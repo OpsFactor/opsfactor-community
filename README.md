@@ -6,9 +6,8 @@ never depends on sources or artifacts from OpsFactor Enterprise.
 
 This repository is released under the [Sustainable Use License 1.0](LICENSE.md).
 The license is source-available, not an OSI-approved open-source license.
-See the [Community License Guide](COMMUNITY-LICENSE-GUIDE.md) for practical
-examples covering internal use, consulting, integrations, hosting, and
-commercial boundaries.
+Practical licensing examples are available in the
+[Community licensing FAQ](https://docs.opsfactor.com/documentation/community/licensing-faq/).
 
 ## Version
 
@@ -63,6 +62,3 @@ The Community frontend lives in the separate
 [`opsfactor-community-front`](../opsfactor-community-front) repository. The
 backend does not version the frontend `dist`; a release pipeline builds it
 separately and packages the resulting artifact in the final distribution.
-
-The previous Portuguese technical guide is available in
-[README.pt-BR.md](README.pt-BR.md).
