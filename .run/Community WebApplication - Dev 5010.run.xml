@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Community WebApplication - Dev 5010" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH" value="ms-21" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="MAIN_CLASS_NAME" value="com.opsfactor.community.web.WebApplication" />
+    <module name="opsfactor-community" />
+    <option name="PROGRAM_PARAMETERS" value="--spring.profiles.active=dev --server.port=5010" />
+    <shortenClasspath name="ARGS_FILE" />
+    <option name="VM_PARAMETERS" value="-Dlogging.file.name=$PROJECT_DIR$/logs/community-webapplication-dev-5010.log" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

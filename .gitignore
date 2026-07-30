@@ -1,0 +1,23 @@
+# Maven build output
+target/
+**/target/
+
+# IntelliJ/local workspace metadata
+.idea/
+*.iml
+.azure/
+**/.azure/
+
+# Local logs and runtime artifacts
+logs/
+*.log
+
+# Local secrets and machine-specific overrides
+.env
+.env.*
+application-local.properties
+
+# Front-end assets are built and packaged outside the backend repo.
+dist/
+public/
+static/
