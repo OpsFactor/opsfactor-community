@@ -1,15 +1,15 @@
-# Revisão Da Licença Da OpsFactor Community
+# Guia Da Licença Da OpsFactor Community
 
-Status: proposta consolidada para revisão jurídica.
+Status: licença oficial da release `v0.1.0`.
 
-Este documento explica as escolhas do
-[`LICENSE-DRAFT.md`](LICENSE-DRAFT.md). Ele não concede direitos e não
-substitui o texto da licença que acompanhará uma release.
+Este documento explica as escolhas e os cenários de uso do
+[`LICENSE.md`](LICENSE.md). Em caso de divergência, prevalece o texto inglês
+do `LICENSE.md` incluído na release correspondente.
 
-## Resultado Recomendado
+## Modelo Adotado
 
-A OpsFactor Community deve adotar a própria **Sustainable Use License 1.0**
-criada e publicada pela n8n, reproduzindo seu corpo sem mudanças substantivas.
+A OpsFactor Community adota a própria **Sustainable Use License 1.0** criada e
+publicada pela n8n, reproduzindo seu corpo sem mudanças substantivas.
 
 Essa escolha elimina um instrumento contratual próprio da OpsFactor e permite
 explicar a fronteira comercial por uma FAQ, seguindo o modelo da n8n:
@@ -24,13 +24,13 @@ explicar a fronteira comercial por uma FAQ, seguindo o modelo da n8n:
 A atribuição à n8n deve permanecer explícita. Ela também deve informar que a
 n8n não é afiliada à OpsFactor e não endossa a empresa ou o produto.
 
-O preâmbulo específico da OpsFactor apenas delimita branches, conteúdo
+O preâmbulo específico da OpsFactor delimita branches, conteúdo
 Community e componentes de terceiros. Ele declara expressamente que não
 modifica os termos da Sustainable Use License.
 
 ## Matriz Consolidada
 
-| Situação | Tratamento proposto |
+| Situação | Tratamento sob a licença |
 | --- | --- |
 | Empresa usa a Community para planejar a própria operação | Permitido |
 | Empresa modifica código ou telas para o próprio uso | Permitido |
@@ -72,7 +72,7 @@ não equivale a comprar uma licença OpsFactor. A restrição surge quando um
 provedor oferece a funcionalidade OpsFactor aos próprios clientes como
 serviço ou produto.
 
-A proposta não exige que o cliente pague diretamente a conta de nuvem. Uma
+A licença não exige que o cliente pague diretamente a conta de nuvem. Uma
 consultoria pode contratar, instalar e administrar infraestrutura como parte
 de seus serviços, desde que não esteja vendendo acesso à OpsFactor como sua
 própria ferramenta.
@@ -110,7 +110,7 @@ domínio de Supply Chain Planning.
 
 ## Marca E Interface
 
-A proposta não exige preservar o logo OpsFactor nem o layout original em um
+A licença não exige preservar o logo OpsFactor nem o layout original em um
 portal interno. Ela exige preservar avisos de licença, copyright e demais
 avisos jurídicos presentes no software.
 
@@ -120,29 +120,26 @@ autoral da licença.
 
 ## Documentos Públicos
 
-- O arquivo inglês do repositório reproduzirá a n8n Sustainable Use License
-  1.0 e será o instrumento aplicável à release.
+- O arquivo inglês do repositório reproduz a n8n Sustainable Use License 1.0 e
+  é o instrumento aplicável à release.
 - A documentação inglesa pode espelhar o texto para referência.
 - A versão portuguesa é tradução informativa e declara a prevalência do
   `LICENSE.md` inglês da release correspondente.
-- A FAQ bilíngue explica os casos de uso, mas não concede direitos por si só.
+- A FAQ bilíngue explica os casos de uso; o instrumento aplicável permanece o
+  `LICENSE.md`.
 
-Enquanto a revisão jurídica e a primeira release não forem concluídas, o
-arquivo permanece como `LICENSE-DRAFT.md` e as páginas públicas permanecem
-marcadas como proposta.
+O código-fonte, o `LICENSE.md` e a tag `v0.1.0` estão publicados no repositório
+oficial da OpsFactor Community.
 
-## Pendências Antes Da Publicação
+## Evoluções Do Projeto
 
-1. confirmar a entidade jurídica que será o licenciante e a titularidade do
-   código;
-2. auditar dependências, assets, licenças e avisos de terceiros;
-3. definir `NOTICE.md`, `THIRD_PARTY_NOTICES.md` e o escopo de branches e
-   diretórios;
-4. adotar um Contributor License Agreement adequado a contribuições externas,
-   dual licensing e uso Enterprise;
-5. submeter licença, tradução e FAQ a advogado especializado em software e
-   propriedade intelectual;
-6. definir um canal de contato comercial antes de publicar a primeira release.
+1. manter a auditoria de dependências, assets, licenças e avisos de terceiros;
+2. evoluir `NOTICE.md` e `THIRD_PARTY_NOTICES.md` quando novos componentes
+   exigirem avisos adicionais;
+3. adotar um Contributor License Agreement antes de aceitar contribuições
+   externas;
+4. publicar canais de contato para dúvidas de licenciamento e acordos
+   comerciais.
 
 Não se deve inventar um identificador SPDX oficial. Enquanto a Sustainable Use
 License 1.0 não tiver identificador reconhecido no catálogo adotado pelo
