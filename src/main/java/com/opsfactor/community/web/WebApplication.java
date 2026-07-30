@@ -33,6 +33,9 @@ import java.util.TimeZone;
         "com.opsfactor.community.platform.dto",
         "com.opsfactor.community.platform.routine",
         "com.opsfactor.community.platform.service",
+        "com.opsfactor.community.platform.bi",
+        "com.opsfactor.community.platform.cache",
+        "com.opsfactor.community.platform.runtime",
         "com.opsfactor.community.web",
         "com.opsfactor.community.platform.security"
 })

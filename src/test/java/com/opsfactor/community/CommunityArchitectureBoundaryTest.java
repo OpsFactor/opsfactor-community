@@ -1789,6 +1789,9 @@ class CommunityArchitectureBoundaryTest {
         Assertions.assertTrue(communityWebApplicationSource.contains("\"com.opsfactor.community.platform.dto\""));
         Assertions.assertTrue(communityWebApplicationSource.contains("\"com.opsfactor.community.platform.routine\""));
         Assertions.assertTrue(communityWebApplicationSource.contains("\"com.opsfactor.community.platform.service\""));
+        Assertions.assertTrue(communityWebApplicationSource.contains("\"com.opsfactor.community.platform.bi\""));
+        Assertions.assertTrue(communityWebApplicationSource.contains("\"com.opsfactor.community.platform.cache\""));
+        Assertions.assertTrue(communityWebApplicationSource.contains("\"com.opsfactor.community.platform.runtime\""));
         Assertions.assertTrue(communityWebApplicationSource.contains("\"com.opsfactor.community.web\""));
         Assertions.assertTrue(communityWebApplicationSource.contains("\"com.opsfactor.community.platform.security\""));
         Assertions.assertFalse(
