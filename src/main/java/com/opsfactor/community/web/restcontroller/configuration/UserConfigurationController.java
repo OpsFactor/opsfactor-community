@@ -1,7 +1,6 @@
 package com.opsfactor.community.web.restcontroller.configuration;
 
 import com.opsfactor.community.capability.configuration.user.facade.dto.ConfiguracaoUsuarioDTO;
-import com.opsfactor.community.capability.configuration.user.facade.dto.UserInterfacePreferencesDTO;
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguredView;
 import com.opsfactor.community.capability.configuration.facade.ConfiguracaoUsuarioFacade;
 import com.opsfactor.community.capability.configuration.facade.ConfiguredViewFacade;
@@ -346,47 +345,6 @@ public class UserConfigurationController {
             return ResponseEntity.ok("User Configurations Saved");
         } catch (RuntimeException e) {
             log.error("Error saving user configurations", e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
-        }
-
-    }
-
-    /**
-     * Carrega as preferencias visuais tipadas da interface do usuario logado.
-     */
-    @GetMapping("api/secured/configuration/user/interface/preferences")
-    @Secured("ROLE_ADMIN")
-    public ResponseEntity<UserInterfacePreferencesDTO> getUserInterfacePreferencesDTO() {
-
-        try {
-            String userId = getUserIdAutenticadoCommunity();
-            UserInterfacePreferencesDTO userInterfacePreferencesDTO =
-                    configuracaoUsuarioFrontService.getUserInterfacePreferencesDTO(userId);
-            return ResponseEntity.ok(userInterfacePreferencesDTO);
-        } catch (RuntimeException e) {
-            log.error("Error loading user interface preferences", e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
-        }
-
-    }
-
-    /**
-     * Salva as preferencias visuais tipadas da interface do usuario logado.
-     */
-    @PostMapping("api/secured/configuration/user/interface/preferences")
-    @Secured("ROLE_ADMIN")
-    public ResponseEntity<UserInterfacePreferencesDTO> postUserInterfacePreferencesDTO(
-            @RequestBody UserInterfacePreferencesDTO userInterfacePreferencesDTO) {
-
-        try {
-            String userId = getUserIdAutenticadoCommunity();
-            UserInterfacePreferencesDTO savedUserInterfacePreferencesDTO =
-                    configuracaoUsuarioFrontService.saveUserInterfacePreferencesDTO(
-                            userId,
-                            userInterfacePreferencesDTO);
-            return ResponseEntity.ok(savedUserInterfacePreferencesDTO);
-        } catch (RuntimeException e) {
-            log.error("Error saving user interface preferences", e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
         }
 

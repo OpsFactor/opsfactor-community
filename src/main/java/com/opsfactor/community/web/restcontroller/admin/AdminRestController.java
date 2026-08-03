@@ -1,8 +1,6 @@
 package com.opsfactor.community.web.restcontroller.admin;
 
 import com.opsfactor.community.platform.cache.CachingService;
-import com.opsfactor.community.capability.configuration.facade.dto.application.ApplicationAppearanceDTO;
-import com.opsfactor.community.capability.configuration.facade.ApplicationAppearanceFacade;
 import com.opsfactor.community.platform.security.login.CommunitySecurityConstants;
 import com.opsfactor.community.platform.security.login.facade.dto.UserDTO;
 import com.opsfactor.community.platform.security.login.facade.UserFacade;
@@ -10,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
@@ -66,74 +63,6 @@ public class AdminRestController {
      */
     @Autowired
     private CachingService cachingService;
-
-    /**
-     * Fachada que disponibiliza a aparencia visual publica e a administracao
-     * restrita do logotipo da barra superior.
-     */
-    @Autowired
-    private ApplicationAppearanceFacade applicationAppearanceFrontService;
-
-    /**
-     * Retorna a aparencia publica da aplicacao, inclusive o logotipo efetivo
-     * da barra superior quando tiver sido configurado por um administrador.
-     */
-    @GetMapping(value = "api/open/applicationappearance", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ApplicationAppearanceDTO getApplicationAppearance() {
-
-        return applicationAppearanceFrontService.getApplicationAppearance();
-
-    }
-
-    /**
-     * Salva o logotipo customizado da barra superior.
-     *
-     * <p>Dados invalidos de imagem sao erro de requisicao; indisponibilidades
-     * de persistencia ou do service continuam como erro interno.</p>
-     */
-    @PostMapping(
-            value = "api/secured/admin/applicationappearance/topbarlogo",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    @Secured("ROLE_ADMIN")
-    public ApplicationAppearanceDTO saveTopbarLogo(@RequestBody ApplicationAppearanceDTO applicationAppearanceDTO) {
-
-        try {
-            return applicationAppearanceFrontService.saveTopbarLogo(
-                    applicationAppearanceDTO.getTopbarLogoDataUrl(),
-                    applicationAppearanceDTO.getTopbarLogoFileName());
-        } catch (IllegalArgumentException illegalArgumentException) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, illegalArgumentException.getMessage(), illegalArgumentException);
-        } catch (RuntimeException runtimeException) {
-            log.error("Error saving Community topbar logo", runtimeException);
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    runtimeException.getMessage(),
-                    runtimeException);
-        }
-
-    }
-
-    /**
-     * Remove o logotipo customizado e restaura a aparencia padrao.
-     */
-    @DeleteMapping(
-            value = "api/secured/admin/applicationappearance/topbarlogo",
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    @Secured("ROLE_ADMIN")
-    public ApplicationAppearanceDTO resetTopbarLogo() {
-
-        try {
-            return applicationAppearanceFrontService.resetTopbarLogo();
-        } catch (RuntimeException runtimeException) {
-            log.error("Error resetting Community topbar logo", runtimeException);
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    runtimeException.getMessage(),
-                    runtimeException);
-        }
-
-    }
 
     /**
      * Lista usuarios disponiveis para configuracao de views.

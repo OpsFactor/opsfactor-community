@@ -42,15 +42,12 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standal
 public class AdminRestControllerCommunityContractTest {
 
     private static final List<ControllerEndpoint> COMMUNITY_ADMIN_ENDPOINTS = List.of(
-            new ControllerEndpoint("DELETE", "api/secured/admin/applicationappearance/topbarlogo"),
-            new ControllerEndpoint("GET", "api/open/applicationappearance"),
             new ControllerEndpoint("GET", "api/secured/clearallcaches"),
             new ControllerEndpoint("GET", "api/secured/usedmemory"),
             new ControllerEndpoint("GET", "api/secured/user"),
             new ControllerEndpoint("GET", "api/secured/user/configuredview/{configuredViewType}"),
             new ControllerEndpoint("GET", "api/secured/user/rolelist"),
             new ControllerEndpoint("POST", "api/open/createdefaultuser"),
-            new ControllerEndpoint("POST", "api/secured/admin/applicationappearance/topbarlogo"),
             new ControllerEndpoint("POST", "api/secured/user"));
 
     @Test
@@ -147,7 +144,22 @@ public class AdminRestControllerCommunityContractTest {
          */
         assertFieldHasAutowired("userFrontService");
         assertFieldHasAutowired("cachingService");
-        assertFieldHasAutowired("applicationAppearanceFrontService");
+
+    }
+
+    @Test
+    public void adminControllerShouldNotExposeEnterpriseAppearanceEndpoints() {
+
+        List<String> endpointPaths = Arrays.stream(AdminRestController.class.getDeclaredMethods())
+                .flatMap(this::getEndpointPaths)
+                .toList();
+
+        /*
+         * Community tem marca e tema fixos. Logo administrativo e preferências
+         * visuais por usuário pertencem ao overlay Enterprise e não podem
+         * ressurgir neste controller por acidente.
+         */
+        Assertions.assertTrue(endpointPaths.stream().noneMatch(path -> path.contains("applicationappearance")));
 
     }
 

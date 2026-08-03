@@ -1,7 +1,6 @@
 package com.opsfactor.community.web.restcontroller.configuration;
 
 import com.opsfactor.community.capability.configuration.user.facade.dto.ConfiguracaoUsuarioDTO;
-import com.opsfactor.community.capability.configuration.user.facade.dto.UserInterfacePreferencesDTO;
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguredView;
 import com.opsfactor.community.capability.configuration.facade.ConfiguracaoUsuarioFacade;
 import com.opsfactor.community.capability.configuration.facade.ConfiguredViewFacade;
@@ -363,69 +362,6 @@ class UserConfigurationControllerCommunityContractTest {
         Mockito.verify(configuracaoUsuarioFrontService).saveConfigurationViewDTOList(
                 "admin",
                 configuracaoUsuarioDTOList);
-
-    }
-
-    @Test
-    void userInterfacePreferenceEndpointsShouldUseAuthenticatedUserAndReturnTypedDto() {
-
-        UserConfigurationController userConfigurationController = new UserConfigurationController();
-        ConfiguracaoUsuarioFacade configuracaoUsuarioFrontService =
-                Mockito.mock(ConfiguracaoUsuarioFacade.class);
-        AuthenticationService authenticationService = Mockito.mock(AuthenticationService.class);
-        UserInterfacePreferencesDTO userInterfacePreferencesDTO = new UserInterfacePreferencesDTO();
-        userInterfacePreferencesDTO.themeMode = "light";
-
-        Mockito.when(authenticationService.getAuthenticatedUserId()).thenReturn("admin");
-        Mockito.when(configuracaoUsuarioFrontService.getUserInterfacePreferencesDTO("admin"))
-                .thenReturn(userInterfacePreferencesDTO);
-        Mockito.when(configuracaoUsuarioFrontService.saveUserInterfacePreferencesDTO(
-                        "admin",
-                        userInterfacePreferencesDTO))
-                .thenReturn(userInterfacePreferencesDTO);
-        setCommonFields(
-                userConfigurationController,
-                Mockito.mock(ConfiguredViewFacade.class),
-                configuracaoUsuarioFrontService,
-                authenticationService);
-
-        ResponseEntity<UserInterfacePreferencesDTO> getResponseEntity =
-                userConfigurationController.getUserInterfacePreferencesDTO();
-        ResponseEntity<UserInterfacePreferencesDTO> postResponseEntity =
-                userConfigurationController.postUserInterfacePreferencesDTO(userInterfacePreferencesDTO);
-
-        Assertions.assertEquals(userInterfacePreferencesDTO, getResponseEntity.getBody());
-        Assertions.assertEquals(userInterfacePreferencesDTO, postResponseEntity.getBody());
-        Mockito.verify(configuracaoUsuarioFrontService).getUserInterfacePreferencesDTO("admin");
-        Mockito.verify(configuracaoUsuarioFrontService).saveUserInterfacePreferencesDTO(
-                "admin",
-                userInterfacePreferencesDTO);
-
-    }
-
-    @Test
-    void userInterfacePreferenceEndpointsShouldTranslateRuntimeFailureToHttp500() {
-
-        UserConfigurationController userConfigurationController = new UserConfigurationController();
-        ConfiguracaoUsuarioFacade configuracaoUsuarioFrontService =
-                Mockito.mock(ConfiguracaoUsuarioFacade.class);
-        AuthenticationService authenticationService = Mockito.mock(AuthenticationService.class);
-
-        Mockito.when(authenticationService.getAuthenticatedUserId()).thenReturn("admin");
-        Mockito.when(configuracaoUsuarioFrontService.getUserInterfacePreferencesDTO("admin"))
-                .thenThrow(new IllegalArgumentException("invalid theme"));
-        setCommonFields(
-                userConfigurationController,
-                Mockito.mock(ConfiguredViewFacade.class),
-                configuracaoUsuarioFrontService,
-                authenticationService);
-
-        ResponseStatusException responseStatusException = Assertions.assertThrows(
-                ResponseStatusException.class,
-                userConfigurationController::getUserInterfacePreferencesDTO);
-
-        Assertions.assertEquals(500, responseStatusException.getStatusCode().value());
-        Assertions.assertEquals("invalid theme", responseStatusException.getReason());
 
     }
 

@@ -1,7 +1,6 @@
 package com.opsfactor.community.web.restcontroller.admin;
 
 import com.opsfactor.community.platform.cache.CachingService;
-import com.opsfactor.community.capability.configuration.facade.ApplicationAppearanceFacade;
 import com.opsfactor.community.platform.security.login.CommunitySecurityConstants;
 import com.opsfactor.community.platform.security.login.facade.dto.UserDTO;
 import com.opsfactor.community.platform.security.login.facade.UserFacade;
@@ -43,10 +42,6 @@ class AdminRestControllerHttpTest {
         userFrontService = mock(UserFacade.class);
         ReflectionTestUtils.setField(adminRestController, "userFrontService", userFrontService);
         ReflectionTestUtils.setField(adminRestController, "cachingService", mock(CachingService.class));
-        ReflectionTestUtils.setField(
-                adminRestController,
-                "applicationAppearanceFrontService",
-                mock(ApplicationAppearanceFacade.class));
         mockMvc = MockMvcBuilders.standaloneSetup(adminRestController).build();
 
     }

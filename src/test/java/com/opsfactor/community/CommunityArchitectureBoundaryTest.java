@@ -1146,6 +1146,7 @@ class CommunityArchitectureBoundaryTest {
             "application-prd.properties",
             "application.properties",
             "banner.txt",
+            "data-community-dev.sql",
             "data.sql",
             "META-INF/services/org.hibernate.boot.model.FunctionContributor"
     );
@@ -2651,7 +2652,8 @@ class CommunityArchitectureBoundaryTest {
             List<String> sourceLines = Files.readAllLines(sourcePath, StandardCharsets.UTF_8);
             for (int lineIndex = 0; lineIndex < sourceLines.size(); lineIndex++) {
                 String sourceLine = sourceLines.get(lineIndex);
-                if (containsLegacyEditionNamingToken(sourceLine)
+                if ((containsLegacyEditionNamingToken(sourceLine)
+                        && !isApprovedSourceAvailableLicenseStatement(sourceLine))
                         || containsForbiddenCommercialEditionTerm(sourceLine)) {
                     violations.add(formatViolation(communityWorkspaceDirectory, sourcePath, lineIndex, sourceLine));
                 }
@@ -5188,6 +5190,21 @@ class CommunityArchitectureBoundaryTest {
 
         String lowercaseLine = line.toLowerCase();
         return COMMUNITY_FORBIDDEN_LEGACY_EDITION_NAMING_TOKENS.stream().anyMatch(lowercaseLine::contains);
+
+    }
+
+    /**
+     * A licença aprovada para a distribuição Community é source-available e a
+     * negativa explícita da aprovação OSI é documentação jurídica, não
+     * nomenclatura operacional de edição. Sem esta exceção a própria regra de
+     * fronteira reprova o README aprovado.
+     */
+    private static boolean isApprovedSourceAvailableLicenseStatement(String line) {
+
+        String lowercaseLine = line.toLowerCase(Locale.ROOT);
+        String approvedOsiStatement = "not an osi-approved open" + "-source license";
+        return lowercaseLine.contains("source-available")
+                && lowercaseLine.contains(approvedOsiStatement);
 
     }
 

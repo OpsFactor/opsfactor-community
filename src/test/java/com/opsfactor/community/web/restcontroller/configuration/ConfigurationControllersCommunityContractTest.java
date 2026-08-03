@@ -186,7 +186,6 @@ public class ConfigurationControllersCommunityContractTest {
         assertControllerEndpoints(
                 UserConfigurationController.class,
                 List.of(
-                        new ControllerEndpoint("GET", "api/secured/configuration/user/interface/preferences"),
                         new ControllerEndpoint("GET", "api/secured/configuration/user/userconfigs/{tema}"),
                         new ControllerEndpoint("GET", "api/secured/configuration/user/view/demandplanningbook"),
                         new ControllerEndpoint("GET", "api/secured/configuration/user/view/demandplanningbook/new/{userId}/{viewName}"),
@@ -194,12 +193,28 @@ public class ConfigurationControllersCommunityContractTest {
                         new ControllerEndpoint("GET", "api/secured/configuration/user/view/supplyplanningbook"),
                         new ControllerEndpoint("GET", "api/secured/configuration/user/view/supplyplanningbook/new/{userId}/{viewName}"),
                         new ControllerEndpoint("GET", "api/secured/configuration/user/view/supplyplanningbook/{userId}"),
-                        new ControllerEndpoint("POST", "api/secured/configuration/user/interface/preferences"),
                         new ControllerEndpoint("POST", "api/secured/configuration/user/userconfigs"),
                         new ControllerEndpoint("POST", "api/secured/configuration/user/view"),
                         new ControllerEndpoint("POST", "api/secured/configuration/user/view/delete"),
                         new ControllerEndpoint("POST", "api/secured/configuration/user/view/list"),
                         new ControllerEndpoint("POST", "api/secured/configuration/user/view/new")));
+
+    }
+
+    @Test
+    public void userConfigurationControllerShouldNotExposeEnterpriseInterfacePreferences() {
+
+        List<String> endpointPaths = Arrays.stream(UserConfigurationController.class.getDeclaredMethods())
+                .flatMap(ConfigurationControllersCommunityContractTest::getControllerEndpoints)
+                .map(ControllerEndpoint::path)
+                .toList();
+
+        /*
+         * Community inicia e permanece no tema claro fixo. A preferência
+         * individual de interface é fornecida somente pelo controller
+         * Enterprise, portanto esta rota não pode voltar ao artefato aberto.
+         */
+        Assertions.assertTrue(endpointPaths.stream().noneMatch(path -> path.contains("interface/preferences")));
 
     }
 

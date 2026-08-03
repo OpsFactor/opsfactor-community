@@ -1,7 +1,6 @@
 package com.opsfactor.community.capability.configuration.facade;
 
 import com.opsfactor.community.capability.configuration.user.facade.dto.ConfiguracaoUsuarioDTO;
-import com.opsfactor.community.capability.configuration.user.facade.dto.UserInterfacePreferencesDTO;
 import com.opsfactor.community.capability.configuration.user.facade.mapper.ConfiguracaoUsuarioAutoMapper;
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguracaoUsuario;
 import java.util.LinkedHashMap;
@@ -19,26 +18,6 @@ import com.opsfactor.community.capability.configuration.user.repository.Configur
  */
 @Service
 public class ConfiguracaoUsuarioFacade {
-
-    /**
-     * Escopo funcional das preferencias globais da interface grafica.
-     */
-    public static final String USER_INTERFACE_SCOPE = "user-interface";
-
-    /**
-     * Parametro persistido para o tema visual efetivo da SPA.
-     */
-    public static final String VISUAL_THEME_MODE_PARAMETER = "visual-theme-mode";
-
-    /**
-     * Tema padrao de trabalho da plataforma.
-     */
-    public static final String DARK_THEME_MODE = "dark";
-
-    /**
-     * Tema claro opcional da interface.
-     */
-    public static final String LIGHT_THEME_MODE = "light";
 
     /**
      * Repository de configuracoes simples por usuario. O @Autowired fica
@@ -124,49 +103,6 @@ public class ConfiguracaoUsuarioFacade {
         validaConfiguracoesUsuarioSalvasCommunity(
                 configuracoesUsuarioSalvas,
                 configuracoesUsuario.size());
-    }
-
-    /**
-     * Carrega as preferencias visuais tipadas da interface para o usuario.
-     *
-     * <p>O tema permanece uma configuracao chave/valor do escopo
-     * {@value #USER_INTERFACE_SCOPE}. Quando ainda nao houver escolha salva,
-     * o modo escuro preserva o padrao funcional legado.</p>
-     */
-    public UserInterfacePreferencesDTO getUserInterfacePreferencesDTO(String userId) {
-
-        List<ConfiguracaoUsuarioDTO> configuracaoUsuarioDTOList =
-                getConfiguredViewDTOList(userId, USER_INTERFACE_SCOPE);
-
-        UserInterfacePreferencesDTO userInterfacePreferencesDTO = new UserInterfacePreferencesDTO();
-        userInterfacePreferencesDTO.themeMode =
-                resolveThemeModeConfigurado(configuracaoUsuarioDTOList);
-        userInterfacePreferencesDTO.availableThemeModes = getAvailableThemeModes();
-        return userInterfacePreferencesDTO;
-
-    }
-
-    /**
-     * Salva a preferencia visual tipada e devolve a fotografia canonica.
-     *
-     * <p>A gravacao reutiliza o batch e o mapper ja usados pelas preferencias
-     * de usuario. Assim nao ha entidade, join ou query adicional para a nova
-     * superficie REST.</p>
-     */
-    public UserInterfacePreferencesDTO saveUserInterfacePreferencesDTO(
-            String userId,
-            UserInterfacePreferencesDTO userInterfacePreferencesDTO) {
-
-        validaUserInterfacePreferencesDTO(userInterfacePreferencesDTO);
-
-        ConfiguracaoUsuarioDTO configuracaoUsuarioDTO = new ConfiguracaoUsuarioDTO();
-        configuracaoUsuarioDTO.scope = USER_INTERFACE_SCOPE;
-        configuracaoUsuarioDTO.parameter = VISUAL_THEME_MODE_PARAMETER;
-        configuracaoUsuarioDTO.parameterValue = userInterfacePreferencesDTO.themeMode;
-
-        saveConfigurationViewDTOList(userId, List.of(configuracaoUsuarioDTO));
-        return getUserInterfacePreferencesDTO(userId);
-
     }
 
     /**
@@ -400,61 +336,6 @@ public class ConfiguracaoUsuarioFacade {
                                 + " must have a primary key.");
             }
             indiceConfiguracao++;
-        }
-
-    }
-
-    /**
-     * Extrai o tema visual do escopo dedicado, mantendo escuro como padrao.
-     */
-    private String resolveThemeModeConfigurado(
-            List<ConfiguracaoUsuarioDTO> configuracaoUsuarioDTOList) {
-
-        String themeMode = DARK_THEME_MODE;
-        for (ConfiguracaoUsuarioDTO configuracaoUsuarioDTO : configuracaoUsuarioDTOList) {
-            if (VISUAL_THEME_MODE_PARAMETER.equals(configuracaoUsuarioDTO.parameter)
-                    && configuracaoUsuarioDTO.parameterValue != null) {
-                themeMode = configuracaoUsuarioDTO.parameterValue;
-            }
-        }
-        validaThemeMode(themeMode);
-        return themeMode;
-
-    }
-
-    /**
-     * Lista os modos de tema que a Community disponibiliza para a SPA.
-     */
-    private List<String> getAvailableThemeModes() {
-
-        return List.of(DARK_THEME_MODE, LIGHT_THEME_MODE);
-
-    }
-
-    /**
-     * Valida o payload tipado antes de adapta-lo para configuracao chave/valor.
-     */
-    private void validaUserInterfacePreferencesDTO(
-            UserInterfacePreferencesDTO userInterfacePreferencesDTO) {
-
-        if (userInterfacePreferencesDTO == null) {
-            throw new IllegalArgumentException("User interface preferences payload is required.");
-        }
-        if (isBlank(userInterfacePreferencesDTO.themeMode)) {
-            throw new IllegalArgumentException("User interface theme mode is required.");
-        }
-
-        validaThemeMode(userInterfacePreferencesDTO.themeMode);
-
-    }
-
-    /**
-     * Garante que a persistencia mantenha apenas os modos conhecidos pela SPA.
-     */
-    private void validaThemeMode(String themeMode) {
-
-        if (!DARK_THEME_MODE.equals(themeMode) && !LIGHT_THEME_MODE.equals(themeMode)) {
-            throw new IllegalArgumentException("User interface theme mode must be dark or light.");
         }
 
     }

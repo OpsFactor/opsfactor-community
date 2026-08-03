@@ -1,7 +1,6 @@
 package com.opsfactor.community.capability.configuration.facade;
 
 import com.opsfactor.community.capability.configuration.user.facade.dto.ConfiguracaoUsuarioDTO;
-import com.opsfactor.community.capability.configuration.user.facade.dto.UserInterfacePreferencesDTO;
 import com.opsfactor.community.capability.configuration.user.facade.mapper.ConfiguracaoUsuarioAutoMapper;
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguracaoUsuario;
 import com.opsfactor.community.capability.configuration.user.repository.ConfiguracaoUsuarioRepository;
@@ -247,73 +246,6 @@ public class ConfiguracaoUsuarioFacadeTest {
         Assertions.assertEquals(
                 "Saved user configuration collection size 1 differs from expected size 2.",
                 illegalArgumentException.getMessage());
-
-    }
-
-    @Test
-    public void userInterfacePreferencesShouldReadDefaultAndPersistThemeThroughExistingConfigurationBatch()
-            throws Exception {
-
-        ConfiguracaoUsuarioFacade serviceComTemaPadrao =
-                criaConfiguracaoUsuarioFrontServiceParaListagem(List.of(), List.of());
-
-        Assertions.assertEquals(
-                ConfiguracaoUsuarioFacade.DARK_THEME_MODE,
-                serviceComTemaPadrao.getUserInterfacePreferencesDTO("admin").themeMode);
-
-        ConfiguracaoUsuarioFacade configuracaoUsuarioFrontService =
-                new ConfiguracaoUsuarioFacade();
-        ConfiguracaoUsuarioRepository configuracaoUsuarioRepository =
-                Mockito.mock(ConfiguracaoUsuarioRepository.class);
-        ConfiguracaoUsuarioAutoMapper configuracaoUsuarioAutoMapper =
-                Mockito.mock(ConfiguracaoUsuarioAutoMapper.class);
-        ConfiguracaoUsuario configuracaoUsuario = getConfiguracaoUsuarioEntidade(
-                "admin",
-                ConfiguracaoUsuarioFacade.USER_INTERFACE_SCOPE,
-                ConfiguracaoUsuarioFacade.VISUAL_THEME_MODE_PARAMETER);
-        ConfiguracaoUsuarioDTO configuracaoUsuarioDTO = getConfiguracaoUsuarioDTOListagem(
-                "admin",
-                ConfiguracaoUsuarioFacade.USER_INTERFACE_SCOPE,
-                ConfiguracaoUsuarioFacade.VISUAL_THEME_MODE_PARAMETER);
-        configuracaoUsuarioDTO.parameterValue = ConfiguracaoUsuarioFacade.LIGHT_THEME_MODE;
-
-        Mockito.when(configuracaoUsuarioAutoMapper.converteListDTOs(Mockito.any()))
-                .thenReturn(List.of(configuracaoUsuario));
-        Mockito.when(configuracaoUsuarioRepository.saveAll(Mockito.any()))
-                .thenReturn(List.of(configuracaoUsuario));
-        Mockito.when(configuracaoUsuarioRepository
-                        .findByConfiguracaoUsuarioCompositeKeyUserIdAndConfiguracaoUsuarioCompositeKeyTema(
-                                "admin",
-                                ConfiguracaoUsuarioFacade.USER_INTERFACE_SCOPE))
-                .thenReturn(List.of(configuracaoUsuario));
-        Mockito.when(configuracaoUsuarioAutoMapper.converteListEntidades(List.of(configuracaoUsuario)))
-                .thenReturn(List.of(configuracaoUsuarioDTO));
-        setField(
-                configuracaoUsuarioFrontService,
-                "configuracaoUsuarioRepository",
-                configuracaoUsuarioRepository);
-        setField(
-                configuracaoUsuarioFrontService,
-                "configuracaoUsuarioAutoMapper",
-                configuracaoUsuarioAutoMapper);
-
-        UserInterfacePreferencesDTO request = new UserInterfacePreferencesDTO();
-        request.themeMode = ConfiguracaoUsuarioFacade.LIGHT_THEME_MODE;
-
-        UserInterfacePreferencesDTO response =
-                configuracaoUsuarioFrontService.saveUserInterfacePreferencesDTO("admin", request);
-
-        Assertions.assertEquals(ConfiguracaoUsuarioFacade.LIGHT_THEME_MODE, response.themeMode);
-        Assertions.assertEquals(
-                List.of(
-                        ConfiguracaoUsuarioFacade.DARK_THEME_MODE,
-                        ConfiguracaoUsuarioFacade.LIGHT_THEME_MODE),
-                response.availableThemeModes);
-        Mockito.verify(configuracaoUsuarioRepository).saveAll(Mockito.any());
-        Mockito.verify(configuracaoUsuarioRepository)
-                .findByConfiguracaoUsuarioCompositeKeyUserIdAndConfiguracaoUsuarioCompositeKeyTema(
-                        "admin",
-                        ConfiguracaoUsuarioFacade.USER_INTERFACE_SCOPE);
 
     }
 
