@@ -6,8 +6,8 @@ import com.opsfactor.community.capability.configuration.projection.parametros.Cl
 import com.opsfactor.community.capability.supplyplanning.supplyplan.projection.SupplyPlanningProjection;
 import com.opsfactor.community.capability.supplyplanning.engine.SupplyPlanning;
 import com.opsfactor.community.platform.bi.service.CommunityInventoryOverviewCoverageCalculator;
-import com.opsfactor.community.platform.bi.service.CommunityInventoryOverviewSnapshotFactory;
-import com.opsfactor.community.platform.bi.service.CommunityInventoryOverviewSnapshotFactory.CommunityInventoryOverviewSnapshot;
+import com.opsfactor.community.platform.bi.service.CommunityInventoryOverviewProjectionLoader;
+import com.opsfactor.community.platform.bi.service.CommunityInventoryOverviewProjectionLoader.CommunityInventoryOverviewProjectionContext;
 import com.opsfactor.community.platform.bi.facade.dto.CommunityInventoryOverviewDTO;
 import com.opsfactor.community.platform.bi.facade.dto.CommunityInventoryOverviewPeriodDTO;
 import com.opsfactor.community.platform.bi.facade.dto.CommunityInventoryOverviewSelectionDTO;
@@ -31,7 +31,7 @@ public class CommunityInventoryOverviewService {
 
     /** Materializa o recorte físico indexado antes de calcular a visão de estoque. */
     @Autowired
-    private CommunityInventoryOverviewSnapshotFactory inventoryOverviewSnapshotFactory;
+    private CommunityInventoryOverviewProjectionLoader inventoryOverviewProjectionLoader;
 
     /** Materializa as séries restrita e irrestrita do recorte físico Community. */
     public CommunityInventoryOverviewDTO getInventoryOverview(CommunityInventoryOverviewSelectionDTO selectionDTO) {
@@ -51,8 +51,8 @@ public class CommunityInventoryOverviewService {
     public CommunityInventoryOverviewPhysicalRead getInventoryOverviewPhysicalRead(
             CommunityInventoryOverviewSelectionDTO selectionDTO) {
 
-        CommunityInventoryOverviewSnapshot snapshot = inventoryOverviewSnapshotFactory.createSnapshot(selectionDTO);
-        Calendario calendar = snapshot.calendar();
+        CommunityInventoryOverviewProjectionContext projectionContext = inventoryOverviewProjectionLoader.load(selectionDTO);
+        Calendario calendar = projectionContext.calendar();
         int firstFuturePeriod = calendar.getPosicaoPeriodoPresente();
         int finalFuturePeriod = calendar.getPosicaoPeriodoFinalFuturo();
         int numberOfDisplayedPeriods = finalFuturePeriod - firstFuturePeriod + 1;
@@ -67,14 +67,14 @@ public class CommunityInventoryOverviewService {
             daysByPeriod[period - firstFuturePeriod] = calendar.getNumeroDiasNoPeriodo(period);
         }
 
-        for (Location location : snapshot.eligibleLocations()) {
+        for (Location location : projectionContext.eligibleLocations()) {
 
-            SupplyPlanningProjection locationProjection = snapshot.supplyPlanningBiProjection()
-                    .getSupplyPlanningProjection(location, snapshot.materialProjection());
+            SupplyPlanningProjection locationProjection = projectionContext.supplyPlanningBiProjection()
+                    .getSupplyPlanningProjection(location, projectionContext.materialProjection());
             ClusterEParametrosProjection clusterAndParametersProjection = locationProjection
                     .getSupplyNetworkProjection()
                     .getClusterEParametrosProjection();
-            for (Produto material : snapshot.materialProjection().getMateriaisAtivos()) {
+            for (Produto material : projectionContext.materialProjection().getMateriaisAtivos()) {
 
                 if (!clusterAndParametersProjection.isDfuAtiva(material, location)) {
                     continue;
@@ -82,7 +82,7 @@ public class CommunityInventoryOverviewService {
                 addMaterialLocationSeries(
                         locationProjection,
                         material,
-                        snapshot,
+                        projectionContext,
                         firstFuturePeriod,
                         finalFuturePeriod,
                         constrainedStock,
@@ -103,7 +103,7 @@ public class CommunityInventoryOverviewService {
                 daysByPeriod,
                 selectionDTO.postHorizonPolicy());
         CommunityInventoryOverviewDTO inventoryOverview = new CommunityInventoryOverviewDTO(
-                snapshot.targetUnitOfMeasure().getId(),
+                projectionContext.targetUnitOfMeasure().getId(),
                 getPeriodDTOs(
                         calendar,
                         firstFuturePeriod,
@@ -111,7 +111,7 @@ public class CommunityInventoryOverviewService {
                         unconstrainedStock,
                         constrainedCoverageDays,
                         unconstrainedCoverageDays));
-        return new CommunityInventoryOverviewPhysicalRead(inventoryOverview, snapshot);
+        return new CommunityInventoryOverviewPhysicalRead(inventoryOverview, projectionContext);
 
     }
 
@@ -119,7 +119,7 @@ public class CommunityInventoryOverviewService {
     private void addMaterialLocationSeries(
             SupplyPlanningProjection locationProjection,
             Produto material,
-            CommunityInventoryOverviewSnapshot snapshot,
+            CommunityInventoryOverviewProjectionContext projectionContext,
             int firstFuturePeriod,
             int finalFuturePeriod,
             double[] constrainedStock,
@@ -134,24 +134,24 @@ public class CommunityInventoryOverviewService {
                     period,
                     material,
                     Constantes.TipoPlano.PLANO_RESTRITO,
-                    snapshot.targetUnitOfMeasure());
+                    projectionContext.targetUnitOfMeasure());
             unconstrainedStock[displayedPeriodIndex] += locationProjection.getQuantidadeEstoqueProjetado(
                     period,
                     material,
                     Constantes.TipoPlano.PLANO_IRRESTRITO,
-                    snapshot.targetUnitOfMeasure());
+                    projectionContext.targetUnitOfMeasure());
             constrainedConsumption[displayedPeriodIndex] += getStockConsumption(
                     locationProjection,
                     period,
                     material,
                     Constantes.TipoPlano.PLANO_RESTRITO,
-                    snapshot);
+                    projectionContext);
             unconstrainedConsumption[displayedPeriodIndex] += getStockConsumption(
                     locationProjection,
                     period,
                     material,
                     Constantes.TipoPlano.PLANO_IRRESTRITO,
-                    snapshot);
+                    projectionContext);
         }
 
     }
@@ -165,20 +165,20 @@ public class CommunityInventoryOverviewService {
             int period,
             Produto material,
             Constantes.TipoPlano planType,
-            CommunityInventoryOverviewSnapshot snapshot) {
+            CommunityInventoryOverviewProjectionContext projectionContext) {
 
         return SupplyPlanning.getDemandaDiretaConsideradaParaEstoqueProjetado(
                 locationProjection,
                 period,
                 material,
                 planType,
-                snapshot.targetUnitOfMeasure())
+                projectionContext.targetUnitOfMeasure())
                 + locationProjection.getQuantidadeMaterialInputConsumidoNoProductionPlan(
                         period,
                         material,
                         Constantes.FirmePlanejado.TOTAL,
                         planType,
-                        snapshot.targetUnitOfMeasure());
+                        projectionContext.targetUnitOfMeasure());
 
     }
 
@@ -209,7 +209,7 @@ public class CommunityInventoryOverviewService {
     /** Resultado físico e contexto transitório reutilizável apenas no overlay da mesma requisição. */
     public record CommunityInventoryOverviewPhysicalRead(
             CommunityInventoryOverviewDTO inventoryOverview,
-            CommunityInventoryOverviewSnapshot snapshot) {
+            CommunityInventoryOverviewProjectionContext projectionContext) {
     }
 
 }

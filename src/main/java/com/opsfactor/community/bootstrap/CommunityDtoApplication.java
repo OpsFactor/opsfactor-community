@@ -1,6 +1,5 @@
-package com.opsfactor.community.platform.dto;
+package com.opsfactor.community.bootstrap;
 
-import com.opsfactor.community.platform.model.ModelApplication;
 import jakarta.annotation.PostConstruct;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -26,12 +25,12 @@ import java.util.TimeZone;
         "com.opsfactor.community.platform.model",
         "com.opsfactor.community.platform.dto"
 })
-public class DtoApplication {
+public class CommunityDtoApplication {
 
     public static void main(String[] args) {
 
         new SpringApplicationBuilder()
-                .sources(DtoApplication.class, ModelApplication.class)
+                .sources(CommunityDtoApplication.class, CommunityModelApplication.class)
                 .run(args);
 
     }

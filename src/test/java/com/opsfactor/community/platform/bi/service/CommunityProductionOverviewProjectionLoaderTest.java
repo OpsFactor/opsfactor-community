@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 /** Contrato de UOM obrigatória antes de montar qualquer projection agregada. */
-class CommunityProductionOverviewSnapshotFactoryTest {
+class CommunityProductionOverviewProjectionLoaderTest {
 
     @Test
     void shouldFailExplicitlyWhenTheQuantityUnitOfMeasureIsMissing() {
@@ -17,7 +17,7 @@ class CommunityProductionOverviewSnapshotFactoryTest {
 
         IllegalArgumentException exception = Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> CommunityProductionOverviewSnapshotFactory.getRequiredQuantityUnitOfMeasure(
+                () -> CommunityProductionOverviewProjectionLoader.getRequiredQuantityUnitOfMeasure(
                         unitOfMeasureProjection, null));
 
         Assertions.assertEquals("uomId is required for Production Overview", exception.getMessage());
@@ -33,7 +33,7 @@ class CommunityProductionOverviewSnapshotFactoryTest {
                 .thenReturn(expectedUnitOfMeasure);
 
         Assertions.assertSame(expectedUnitOfMeasure,
-                CommunityProductionOverviewSnapshotFactory.getRequiredQuantityUnitOfMeasure(
+                CommunityProductionOverviewProjectionLoader.getRequiredQuantityUnitOfMeasure(
                         unitOfMeasureProjection, "EA"));
 
     }

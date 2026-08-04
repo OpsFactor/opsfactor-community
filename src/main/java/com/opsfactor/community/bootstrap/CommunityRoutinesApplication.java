@@ -1,6 +1,5 @@
-package com.opsfactor.community.platform.routine;
+package com.opsfactor.community.bootstrap;
 
-import com.opsfactor.community.platform.model.ModelApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.ComponentScan;
@@ -22,12 +21,12 @@ import org.springframework.context.annotation.ComponentScan;
         "com.opsfactor.community.platform.model",
         "com.opsfactor.community.platform.routine"
 })
-public class RoutinesApplication {
+public class CommunityRoutinesApplication {
 
     public static void main(String[] args) {
 
         new SpringApplicationBuilder()
-                .sources(ModelApplication.class, RoutinesApplication.class)
+                .sources(CommunityModelApplication.class, CommunityRoutinesApplication.class)
                 .run(args);
 
     }

@@ -1,4 +1,4 @@
-package com.opsfactor.community.platform.security;
+package com.opsfactor.community.bootstrap;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -11,11 +11,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * classe existe para testes ou execucoes locais isoladas do modulo security.</p>
  */
 @SpringBootApplication
-public class SecurityApplication {
+public class CommunitySecurityApplication {
 
     public static void main(String[] args) {
 
-        SpringApplication.run(SecurityApplication.class, args);
+        SpringApplication.run(CommunitySecurityApplication.class, args);
 
     }
 

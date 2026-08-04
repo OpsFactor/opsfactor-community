@@ -1,4 +1,4 @@
-package com.opsfactor.community.platform.model;
+package com.opsfactor.community.bootstrap;
 
 import com.opsfactor.community.platform.database.CommunityJpaConfiguration;
 import org.springframework.boot.SpringApplication;
@@ -15,14 +15,14 @@ import org.springframework.context.annotation.Import;
 @SpringBootApplication
 @EnableCaching
 @Import(CommunityJpaConfiguration.class)
-public class ModelApplication {
+public class CommunityModelApplication {
 
     /**
      * Inicia o contexto Spring do modulo Community de modelo.
      */
     public static void main(String[] args) {
 
-        SpringApplication.run(ModelApplication.class, args);
+        SpringApplication.run(CommunityModelApplication.class, args);
 
     }
 

@@ -1,10 +1,5 @@
-package com.opsfactor.community.web;
+package com.opsfactor.community.bootstrap;
 
-import com.opsfactor.community.platform.dto.DtoApplication;
-import com.opsfactor.community.platform.model.ModelApplication;
-import com.opsfactor.community.platform.routine.RoutinesApplication;
-import com.opsfactor.community.platform.service.ServicesApplication;
-import com.opsfactor.community.platform.scheduler.SchedulerApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cache.annotation.EnableCaching;
@@ -40,13 +35,14 @@ import java.util.TimeZone;
         "com.opsfactor.community.platform.security"
 })
 @EnableCaching
-public class WebApplication {
+public class CommunityWebApplication {
 
     public static void main(String[] args) {
 
         new SpringApplicationBuilder()
-                .sources(ModelApplication.class, SchedulerApplication.class, DtoApplication.class,
-                        ServicesApplication.class, RoutinesApplication.class, WebApplication.class)
+                .sources(CommunityModelApplication.class, CommunitySchedulerApplication.class,
+                        CommunityDtoApplication.class, CommunityServicesApplication.class,
+                        CommunityRoutinesApplication.class, CommunityWebApplication.class)
                 .run(args);
 
     }

@@ -1,4 +1,4 @@
-package com.opsfactor.community.platform.scheduler;
+package com.opsfactor.community.bootstrap;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -12,6 +12,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * workers batch ou execucao por linha de comando.</p>
  */
 @SpringBootApplication
-public class SchedulerApplication {
+public class CommunitySchedulerApplication {
 
 }

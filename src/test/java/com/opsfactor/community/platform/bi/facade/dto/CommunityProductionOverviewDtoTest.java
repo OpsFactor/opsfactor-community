@@ -12,8 +12,8 @@ class CommunityProductionOverviewDtoTest {
     @Test
     void shouldPreserveFlattenedLegacySeriesNamesAndQuantityUom() throws Exception {
 
-        CommunityProductionOverviewDTO.StockAndProductionDTO stockAndProduction =
-                new CommunityProductionOverviewDTO.StockAndProductionDTO(
+        CommunitySupplyOverviewBaseDTO.StockAndProductionDTO stockAndProduction =
+                new CommunitySupplyOverviewBaseDTO.StockAndProductionDTO(
                         "PLANT", Map.of("materialId", "MAT-1"), "EA", 2);
         stockAndProduction.unconstrainedInventory[0] = 12.0f;
         stockAndProduction.constrainedProduction[1] = 7.0f;

@@ -33,14 +33,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Materializa a fotografia física mínima do Inventory Overview.
+ * Carrega as projections físicas mínimas do Inventory Overview.
  *
  * <p>A carga reaproveita a projection central de Supply Planning: Inventory
  * Plan, consumo de BOM e demanda direta são lidos uma vez em lote. A montagem
  * do DTO não acessa entidades ou repositories por DFU.</p>
  */
 @Service
-public class CommunityInventoryOverviewSnapshotFactory {
+public class CommunityInventoryOverviewProjectionLoader {
 
     /** Resolve o Supply Plan e seu calendário para o request físico. */
     @Autowired
@@ -69,7 +69,7 @@ public class CommunityInventoryOverviewSnapshotFactory {
     /**
      * Resolve o recorte e carrega a fotografia indexada antes da agregação.
      */
-    public CommunityInventoryOverviewSnapshot createSnapshot(CommunityInventoryOverviewSelectionDTO selectionDTO) {
+    public CommunityInventoryOverviewProjectionContext load(CommunityInventoryOverviewSelectionDTO selectionDTO) {
 
         if (selectionDTO == null) {
             throw new IllegalArgumentException("Inventory Overview selection is required");
@@ -104,7 +104,7 @@ public class CommunityInventoryOverviewSnapshotFactory {
                         materialProjection,
                         locationProjection);
 
-        return new CommunityInventoryOverviewSnapshot(
+        return new CommunityInventoryOverviewProjectionContext(
                 calendar,
                 targetUnitOfMeasure,
                 materialProjection,
@@ -181,8 +181,8 @@ public class CommunityInventoryOverviewSnapshotFactory {
 
     }
 
-    /** Contexto imutável, descartado ao fim da requisição. */
-    public record CommunityInventoryOverviewSnapshot(
+    /** Projections imutáveis, descartadas ao fim da requisição. */
+    public record CommunityInventoryOverviewProjectionContext(
             Calendario calendar,
             UnidadeMedida targetUnitOfMeasure,
             MaterialProjection materialProjection,

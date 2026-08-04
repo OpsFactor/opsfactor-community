@@ -34,16 +34,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Materializa a fotografia Community única usada pelo Production Overview.
+ * Carrega as projections Community necessárias ao Production Overview.
  *
  * <p>A factory concentra a carga batch das projections antes de qualquer
  * agregação de DTO. Assim, cada leitura monta índices de Supply Plan uma única
  * vez e o service consumidor percorre apenas coleções em memória.</p>
  */
 @Service
-public class CommunityProductionOverviewSnapshotFactory {
+public class CommunityProductionOverviewProjectionLoader {
 
-    /** Recupera o plano e o perfil de execução que definem o snapshot. */
+    /** Recupera o plano e o perfil de execução que delimitam a leitura. */
     @Autowired
     private SupplyPlanService supplyPlanService;
     /** Carrega parâmetros globais e escopos ativos em cache. */
@@ -74,7 +74,7 @@ public class CommunityProductionOverviewSnapshotFactory {
      * <p>A seleção é obrigatória; sua ausência falha explicitamente antes de
      * qualquer projection ser carregada.</p>
      */
-    public CommunityProductionOverviewSnapshot createSnapshot(
+    public CommunityProductionOverviewProjectionContext load(
             CommunityProductionOverviewSelectionDTO selectionDTO) {
 
         if (selectionDTO == null) {
@@ -129,7 +129,7 @@ public class CommunityProductionOverviewSnapshotFactory {
         supplyPlanProjectionFactory.populaSupplyPlanningMultiplasLocationsProjectionComDemandaDiretaConsideradaProjection(
                 supplyPlanningProjection, consideredDirectDemandProjection);
 
-        return new CommunityProductionOverviewSnapshot(
+        return new CommunityProductionOverviewProjectionContext(
                 supplyPlan,
                 supplyPlanCalendar,
                 supplyExecutionProfile,
@@ -181,8 +181,8 @@ public class CommunityProductionOverviewSnapshotFactory {
 
     }
 
-    /** Contexto imutável consumido somente durante a montagem da resposta da requisição atual. */
-    public record CommunityProductionOverviewSnapshot(
+    /** Projections já carregadas, restritas à montagem da resposta da requisição atual. */
+    public record CommunityProductionOverviewProjectionContext(
             SupplyPlan supplyPlan,
             Calendario calendar,
             PerfilExecucaoSupplyPlan supplyExecutionProfile,

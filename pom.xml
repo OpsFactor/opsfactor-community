@@ -275,7 +275,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>com.opsfactor.community.web.WebApplication</mainClass>
+                    <mainClass>com.opsfactor.community.bootstrap.CommunityWebApplication</mainClass>
                     <classifier>exec</classifier>
                     <finalName>${project.artifactId}</finalName>
                 </configuration>

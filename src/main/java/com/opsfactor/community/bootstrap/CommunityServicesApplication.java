@@ -1,8 +1,5 @@
-package com.opsfactor.community.platform.service;
+package com.opsfactor.community.bootstrap;
 
-import com.opsfactor.community.platform.dto.DtoApplication;
-import com.opsfactor.community.platform.model.ModelApplication;
-import com.opsfactor.community.platform.routine.RoutinesApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cache.annotation.EnableCaching;
@@ -30,13 +27,13 @@ import org.springframework.context.annotation.ComponentScan;
         "com.opsfactor.community.platform.dto",
         "com.opsfactor.community.platform.routine"
 })
-public class ServicesApplication {
+public class CommunityServicesApplication {
 
     public static void main(String[] args) {
 
         new SpringApplicationBuilder()
-                .sources(ModelApplication.class, DtoApplication.class, RoutinesApplication.class,
-                        ServicesApplication.class)
+                .sources(CommunityModelApplication.class, CommunityDtoApplication.class,
+                        CommunityRoutinesApplication.class, CommunityServicesApplication.class)
                 .run(args);
 
     }

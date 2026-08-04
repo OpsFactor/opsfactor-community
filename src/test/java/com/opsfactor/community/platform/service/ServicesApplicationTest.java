@@ -1,5 +1,6 @@
 package com.opsfactor.community.platform.service;
 
+import com.opsfactor.community.bootstrap.CommunityServicesApplication;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.ComponentScan;
@@ -14,7 +15,7 @@ class ServicesApplicationTest {
     @Test
     void componentScanShouldIncludeServicesAndLowerCommunityLayers() {
 
-        ComponentScan componentScan = ServicesApplication.class.getAnnotation(ComponentScan.class);
+        ComponentScan componentScan = CommunityServicesApplication.class.getAnnotation(ComponentScan.class);
 
         /*
          * ServicesApplication e usado por testes e ferramentas que sobem a
