@@ -12,12 +12,12 @@ Community. “n8n” is a trademark of its respective owner.
 
 Portions of this software are licensed as follows:
 
-- Content of branches other than the repository's default branch is not
-  licensed under these terms unless expressly stated otherwise.
 - Third-party components incorporated into OpsFactor Community are licensed
   under the original licenses provided by their respective owners.
-- Content outside the restrictions above is available under the Sustainable
-  Use License defined below.
+- Except for third-party components and files expressly marked otherwise, all
+  OpsFactor-authored content in this repository, including the default branch,
+  other branches, and tags, is licensed under the Sustainable Use License
+  defined below.
 
 ## Sustainable Use License
 
