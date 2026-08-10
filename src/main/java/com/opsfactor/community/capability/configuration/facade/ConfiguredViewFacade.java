@@ -5,6 +5,10 @@ import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguredView.ConfiguredViewCompositeKey;
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguredView.TipoView;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
+import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
+import com.opsfactor.community.capability.masterdata.network.location.repository.LocationRepository;
+import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
+import com.opsfactor.community.capability.masterdata.product.material.repository.ProdutoRepository;
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigureStandardEnum;
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigureStandardSupplyPlanning;
 import com.opsfactor.community.capability.configuration.user.repository.ConfiguredViewRepository;
@@ -27,6 +31,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.Optional;
 import java.util.Set;
@@ -48,6 +53,19 @@ import java.util.Set;
  */
 @Service
 public class ConfiguredViewFacade {
+
+    /** Atributos de material que o runtime Community consegue avaliar sem catálogo privado. */
+    public static final Set<String> MATERIAL_FILTER_CHARACTERISTICS = Set.of(
+            "MATERIAL_STATUS",
+            "MATERIAL_ACTIVE");
+
+    /** Atributos de location presentes no próprio aggregate Community. */
+    public static final Set<String> LOCATION_FILTER_CHARACTERISTICS = Set.of(
+            "LOCATION_TYPE",
+            "LOCATION_ACTIVE",
+            "COUNTRY",
+            "STATE",
+            "CITY");
 
     /**
      * Repository da entidade de view persistida.
@@ -86,6 +104,13 @@ public class ConfiguredViewFacade {
      */
     @Autowired
     private UnidadeMedidaRepository unidadeMedidaRepository;
+
+    /** Repositories usados em duas consultas batch para validar filtros por ID. */
+    @Autowired
+    private ProdutoRepository produtoRepository;
+
+    @Autowired
+    private LocationRepository locationRepository;
 
     /**
      * Lista as views de Demand Planning Book do usuario solicitante.
@@ -160,6 +185,7 @@ public class ConfiguredViewFacade {
 
         validaConfiguredViewDTOCommunity(configuredViewDTO);
         validaCamposPersistenciaConfiguredViewDTOCommunity(configuredViewDTO);
+        validaFiltrosIdConfiguredViewDTOCommunity(configuredViewDTO);
 
         if (userId.equals(configuredViewDTO.userId) || usuarioPodeModificarVisaoOutrosUsuarios) {
 
@@ -217,6 +243,20 @@ public class ConfiguredViewFacade {
             configuredView.setKeyFigureAjustesDemandaDiretaTotal(getKeyFigureAjusteDemandaDiretaTotalCommunity());
 
             configuredView.setNumeroPeriodosHistoricosDemandPlanningBook(configuredViewDTO.numberHistoricalSalesPeriodsDemandPlanningBook);
+
+            /*
+             * Filtros simples por chave funcional pertencem à Community. Eles
+             * não criam agrupamentos nem dependem das características
+             * dinâmicas do overlay Enterprise.
+             */
+            configuredView.setMaterialIdFilterSet(
+                    new LinkedHashSet<>(getIdFilterList(configuredViewDTO.materialIdFilterList)));
+            configuredView.setLocationIdFilterSet(
+                    new LinkedHashSet<>(getIdFilterList(configuredViewDTO.locationIdFilterList)));
+            configuredView.setMaterialCharacteristicFilterSet(
+                    toCharacteristicFilterSet(configuredViewDTO.materialCharacteristicDetailList));
+            configuredView.setLocationCharacteristicFilterSet(
+                    toCharacteristicFilterSet(configuredViewDTO.locationCharacteristicDetailList));
 
             ConfiguredView configuredViewSalva = salvaConfiguredViewCommunity(configuredView);
             sincronizaConfiguredViewKeyFigures(
@@ -341,10 +381,12 @@ public class ConfiguredViewFacade {
         validaKeyFiguresPlanningBookCommunity(configuredViewDTO);
         validaCaracteristicasPlanningBookCommunity(
                 configuredViewDTO.materialCharacteristicDetailList,
-                "Material characteristic filters, presentation and grouping");
+                MATERIAL_FILTER_CHARACTERISTICS,
+                "Material characteristic presentation and grouping");
         validaCaracteristicasPlanningBookCommunity(
                 configuredViewDTO.locationCharacteristicDetailList,
-                "Location characteristic filters, presentation and grouping");
+                LOCATION_FILTER_CHARACTERISTICS,
+                "Location characteristic presentation and grouping");
         validaFiltrosDfuPlanningBookCommunity(configuredViewDTO);
 
     }
@@ -399,6 +441,76 @@ public class ConfiguredViewFacade {
             throw new IllegalArgumentException(
                     "Configured View historical sales period count must be zero or positive.");
         }
+
+    }
+
+    /**
+     * Valida em batch as chaves funcionais usadas pelos filtros Community.
+     *
+     * <p>São no máximo duas consultas, independentemente da quantidade de IDs.
+     * Duplicidades, valores vazios ou cadastros inexistentes falham antes de
+     * qualquer escrita da view.</p>
+     */
+    private void validaFiltrosIdConfiguredViewDTOCommunity(ConfiguredViewDTO configuredViewDTO) {
+
+        List<String> materialIds = getIdFilterList(configuredViewDTO.materialIdFilterList);
+        List<String> locationIds = getIdFilterList(configuredViewDTO.locationIdFilterList);
+        validaIdFilterList(materialIds, "material");
+        validaIdFilterList(locationIds, "location");
+
+        Set<String> materialIdsEncontrados = materialIds.isEmpty()
+                ? Set.of()
+                : produtoRepository.findAllById(materialIds).stream()
+                        .map(Produto::getId)
+                        .collect(Collectors.toSet());
+        Set<String> locationIdsEncontrados = locationIds.isEmpty()
+                ? Set.of()
+                : locationRepository.findAllById(locationIds).stream()
+                        .map(Location::getId)
+                        .collect(Collectors.toSet());
+
+        validaTodosIdsEncontrados(materialIds, materialIdsEncontrados, "material");
+        validaTodosIdsEncontrados(locationIds, locationIdsEncontrados, "location");
+
+    }
+
+    /** Valida forma e unicidade sem consultar uma entidade por vez. */
+    private void validaIdFilterList(List<String> ids, String dimensionName) {
+
+        Set<String> uniqueIds = new LinkedHashSet<>();
+        for (String id : ids) {
+            if (isBlank(id)) {
+                throw new IllegalArgumentException(
+                        "Configured View " + dimensionName + " filter id is required.");
+            }
+            if (!uniqueIds.add(id)) {
+                throw new IllegalArgumentException(
+                        "Configured View " + dimensionName + " filter id must be unique: " + id);
+            }
+        }
+
+    }
+
+    /** Diferencia cadastro inexistente de um filtro vazio intencional. */
+    private void validaTodosIdsEncontrados(
+            List<String> requestedIds,
+            Set<String> foundIds,
+            String dimensionName) {
+
+        Set<String> missingIds = new LinkedHashSet<>(requestedIds);
+        missingIds.removeAll(foundIds);
+        if (!missingIds.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Configured View " + dimensionName + " filter contains unknown ids: "
+                            + String.join(", ", missingIds));
+        }
+
+    }
+
+    /** Normaliza somente ausência de lista; valores inválidos são validados acima. */
+    private List<String> getIdFilterList(List<String> idFilterList) {
+
+        return idFilterList == null ? List.of() : idFilterList;
 
     }
 
@@ -467,8 +579,10 @@ public class ConfiguredViewFacade {
 
     protected void validaKeyFiguresPlanningBookCommunity(ConfiguredViewDTO configuredViewDTO) {
 
+        List<ConfiguredViewKeyFigureDTO> configuredViewKeyFigureDTOList =
+                getConfiguredViewKeyFigureDTOList(configuredViewDTO.keyFigureList);
         Set<String> keyFigureIds = new LinkedHashSet<>();
-        for (ConfiguredViewKeyFigureDTO configuredViewKeyFigureDTO : getConfiguredViewKeyFigureDTOList(configuredViewDTO.keyFigureList)) {
+        for (ConfiguredViewKeyFigureDTO configuredViewKeyFigureDTO : configuredViewKeyFigureDTOList) {
             if (configuredViewKeyFigureDTO == null) {
                 throw new IllegalArgumentException("Configured View key figure entry is required.");
             }
@@ -490,6 +604,17 @@ public class ConfiguredViewFacade {
             } else {
                 validaKeyFigurePlanningBookDemandCommunity(configuredViewKeyFigureDTO);
             }
+        }
+
+        if (TipoView.DEMANDPLANNINGBOOK.equals(configuredViewDTO.viewType)) {
+            /*
+             * A seleção livre é Pro, porém versões anteriores do Community
+             * reenviavam subconjuntos ou o catálogo público inteiro. Depois de
+             * validar que não há KFs privadas, converte qualquer fotografia
+             * antiga para o conjunto canônico em vez de quebrar a API.
+             */
+            configuredViewDTO.keyFigureList =
+                    getKeyFiguresPredefinidasDemandPlanningBookCommunity();
         }
 
     }
@@ -542,21 +667,73 @@ public class ConfiguredViewFacade {
 
     private void validaCaracteristicasPlanningBookCommunity(
             List<ConfiguredViewCaracteristicaDTO> configuredViewCaracteristicaDTOList,
+            Set<String> allowedCharacteristicIds,
             String featureName) {
 
+        Set<String> characteristicIds = new LinkedHashSet<>();
         for (ConfiguredViewCaracteristicaDTO configuredViewCaracteristicaDTO : getConfiguredViewCaracteristicaDTOList(configuredViewCaracteristicaDTOList)) {
             if (configuredViewCaracteristicaDTO == null) {
                 throw new IllegalArgumentException("Configured View characteristic entry is required.");
             }
             /*
-             * Community nao possui cadastro nem carga de caracteristicas
-             * dinamicas de material/location. Logo, qualquer configuracao real
-             * de caracteristica na view e Enterprise, inclusive filtros simples.
+             * Community aceita filtros sobre atributos públicos, mas não usa a
+             * mesma linha para definir apresentação, posição ou agrupamento.
              */
-            if (temConfiguracaoCaracteristica(configuredViewCaracteristicaDTO)) {
+            if (configuredViewCaracteristicaDTO.aggregationType != null
+                    || configuredViewCaracteristicaDTO.columnPosition != null) {
                 throw new RequiresEnterpriseVersionException(featureName);
             }
+            if (isBlank(configuredViewCaracteristicaDTO.characteristicId)) {
+                throw new IllegalArgumentException(
+                        "Configured View characteristic filter id is required.");
+            }
+            if (!allowedCharacteristicIds.contains(configuredViewCaracteristicaDTO.characteristicId)) {
+                throw new RequiresEnterpriseVersionException(featureName);
+            }
+            if (!characteristicIds.add(configuredViewCaracteristicaDTO.characteristicId)) {
+                throw new IllegalArgumentException(
+                        "Configured View characteristic filter id must be unique: "
+                                + configuredViewCaracteristicaDTO.characteristicId);
+            }
+            validaCharacteristicFilterValues(configuredViewCaracteristicaDTO);
         }
+
+    }
+
+    /** Valida valores sem consultar uma linha de master data por opção. */
+    private void validaCharacteristicFilterValues(
+            ConfiguredViewCaracteristicaDTO configuredViewCaracteristicaDTO) {
+
+        Set<String> uniqueValues = new LinkedHashSet<>();
+        for (String filteredValue : getFilteredValues(configuredViewCaracteristicaDTO)) {
+            if (isBlank(filteredValue)) {
+                throw new IllegalArgumentException(
+                        "Configured View characteristic filter value is required.");
+            }
+            if (!uniqueValues.add(filteredValue)) {
+                throw new IllegalArgumentException(
+                        "Configured View characteristic filter value must be unique: "
+                                + filteredValue);
+            }
+        }
+
+    }
+
+    /** Converte somente os valores efetivamente selecionados para o snapshot relacional. */
+    private Set<ConfiguredViewCharacteristicFilter> toCharacteristicFilterSet(
+            List<ConfiguredViewCaracteristicaDTO> configuredViewCaracteristicaDTOList) {
+
+        Set<ConfiguredViewCharacteristicFilter> configuredViewCharacteristicFilters =
+                new LinkedHashSet<>();
+        for (ConfiguredViewCaracteristicaDTO configuredViewCaracteristicaDTO :
+                getConfiguredViewCaracteristicaDTOList(configuredViewCaracteristicaDTOList)) {
+            for (String filteredValue : getFilteredValues(configuredViewCaracteristicaDTO)) {
+                configuredViewCharacteristicFilters.add(new ConfiguredViewCharacteristicFilter(
+                        configuredViewCaracteristicaDTO.characteristicId,
+                        filteredValue));
+            }
+        }
+        return configuredViewCharacteristicFilters;
 
     }
 
@@ -706,10 +883,15 @@ public class ConfiguredViewFacade {
                         configuredViewDTO.userId,
                         configuredViewDTO.viewName,
                         configuredViewDTO.viewType)
-                .ifPresent(configuredViewKeyFigureRepository::deleteAllByConfiguredView);
-
-        configuredViewRepository.removeByConfiguredViewCompositeKeyUserIdAndConfiguredViewCompositeKeyNomeViewAndConfiguredViewCompositeKeyTipoView(
-                    configuredViewDTO.userId, configuredViewDTO.viewName, configuredViewDTO.viewType);
+                .ifPresent(configuredView -> {
+                    configuredViewKeyFigureRepository.deleteAllByConfiguredView(configuredView);
+                    /*
+                     * EntityManager.remove também limpa as duas
+                     * ElementCollections de filtros por ID. Um DELETE bulk do
+                     * pai deixaria essa limpeza fora do ciclo de vida JPA.
+                     */
+                    configuredViewRepository.delete(configuredView);
+                });
 
     }
 
@@ -754,12 +936,43 @@ public class ConfiguredViewFacade {
                         keyFiguresByConfiguredView.getOrDefault(configuredView, List.of())))
                 .collect(Collectors.toList());
 
+        /*
+         * Views anteriores à seleção persistida usam o conjunto Community
+         * predefinido. O fallback ocorre uma vez por DTO e não grava o banco
+         * durante uma leitura administrativa.
+         */
+        configuredViewDTOList.stream()
+                .filter(Objects::nonNull)
+                .filter(configuredViewDTO -> TipoView.DEMANDPLANNINGBOOK.equals(configuredViewDTO.viewType))
+                .forEach(configuredViewDTO -> configuredViewDTO.keyFigureList =
+                        getKeyFiguresPredefinidasDemandPlanningBookCommunity());
+
         validaConfiguredViewDTOListSnapshotCommunity(
                 configuredViewDTOList,
                 expectedUserId,
                 expectedTipoView);
 
         return configuredViewDTOList;
+
+    }
+
+    /** Cria uma nova fotografia mutável do conjunto fixo para cada view. */
+    private List<ConfiguredViewKeyFigureDTO> getKeyFiguresPredefinidasDemandPlanningBookCommunity() {
+
+        List<ConfiguredViewKeyFigureDTO> configuredViewKeyFigureDTOList =
+                new java.util.ArrayList<>();
+        for (String keyFigureId : List.of(
+                "Direct Demand",
+                "Baseline",
+                "Demand Adjustment")) {
+            ConfiguredViewKeyFigureDTO configuredViewKeyFigureDTO =
+                    new ConfiguredViewKeyFigureDTO();
+            configuredViewKeyFigureDTO.keyFigure = keyFigureId;
+            configuredViewKeyFigureDTO.allowChanges = !"Baseline".equals(keyFigureId);
+            configuredViewKeyFigureDTO.position = configuredViewKeyFigureDTOList.size() + 1;
+            configuredViewKeyFigureDTOList.add(configuredViewKeyFigureDTO);
+        }
+        return configuredViewKeyFigureDTOList;
 
     }
 
@@ -868,6 +1081,12 @@ public class ConfiguredViewFacade {
                                 + " is required for Community view listing.");
             }
 
+            /* Ausência no mapper/overlay antigo equivale ao filtro vazio. */
+            configuredViewDTO.materialIdFilterList =
+                    getIdFilterList(configuredViewDTO.materialIdFilterList);
+            configuredViewDTO.locationIdFilterList =
+                    getIdFilterList(configuredViewDTO.locationIdFilterList);
+
             validaIdentidadeConfiguredViewDTOCommunity(configuredViewDTO);
             if (!expectedUserId.equals(configuredViewDTO.userId)) {
                 throw new IllegalStateException(
@@ -901,14 +1120,6 @@ public class ConfiguredViewFacade {
             }
 
             validaListaMapperConfiguredViewVaziaCommunity(
-                    configuredViewDTO.materialCharacteristicDetailList,
-                    configuredViewDTOIndex,
-                    "material characteristic");
-            validaListaMapperConfiguredViewVaziaCommunity(
-                    configuredViewDTO.locationCharacteristicDetailList,
-                    configuredViewDTOIndex,
-                    "location characteristic");
-            validaListaMapperConfiguredViewVaziaCommunity(
                     configuredViewDTO.materialLocationCharacteristicDetailList,
                     configuredViewDTOIndex,
                     "material-location characteristic");
@@ -920,6 +1131,20 @@ public class ConfiguredViewFacade {
              */
             validaKeyFiguresPlanningBookCommunity(configuredViewDTO);
             validaConfiguredViewDTOCommunity(configuredViewDTO);
+            if (configuredViewDTO.materialIdFilterList == null) {
+                throw new IllegalStateException(
+                        "Configured View DTO list item "
+                                + configuredViewDTOIndex
+                                + " material id filter list is required for Community view listing.");
+            }
+            if (configuredViewDTO.locationIdFilterList == null) {
+                throw new IllegalStateException(
+                        "Configured View DTO list item "
+                                + configuredViewDTOIndex
+                                + " location id filter list is required for Community view listing.");
+            }
+            validaIdFilterList(configuredViewDTO.materialIdFilterList, "material");
+            validaIdFilterList(configuredViewDTO.locationIdFilterList, "location");
         }
 
     }

@@ -284,7 +284,8 @@ public class ParametrosGlobaisController {
             dto.setDiasHistoricosNormalizacao(Constantes.DP_PADRAO_DIAS_NORMALIZACAO);
             dto.setPercentilOutliersVenda(Constantes.DP_PADRAO_PERCENTIL_OUTLIERS_VENDA);
             dto.setDiasHistoricosForecastEstatistico(parametrosGlobais.getDiasHistoricosForecastEstatistico());
-            dto.setDpArredondaParaUnidadeVenda(parametrosGlobais.getDpArredondaParaUnidadeVenda());
+            // O arredondamento na UOM de venda pertence ao Pro/Enterprise.
+            dto.setDpArredondaParaUnidadeVenda(false);
             dto.setDemandPlanningGenerateForecastForDiscontinuedMaterials(
                     parametrosGlobais.getDpGeraForecastParaDescontinuados());
             dto.setPermiteAjusteAgregadoSemBaselineProduto(false);

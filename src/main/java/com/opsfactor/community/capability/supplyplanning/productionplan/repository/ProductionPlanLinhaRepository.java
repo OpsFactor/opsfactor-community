@@ -277,13 +277,17 @@ public interface ProductionPlanLinhaRepository extends JpaRepository<ProductionP
     void removeByProductionPlanLinhaCompositeKeySupplyPlanId(Long supplyPlanId);
 
     /**
-     * Atualiza o plano restrito de producao a partir do plano irrestrito e neutraliza ordens firmes.
+     * Atualiza o plano restrito de producao a partir do plano irrestrito.
+     *
+     * <p>No Community puro as ordens firmes já chegam neutralizadas pelo SPI
+     * ausente. Copiar o valor permite que o runtime Enterprise preserve suas
+     * ordens firmes ao reutilizar este repository compartilhado.</p>
      */
     @Transactional
     @Modifying(clearAutomatically = true, flushAutomatically = true) // https://www.baeldung.com/spring-data-jpa-modifying-annotation
     @Query("UPDATE ProductionPlanLinha ppl "
             + "SET ppl.quantidadeOrdemPlanejadaProducaoRestrita = ppl.quantidadeOrdemPlanejadaProducaoIrrestrita, "
-            + "ppl.quantidadeOrdemFirmeProducaoRestrita = 0 "
+            + "ppl.quantidadeOrdemFirmeProducaoRestrita = ppl.quantidadeOrdemFirmeProducaoIrrestrita "
             + "WHERE ppl.productionPlanLinhaCompositeKey.supplyPlan.id = :supplyPlanId")
     public void atualizaPlanoRestritoComPlanoIrrestrito(Long supplyPlanId);
 

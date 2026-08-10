@@ -2,7 +2,7 @@
   <configuration default="false" name="Community WebApplication - Dev 5010" type="Application" factoryName="Application">
     <option name="ALTERNATIVE_JRE_PATH" value="ms-21" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
-    <option name="MAIN_CLASS_NAME" value="com.opsfactor.community.web.WebApplication" />
+    <option name="MAIN_CLASS_NAME" value="com.opsfactor.community.bootstrap.CommunityWebApplication" />
     <module name="opsfactor-community" />
     <option name="PROGRAM_PARAMETERS" value="--spring.profiles.active=dev --server.port=5010" />
     <shortenClasspath name="ARGS_FILE" />

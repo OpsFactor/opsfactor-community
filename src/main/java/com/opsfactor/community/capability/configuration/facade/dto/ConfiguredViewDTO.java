@@ -22,8 +22,14 @@ public class ConfiguredViewDTO {
     public ConfiguredView.TipoView viewType;
     
     public String directDemandUpdateKeyFigure;
-    
+
+    /**
+     * Filtros Community por atributos públicos de material. O backend aceita
+     * somente identidade e valores; apresentação, posição e agrupamento são Pro.
+     */
     public List<ConfiguredViewCaracteristicaDTO> materialCharacteristicDetailList;
+
+    /** Filtros equivalentes sobre os atributos públicos de location. */
     public List<ConfiguredViewCaracteristicaDTO> locationCharacteristicDetailList;
 
     /**
@@ -58,5 +64,17 @@ public class ConfiguredViewDTO {
 
     public String demandPlanWorkflowId;
     public String demandPlanWorkflowStageId;
+
+    /**
+     * Identificadores de material aceitos pela edição Community para limitar
+     * diretamente o escopo da view. Lista vazia significa todos os materiais.
+     */
+    public List<String> materialIdFilterList;
+
+    /**
+     * Identificadores de location aceitos pela edição Community para limitar
+     * diretamente o escopo da view. Lista vazia significa todas as locations.
+     */
+    public List<String> locationIdFilterList;
     
 }

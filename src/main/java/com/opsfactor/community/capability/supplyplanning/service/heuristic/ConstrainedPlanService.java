@@ -26,6 +26,7 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.proje
 import com.opsfactor.community.capability.masterdata.production.productionresource.projection.BIProjectionCapacidadeProdutiva;
 import com.opsfactor.community.capability.masterdata.production.productionresource.projection.BIProjectionCapacidadeProdutivaFactory;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.projection.SupplyPlanProjectionFactory;
+import com.opsfactor.community.capability.supplyplanning.supplyplan.projection.SupplyPlanningBiProjection;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.projection.SupplyPlanningProjection;
 import com.opsfactor.community.capability.lowlevelcode.engine.LowLevelCode;
 import com.opsfactor.community.capability.supplyplanning.engine.SupplyPlanning;
@@ -362,6 +363,35 @@ public class ConstrainedPlanService {
             PoliticaEstoquesProjection politicaEstoquesProjection,
             LowLevelCode lowLevelCode) {
 
+        restringePlano(
+                supplyPlan,
+                perfilExecucaoSupplyPlan,
+                calendario,
+                supplyNetworkProjection,
+                biProjectionCapacidadeProdutiva,
+                politicaEstoquesProjection,
+                lowLevelCode,
+                null);
+
+    }
+
+    /**
+     * Restringe a mesma fotografia central produzida pelo heuristico.
+     *
+     * <p>Quando a fotografia e informada, as views por location/LLC usam as
+     * instancias que acabaram de passar pelo capacity leveling. A sobrecarga
+     * sem fotografia continua atendendo recalculos manuais a partir do banco.</p>
+     */
+    public void restringePlano(
+            SupplyPlan supplyPlan,
+            PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
+            Calendario calendario,
+            SupplyNetworkProjection supplyNetworkProjection,
+            BIProjectionCapacidadeProdutiva biProjectionCapacidadeProdutiva,
+            PoliticaEstoquesProjection politicaEstoquesProjection,
+            LowLevelCode lowLevelCode,
+            SupplyPlanningBiProjection supplyPlanningBiProjection) {
+
         validaEntradasProjectionAwareConstrainedPlanningCommunity(
                 supplyPlan,
                 perfilExecucaoSupplyPlan,
@@ -382,23 +412,32 @@ public class ConstrainedPlanService {
          * plano; a rotina segue para preservar o comportamento operacional
          * legado de tentar recalcular a restricao a partir do estado existente.
          */
-        try {
-            productionPlanLinhaRepository.atualizaPlanoRestritoComPlanoIrrestrito(supplyPlan.getId());
-        } catch (DataAccessException dataAccessException) {
-            log.error("Erro ao realizar reset do plano de producao restrito para o Supply Plan {}", supplyPlan.getId(), dataAccessException);
-        }
-        try {
-            distributionPlanItemRepository.atualizaPlanoRestritoComPlanoIrrestrito(supplyPlan.getId());
-        } catch (DataAccessException dataAccessException) {
-            log.error("Erro ao realizar reset do plano de distribuicao restrito para o Supply Plan {}", supplyPlan.getId(), dataAccessException);
-        }
-        if (perfilExecucaoSupplyPlan.getSalvaInventoryPlan()) {
-            inventoryPlanLinhaRepository.atualizaPlanoRestritoComPlanoIrrestrito(supplyPlan.getId());
-        }
-        try {
-            demandaDiretaConsideradaLinhaRepository.atualizaPlanoRestritoComPlanoIrrestrito(supplyPlan.getId());
-        } catch (DataAccessException dataAccessException) {
-            log.error("Erro ao realizar reset da demanda direta considerada restrita para o Supply Plan {}", supplyPlan.getId(), dataAccessException);
+        if (supplyPlanningBiProjection != null) {
+            /*
+             * O reset deve atingir as mesmas instancias alteradas pelo
+             * nivelamento. Bulk SQL sozinho nao sincroniza os campos
+             * restritos do snapshot em memoria.
+             */
+            supplyPlanningBiProjection.atualizaPlanoRestritoComPlanoIrrestrito();
+        } else {
+            try {
+                productionPlanLinhaRepository.atualizaPlanoRestritoComPlanoIrrestrito(supplyPlan.getId());
+            } catch (DataAccessException dataAccessException) {
+                log.error("Erro ao realizar reset do plano de producao restrito para o Supply Plan {}", supplyPlan.getId(), dataAccessException);
+            }
+            try {
+                distributionPlanItemRepository.atualizaPlanoRestritoComPlanoIrrestrito(supplyPlan.getId());
+            } catch (DataAccessException dataAccessException) {
+                log.error("Erro ao realizar reset do plano de distribuicao restrito para o Supply Plan {}", supplyPlan.getId(), dataAccessException);
+            }
+            if (perfilExecucaoSupplyPlan.getSalvaInventoryPlan()) {
+                inventoryPlanLinhaRepository.atualizaPlanoRestritoComPlanoIrrestrito(supplyPlan.getId());
+            }
+            try {
+                demandaDiretaConsideradaLinhaRepository.atualizaPlanoRestritoComPlanoIrrestrito(supplyPlan.getId());
+            } catch (DataAccessException dataAccessException) {
+                log.error("Erro ao realizar reset da demanda direta considerada restrita para o Supply Plan {}", supplyPlan.getId(), dataAccessException);
+            }
         }
 
         
@@ -434,23 +473,20 @@ public class ConstrainedPlanService {
                     MaterialProjection materialProjectionMateriaisLowLevelCodeLocation = MaterialProjectionFactory.getProjectionSetMateriais(
                             produtosLowLevelCodeLocation, clusterEParametrosProjection);
 
-                    SupplyPlanningProjection supplyPlanningProjection = supplyPlanProjectionFactory.getSupplyPlanningProjectionVazio(
-                            supplyPlan, 
-                            perfilExecucaoSupplyPlan, 
+                    SupplyPlanningProjection supplyPlanningProjection = getSupplyPlanningProjection(
+                            supplyPlan,
+                            perfilExecucaoSupplyPlan,
                             location,
-                            supplyNetworkProjection, 
+                            supplyNetworkProjection,
                             politicaEstoquesProjection,
                             materialProjectionMateriaisLowLevelCodeLocation,
-                            locationProjection);
+                            locationProjection,
+                            supplyPlanningBiProjection);
 
-                    supplyPlanProjectionFactory.populaSupplyPlanningProjectionComInventoryPlan(supplyPlanningProjection);
-                    supplyPlanProjectionFactory.populaSupplyPlanningProjectionComProductionPlanOutput(supplyPlanningProjection);
-                    supplyPlanProjectionFactory.populaSupplyPlanningProjectionComProductionPlanInput(supplyPlanningProjection);
-                    supplyPlanProjectionFactory.populaSupplyPlanningProjectionComDistributionPlanInbound(supplyPlanningProjection);
-                    supplyPlanProjectionFactory.populaSupplyPlanningProjectionComDistributionPlanOutbound(supplyPlanningProjection);
-                    supplyPlanProjectionFactory.populaSupplyPlanningProjectionComDemandaDiretaConsideradaProjection(supplyPlanningProjection);
-                    // popula com estoque dos insumos
-                    supplyPlanProjectionFactory.populaSupplyPlanningProjectionComInventoryPlanDeInputsProducao(supplyPlanningProjection, i);
+                    populaInventoryPlanDeInputsProducao(
+                            supplyPlanningProjection,
+                            i,
+                            supplyPlanningBiProjection);
                     
                     // se não há inventory plan salvo (nesse caso só teremos a posição inicial de estoque salva)
                     // será necessário recalcular estoques
@@ -472,28 +508,17 @@ public class ConstrainedPlanService {
                                 .getMateriaisAtivosEmLocation(location);
                         
                         // cria novo supply planning projection específico para insumos
-                        SupplyPlanningProjection supplyPlanningProjectionInsumos = supplyPlanProjectionFactory.getSupplyPlanningProjectionVazio(
-                                supplyPlan, 
+                        SupplyPlanningProjection supplyPlanningProjectionInsumos = getSupplyPlanningProjection(
+                                supplyPlan,
                                 perfilExecucaoSupplyPlan,
-                                location, 
-                                supplyNetworkProjection, 
+                                location,
+                                supplyNetworkProjection,
                                 politicaEstoquesProjection,
-                                MaterialProjectionFactory.getProjectionSetMateriais(todosMateriaisAtivosLocation, clusterEParametrosProjection), // 100% dos materiais, não apenas os materiais low level code atual
-                                locationProjection);
-                        
-                        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComInventoryPlan(supplyPlanningProjectionInsumos);
-                        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComProductionPlanOutput(supplyPlanningProjectionInsumos);
-                        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComProductionPlanInput(supplyPlanningProjectionInsumos);
-                        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComDistributionPlanInbound(supplyPlanningProjectionInsumos);
-                        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComDistributionPlanOutbound(supplyPlanningProjectionInsumos);
-                        /*
-                         * A projection auxiliar de insumos tambem projeta
-                         * estoque. Ela precisa carregar a demanda direta
-                         * considerada propria; popular apenas a projection
-                         * principal deixa o calculo de saldo sem a serie de
-                         * demanda para esses materiais.
-                         */
-                        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComDemandaDiretaConsideradaProjection(supplyPlanningProjectionInsumos);
+                                MaterialProjectionFactory.getProjectionSetMateriais(
+                                        todosMateriaisAtivosLocation,
+                                        clusterEParametrosProjection),
+                                locationProjection,
+                                supplyPlanningBiProjection);
                         
                         // se não há inventory plan salvo (nesse caso só teremos a posição inicial de estoque salva)
                         // será necessário recalcular estoques
@@ -541,33 +566,22 @@ public class ConstrainedPlanService {
                         MaterialProjection materialProjectionMateriaisInputEmProducaoComRestricao = MaterialProjectionFactory.getProjectionSetMateriais(
                                 materiaisInputEmProducaoComRestricao, clusterEParametrosProjection);
                         
-                        SupplyPlanningProjection supplyPlanningProjectionMateriaisInput = supplyPlanProjectionFactory.getSupplyPlanningProjectionVazio(
-                            supplyPlan, 
-                            perfilExecucaoSupplyPlan, 
-                            location, 
-                            supplyNetworkProjection, 
-                            politicaEstoquesProjection,
-                            materialProjectionMateriaisInputEmProducaoComRestricao,
-                            locationProjection);
-                        
-                        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComInventoryPlan(supplyPlanningProjectionMateriaisInput);
-                        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComProductionPlanOutput(supplyPlanningProjectionMateriaisInput);
-                        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComProductionPlanInput(supplyPlanningProjectionMateriaisInput);
-                        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComDistributionPlanInbound(supplyPlanningProjectionMateriaisInput);
-                        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComDistributionPlanOutbound(supplyPlanningProjectionMateriaisInput);
-                        /*
-                         * Esta projection e recriada depois de cortes de
-                         * producao para recalcular o estoque dos insumos.
-                         * Portanto ela, e nao apenas a projection principal,
-                         * precisa da demanda direta considerada carregada.
-                         */
-                        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComDemandaDiretaConsideradaProjection(supplyPlanningProjectionMateriaisInput);
+                        SupplyPlanningProjection supplyPlanningProjectionMateriaisInput = getSupplyPlanningProjection(
+                                supplyPlan,
+                                perfilExecucaoSupplyPlan,
+                                location,
+                                supplyNetworkProjection,
+                                politicaEstoquesProjection,
+                                materialProjectionMateriaisInputEmProducaoComRestricao,
+                                locationProjection,
+                                supplyPlanningBiProjection);
                         
                         SupplyPlanning.atualizaEstoqueProjetadoSemLimitarAZero(
                                 supplyPlanningProjectionMateriaisInput,
                                 Constantes.TipoPlano.PLANO_RESTRITO);
                         
-                        if (perfilExecucaoSupplyPlan.getSalvaInventoryPlan()) {
+                        if (supplyPlanningBiProjection == null
+                                && perfilExecucaoSupplyPlan.getSalvaInventoryPlan()) {
                             supplyPlanService.saveInventoryPlanDePlanningProjection(supplyPlanningProjectionMateriaisInput, i, false);
                         }
                         
@@ -578,17 +592,53 @@ public class ConstrainedPlanService {
                         SupplyPlanning.limitaEstoquesNegativosAZero(Constantes.TipoPlano.PLANO_RESTRITO, supplyPlanningProjection);
                     }
         
-                    log.debug("Salvando plano restrito na location " + location.getId());
-                    // Salva elementos do supply plan : distribution plan , production plan e inventory plan
-                    supplyPlanService.saveProductionPlanOutputDePlanningProjection(supplyPlanningProjection, i, false);
-                    supplyPlanService.saveDistributionPlanOutboundDePlanningProjection(supplyPlanningProjection, i, false);
-                    if (perfilExecucaoSupplyPlan.getSalvaInventoryPlan()) {
-                        supplyPlanService.saveInventoryPlanDePlanningProjection(supplyPlanningProjection, i, false);
+                    if (supplyPlanningBiProjection == null) {
+                        log.debug("Salvando plano restrito na location " + location.getId());
+                        supplyPlanService.saveProductionPlanOutputDePlanningProjection(
+                                supplyPlanningProjection,
+                                i,
+                                false);
+                        supplyPlanService.saveDistributionPlanOutboundDePlanningProjection(
+                                supplyPlanningProjection,
+                                i,
+                                false);
+                        if (perfilExecucaoSupplyPlan.getSalvaInventoryPlan()) {
+                            supplyPlanService.saveInventoryPlanDePlanningProjection(
+                                    supplyPlanningProjection,
+                                    i,
+                                    false);
+                        }
+                        supplyPlanService.saveDemandaDiretaConsideradaLinhaDeProjection(
+                                supplyPlanningProjection,
+                                i,
+                                false);
+                    } else {
+                        supplyPlanningBiProjection.sincroniza(supplyPlanningProjection);
                     }
-                    // Salva demanda direta considerando restrições atualizadas
-                    supplyPlanService.saveDemandaDiretaConsideradaLinhaDeProjection(supplyPlanningProjection, i, false);
                 }
             }
+        }
+
+        /*
+         * No fluxo integrado, todas as views apontam para a fotografia
+         * central. Persistimos cada coleção uma unica vez depois de concluir o
+         * constrained plan, evitando save por periodo/location.
+         */
+        if (supplyPlanningBiProjection != null) {
+            supplyPlanService.saveProductionPlanLinhaCollection(
+                    supplyPlanningBiProjection.getTodosProductionPlanLinhas(),
+                    false);
+            supplyPlanService.saveDistributionPlanItemCollection(
+                    supplyPlanningBiProjection.getTodosDistributionPlanItems(),
+                    false);
+            if (perfilExecucaoSupplyPlan.getSalvaInventoryPlan()) {
+                supplyPlanService.saveInventoryPlanLinhaCollection(
+                        supplyPlanningBiProjection.getTodosInventoryPlanLinhas(),
+                        false);
+            }
+            supplyPlanService.saveDemandaDiretaConsideradaLinhaCollection(
+                    supplyPlanningBiProjection.getTodasDemandasDiretasConsideradas(),
+                    false);
         }
         
         // caso especificado no perfil execução, copia o supply plan restrito no supply plan irrestrito
@@ -612,6 +662,81 @@ public class ConstrainedPlanService {
          */
         
         log.info("Plano restrito gerado");
+    }
+
+    /**
+     * Cria uma view pelo snapshot central ou pelo factory usado no recálculo
+     * manual.
+     *
+     * <p>O caminho integrado não consulta repositories dentro dos loops. O
+     * caminho sem fotografia preserva o endpoint que recalcula um constrained
+     * plan já persistido.</p>
+     */
+    private SupplyPlanningProjection getSupplyPlanningProjection(
+            SupplyPlan supplyPlan,
+            PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
+            Location location,
+            SupplyNetworkProjection supplyNetworkProjection,
+            PoliticaEstoquesProjection politicaEstoquesProjection,
+            MaterialProjection materialProjection,
+            LocationProjection locationProjection,
+            SupplyPlanningBiProjection supplyPlanningBiProjection) {
+
+        if (supplyPlanningBiProjection != null) {
+            return supplyPlanningBiProjection.getSupplyPlanningProjection(
+                    location,
+                    materialProjection);
+        }
+
+        SupplyPlanningProjection supplyPlanningProjection =
+                supplyPlanProjectionFactory.getSupplyPlanningProjectionVazio(
+                        supplyPlan,
+                        perfilExecucaoSupplyPlan,
+                        location,
+                        supplyNetworkProjection,
+                        politicaEstoquesProjection,
+                        materialProjection,
+                        locationProjection);
+        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComInventoryPlan(supplyPlanningProjection);
+        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComProductionPlanOutput(supplyPlanningProjection);
+        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComProductionPlanInput(supplyPlanningProjection);
+        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComDistributionPlanInbound(supplyPlanningProjection);
+        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComDistributionPlanOutbound(supplyPlanningProjection);
+        supplyPlanProjectionFactory.populaSupplyPlanningProjectionComDemandaDiretaConsideradaProjection(
+                supplyPlanningProjection);
+        return supplyPlanningProjection;
+
+    }
+
+    /**
+     * Acrescenta à view o estoque dos materiais consumidos pela produção do
+     * período sem reabrir consultas quando a fotografia BI já está disponível.
+     */
+    private void populaInventoryPlanDeInputsProducao(
+            SupplyPlanningProjection supplyPlanningProjection,
+            int posicaoPeriodo,
+            SupplyPlanningBiProjection supplyPlanningBiProjection) {
+
+        if (supplyPlanningBiProjection == null) {
+            supplyPlanProjectionFactory.populaSupplyPlanningProjectionComInventoryPlanDeInputsProducao(
+                    supplyPlanningProjection,
+                    posicaoPeriodo);
+            return;
+        }
+
+        Set<Produto> materiaisInput = supplyPlanningProjection
+                .getProductionPlanLinhaOutput(posicaoPeriodo)
+                .stream()
+                .flatMap(productionPlanLinha -> productionPlanLinha
+                        .getMateriaisInput(supplyPlanningProjection.getSupplyNetworkProjection())
+                        .stream())
+                .collect(Collectors.toSet());
+        supplyPlanningBiProjection.getInventoryPlanLinhaBiProjection()
+                .getInventoryPlanLinhas(
+                        supplyPlanningProjection.getLocation(),
+                        materiaisInput)
+                .forEach(supplyPlanningProjection::addInventoryPlanLinha);
+
     }
 
     /**

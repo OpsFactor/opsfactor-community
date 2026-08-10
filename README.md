@@ -1,11 +1,10 @@
 # OpsFactor Community
 
-OpsFactor Community is the source-available backend for demand and supply
-chain planning. It is an independently buildable Spring Boot application and
-never depends on sources or artifacts from OpsFactor Enterprise.
+OpsFactor Community is the backend of the OpsFactor Open Core foundation for
+demand and supply chain planning. It is an independently buildable Spring Boot
+application and never depends on sources or artifacts from OpsFactor Enterprise.
 
 This repository is released under the [Sustainable Use License 1.0](LICENSE.md).
-The license is source-available, not an OSI-approved open-source license.
 Practical licensing examples are available in the
 [Community licensing FAQ](https://docs.opsfactor.com/documentation/community/licensing-faq/).
 

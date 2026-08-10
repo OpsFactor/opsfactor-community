@@ -21,3 +21,7 @@ application-local.properties
 dist/
 public/
 static/
+
+# IntelliJ run configurations: version only the shared Community backend profile.
+/.run/*
+!/.run/Community WebApplication - Dev 5010.run.xml

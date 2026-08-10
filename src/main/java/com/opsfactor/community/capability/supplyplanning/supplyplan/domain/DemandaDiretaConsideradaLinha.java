@@ -583,13 +583,13 @@ public class DemandaDiretaConsideradaLinha {
      * Inicializa o plano irrestrito Community a partir do Demand Plan.
      *
      * <p>O runtime aberto nao possui carteira/sales orders como fonte de
-     * demanda. Assim, a quantidade original de plano de demanda vira a demanda
-     * direta irrestrita no segmento `PLANO_DEMANDA`, enquanto `CARTEIRA`
-     * permanece explicitamente zerado.</p>
+     * demanda. Assim, a soma da quantidade local com a quantidade propagada
+     * de clientes vira a demanda direta irrestrita no segmento
+     * `PLANO_DEMANDA`, enquanto `CARTEIRA` permanece explicitamente zerado.</p>
      */
     public void atualizaPlanoIrrestritoCommunityComPlanoDemanda() {
 
-        setQuantidadeDemandaDiretaPlanoDemandaIrrestrita(getQuantidadePlanoDemandaOriginal());
+        setQuantidadeDemandaDiretaPlanoDemandaIrrestrita(getQuantidadePlanoDemandaTotal());
         setQuantidadeDemandaDiretaCarteiraIrrestrita(0.0);
 
     }

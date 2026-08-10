@@ -31,7 +31,7 @@ import java.util.stream.StreamSupport;
 class ConfiguredViewKeyFigureSelectionCommunityTest {
 
     @Test
-    void saveShouldReplaceTheWholeKeyFigureSnapshotAndNormalizeOrderAndEdition() {
+    void saveShouldReplaceLegacyKeyFigureSelectionWithTheFixedCommunitySnapshot() {
 
         ConfiguredView configuredView = configuredView();
         ConfiguredViewRepository configuredViewRepository = Mockito.mock(ConfiguredViewRepository.class);
@@ -66,13 +66,13 @@ class ConfiguredViewKeyFigureSelectionCommunityTest {
         List<ConfiguredViewKeyFigure> savedKeyFigures = StreamSupport
                 .stream(keyFiguresCaptor.getValue().spliterator(), false)
                 .toList();
-        Assertions.assertEquals(List.of("Demand Adjustment", "Baseline"), savedKeyFigures.stream()
+        Assertions.assertEquals(List.of("Direct Demand", "Baseline", "Demand Adjustment"), savedKeyFigures.stream()
                 .map(ConfiguredViewKeyFigure::getKeyFigureId)
                 .toList());
-        Assertions.assertEquals(List.of(1, 2), savedKeyFigures.stream()
+        Assertions.assertEquals(List.of(1, 2, 3), savedKeyFigures.stream()
                 .map(ConfiguredViewKeyFigure::getPosition)
                 .toList());
-        Assertions.assertEquals(List.of(false, true), savedKeyFigures.stream()
+        Assertions.assertEquals(List.of(true, false, true), savedKeyFigures.stream()
                 .map(ConfiguredViewKeyFigure::getAllowChanges)
                 .toList());
         Mockito.verify(configuredViewKeyFigureRepository, Mockito.never())
@@ -80,7 +80,7 @@ class ConfiguredViewKeyFigureSelectionCommunityTest {
     }
 
     @Test
-    void removeShouldBulkDeleteKeyFigureChildrenBeforeDeletingView() {
+    void removeShouldBulkDeleteKeyFigureChildrenBeforeDeletingViewAndItsIdFilters() {
 
         ConfiguredView configuredView = configuredView();
         ConfiguredViewRepository configuredViewRepository = Mockito.mock(ConfiguredViewRepository.class);
@@ -98,9 +98,7 @@ class ConfiguredViewKeyFigureSelectionCommunityTest {
 
         InOrder inOrder = Mockito.inOrder(configuredViewKeyFigureRepository, configuredViewRepository);
         inOrder.verify(configuredViewKeyFigureRepository).deleteAllByConfiguredView(configuredView);
-        inOrder.verify(configuredViewRepository)
-                .removeByConfiguredViewCompositeKeyUserIdAndConfiguredViewCompositeKeyNomeViewAndConfiguredViewCompositeKeyTipoView(
-                        "DEBUG", "Planning Book", ConfiguredView.TipoView.DEMANDPLANNINGBOOK);
+        inOrder.verify(configuredViewRepository).delete(configuredView);
     }
 
     @Test

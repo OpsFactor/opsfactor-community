@@ -38,6 +38,33 @@ class NivelamentoCapacidadePlanoIrrestritoHeuristicoServiceCommunityContractTest
                 "O nivelamento deve persistir zeros em checkpoint próprio antes do plano restrito.");
         assertTrue(source.contains("if (nivelamentoAplicado)"),
                 "O segundo checkpoint deve ser condicional a uma realocação efetiva.");
+        assertTrue(source.contains("lowLevelCode,\n                supplyPlanningBiProjection);"),
+                "O constrained plan deve receber a mesma fotografia alterada pelo nivelamento.");
+
+    }
+
+    @Test
+    void constrainedDeveCopiarIrrestritoNiveladoNaMesmaFotografia() throws Exception {
+
+        Path constrainedSourcePath = Path.of(
+                "src/main/java/com/opsfactor/community/capability/supplyplanning/service/heuristic/"
+                        + "ConstrainedPlanService.java");
+        String constrainedSource = Files.readString(constrainedSourcePath, StandardCharsets.UTF_8);
+        Path projectionSourcePath = Path.of(
+                "src/main/java/com/opsfactor/community/capability/supplyplanning/supplyplan/projection/"
+                        + "SupplyPlanningBiProjection.java");
+        String projectionSource = Files.readString(projectionSourcePath, StandardCharsets.UTF_8);
+
+        int resetSnapshot = constrainedSource.indexOf(
+                "supplyPlanningBiProjection.atualizaPlanoRestritoComPlanoIrrestrito()");
+        int constrainedLoop = constrainedSource.indexOf("for (int i");
+
+        assertTrue(resetSnapshot >= 0 && resetSnapshot < constrainedLoop,
+                "A baseline restrita deve ser materializada no snapshot antes dos cortes de capacidade.");
+        assertTrue(projectionSource.contains(
+                        "setQuantidadeOrdemPlanejadaProducaoRestrita(\n"
+                                + "                    productionPlanLinha.getQuantidadeOrdemPlanejadaProducaoIrrestrita())"),
+                "A produção realocada no irrestrito precisa iniciar o constrained na mesma linha em memória.");
 
     }
 

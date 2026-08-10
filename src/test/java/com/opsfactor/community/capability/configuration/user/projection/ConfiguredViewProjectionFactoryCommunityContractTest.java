@@ -1,6 +1,7 @@
 package com.opsfactor.community.capability.configuration.user.projection;
 
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguredView;
+import com.opsfactor.community.capability.configuration.user.domain.ConfiguredViewCharacteristicFilter;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
@@ -20,10 +21,10 @@ import java.util.Set;
 /**
  * Contrato Community da materializacao de views de Planning Book.
  *
- * <p>A configuracao persistida Community nao possui filtros, agrupamentos ou
- * colunas de caracteristicas dinamicas nem selecao livre de key figures. A
- * projection deve, portanto, nascer diretamente no escopo material/location e
- * aplicar apenas filtros ad-hoc do proprio fluxo Community.</p>
+ * <p>A configuracao persistida Community aceita filtros por ID e por atributos
+ * publicos, mas nao agrupamentos, colunas dinamicas nem selecao livre de key
+ * figures. A projection nasce no escopo material/location e restringe a
+ * fotografia ja carregada, sem consultas entidade a entidade.</p>
  */
 public class ConfiguredViewProjectionFactoryCommunityContractTest {
 
@@ -54,6 +55,67 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
                 configuredViewProjection.getPlanningBookDfuScopes().iterator().next().getMateriais());
         Assertions.assertEquals(
                 Set.of(location),
+                configuredViewProjection.getPlanningBookDfuScopes().iterator().next().getLocations());
+
+    }
+
+    @Test
+    public void getConfiguredViewProjectionShouldApplyPersistedMaterialAndLocationIdFiltersCommunity() throws Exception {
+
+        Produto materialMantido = new Produto("M1");
+        Produto materialRemovido = new Produto("M2");
+        Location locationMantida = new Location("L1");
+        Location locationRemovida = new Location("L2");
+        ClusterEParametrosProjection clusterEParametrosProjection = getClusterEParametrosProjection(
+                Set.of(materialMantido, materialRemovido),
+                Set.of(locationMantida, locationRemovida));
+
+        ConfiguredView configuredView = getConfiguredViewValida();
+        configuredView.setMaterialIdFilterSet(Set.of("M1"));
+        configuredView.setLocationIdFilterSet(Set.of("L1"));
+
+        ConfiguredViewProjection configuredViewProjection =
+                new ConfiguredViewProjectionFactory().getConfiguredViewProjection(
+                        configuredView,
+                        clusterEParametrosProjection);
+
+        Assertions.assertEquals(Set.of(materialMantido), configuredViewProjection.getMateriaisFiltrados());
+        Assertions.assertEquals(Set.of(locationMantida), configuredViewProjection.getLocationsFiltradas());
+        Assertions.assertEquals(
+                Set.of(materialMantido),
+                configuredViewProjection.getPlanningBookDfuScopes().iterator().next().getMateriais());
+        Assertions.assertEquals(
+                Set.of(locationMantida),
+                configuredViewProjection.getPlanningBookDfuScopes().iterator().next().getLocations());
+
+    }
+
+    @Test
+    public void getConfiguredViewProjectionShouldApplyPublicLocationAttributeFiltersCommunity() throws Exception {
+
+        Produto material = new Produto("M1");
+        Location locationBrazil = new Location("L-BR");
+        locationBrazil.setPais("Brazil");
+        Location locationChile = new Location("L-CL");
+        locationChile.setPais("Chile");
+        ClusterEParametrosProjection clusterEParametrosProjection = getClusterEParametrosProjection(
+                Set.of(material),
+                Set.of(locationBrazil, locationChile));
+
+        ConfiguredView configuredView = getConfiguredViewValida();
+        configuredView.setLocationCharacteristicFilterSet(Set.of(
+                new ConfiguredViewCharacteristicFilter("COUNTRY", "Brazil")));
+
+        ConfiguredViewProjection configuredViewProjection =
+                new ConfiguredViewProjectionFactory().getConfiguredViewProjection(
+                        configuredView,
+                        clusterEParametrosProjection);
+
+        Assertions.assertEquals(
+                Set.of(locationBrazil),
+                configuredViewProjection.getLocationsFiltradas());
+        Assertions.assertEquals(
+                Set.of(locationBrazil),
                 configuredViewProjection.getPlanningBookDfuScopes().iterator().next().getLocations());
 
     }

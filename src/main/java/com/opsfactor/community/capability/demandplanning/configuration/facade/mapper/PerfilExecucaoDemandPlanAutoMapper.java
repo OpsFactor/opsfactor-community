@@ -14,9 +14,9 @@ import java.util.Set;
 /**
  * Mapper MapStruct do perfil de execucao Demand Planning Community.
  *
- * <p>Campos de MAPE agregado, auto-fit e regression tree sao ignorados nesta
- * conversao porque nao possuem runtime Community. Overlays Enterprise devem
- * reabrir esses campos em mapper/service proprio.</p>
+ * <p>Campos de horizonte fixo, MAPE agregado, auto-fit e regression tree sao
+ * neutralizados nesta conversao porque nao possuem runtime Community. Overlays
+ * Enterprise devem reabrir esses campos em mapper/service proprio.</p>
  */
 @Mapper(componentModel = "spring")
 public interface PerfilExecucaoDemandPlanAutoMapper {
@@ -26,9 +26,9 @@ public interface PerfilExecucaoDemandPlanAutoMapper {
     @Mapping(expression = "java(com.opsfactor.community.platform.utility.Constantes.TipoDocumentoVenda.SELLOUT)", target = "historicalSalesDocumentType")
     @Mapping(source = "perfilExecucaoDemandPlan.tamanhoBucket", target = "bucketSize")
     @Mapping(source = "perfilExecucaoDemandPlan.numeroPeriodosHorizontePlanejamento", target = "planningHorizonInPeriods")
-    @Mapping(source = "perfilExecucaoDemandPlan.restringePeriodosEdicaoPlano", target = "constrainPlanEditPeriods")
-    @Mapping(source = "perfilExecucaoDemandPlan.periodoInicialEdicaoPlano", target = "initialPlanEditPeriod")
-    @Mapping(source = "perfilExecucaoDemandPlan.periodoFinalEdicaoPlano", target = "finalPlanEditPeriod")
+    @Mapping(expression = "java(false)", target = "constrainPlanEditPeriods")
+    @Mapping(target = "initialPlanEditPeriod", ignore = true)
+    @Mapping(target = "finalPlanEditPeriod", ignore = true)
     @Mapping(source = "perfilExecucaoDemandPlan.unidadeMedidaPadraoDP.id", target = "defaultDemandPlanningUomId")
     @Mapping(target = "mapeMaterialAggregationLevelId", ignore = true)
     @Mapping(target = "mapeLocationAggregationLevelId", ignore = true)

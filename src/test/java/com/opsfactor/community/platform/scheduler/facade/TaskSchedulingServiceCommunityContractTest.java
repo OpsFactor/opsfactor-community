@@ -320,6 +320,94 @@ public class TaskSchedulingServiceCommunityContractTest {
     }
 
     @Test
+    public void synchronousTaskFailureShouldReturnFailureAfterPersistingProcessStatus() {
+
+        TaskSchedulingService taskSchedulingService = new TaskSchedulingService();
+        ScheduledTaskImediatoRepository scheduledTaskImediatoRepository =
+                Mockito.mock(ScheduledTaskImediatoRepository.class);
+        ScheduledTaskAbstractRepository scheduledTaskAbstractRepository =
+                Mockito.mock(ScheduledTaskAbstractRepository.class);
+        ScheduledTaskExecutionRepository scheduledTaskExecutionRepository =
+                Mockito.mock(ScheduledTaskExecutionRepository.class);
+        ApplicationContext applicationContext = Mockito.mock(ApplicationContext.class);
+        ScheduledTaskPersistenceService scheduledTaskPersistenceService =
+                new ScheduledTaskPersistenceService();
+        ScheduledTaskExecutionService scheduledTaskExecutionService =
+                new ScheduledTaskExecutionService();
+        TestService testService = new TestService();
+
+        Mockito.when(scheduledTaskImediatoRepository.customFindById("Task-1"))
+                .thenReturn(Optional.empty());
+        Mockito.when(scheduledTaskImediatoRepository.save(Mockito.any(ScheduledTaskImediato.class)))
+                .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+        Mockito.when(scheduledTaskAbstractRepository.save(Mockito.any(ScheduledTaskAbstract.class)))
+                .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+        Mockito.when(scheduledTaskExecutionRepository.save(Mockito.any(ScheduledTaskExecution.class)))
+                .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(0));
+        Mockito.when(applicationContext.getBeanNamesForType(TestService.class))
+                .thenReturn(new String[]{"testService"});
+        Mockito.when(applicationContext.getBean("testService", TestService.class))
+                .thenReturn(testService);
+
+        ReflectionTestUtils.setField(
+                scheduledTaskPersistenceService,
+                "scheduledTaskAbstractRepository",
+                scheduledTaskAbstractRepository);
+        ReflectionTestUtils.setField(
+                scheduledTaskPersistenceService,
+                "scheduledTaskExecutionRepository",
+                scheduledTaskExecutionRepository);
+        ReflectionTestUtils.setField(
+                scheduledTaskExecutionService,
+                "applicationContext",
+                applicationContext);
+        ReflectionTestUtils.setField(
+                scheduledTaskExecutionService,
+                "scheduledTaskPersistenceService",
+                scheduledTaskPersistenceService);
+        ReflectionTestUtils.setField(
+                taskSchedulingService,
+                "scheduledTaskImediatoRepository",
+                scheduledTaskImediatoRepository);
+        ReflectionTestUtils.setField(
+                taskSchedulingService,
+                "scheduledTaskPersistenceService",
+                scheduledTaskPersistenceService);
+        ReflectionTestUtils.setField(
+                taskSchedulingService,
+                "scheduledTaskExecutionService",
+                scheduledTaskExecutionService);
+
+        /*
+         * Task.run() grava a falha e continua compatível com Runnable para o
+         * runner Enterprise. O coordenador sincrono deve inspecionar esse
+         * resultado e relancar uma falha funcional somente depois de salvar o
+         * mesmo registro exibido no Process Status.
+         */
+        TaskSchedulingException taskSchedulingException = Assertions.assertThrows(
+                TaskSchedulingException.class,
+                () -> taskSchedulingService.criaSalvaEExecutaScheduledTaskImediatoSincronoComTask(
+                        FailingTestTask.class,
+                        "TestProcess",
+                        "Task-1",
+                        "admin",
+                        "Failing task",
+                        "UTC",
+                        null));
+
+        Assertions.assertEquals(
+                "IllegalStateException: planned task failure",
+                taskSchedulingException.getMessage());
+        Mockito.verify(scheduledTaskExecutionRepository, Mockito.times(2))
+                .save(Mockito.any(ScheduledTaskExecution.class));
+        Mockito.verify(scheduledTaskAbstractRepository)
+                .save(Mockito.any(ScheduledTaskAbstract.class));
+        Mockito.verify(scheduledTaskImediatoRepository)
+                .save(Mockito.any(ScheduledTaskImediato.class));
+
+    }
+
+    @Test
     public void taskSchedulingServiceShouldTreatDuplicateInstantTaskIdAsStateConflict() {
 
         TaskSchedulingService taskSchedulingService = new TaskSchedulingService();
@@ -876,6 +964,26 @@ public class TaskSchedulingServiceCommunityContractTest {
 
         @Override
         public void executaTask(Void dtoParametros, TestService testService) {
+
+        }
+
+    }
+
+    public static class FailingTestTask extends Task<Void, TestService> {
+
+        public FailingTestTask(
+                ScheduledTaskAbstract scheduledTaskAbstract,
+                ScheduledTaskPersistenceService scheduledTaskPersistenceService,
+                TestService testService) {
+
+            super(scheduledTaskAbstract, scheduledTaskPersistenceService, testService);
+
+        }
+
+        @Override
+        public void executaTask(Void dtoParametros, TestService testService) {
+
+            throw new IllegalStateException("planned task failure");
 
         }
 

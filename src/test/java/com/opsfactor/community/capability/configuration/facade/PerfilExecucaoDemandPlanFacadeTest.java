@@ -34,9 +34,6 @@ public class PerfilExecucaoDemandPlanFacadeTest {
             "description",
             "bucketSize",
             "planningHorizonInPeriods",
-            "constrainPlanEditPeriods",
-            "initialPlanEditPeriod",
-            "finalPlanEditPeriod",
             "defaultDemandPlanningUomId");
 
     @Test
@@ -620,6 +617,9 @@ public class PerfilExecucaoDemandPlanFacadeTest {
         }
         if (Integer.class.equals(fieldType)) {
             return 1;
+        }
+        if (Boolean.class.equals(fieldType)) {
+            return true;
         }
         if (Long.class.equals(fieldType)) {
             return 1L;

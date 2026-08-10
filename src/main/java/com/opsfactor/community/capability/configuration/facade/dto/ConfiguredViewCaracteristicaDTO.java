@@ -7,11 +7,10 @@ import java.util.List;
 /**
  * Item de configuracao de caracteristica em uma view.
  *
- * <p>No Community, configuracoes reais de caracteristicas dinamicas sao
- * recursos Enterprise para material, location e material-location/DFU. O DTO
- * permanece no modulo Community para rejeitar payloads legados ou transicionais
- * amplos; o service rejeita qualquer configuracao real antes de persistir a
- * view.</p>
+ * <p>No Community, o DTO representa apenas filtros por atributos públicos de
+ * material e location. {@code aggregationType}, {@code columnPosition} e
+ * características material-location/DFU continuam Pro; o service rejeita
+ * esses campos antes de persistir a view.</p>
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ConfiguredViewCaracteristicaDTO {

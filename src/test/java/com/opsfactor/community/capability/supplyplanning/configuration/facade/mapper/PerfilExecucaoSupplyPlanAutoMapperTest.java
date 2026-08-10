@@ -5,6 +5,7 @@ import com.opsfactor.community.capability.supplyplanning.configuration.domain.Pe
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /** Verifica o contrato bidirecional das preferencias Finance persistidas no perfil compartilhado. */
 class PerfilExecucaoSupplyPlanAutoMapperTest {
@@ -36,55 +37,66 @@ class PerfilExecucaoSupplyPlanAutoMapperTest {
     }
 
     @Test
-    void shouldRoundTripSharedOptimizerScalarControlsWithHistoricalDefaults() {
+    void shouldNeutralizeEnterpriseOptimizerScalarDefaultsInCommunityDto() {
 
         PerfilExecucaoSupplyPlan defaultProfile = new PerfilExecucaoSupplyPlan();
         PerfilExecucaoSupplyPlanDTO defaultDto = perfilExecucaoSupplyPlanAutoMapper.converte(defaultProfile);
 
-        Assertions.assertEquals(0.1, defaultDto.getEntityTabuRatio());
-        Assertions.assertEquals(10_000, defaultDto.getAcceptedCountLimit());
+        /*
+         * A entidade compartilhada ainda oferece defaults historicos por seus
+         * getters. O DTO publico deve neutraliza-los para que a listagem de um
+         * perfil Community nao pareca ativar optimizer, Greenfield ou detailed
+         * scheduling e nao seja rejeitada pela propria facade.
+         */
+        Assertions.assertNull(defaultDto.getEntityTabuRatio());
+        Assertions.assertNull(defaultDto.getAcceptedCountLimit());
         Assertions.assertFalse(defaultDto.getConsiderBudgetForGreenfieldLocationActivation());
-        Assertions.assertEquals(0.0, defaultDto.getGreenfieldLocationActivationBudget());
-        Assertions.assertTrue(defaultDto.getRoundProductionAndSetupsToDetailedPlanBucket());
-
-        PerfilExecucaoSupplyPlanDTO configuredDto = new PerfilExecucaoSupplyPlanDTO();
-        configuredDto.setEntityTabuRatio(0.25);
-        configuredDto.setAcceptedCountLimit(500);
-        configuredDto.setConsiderBudgetForGreenfieldLocationActivation(true);
-        configuredDto.setGreenfieldLocationActivationBudget(2_500.0);
-        configuredDto.setRoundProductionAndSetupsToDetailedPlanBucket(false);
-
-        PerfilExecucaoSupplyPlan configuredProfile = perfilExecucaoSupplyPlanAutoMapper.converte(configuredDto);
-        PerfilExecucaoSupplyPlanDTO roundTrippedDto = perfilExecucaoSupplyPlanAutoMapper.converte(configuredProfile);
-
-        Assertions.assertEquals(0.25, roundTrippedDto.getEntityTabuRatio());
-        Assertions.assertEquals(500, roundTrippedDto.getAcceptedCountLimit());
-        Assertions.assertTrue(roundTrippedDto.getConsiderBudgetForGreenfieldLocationActivation());
-        Assertions.assertEquals(2_500.0, roundTrippedDto.getGreenfieldLocationActivationBudget());
-        Assertions.assertFalse(roundTrippedDto.getRoundProductionAndSetupsToDetailedPlanBucket());
+        Assertions.assertNull(defaultDto.getGreenfieldLocationActivationBudget());
+        Assertions.assertFalse(defaultDto.getRoundProductionAndSetupsToDetailedPlanBucket());
 
     }
 
     @Test
-    void shouldRoundTripHeuristicCapacityLevelingWithFalseDefault() {
+    void shouldFixCommunityHeuristicPipelineAndProTabs() {
 
         PerfilExecucaoSupplyPlan defaultProfile = new PerfilExecucaoSupplyPlan();
+        defaultProfile.setGeraPlanoIrrestrito(false);
+        defaultProfile.setHeuristicUnconstrainedPlanCapacityLeveling(false);
+        defaultProfile.setIgnoraRestricaoProducaoIrrestrito(true);
+        defaultProfile.setLocationsClienteApenasPropagamDemanda(true);
+        defaultProfile.setModoPropagacaoDemanda(
+                PerfilExecucaoSupplyPlan.ModoPropagacaoDemanda.PROPAGACAO_DEMANDA_LOCATIONS_INTERNAS);
 
-        Assertions.assertFalse(defaultProfile.getHeuristicUnconstrainedPlanCapacityLeveling());
-        Assertions.assertFalse(
-                perfilExecucaoSupplyPlanAutoMapper.converte(defaultProfile)
-                        .getHeuristicUnconstrainedPlanCapacityLeveling());
+        PerfilExecucaoSupplyPlanDTO communityDto =
+                perfilExecucaoSupplyPlanAutoMapper.converte(defaultProfile);
 
-        PerfilExecucaoSupplyPlanDTO enabledDto = new PerfilExecucaoSupplyPlanDTO();
-        enabledDto.setHeuristicUnconstrainedPlanCapacityLeveling(true);
+        Assertions.assertTrue(communityDto.getAutomaticallyRunConstrainedPlan());
+        Assertions.assertTrue(communityDto.getGenerateUnconstrainedPlan());
+        Assertions.assertTrue(communityDto.getHeuristicUnconstrainedPlanCapacityLeveling());
+        Assertions.assertFalse(communityDto.getIgnoreProductionConstraintsForUnconstrainedPlan());
+        Assertions.assertFalse(communityDto.getConsolidateClientDemand());
+        Assertions.assertNull(communityDto.getDemandConsolidationMode());
 
-        PerfilExecucaoSupplyPlan enabledProfile =
-                perfilExecucaoSupplyPlanAutoMapper.converte(enabledDto);
+        PerfilExecucaoSupplyPlanDTO proDto = new PerfilExecucaoSupplyPlanDTO();
+        proDto.setAutomaticallyRunConstrainedPlan(false);
+        proDto.setGenerateUnconstrainedPlan(false);
+        proDto.setHeuristicUnconstrainedPlanCapacityLeveling(false);
+        proDto.setIgnoreProductionConstraintsForUnconstrainedPlan(true);
+        proDto.setConsolidateClientDemand(true);
+        proDto.setDemandConsolidationMode(
+                PerfilExecucaoSupplyPlan.ModoPropagacaoDemanda.PROPAGACAO_DEMANDA_REGIOES_COMERCIAIS);
 
-        Assertions.assertTrue(enabledProfile.getHeuristicUnconstrainedPlanCapacityLeveling());
-        Assertions.assertTrue(
-                perfilExecucaoSupplyPlanAutoMapper.converte(enabledProfile)
-                        .getHeuristicUnconstrainedPlanCapacityLeveling());
+        PerfilExecucaoSupplyPlan communityProfile =
+                perfilExecucaoSupplyPlanAutoMapper.converte(proDto);
+
+        Assertions.assertTrue(communityProfile.getEncadeiaExecucaoPlanoRestrito());
+        Assertions.assertTrue(communityProfile.getGeraPlanoIrrestrito());
+        Assertions.assertTrue(communityProfile.getHeuristicUnconstrainedPlanCapacityLeveling());
+        Assertions.assertFalse(communityProfile.getIgnoraRestricaoProducaoIrrestrito());
+        Assertions.assertFalse(communityProfile.getLocationsClienteApenasPropagamDemanda());
+        Assertions.assertNull(ReflectionTestUtils.getField(
+                communityProfile,
+                "modoPropagacaoDemanda"));
 
     }
 

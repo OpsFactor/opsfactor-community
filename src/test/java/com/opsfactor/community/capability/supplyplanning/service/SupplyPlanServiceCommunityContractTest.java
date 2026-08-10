@@ -31,7 +31,7 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.repos
 import com.opsfactor.community.capability.supplyplanning.supplyplan.repository.DemandaDiretaConsideradaLinhaRepository;
 import com.opsfactor.community.capability.supplyplanning.distributionplan.repository.DistributionPlanItemRepository;
 import com.opsfactor.community.capability.supplyplanning.inventoryplan.repository.InventoryPlanLinhaRepository;
-import com.opsfactor.community.capability.supplyplanning.productionplan.repository.ProductionPlanLinhaRepository;
+import com.opsfactor.community.capability.supplyplanning.productionplan.repository.ProductionPlanLinhaDAO;
 import com.opsfactor.community.capability.demandplanning.demandplan.repository.DemandPlanRepository;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.repository.SupplyPlanRepository;
 import com.opsfactor.community.capability.masterdata.production.productionversion.service.VersaoProducaoService;
@@ -50,6 +50,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -63,8 +64,10 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Valida o mecanismo Community/Enterprise de Supply Planning sem subir Spring.
@@ -90,6 +93,7 @@ public class SupplyPlanServiceCommunityContractTest {
                 "versaoMalhaRepository",
                 "distributionPlanItemRepository",
                 "productionPlanLinhaRepository",
+                "productionPlanLinhaDAO",
                 "inventoryPlanLinhaRepository",
                 "perfilExecucaoSupplyPlanRepository",
                 "estoqueRepository",
@@ -1898,8 +1902,8 @@ public class SupplyPlanServiceCommunityContractTest {
                 getVersaoProducaoServiceTeste());
         setField(
                 supplyPlanService,
-                "productionPlanLinhaRepository",
-                getProductionPlanLinhaRepositoryCapturandoSaveAll(productionPlanLinhasSalvas));
+                "productionPlanLinhaDAO",
+                getProductionPlanLinhaDAOCapturandoBatch(productionPlanLinhasSalvas));
 
         supplyPlanService.saveProductionPlanLinhaCollection(
                 List.of(productionPlanLinha),
@@ -1978,8 +1982,8 @@ public class SupplyPlanServiceCommunityContractTest {
                 getVersaoProducaoServiceTeste());
         setField(
                 supplyPlanService,
-                "productionPlanLinhaRepository",
-                getProductionPlanLinhaRepositoryCapturandoSaveAll(productionPlanLinhasSalvas));
+                "productionPlanLinhaDAO",
+                getProductionPlanLinhaDAOCapturandoBatch(productionPlanLinhasSalvas));
 
         supplyPlanService.saveProductionPlanLinhaCollection(
                 List.of(
@@ -2004,27 +2008,16 @@ public class SupplyPlanServiceCommunityContractTest {
     }
 
     @Test
-    public void saveSupplyPlanLinhaCollectionsShouldRejectNullRepositorySnapshotsCommunity() throws Exception {
+    public void saveDistributionAndInventoryCollectionsShouldRejectNullRepositorySnapshotsCommunity() throws Exception {
 
         SupplyPlanService supplyPlanService = new SupplyPlanService();
-        ProductionPlanLinha productionPlanLinha =
-                criaProductionPlanLinhaParaTeste("MAT-PROD-SAVED-NULL");
         DistributionPlanItem distributionPlanItem =
                 criaDistributionPlanItemParaTeste("MAT-DIST-SAVED-NULL");
         InventoryPlanLinha inventoryPlanLinha =
                 criaInventoryPlanLinhaParaTeste("MAT-INV-SAVED-NULL");
-        productionPlanLinha.setQuantidadeOrdemPlanejadaProducaoRestrita(1.0);
         distributionPlanItem.setQuantidadeOrdemPlanejadaRestrita(1.0);
         inventoryPlanLinha.setQuantidadeEstoqueProjetadoRestrito(1.0);
 
-        setField(
-                supplyPlanService,
-                "versaoProducaoService",
-                getVersaoProducaoServiceTeste());
-        setField(
-                supplyPlanService,
-                "productionPlanLinhaRepository",
-                getProductionPlanLinhaRepositoryRetornandoSaveAll(null));
         setField(
                 supplyPlanService,
                 "distributionPlanItemRepository",
@@ -2039,11 +2032,6 @@ public class SupplyPlanServiceCommunityContractTest {
          * materializado. Retorno nulo de saveAll deve falhar de forma explicita
          * para cada familia de linha, em vez de seguir como sucesso silencioso.
          */
-        IllegalStateException productionPlanException = Assertions.assertThrows(
-                IllegalStateException.class,
-                () -> supplyPlanService.saveProductionPlanLinhaCollection(
-                        List.of(productionPlanLinha),
-                        false));
         IllegalStateException distributionPlanException = Assertions.assertThrows(
                 IllegalStateException.class,
                 () -> supplyPlanService.saveDistributionPlanItemCollection(
@@ -2056,9 +2044,6 @@ public class SupplyPlanServiceCommunityContractTest {
                         false));
 
         Assertions.assertEquals(
-                "Saved Production Plan line snapshot is required after Community production planning persistence.",
-                productionPlanException.getMessage());
-        Assertions.assertEquals(
                 "Saved Distribution Plan line snapshot is required after Community distribution planning persistence.",
                 distributionPlanException.getMessage());
         Assertions.assertEquals(
@@ -2068,13 +2053,9 @@ public class SupplyPlanServiceCommunityContractTest {
     }
 
     @Test
-    public void saveSupplyPlanLinhaCollectionsShouldRejectPartialRepositorySnapshotsCommunity() throws Exception {
+    public void saveDistributionAndInventoryCollectionsShouldRejectPartialRepositorySnapshotsCommunity() throws Exception {
 
         SupplyPlanService supplyPlanService = new SupplyPlanService();
-        ProductionPlanLinha productionPlanLinhaUm =
-                criaProductionPlanLinhaParaTeste("MAT-PROD-PARTIAL-1");
-        ProductionPlanLinha productionPlanLinhaDois =
-                criaProductionPlanLinhaParaTeste("MAT-PROD-PARTIAL-2");
         DistributionPlanItem distributionPlanItemUm =
                 criaDistributionPlanItemParaTeste("MAT-DIST-PARTIAL-1");
         DistributionPlanItem distributionPlanItemDois =
@@ -2083,21 +2064,11 @@ public class SupplyPlanServiceCommunityContractTest {
                 criaInventoryPlanLinhaParaTeste("MAT-INV-PARTIAL-1");
         InventoryPlanLinha inventoryPlanLinhaDois =
                 criaInventoryPlanLinhaParaTeste("MAT-INV-PARTIAL-2");
-        productionPlanLinhaUm.setQuantidadeOrdemPlanejadaProducaoRestrita(1.0);
-        productionPlanLinhaDois.setQuantidadeOrdemPlanejadaProducaoRestrita(1.0);
         distributionPlanItemUm.setQuantidadeOrdemPlanejadaRestrita(1.0);
         distributionPlanItemDois.setQuantidadeOrdemPlanejadaRestrita(1.0);
         inventoryPlanLinhaUm.setQuantidadeEstoqueProjetadoRestrito(1.0);
         inventoryPlanLinhaDois.setQuantidadeEstoqueProjetadoRestrito(1.0);
 
-        setField(
-                supplyPlanService,
-                "versaoProducaoService",
-                getVersaoProducaoServiceTeste());
-        setField(
-                supplyPlanService,
-                "productionPlanLinhaRepository",
-                getProductionPlanLinhaRepositoryRetornandoSaveAll(List.of(productionPlanLinhaUm)));
         setField(
                 supplyPlanService,
                 "distributionPlanItemRepository",
@@ -2113,13 +2084,6 @@ public class SupplyPlanServiceCommunityContractTest {
          * deve falhar antes de assumir que Planning Book/plano restrito estao
          * materializados.
          */
-        IllegalStateException productionPlanException = Assertions.assertThrows(
-                IllegalStateException.class,
-                () -> supplyPlanService.saveProductionPlanLinhaCollection(
-                        List.of(
-                                productionPlanLinhaUm,
-                                productionPlanLinhaDois),
-                        false));
         IllegalStateException distributionPlanException = Assertions.assertThrows(
                 IllegalStateException.class,
                 () -> supplyPlanService.saveDistributionPlanItemCollection(
@@ -2135,9 +2099,6 @@ public class SupplyPlanServiceCommunityContractTest {
                                 inventoryPlanLinhaDois),
                         false));
 
-        Assertions.assertEquals(
-                "Saved Production Plan line snapshot size 1 differs from expected Community production planning persistence size 2.",
-                productionPlanException.getMessage());
         Assertions.assertEquals(
                 "Saved Distribution Plan line snapshot size 1 differs from expected Community distribution planning persistence size 2.",
                 distributionPlanException.getMessage());
@@ -2206,8 +2167,8 @@ public class SupplyPlanServiceCommunityContractTest {
                 getVersaoProducaoServiceTeste());
         setField(
                 supplyPlanService,
-                "productionPlanLinhaRepository",
-                getProductionPlanLinhaRepositoryFalhandoEmMutacao());
+                "productionPlanLinhaDAO",
+                getProductionPlanLinhaDAOFalhandoEmMutacao());
         setField(
                 supplyPlanService,
                 "distributionPlanItemRepository",
@@ -2396,8 +2357,8 @@ public class SupplyPlanServiceCommunityContractTest {
 
         setField(
                 supplyPlanService,
-                "productionPlanLinhaRepository",
-                getProductionPlanLinhaRepositoryFalhandoEmMutacao());
+                "productionPlanLinhaDAO",
+                getProductionPlanLinhaDAOFalhandoEmMutacao());
         setField(
                 supplyPlanService,
                 "distributionPlanItemRepository",
@@ -3025,6 +2986,35 @@ public class SupplyPlanServiceCommunityContractTest {
 
     }
 
+    @Test
+    public void resetPlanoExistenteShouldUseOnlyColumnsMaterializedByCommunitySchema() throws Exception {
+
+        SupplyPlanService supplyPlanService = new SupplyPlanService();
+        TestJdbcTemplate jdbcTemplate = new TestJdbcTemplate(true);
+        setField(
+                supplyPlanService,
+                "jdbcTemplate",
+                jdbcTemplate);
+
+        supplyPlanService.resetPlanoDistribuicaoIrrestritoBySupplyPlanId(77L);
+        supplyPlanService.resetPlanoInventarioIrrestritoBySupplyPlanId(77L);
+        supplyPlanService.resetPlanoProducaoIrrestritoBySupplyPlanId(77L);
+
+        Assertions.assertEquals(3, jdbcTemplate.sqlUpdates.size());
+        Assertions.assertTrue(jdbcTemplate.sqlUpdates.get(0).contains("quantidade_requisicao_baseline = 0"));
+        Assertions.assertTrue(jdbcTemplate.sqlUpdates.get(0).contains("quantidade_requisicao_atendimento_carteira = 0"));
+        Assertions.assertTrue(jdbcTemplate.sqlUpdates.get(1).contains("quantidade_estoque_seguranca_baseline = 0"));
+        Assertions.assertTrue(jdbcTemplate.sqlUpdates.get(1).contains("quantidade_estoque_baseline = 0"));
+        Assertions.assertTrue(jdbcTemplate.sqlUpdates.get(2).contains("quantidade_sugestao_producao_baseline = 0"));
+
+        for (String sqlUpdate : jdbcTemplate.sqlUpdates) {
+            Assertions.assertFalse(sqlUpdate.contains("itens_novos"));
+            Assertions.assertFalse(sqlUpdate.contains("uplift"));
+            Assertions.assertFalse(sqlUpdate.contains("ajuste_demanda"));
+        }
+
+    }
+
     private static void assertAutowiredFields(
             boolean required,
             String... fieldNames) throws Exception {
@@ -3512,46 +3502,37 @@ public class SupplyPlanServiceCommunityContractTest {
 
     }
 
-    private static ProductionPlanLinhaRepository getProductionPlanLinhaRepositoryRetornandoSaveAll(
-            Object retornoSaveAll) {
-
-        return getRepositoryRetornandoSaveAll(
-                ProductionPlanLinhaRepository.class,
-                retornoSaveAll,
-                "ProductionPlanLinhaRepository retornando saveAll customizado para teste Community");
-
-    }
-
-    private static ProductionPlanLinhaRepository getProductionPlanLinhaRepositoryCapturandoSaveAll(
+    private static ProductionPlanLinhaDAO getProductionPlanLinhaDAOCapturandoBatch(
             List<ProductionPlanLinha> productionPlanLinhasSalvas) {
 
-        InvocationHandler invocationHandler = (proxy, method, args) -> {
-            if ("saveAll".equals(method.getName())) {
-                Iterable<?> iterableProductionPlanLinhas = (Iterable<?>) args[0];
-                for (Object productionPlanLinha : iterableProductionPlanLinhas) {
-                    productionPlanLinhasSalvas.add((ProductionPlanLinha) productionPlanLinha);
-                }
-                return productionPlanLinhasSalvas;
-            }
-            if ("toString".equals(method.getName())) {
-                return "ProductionPlanLinhaRepository capturando saveAll para teste Community";
-            }
-            throw new UnsupportedOperationException(
-                    "Metodo nao esperado no proxy de teste: " + method.getName());
-        };
+        return new ProductionPlanLinhaDAO() {
+            @Override
+            public void saveInBatch(Collection<ProductionPlanLinha> productionPlanLinhas) {
 
-        return ProductionPlanLinhaRepository.class.cast(Proxy.newProxyInstance(
-                ProductionPlanLinhaRepository.class.getClassLoader(),
-                new Class<?>[]{ProductionPlanLinhaRepository.class},
-                invocationHandler));
+                productionPlanLinhasSalvas.addAll(productionPlanLinhas);
+
+            }
+        };
 
     }
 
-    private static ProductionPlanLinhaRepository getProductionPlanLinhaRepositoryFalhandoEmMutacao() {
+    private static ProductionPlanLinhaDAO getProductionPlanLinhaDAOFalhandoEmMutacao() {
 
-        return getRepositoryFalhandoEmMutacao(
-                ProductionPlanLinhaRepository.class,
-                "ProductionPlanLinhaRepository");
+        return new ProductionPlanLinhaDAO() {
+            @Override
+            public void saveInBatch(Collection<ProductionPlanLinha> productionPlanLinhas) {
+
+                throw new AssertionError("ProductionPlanLinhaDAO nao deveria persistir neste teste.");
+
+            }
+
+            @Override
+            public void deleteInBatch(Collection<ProductionPlanLinha> productionPlanLinhas) {
+
+                throw new AssertionError("ProductionPlanLinhaDAO nao deveria remover neste teste.");
+
+            }
+        };
 
     }
 
@@ -4406,6 +4387,64 @@ public class SupplyPlanServiceCommunityContractTest {
     private static class TestJdbcTemplate extends JdbcTemplate {
 
         private final List<Object> supplyPlanIdsAtualizados = new ArrayList<>();
+        private final List<String> sqlUpdates = new ArrayList<>();
+        private final boolean communitySchemaOnly;
+
+        private TestJdbcTemplate() {
+
+            this(false);
+
+        }
+
+        private TestJdbcTemplate(boolean communitySchemaOnly) {
+
+            this.communitySchemaOnly = communitySchemaOnly;
+
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T query(String sql, ResultSetExtractor<T> resultSetExtractor) {
+
+            Set<String> existingColumnNames = new LinkedHashSet<>();
+
+            if (sql.contains("distribution_plan_item")) {
+                existingColumnNames.addAll(List.of(
+                        "quantidade_requisicao_baseline",
+                        "quantidade_requisicao_atendimento_carteira",
+                        "quantidade_pedido_atendimento_carteira"));
+                if (!communitySchemaOnly) {
+                    existingColumnNames.addAll(List.of(
+                            "quantidade_requisicao_itens_novos",
+                            "quantidade_requisicao_uplift",
+                            "quantidade_requisicao_ajuste_demanda"));
+                }
+            } else if (sql.contains("inventory_plan_linha")) {
+                existingColumnNames.addAll(List.of(
+                        "quantidade_estoque_seguranca_baseline",
+                        "quantidade_estoque_baseline"));
+                if (!communitySchemaOnly) {
+                    existingColumnNames.addAll(List.of(
+                            "quantidade_estoque_seguranca_itens_novos",
+                            "quantidade_estoque_itens_novos",
+                            "quantidade_estoque_uplift",
+                            "quantidade_estoque_ajuste_demanda"));
+                }
+            } else if (sql.contains("production_plan_linha")) {
+                existingColumnNames.add("quantidade_sugestao_producao_baseline");
+                if (!communitySchemaOnly) {
+                    existingColumnNames.addAll(List.of(
+                            "quantidade_sugestao_producao_itens_novos",
+                            "quantidade_sugestao_producao_uplift",
+                            "quantidade_sugestao_producao_ajuste_demanda"));
+                }
+            } else {
+                throw new AssertionError("Unexpected schema inspection SQL: " + sql);
+            }
+
+            return (T) existingColumnNames;
+
+        }
 
         @Override
         public int update(String sql, Object... args) {
@@ -4416,6 +4455,7 @@ public class SupplyPlanServiceCommunityContractTest {
              * Plan reaproveitado como unico parametro.
              */
             Assertions.assertEquals(1, args.length);
+            sqlUpdates.add(sql);
             supplyPlanIdsAtualizados.add(args[0]);
             return 1;
 

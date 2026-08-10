@@ -40,7 +40,8 @@ public interface DemandaDiretaConsideradaLinhaRepository extends JpaRepository<D
     @Transactional
     @Modifying(clearAutomatically = true, flushAutomatically = true) // https://www.baeldung.com/spring-data-jpa-modifying-annotation
     @Query("UPDATE DemandaDiretaConsideradaLinha ddc "
-            + "SET ddc.quantidadeDemandaDiretaPlanoDemandaRestrita = ddc.quantidadeDemandaDiretaPlanoDemandaIrrestrita "
+            + "SET ddc.quantidadeDemandaDiretaPlanoDemandaRestrita = ddc.quantidadeDemandaDiretaPlanoDemandaIrrestrita, "
+            + "ddc.quantidadeDemandaDiretaCarteiraRestrita = ddc.quantidadeDemandaDiretaCarteiraIrrestrita "
             + "WHERE ddc.demandaDiretaConsideradaLinhaCompositeKey.supplyPlan.id = :supplyPlanId")
     public void atualizaPlanoRestritoComPlanoIrrestrito(Long supplyPlanId);
 

@@ -1,6 +1,7 @@
 package com.opsfactor.community.capability.configuration.user.projection;
 
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguredView;
+import com.opsfactor.community.capability.configuration.user.domain.ConfiguredViewCharacteristicFilter;
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguredView.TipoView;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
@@ -19,6 +20,9 @@ import jakarta.annotation.Nullable;
 import jakarta.persistence.NoResultException;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 /**
  * Factory da projection de User View usada pelo Planning Book Community.
@@ -121,15 +125,29 @@ public class ConfiguredViewProjectionFactory {
         /*
          * MATERIAIS E LOCATIONS FILTRADOS
          *
-         * No Community, filtros persistidos por caracteristicas reais e
-         * estruturas de agregacao configuraveis nao sao suportados. A view
-         * parte diretamente dos materiais e locations ativos da projection
-         * central e aplica apenas filtros ad-hoc de DFU criados pelo proprio
-         * fluxo Community.
+         * A view parte dos materiais e locations ativos da projection central.
+         * Filtros por atributos públicos são avaliados nessa fotografia em
+         * memória; não há consulta por linha nem estrutura de agrupamento.
          */
         Set<Produto> materiaisFiltrados = new HashSet<>(clusterEParametrosProjection.getMateriaisAtivos());
 
         Set<Location> locationsFiltradas = new HashSet<>(clusterEParametrosProjection.getLocationsAtivas());
+
+        /*
+         * A edição Community permite restringir a view diretamente pelas
+         * chaves funcionais de material e location. Lista vazia mantém todo o
+         * conjunto ativo; características, agrupamentos e filtros DFU
+         * dinâmicos continuam fora deste caminho.
+         */
+        aplicaFiltrosIdCommunity(
+                configuredView,
+                materiaisFiltrados,
+                locationsFiltradas);
+        aplicaFiltrosCaracteristicasCommunity(
+                configuredView,
+                materiaisFiltrados,
+                locationsFiltradas,
+                clusterEParametrosProjection);
         
         // Aplica apenas filtros ad-hoc de DFU criados pelo proprio fluxo
         // Community, como esconder DFUs sem faturamento historico. Filtros
@@ -325,6 +343,152 @@ public class ConfiguredViewProjectionFactory {
             }
             index++;
         }
+
+    }
+
+    /** Aplica os filtros persistidos sem criar consultas nem estruturas Enterprise. */
+    private void aplicaFiltrosIdCommunity(
+            ConfiguredView configuredView,
+            Set<Produto> materiaisFiltrados,
+            Set<Location> locationsFiltradas) {
+
+        Set<String> materialIdFilterSet = getIdFilterSet(
+                configuredView.getMaterialIdFilterSet(),
+                "material");
+        Set<String> locationIdFilterSet = getIdFilterSet(
+                configuredView.getLocationIdFilterSet(),
+                "location");
+
+        if (!materialIdFilterSet.isEmpty()) {
+            materiaisFiltrados.removeIf(material -> !materialIdFilterSet.contains(material.getId()));
+        }
+        if (!locationIdFilterSet.isEmpty()) {
+            locationsFiltradas.removeIf(location -> !locationIdFilterSet.contains(location.getId()));
+        }
+
+    }
+
+    /**
+     * Aplica filtros públicos com OR entre valores e AND entre características.
+     *
+     * <p>Todo o cálculo usa os sets já carregados pela projection central. O
+     * número de round-trips ao banco permanece inalterado.</p>
+     */
+    private void aplicaFiltrosCaracteristicasCommunity(
+            ConfiguredView configuredView,
+            Set<Produto> materiaisFiltrados,
+            Set<Location> locationsFiltradas,
+            ClusterEParametrosProjection clusterEParametrosProjection) {
+
+        Map<String, Set<String>> materialFilters = groupCharacteristicFilters(
+                configuredView.getMaterialCharacteristicFilterSet(),
+                "material");
+        Map<String, Set<String>> locationFilters = groupCharacteristicFilters(
+                configuredView.getLocationCharacteristicFilterSet(),
+                "location");
+
+        LocalDateTime referenceDate = LocalDateTime.now();
+        materiaisFiltrados.removeIf(material -> !matchesAllCharacteristicFilters(
+                materialFilters,
+                characteristicId -> switch (characteristicId) {
+                    case "MATERIAL_STATUS" -> material
+                            .getStatusProduto(referenceDate, clusterEParametrosProjection.getParametrosGlobais())
+                            .toString();
+                    case "MATERIAL_ACTIVE" -> Boolean.toString(material.getAtivo());
+                    default -> throw new IllegalStateException(
+                            "Unsupported persisted Community material filter characteristic "
+                                    + characteristicId + ".");
+                }));
+
+        locationsFiltradas.removeIf(location -> !matchesAllCharacteristicFilters(
+                locationFilters,
+                characteristicId -> switch (characteristicId) {
+                    case "LOCATION_TYPE" -> getLocationTypePublicValue(location);
+                    case "LOCATION_ACTIVE" -> Boolean.toString(location.getAtivo());
+                    case "COUNTRY" -> location.getPais();
+                    case "STATE" -> location.getEstado();
+                    case "CITY" -> location.getCidade();
+                    default -> throw new IllegalStateException(
+                            "Unsupported persisted Community location filter characteristic "
+                                    + characteristicId + ".");
+                }));
+
+    }
+
+    /** Agrupa o snapshot e falha se a persistência contiver entradas parciais. */
+    private Map<String, Set<String>> groupCharacteristicFilters(
+            Set<ConfiguredViewCharacteristicFilter> configuredViewCharacteristicFilters,
+            String dimensionName) {
+
+        if (configuredViewCharacteristicFilters == null) {
+            throw new IllegalStateException(
+                    "Configured View " + dimensionName + " characteristic filter snapshot is required.");
+        }
+        for (ConfiguredViewCharacteristicFilter characteristicFilter : configuredViewCharacteristicFilters) {
+            if (characteristicFilter == null
+                    || characteristicFilter.getCharacteristicId() == null
+                    || characteristicFilter.getCharacteristicId().isBlank()
+                    || characteristicFilter.getFilteredValue() == null
+                    || characteristicFilter.getFilteredValue().isBlank()) {
+                throw new IllegalStateException(
+                        "Configured View " + dimensionName + " characteristic filter contains an incomplete entry.");
+            }
+        }
+        return configuredViewCharacteristicFilters.stream().collect(Collectors.groupingBy(
+                ConfiguredViewCharacteristicFilter::getCharacteristicId,
+                LinkedHashMap::new,
+                Collectors.mapping(
+                        ConfiguredViewCharacteristicFilter::getFilteredValue,
+                        Collectors.toCollection(LinkedHashSet::new))));
+
+    }
+
+    /** Avalia a interseção das características configuradas. */
+    private boolean matchesAllCharacteristicFilters(
+            Map<String, Set<String>> filters,
+            Function<String, String> valueResolver) {
+
+        for (Map.Entry<String, Set<String>> filter : filters.entrySet()) {
+            String actualValue = valueResolver.apply(filter.getKey());
+            if (actualValue == null || !filter.getValue().contains(actualValue)) {
+                return false;
+            }
+        }
+        return true;
+
+    }
+
+    /** Mantém no runtime os mesmos labels JSON publicados pelo DTO de location. */
+    private String getLocationTypePublicValue(Location location) {
+
+        if (location.getTipoLocation() == null) {
+            return null;
+        }
+        return switch (location.getTipoLocation()) {
+            case INTERNA -> "Internal";
+            case CLIENTE_FINAL -> "End Client";
+            case DISTRIBUIDOR -> "Distributor";
+            case FORNECEDOR -> "Supplier";
+            case REGIAO_COMERCIAL -> "Commercial Region";
+            case PONTO_TRANSBORDO -> "Transshipment Point";
+        };
+
+    }
+
+    /** Valida a fotografia persistida antes de filtrar os sets ativos. */
+    private Set<String> getIdFilterSet(Set<String> idFilterSet, String dimensionName) {
+
+        if (idFilterSet == null) {
+            throw new IllegalStateException(
+                    "Configured View " + dimensionName + " id filter snapshot is required.");
+        }
+        for (String id : idFilterSet) {
+            if (id == null || id.isBlank()) {
+                throw new IllegalStateException(
+                        "Configured View " + dimensionName + " id filter contains an empty id.");
+            }
+        }
+        return idFilterSet;
 
     }
 

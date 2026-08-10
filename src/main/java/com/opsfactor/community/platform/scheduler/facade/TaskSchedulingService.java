@@ -253,8 +253,9 @@ public class TaskSchedulingService {
         ScheduledTaskImediato scheduledTaskImediato = criaScheduledTaskImediato(
                 classeTask, tipoProcesso, scheduledTaskId, userId, descricao, timeZoneId, dtoParametros);
 
+        Task<A,S> task;
         try {
-            Task<A,S> task = (Task<A,S>) instanciaTask(
+            task = (Task<A,S>) instanciaTask(
                     classeTask,
                     classeServico,
                     scheduledTaskImediato,
@@ -280,7 +281,39 @@ public class TaskSchedulingService {
             throw e;
         }
 
+        validaResultadoTaskSincrona(task, scheduledTaskImediato);
+
         return scheduledTaskImediato;
+
+    }
+
+    /**
+     * Confirma o resultado funcional gravado pela task sincronizada.
+     *
+     * <p>{@link Task#run()} captura falhas da regra para sempre concluir e
+     * persistir o historico usado por runners assíncronos. No Community, porem,
+     * a task roda dentro da request: uma execucao registrada como falha precisa
+     * voltar como erro HTTP, evitando que a interface mostre sucesso enquanto o
+     * Process Status mostra {@code Failed}.</p>
+     */
+    private void validaResultadoTaskSincrona(
+            Task<?, ?> task,
+            ScheduledTaskImediato scheduledTaskImediato) {
+
+        ScheduledTaskExecution scheduledTaskExecution =
+                task.getLastScheduledTaskExecution();
+
+        if (scheduledTaskExecution == null) {
+            throw new TaskSchedulingException(
+                    "Synchronous task "
+                            + scheduledTaskImediato.getId()
+                            + " did not produce an execution result.");
+        }
+
+        String mensagemErroResumida = scheduledTaskExecution.getMensagemErroResumida();
+        if (mensagemErroResumida != null && !mensagemErroResumida.isBlank()) {
+            throw new TaskSchedulingException(mensagemErroResumida);
+        }
 
     }
 

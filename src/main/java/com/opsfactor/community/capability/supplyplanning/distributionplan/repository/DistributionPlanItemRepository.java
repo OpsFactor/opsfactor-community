@@ -229,16 +229,14 @@ public interface DistributionPlanItemRepository extends JpaRepository<Distributi
     boolean existsByKeySupplyPlanAndKeyLocationOrigem(
             SupplyPlan supplyPlan, Location locationOrigem);
 
-    /**
-     * Atualiza o plano restrito de distribuicao a partir do plano irrestrito e neutraliza ordens firmes.
-     */
+    /** Atualiza o plano restrito de distribuição a partir do plano irrestrito. */
     @Transactional
     @Modifying(clearAutomatically = true, flushAutomatically = true) // https://www.baeldung.com/spring-data-jpa-modifying-annotation
     @Query("UPDATE DistributionPlanItem dpl "
             + "SET dpl.quantidadeOrdemPlanejadaRestrita = dpl.quantidadeOrdemPlanejadaIrrestrita, "
-            + "dpl.quantidadeOrdemFirmeRestrita = 0, "
+            + "dpl.quantidadeOrdemFirmeRestrita = dpl.quantidadeOrdemFirmeIrrestrita, "
             + "dpl.parcelaOrdemPlanejadaRestritaAtendimentoDemandaDireta = dpl.parcelaOrdemPlanejadaIrrestritaAtendimentoDemandaDireta, "
-            + "dpl.parcelaOrdemFirmeRestritaAtendimentoDemandaDireta = 0 "
+            + "dpl.parcelaOrdemFirmeRestritaAtendimentoDemandaDireta = dpl.parcelaOrdemFirmeIrrestritaAtendimentoDemandaDireta "
             + "WHERE dpl.key.supplyPlan.id = :supplyPlanId")
     public void atualizaPlanoRestritoComPlanoIrrestrito(Long supplyPlanId);
 

@@ -158,9 +158,9 @@ public class DemandPlanningConfigurationMapper {
         demandPlanningGeneralParametersDTO.uomId = (parametrosDemandPlanNivelCluster.getUnidadeMedidaPadraoDP() == null) ?
                 clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal().getId()
                 : parametrosDemandPlanNivelCluster.getUnidadeMedidaPadraoDP().getId();
-        demandPlanningGeneralParametersDTO.roundToSalesUnit = (parametrosDemandPlanNivelCluster.getArredondaParaUnidadeVenda() == null) ?
-                false
-                : parametrosDemandPlanNivelCluster.getArredondaParaUnidadeVenda();
+        // O arredondamento pela UOM de venda e uma capacidade Pro. A borda
+        // Community nunca reexpoe um valor legado persistido.
+        demandPlanningGeneralParametersDTO.roundToSalesUnit = false;
         demandPlanningGeneralParametersDTO.considerHistoricalSalesOfInactiveDfus = (parametrosDemandPlanNivelCluster.getDpUsaHistoricoDemandaInativos() == null) ?
                 true
                 : parametrosDemandPlanNivelCluster.getDpUsaHistoricoDemandaInativos();
@@ -174,12 +174,10 @@ public class DemandPlanningConfigurationMapper {
         demandPlanningGeneralParametersDTO.generateForecastForDiscontinuedMaterials = (parametrosDemandPlanNivelCluster.getDpGeraForecastParaDescontinuados() == null) ?
                 parametrosGlobais.getDpGeraForecastParaDescontinuados()
                 : parametrosDemandPlanNivelCluster.getDpGeraForecastParaDescontinuados();
-        demandPlanningGeneralParametersDTO.materialAggregationType = (parametrosDemandPlanNivelCluster.getMaterialAggregationType() == null) ?
-                Constantes.DPNivelAgregacao.TOP_DOWN
-                : parametrosDemandPlanNivelCluster.getMaterialAggregationType();
-        demandPlanningGeneralParametersDTO.locationAggregationType = (parametrosDemandPlanNivelCluster.getLocationAggregationType() == null) ?
-                Constantes.DPNivelAgregacao.TOP_DOWN
-                : parametrosDemandPlanNivelCluster.getLocationAggregationType();
+        // A edicao Community executa sempre Top-Down nas duas dimensoes. Os
+        // seletores de estrategia sao reabertos somente pelo overlay Pro.
+        demandPlanningGeneralParametersDTO.materialAggregationType = Constantes.DPNivelAgregacao.TOP_DOWN;
+        demandPlanningGeneralParametersDTO.locationAggregationType = Constantes.DPNivelAgregacao.TOP_DOWN;
         /*
          * Budget as Forecast e bases financeiras pertencem ao Enterprise.
          * O DTO Community conserva o campo apenas para tolerar payloads
@@ -331,6 +329,17 @@ public class DemandPlanningConfigurationMapper {
         }
         if (Boolean.TRUE.equals(demandPlanningClusterLevelConfigurationDTO.demandPlanningGeneralParameters.useExecutionProfileAutofitModel)) {
             throw new RequiresEnterpriseVersionException("Demand Planning default auto-fit configuration");
+        }
+        if (Boolean.TRUE.equals(demandPlanningClusterLevelConfigurationDTO.demandPlanningGeneralParameters.roundToSalesUnit)) {
+            throw new RequiresEnterpriseVersionException("Demand Planning round forecast to sales UOM");
+        }
+        if ((demandPlanningClusterLevelConfigurationDTO.demandPlanningGeneralParameters.materialAggregationType != null
+                && !Constantes.DPNivelAgregacao.TOP_DOWN.equals(
+                demandPlanningClusterLevelConfigurationDTO.demandPlanningGeneralParameters.materialAggregationType))
+                || (demandPlanningClusterLevelConfigurationDTO.demandPlanningGeneralParameters.locationAggregationType != null
+                && !Constantes.DPNivelAgregacao.TOP_DOWN.equals(
+                demandPlanningClusterLevelConfigurationDTO.demandPlanningGeneralParameters.locationAggregationType))) {
+            throw new RequiresEnterpriseVersionException("Demand Planning aggregation strategy");
         }
         if (demandPlanningClusterLevelConfigurationDTO.demandPlanningGeneralParameters.budgetId != null) {
             throw new RequiresEnterpriseVersionException("Demand Planning Budget as Forecast");
@@ -601,7 +610,7 @@ public class DemandPlanningConfigurationMapper {
          */
         parametrosDemandPlanNivelCluster.setUnidadeMedidaPadraoDP(
                 getUnidadeMedidaPadraoDpOuNull(demandPlanningGeneralParametersDTO));
-        parametrosDemandPlanNivelCluster.setArredondaParaUnidadeVenda(demandPlanningGeneralParametersDTO.roundToSalesUnit);
+        parametrosDemandPlanNivelCluster.setArredondaParaUnidadeVenda(false);
         /*
          * A escrita dos parametros estatisticos fica isolada para deixar
          * evidente que apenas campos Community chegam na entidade. Stockout,

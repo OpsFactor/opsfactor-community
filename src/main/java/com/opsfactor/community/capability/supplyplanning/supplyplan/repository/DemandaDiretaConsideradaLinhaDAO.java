@@ -172,6 +172,10 @@ public class DemandaDiretaConsideradaLinhaDAO {
             return getSqlMergeDemandaDiretaConsideradaLinhaH2();
         }
 
+        if (isDatabaseSQLite()) {
+            return getSqlUpsertDemandaDiretaConsideradaLinhaSQLite();
+        }
+
         return getSqlUpsertDemandaDiretaConsideradaLinhaMariaDb();
 
     }
@@ -182,6 +186,20 @@ public class DemandaDiretaConsideradaLinhaDAO {
                 (ConnectionCallback<String>) connection -> connection.getMetaData().getDatabaseProductName());
         return databaseProductName != null
                 && databaseProductName.toLowerCase(Locale.ROOT).contains("h2");
+
+    }
+
+    /**
+     * Identifica o SQLite usado pelo perfil local Community. O driver nao
+     * aceita `ON DUPLICATE KEY`, portanto precisa de seu `ON CONFLICT`
+     * equivalente para preservar o mesmo upsert em batch.
+     */
+    private boolean isDatabaseSQLite() {
+
+        String databaseProductName = jdbcTemplate.execute(
+                (ConnectionCallback<String>) connection -> connection.getMetaData().getDatabaseProductName());
+        return databaseProductName != null
+                && databaseProductName.toLowerCase(Locale.ROOT).contains("sqlite");
 
     }
 
@@ -209,6 +227,49 @@ public class DemandaDiretaConsideradaLinhaDAO {
                     material_id,
                     supply_plan_id
                 ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                """;
+
+    }
+
+    /**
+     * Upsert SQLite equivalente aos SQLs MariaDB/H2. `excluded` representa a
+     * linha do batch que colidiu com a chave composta já persistida.
+     */
+    private String getSqlUpsertDemandaDiretaConsideradaLinhaSQLite() {
+
+        return """
+                INSERT INTO demanda_direta_considerada_linha (
+                    data_referencia,
+                    quantidade_carteira_original,
+                    quantidade_carteira_original_propagada_location_interna,
+                    quantidade_demanda_direta_carteira_irrestrita,
+                    quantidade_demanda_direta_carteira_restrita,
+                    quantidade_demanda_direta_estoque_seguranca,
+                    quantidade_demanda_direta_plano_demanda_irrestrita,
+                    quantidade_demanda_direta_plano_demanda_restrita,
+                    quantidade_plano_demanda_original,
+                    quantidade_plano_demanda_original_propagada_location_interna,
+                    location_id,
+                    material_id,
+                    supply_plan_id,
+                    unidade_medida_id
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                ON CONFLICT (
+                    data_referencia,
+                    location_id,
+                    material_id,
+                    supply_plan_id
+                ) DO UPDATE SET
+                    quantidade_carteira_original = excluded.quantidade_carteira_original,
+                    quantidade_carteira_original_propagada_location_interna = excluded.quantidade_carteira_original_propagada_location_interna,
+                    quantidade_demanda_direta_carteira_irrestrita = excluded.quantidade_demanda_direta_carteira_irrestrita,
+                    quantidade_demanda_direta_carteira_restrita = excluded.quantidade_demanda_direta_carteira_restrita,
+                    quantidade_demanda_direta_estoque_seguranca = excluded.quantidade_demanda_direta_estoque_seguranca,
+                    quantidade_demanda_direta_plano_demanda_irrestrita = excluded.quantidade_demanda_direta_plano_demanda_irrestrita,
+                    quantidade_demanda_direta_plano_demanda_restrita = excluded.quantidade_demanda_direta_plano_demanda_restrita,
+                    quantidade_plano_demanda_original = excluded.quantidade_plano_demanda_original,
+                    quantidade_plano_demanda_original_propagada_location_interna = excluded.quantidade_plano_demanda_original_propagada_location_interna,
+                    unidade_medida_id = excluded.unidade_medida_id
                 """;
 
     }

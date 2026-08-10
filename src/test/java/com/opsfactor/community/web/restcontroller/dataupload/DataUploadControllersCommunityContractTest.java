@@ -18,6 +18,7 @@ import com.opsfactor.community.web.restcontroller.dataupload.masterdata.producti
 import com.opsfactor.community.web.restcontroller.dataupload.masterdata.production.RecursoProdutivoIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.masterdata.production.RoteiroIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.masterdata.production.VersaoProducaoSimplesIntegrationController;
+import com.opsfactor.community.web.restcontroller.dataupload.planning.supply.FulfilledDemandIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.planning.supply.InventoryPlanIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.transactionaldata.EstoqueIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.transactionaldata.SelloutIntegrationController;
@@ -110,7 +111,7 @@ public class DataUploadControllersCommunityContractTest {
             "safetystockprioritizationmodel",
             "temporalsplitcurve",
             "workingday",
-            "characteristic",
+            "characteristic/materiallocation",
             "productfilter",
             "locationfilter",
             "dfufilter",
@@ -121,10 +122,8 @@ public class DataUploadControllersCommunityContractTest {
             "loadingorders",
             "productionorder",
             "stockproductionbatch",
-            "productionplan",
             "directdemand",
             "consolidatedloadingorders",
-            "distributionplan",
             "inventoryplan/productionlot",
             "inventoryplan/coveragedays",
             "writeoffprojection",
@@ -415,24 +414,21 @@ public class DataUploadControllersCommunityContractTest {
     }
 
     @Test
-    public void dataUploadSurfaceShouldNotExposeDemandPlanFileFillUtilitiesBeforeDedicatedRecorte() {
+    public void dataUploadSurfaceShouldNotExposeRetiredTemplateFillUtilities() {
 
         List<String> violations = new ArrayList<>();
 
         /*
-         * Os utilitarios legados `fillwithdemandplan` recebem arquivo multipart
-         * e devolvem workbook/alertas derivados de um Demand Plan. Eles nao sao
-         * carga generica de cadastro e precisam de recorte proprio de template,
-         * fonte do plano, validacao, OpenAPI e comportamento de front antes de
-         * voltarem para a superficie Community.
+         * Utilitarios legados de preenchimento de template foram aposentados e
+         * nao pertencem a superficie de Data Upload de nenhuma edicao.
          */
         COMMUNITY_DYNAMIC_CONTROLLER_SUBPATHS.forEach((controllerClass, subPath) -> {
-            if (isDemandPlanFileFillUtilitySubPath(subPath)) {
+            if (isRetiredTemplateFillUtilitySubPath(subPath)) {
                 violations.add(controllerClass.getSimpleName() + " dynamic subpath " + subPath);
             }
         });
         COMMUNITY_DECLARED_ENDPOINTS_BY_CONTROLLER.forEach((controllerClass, routeList) -> routeList.forEach(route -> {
-            if (isDemandPlanFileFillUtilitySubPath(route.path())) {
+            if (isRetiredTemplateFillUtilitySubPath(route.path())) {
                 violations.add(controllerClass.getSimpleName()
                         + " declared route "
                         + route.httpMethod()
@@ -443,43 +439,19 @@ public class DataUploadControllersCommunityContractTest {
 
         Assertions.assertTrue(
                 violations.isEmpty(),
-                "Data Upload Community nao deve reabrir fillwithdemandplan antes do recorte completo:\n"
+                "Data Upload Community nao deve expor utilitarios legados de preenchimento de template:\n"
                         + String.join("\n", violations));
 
     }
 
     @Test
-    public void dataUploadSurfaceShouldNotExposeDemandPlanDetailedExportBeforeDedicatedRecorte() {
+    public void dataUploadSurfaceShouldExposeTheBoundedDemandPlanDetailedExport() {
 
-        List<String> violations = new ArrayList<>();
-
-        /*
-         * O export detalhado legado de Demand Plan materializa uma matriz de
-         * arquivo a partir do plano e permanece separado do endpoint
-         * operacional `planning/demand/demandplan/{id}`. Reabrir a rota de
-         * Data Upload exige recorte proprio de projection, key figures,
-         * formato de arquivo, comportamento de front e, idealmente, artefato
-         * assinc para extracoes pesadas.
-         */
-        COMMUNITY_DYNAMIC_CONTROLLER_SUBPATHS.forEach((controllerClass, subPath) -> {
-            if (isDemandPlanDetailedExportSubPath(subPath)) {
-                violations.add(controllerClass.getSimpleName() + " dynamic subpath " + subPath);
-            }
-        });
-        COMMUNITY_DECLARED_ENDPOINTS_BY_CONTROLLER.forEach((controllerClass, routeList) -> routeList.forEach(route -> {
-            if (isDemandPlanDetailedExportSubPath(route.path())) {
-                violations.add(controllerClass.getSimpleName()
-                        + " declared route "
-                        + route.httpMethod()
-                        + " "
-                        + route.path());
-            }
-        }));
-
-        Assertions.assertTrue(
-                violations.isEmpty(),
-                "Data Upload Community nao deve reabrir dataupload/demandplan antes do recorte completo:\n"
-                        + String.join("\n", violations));
+        Assertions.assertEquals(
+                routes(
+                        route("GET", "api/secured/data/file/demandplan/{demandPlanId}"),
+                        route("GET", "api/secured/data/file/demandplan/{demandPlanId}/period/{referenceDate}")),
+                COMMUNITY_DECLARED_ENDPOINTS_BY_CONTROLLER.get(DemandPlanDetailedExportController.class));
 
     }
 
@@ -609,6 +581,10 @@ public class DataUploadControllersCommunityContractTest {
         communityDynamicControllerSubpaths.put(ConversaoUnidadeProdutoIntegrationController.class, "unitconversionmaterial");
         communityDynamicControllerSubpaths.put(LocationIntegrationController.class, "location");
         communityDynamicControllerSubpaths.put(MaterialIntegrationController.class, "material");
+        communityDynamicControllerSubpaths.put(MaterialCharacteristicIntegrationController.class, "characteristic/material");
+        communityDynamicControllerSubpaths.put(MaterialCharacteristicValueIntegrationController.class, "characteristic/material/value");
+        communityDynamicControllerSubpaths.put(LocationCharacteristicIntegrationController.class, "characteristic/location");
+        communityDynamicControllerSubpaths.put(LocationCharacteristicValueIntegrationController.class, "characteristic/location/value");
         communityDynamicControllerSubpaths.put(ParametrosMaterialLocationIntegrationController.class, "materiallocationparameters");
         communityDynamicControllerSubpaths.put(InventoryPolicyIntegrationController.class, "inventorypolicy");
         communityDynamicControllerSubpaths.put(InventoryPolicyDetailIntegrationController.class, "inventorypolicydetail");
@@ -623,6 +599,9 @@ public class DataUploadControllersCommunityContractTest {
         communityDynamicControllerSubpaths.put(VersaoProducaoSimplesIntegrationController.class, "simpleproductionversion");
         communityDynamicControllerSubpaths.put(EstoqueIntegrationController.class, "stock");
         communityDynamicControllerSubpaths.put(SelloutIntegrationController.class, "sellout");
+        communityDynamicControllerSubpaths.put(DistributionPlanIntegrationController.class, "distributionplan");
+        communityDynamicControllerSubpaths.put(ProductionPlanVolumeIntegrationController.class, "productionplan/volume");
+        communityDynamicControllerSubpaths.put(ProductionPlanOccupationIntegrationController.class, "productionplan/occupation");
 
         return communityDynamicControllerSubpaths;
 
@@ -648,6 +627,31 @@ public class DataUploadControllersCommunityContractTest {
         communityDeclaredEndpointsByController.put(RecursoProdutivoIntegrationController.class, List.of());
         communityDeclaredEndpointsByController.put(RoteiroIntegrationController.class, List.of());
         communityDeclaredEndpointsByController.put(VersaoProducaoSimplesIntegrationController.class, List.of());
+        communityDeclaredEndpointsByController.put(MaterialCharacteristicIntegrationController.class, List.of());
+        communityDeclaredEndpointsByController.put(MaterialCharacteristicValueIntegrationController.class, List.of());
+        communityDeclaredEndpointsByController.put(LocationCharacteristicIntegrationController.class, List.of());
+        communityDeclaredEndpointsByController.put(LocationCharacteristicValueIntegrationController.class, List.of());
+        communityDeclaredEndpointsByController.put(
+                DistributionPlanIntegrationController.class,
+                routes(
+                        route("GET", "api/secured/data/distributionplan/{supplyPlanId}"),
+                        route("GET", "api/secured/data/file/distributionplan/{supplyPlanId}")));
+        communityDeclaredEndpointsByController.put(
+                ProductionPlanVolumeIntegrationController.class,
+                routes(
+                        route("GET", "api/secured/data/file/productionplan/volume/{supplyPlanId}"),
+                        route("GET", "api/secured/data/productionplan/volume/{supplyPlanId}")));
+        communityDeclaredEndpointsByController.put(
+                ProductionPlanOccupationIntegrationController.class,
+                routes(
+                        route("GET", "api/secured/data/file/productionplan/occupation/{supplyPlanId}"),
+                        route("GET", "api/secured/data/productionplan/occupation/{supplyPlanId}")));
+
+        communityDeclaredEndpointsByController.put(
+                DemandPlanDetailedExportController.class,
+                routes(
+                        route("GET", "api/secured/data/file/demandplan/{demandPlanId}"),
+                        route("GET", "api/secured/data/file/demandplan/{demandPlanId}/period/{referenceDate}")));
 
         communityDeclaredEndpointsByController.put(
                 LocationIntegrationController.class,
@@ -683,6 +687,12 @@ public class DataUploadControllersCommunityContractTest {
                 routes(
                         route("GET", "api/secured/data/file/operationproductionrouting"),
                         route("POST", "api/secured/data/file/operationproductionrouting")));
+
+        communityDeclaredEndpointsByController.put(
+                FulfilledDemandIntegrationController.class,
+                routes(
+                        route("GET", "api/secured/data/file/fulfilleddemand/{supplyPlanId}/{unitOfMeasureId}"),
+                        route("GET", "api/secured/data/fulfilleddemand/{supplyPlanId}/{unitOfMeasureId}")));
 
         communityDeclaredEndpointsByController.put(
                 InventoryPlanIntegrationController.class,
@@ -923,7 +933,7 @@ public class DataUploadControllersCommunityContractTest {
 
     }
 
-    private static boolean isDemandPlanFileFillUtilitySubPath(String subPath) {
+    private static boolean isRetiredTemplateFillUtilitySubPath(String subPath) {
 
         return subPath != null
                 && subPath.toLowerCase().contains("fillwithdemandplan");

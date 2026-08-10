@@ -1091,6 +1091,25 @@ public class SupplyPlanning {
             SupplyPlanningProjection supplyPlanningProjection,
             MaterialProjection materialProjectionPerfilExecucaoSupplyPlan,
             LocationProjection locationProjectionPerfilExecucaoSupplyPlan) {
+
+        geraRequisicoesESugestoesProducao(
+                supplyPlanningProjection,
+                materialProjectionPerfilExecucaoSupplyPlan,
+                locationProjectionPerfilExecucaoSupplyPlan,
+                false);
+
+    }
+
+    /**
+     * Gera os reabastecimentos irrestritos e, quando solicitado pelo passe
+     * pos-leveling, prefere uma rota inbound viavel para materiais que tambem
+     * poderiam ser produzidos na nova location.
+     */
+    public static void geraRequisicoesESugestoesProducao(
+            SupplyPlanningProjection supplyPlanningProjection,
+            MaterialProjection materialProjectionPerfilExecucaoSupplyPlan,
+            LocationProjection locationProjectionPerfilExecucaoSupplyPlan,
+            boolean priorizaInboundProducaoViavel) {
         
         Calendario calendario = supplyPlanningProjection.getCalendario();        
         VersaoMalha versaoMalha = supplyPlanningProjection.getSupplyPlan().getVersaoMalha();
@@ -1189,6 +1208,11 @@ public class SupplyPlanning {
                            
                         // seta produção, considerando o que já há de pedidos inbound/requisicoes inbound/ordens para reposição do kanban/PR
                         if (supplyPlanningProjection.isGeneratePlannedProductionOrder()
+                            && !(priorizaInboundProducaoViavel
+                                    && perfilExecucaoSupplyPlan
+                                            .getGeraRequisicoesInboundParaMateriaisComProducaoViavel()
+                                    && supplyPlanningProjection.isGenerateInbound()
+                                    && optionalLinhaTransporteInboundPrioritaria.isPresent())
                             && supplyNetworkProjection
                                     .getTipoRessuprimento(
                                             versaoMalha, 
@@ -1248,8 +1272,9 @@ public class SupplyPlanning {
                                             locationProjectionPerfilExecucaoSupplyPlan.getLocationsAtivasOuNuloSeLocationProjectionCompleto(),
                                             materialProjectionPerfilExecucaoSupplyPlan.getMateriaisAtivosOuNuloSeMaterialProjectionCompleto())
                                     .equals(Constantes.SNPOrigemReabastecimento.PRODUCAO)
-                                    || (!perfilExecucaoSupplyPlan.getGeraRequisicoesInboundParaMateriaisComProducaoViavel()
-                                            && supplyPlanningProjection.isGeneratePlannedProductionOrder())) {
+                                    || (perfilExecucaoSupplyPlan.getGeraRequisicoesInboundParaMateriaisComProducaoViavel()
+                                            && (priorizaInboundProducaoViavel
+                                                    || !supplyPlanningProjection.isGeneratePlannedProductionOrder()))) {
                             
                                 // O proprio bloco exige linha inbound prioritaria; por isso a origem
                                 // deve estar materializada antes de gravarmos a requisicao planejada.
@@ -1311,6 +1336,14 @@ public class SupplyPlanning {
 
                     // SE HA ROTEIRO + LISTA TECNICA, ATUALIZA SUGESTAO DE PRODUCAO
                     if (supplyPlanningProjection.isGeneratePlannedProductionOrder()
+                        && !(priorizaInboundProducaoViavel
+                                && perfilExecucaoSupplyPlan
+                                        .getGeraRequisicoesInboundParaMateriaisComProducaoViavel()
+                                && supplyPlanningProjection.isGenerateInbound()
+                                && optionalLinhaTransporteInboundPrioritaria.isPresent()
+                                && (!location.getConsideraRestricaoLinhaInbound()
+                                        || i >= supplyPlanningProjection.getCalendario()
+                                                .getPosicaoPeriodoPresente() + leadTime))
                         && supplyNetworkProjection
                                 .getTipoRessuprimento(
                                         versaoMalha, 
@@ -1379,8 +1412,9 @@ public class SupplyPlanning {
                                         locationProjectionPerfilExecucaoSupplyPlan.getLocationsAtivasOuNuloSeLocationProjectionCompleto(),
                                         materialProjectionPerfilExecucaoSupplyPlan.getMateriaisAtivosOuNuloSeMaterialProjectionCompleto())
                                 .equals(Constantes.SNPOrigemReabastecimento.PRODUCAO) 
-                                || (!perfilExecucaoSupplyPlan.getGeraRequisicoesInboundParaMateriaisComProducaoViavel()
-                                        && supplyPlanningProjection.isGeneratePlannedProductionOrder())) {
+                                || (perfilExecucaoSupplyPlan.getGeraRequisicoesInboundParaMateriaisComProducaoViavel()
+                                        && (priorizaInboundProducaoViavel
+                                                || !supplyPlanningProjection.isGeneratePlannedProductionOrder()))) {
                         
                             // se não consideramos restrições inbound e não há linha transporte inbound,
                             // location origem = location destino para a requisição (auto-ressuprimento)

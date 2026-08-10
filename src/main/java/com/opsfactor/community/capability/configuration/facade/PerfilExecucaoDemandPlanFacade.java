@@ -127,9 +127,10 @@ public class PerfilExecucaoDemandPlanFacade {
         perfilExecucaoDemandPlan.setDescricao(perfilExecucaoDemandPlanDTO.description);
         perfilExecucaoDemandPlan.setTamanhoBucket(perfilExecucaoDemandPlanDTO.bucketSize);
         perfilExecucaoDemandPlan.setNumeroPeriodosHorizontePlanejamento(perfilExecucaoDemandPlanDTO.planningHorizonInPeriods);
-        perfilExecucaoDemandPlan.setRestringePeriodosEdicaoPlano(perfilExecucaoDemandPlanDTO.constrainPlanEditPeriods);
-        perfilExecucaoDemandPlan.setPeriodoInicialEdicaoPlano(perfilExecucaoDemandPlanDTO.initialPlanEditPeriod);
-        perfilExecucaoDemandPlan.setPeriodoFinalEdicaoPlano(perfilExecucaoDemandPlanDTO.finalPlanEditPeriod);
+        // O horizonte fixo pertence ao Pro/Enterprise; Community sempre persiste edicao aberta.
+        perfilExecucaoDemandPlan.setRestringePeriodosEdicaoPlano(false);
+        perfilExecucaoDemandPlan.setPeriodoInicialEdicaoPlano(null);
+        perfilExecucaoDemandPlan.setPeriodoFinalEdicaoPlano(null);
         perfilExecucaoDemandPlan.setUnidadeMedidaPadraoDP(
                 perfilExecucaoDemandPlanDTO.defaultDemandPlanningUomId == null ?
                         null
@@ -305,6 +306,15 @@ public class PerfilExecucaoDemandPlanFacade {
      */
     private void validaConfiguracoesEnterpriseCommunity(PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO) {
 
+        if (Boolean.TRUE.equals(perfilExecucaoDemandPlanDTO.constrainPlanEditPeriods)) {
+            throw new RequiresEnterpriseVersionException("Demand Planning fixed edit horizon");
+        }
+        validaParametroEnterpriseCommunity(
+                perfilExecucaoDemandPlanDTO.initialPlanEditPeriod,
+                "Demand Planning fixed edit horizon");
+        validaParametroEnterpriseCommunity(
+                perfilExecucaoDemandPlanDTO.finalPlanEditPeriod,
+                "Demand Planning fixed edit horizon");
         validaParametroEnterpriseCommunity(perfilExecucaoDemandPlanDTO.mapeMaterialAggregationLevelId, "Demand Planning material aggregation level for MAPE");
         validaParametroEnterpriseCommunity(perfilExecucaoDemandPlanDTO.mapeLocationAggregationLevelId, "Demand Planning location aggregation level for MAPE");
         if (perfilExecucaoDemandPlanDTO.historicalSalesDocumentType != null

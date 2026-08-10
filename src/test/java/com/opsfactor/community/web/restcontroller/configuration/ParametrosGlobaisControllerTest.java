@@ -29,7 +29,6 @@ class ParametrosGlobaisControllerTest {
             "demandPlanningHistoricalDisplayPeriods",
             "horizonteForecastDias",
             "diasHistoricosForecastEstatistico",
-            "dpArredondaParaUnidadeVenda",
             "demandPlanningGenerateForecastForDiscontinuedMaterials",
             "diasHorizonteCongelado",
             "unidadeMedidaPadraoDP",
@@ -166,6 +165,19 @@ class ParametrosGlobaisControllerTest {
                 Boolean.FALSE,
                 ParametrosGlobaisController.ParametrosGlobaisDTO.fromCommunity(parametrosGlobais)
                         .getDemandPlanningGenerateForecastForDiscontinuedMaterials());
+
+    }
+
+    @Test
+    void fromCommunityShouldNeutralizeForecastRoundingToSalesUom() {
+
+        ParametrosGlobais parametrosGlobais = new ParametrosGlobais();
+        parametrosGlobais.setDpArredondaParaUnidadeVenda(true);
+
+        Assertions.assertEquals(
+                Boolean.FALSE,
+                ParametrosGlobaisController.ParametrosGlobaisDTO.fromCommunity(parametrosGlobais)
+                        .getDpArredondaParaUnidadeVenda());
 
     }
 

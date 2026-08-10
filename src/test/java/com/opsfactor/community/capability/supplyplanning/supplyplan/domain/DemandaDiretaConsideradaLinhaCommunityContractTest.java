@@ -76,6 +76,27 @@ class DemandaDiretaConsideradaLinhaCommunityContractTest {
 
     }
 
+    @Test
+    void communityUnconstrainedDemandShouldIncludeDemandPropagatedFromClients() {
+
+        DemandaDiretaConsideradaLinha demandaDiretaConsideradaLinha =
+                criaDemandaDiretaConsideradaLinha();
+        demandaDiretaConsideradaLinha.setQuantidadePlanoDemandaOriginal(20.0d);
+        demandaDiretaConsideradaLinha
+                .setQuantidadePlanoDemandaOriginalPropagadaLocationInterna(120.0d);
+        demandaDiretaConsideradaLinha.setQuantidadeCarteiraOriginal(15.0d);
+
+        demandaDiretaConsideradaLinha.atualizaPlanoIrrestritoCommunityComPlanoDemanda();
+
+        Assertions.assertEquals(
+                140.0d,
+                demandaDiretaConsideradaLinha.getQuantidadeDemandaDiretaPlanoDemandaIrrestrita());
+        Assertions.assertEquals(
+                0.0d,
+                demandaDiretaConsideradaLinha.getQuantidadeDemandaDiretaCarteiraIrrestrita());
+
+    }
+
     private static DemandaDiretaConsideradaLinha criaDemandaDiretaConsideradaLinha() {
 
         DemandaDiretaConsideradaLinha.DemandaDiretaConsideradaLinhaCompositeKey demandaDiretaConsideradaLinhaCompositeKey =

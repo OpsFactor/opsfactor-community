@@ -17,6 +17,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Valida a documentacao OpenAPI dos contratos Community que compartilham DTOs
@@ -293,9 +294,9 @@ public class IntegrationOpenApiConfigurationCommunityTest {
                 openApi.getComponents().getSchemas().get("ConfiguredViewDTO").getProperties().containsKey("viewName"));
         Assertions.assertFalse(
                 openApi.getComponents().getSchemas().get("ConfiguredViewDTO").getProperties().containsKey("directDemandUpdateKeyFigure"));
-        Assertions.assertFalse(
+        Assertions.assertTrue(
                 openApi.getComponents().getSchemas().get("ConfiguredViewDTO").getProperties().containsKey("materialCharacteristicDetailList"));
-        Assertions.assertFalse(
+        Assertions.assertTrue(
                 openApi.getComponents().getSchemas().get("ConfiguredViewDTO").getProperties().containsKey("locationCharacteristicDetailList"));
         Assertions.assertFalse(
                 openApi.getComponents().getSchemas().get("ConfiguredViewDTO").getProperties().containsKey("materialLocationCharacteristicDetailList"));
@@ -309,8 +310,9 @@ public class IntegrationOpenApiConfigurationCommunityTest {
                 openApi.getComponents().getSchemas().get("ConfiguredViewDTO").getProperties().containsKey("demandPlanWorkflowId"));
         Assertions.assertFalse(
                 openApi.getComponents().getSchemas().get("ConfiguredViewDTO").getProperties().containsKey("demandPlanWorkflowStageId"));
-        Assertions.assertTrue(
-                openApi.getComponents().getSchemas().get("ConfiguredViewCaracteristicaDTO").getProperties().isEmpty());
+        Assertions.assertEquals(
+                Set.of("characteristicId", "filteredValues"),
+                openApi.getComponents().getSchemas().get("ConfiguredViewCaracteristicaDTO").getProperties().keySet());
         Assertions.assertTrue(
                 openApi.getComponents().getSchemas().get("ConfiguredViewKeyFigureDTO").getProperties().isEmpty());
 

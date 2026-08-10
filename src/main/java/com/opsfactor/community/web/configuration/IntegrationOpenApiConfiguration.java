@@ -284,8 +284,6 @@ public class IntegrationOpenApiConfiguration {
                     "ConfiguredViewDTO",
                     List.of(
                             "directDemandUpdateKeyFigure",
-                            "materialCharacteristicDetailList",
-                            "locationCharacteristicDetailList",
                             "materialLocationCharacteristicDetailList",
                             "showMaterialLevel",
                             "showLocationLevel",
@@ -294,7 +292,7 @@ public class IntegrationOpenApiConfiguration {
                             "demandPlanWorkflowStageId")),
             Map.entry(
                     "ConfiguredViewCaracteristicaDTO",
-                    List.of("characteristicId", "characteristicDescription", "aggregationType", "columnPosition", "filteredValues")),
+                    List.of("characteristicDescription", "aggregationType", "columnPosition")),
             Map.entry(
                     "ConfiguredViewKeyFigureDTO",
                     List.of("keyFigure", "allowChanges", "position", "userId", "viewName", "viewType")),

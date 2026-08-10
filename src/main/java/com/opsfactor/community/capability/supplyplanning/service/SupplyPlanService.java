@@ -7,6 +7,7 @@ import com.opsfactor.community.capability.supplyplanning.distributionplan.reposi
 import com.opsfactor.community.capability.supplyplanning.inventoryplan.domain.InventoryPlanLinha;
 import com.opsfactor.community.capability.supplyplanning.inventoryplan.repository.InventoryPlanLinhaRepository;
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
+import com.opsfactor.community.capability.supplyplanning.productionplan.repository.ProductionPlanLinhaDAO;
 import com.opsfactor.community.capability.supplyplanning.productionplan.repository.ProductionPlanLinhaRepository;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.DemandaDiretaConsideradaLinha;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
@@ -79,6 +80,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.NoResultException;
+import java.sql.ResultSetMetaData;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -222,6 +224,13 @@ public class SupplyPlanService {
      */
     @Autowired
     private ProductionPlanLinhaRepository productionPlanLinhaRepository;
+
+    /**
+     * DAO JDBC para upsert/delete em lote do snapshot de producao. Evita o
+     * merge JPA de uma chave composta com grafo amplo e seus selects por linha.
+     */
+    @Autowired
+    private ProductionPlanLinhaDAO productionPlanLinhaDAO;
 
     /**
      * Repository das linhas de inventario operacional quando o perfil salva
@@ -1687,14 +1696,18 @@ public class SupplyPlanService {
     @Transactional
     public void resetPlanoDistribuicaoIrrestritoBySupplyPlanId(Long supplyPlanId) {
 
-        jdbcTemplate.update("update distribution_plan_item SET "
-                + "quantidade_requisicao_baseline = 0, "
-                + "quantidade_requisicao_itens_novos = 0, "
-                + "quantidade_requisicao_uplift = 0, "
-                + "quantidade_requisicao_ajuste_demanda = 0, "
-                + "quantidade_requisicao_atendimento_carteira = 0, "
-                + "quantidade_pedido_atendimento_carteira = 0 "
-                + "where supply_plan_id = ?",  supplyPlanId);
+        resetQuantidadesRecalculadasBySupplyPlanId(
+                "distribution_plan_item",
+                supplyPlanId,
+                List.of(
+                        "quantidade_requisicao_baseline",
+                        "quantidade_requisicao_atendimento_carteira",
+                        "quantidade_pedido_atendimento_carteira"),
+                List.of(
+                        "quantidade_requisicao_itens_novos",
+                        "quantidade_requisicao_uplift",
+                        "quantidade_requisicao_ajuste_demanda"));
+
     }
 
     /**
@@ -1713,14 +1726,18 @@ public class SupplyPlanService {
     @Transactional
     public void resetPlanoInventarioIrrestritoBySupplyPlanId(Long supplyPlanId) {
 
-        jdbcTemplate.update("update inventory_plan_linha SET "
-                + "quantidade_estoque_seguranca_baseline = 0, "
-                + "quantidade_estoque_seguranca_itens_novos = 0, "
-                + "quantidade_estoque_baseline = 0, "
-                + "quantidade_estoque_itens_novos = 0, "
-                + "quantidade_estoque_uplift = 0, "
-                + "quantidade_estoque_ajuste_demanda = 0 "
-                + "where supply_plan_id = ?",  supplyPlanId);
+        resetQuantidadesRecalculadasBySupplyPlanId(
+                "inventory_plan_linha",
+                supplyPlanId,
+                List.of(
+                        "quantidade_estoque_seguranca_baseline",
+                        "quantidade_estoque_baseline"),
+                List.of(
+                        "quantidade_estoque_seguranca_itens_novos",
+                        "quantidade_estoque_itens_novos",
+                        "quantidade_estoque_uplift",
+                        "quantidade_estoque_ajuste_demanda"));
+
     }
 
     /**
@@ -1739,12 +1756,108 @@ public class SupplyPlanService {
     @Transactional
     public void resetPlanoProducaoIrrestritoBySupplyPlanId(Long supplyPlanId) {
 
-        jdbcTemplate.update("update production_plan_linha SET "
-                + "quantidade_sugestao_producao_baseline = 0, "
-                + "quantidade_sugestao_producao_itens_novos = 0, "
-                + "quantidade_sugestao_producao_uplift = 0, "
-                + "quantidade_sugestao_producao_ajuste_demanda = 0 "
-                + "where supply_plan_id = ?",  supplyPlanId);
+        resetQuantidadesRecalculadasBySupplyPlanId(
+                "production_plan_linha",
+                supplyPlanId,
+                List.of("quantidade_sugestao_producao_baseline"),
+                List.of(
+                        "quantidade_sugestao_producao_itens_novos",
+                        "quantidade_sugestao_producao_uplift",
+                        "quantidade_sugestao_producao_ajuste_demanda"));
+
+    }
+
+    /**
+     * Zera colunas recalculadas respeitando o schema fisico da edicao ativa.
+     *
+     * <p>O schema Community materializa apenas os componentes de demanda que o
+     * motor aberto calcula. O Enterprise acrescenta New Materials, Uplift e
+     * Demand Adjustment nas mesmas tabelas. A reexecucao compartilhada precisa
+     * limpar todos os componentes presentes, mas nao pode referenciar colunas
+     * privadas ausentes no SQLite Community.</p>
+     *
+     * <p>As colunas obrigatorias representam o contrato Community e sua
+     * ausencia falha explicitamente. As colunas opcionais sao adicionadas ao
+     * mesmo UPDATE somente quando o metadata da tabela confirma sua presenca,
+     * preservando a limpeza completa em schemas Enterprise.</p>
+     *
+     * @param tableName tabela conhecida de output do Supply Plan.
+     * @param supplyPlanId plano existente que sera reexecutado.
+     * @param requiredColumnNames colunas obrigatorias no schema Community.
+     * @param optionalColumnNames extensoes presentes apenas em schemas maiores.
+     */
+    private void resetQuantidadesRecalculadasBySupplyPlanId(
+            String tableName,
+            Long supplyPlanId,
+            List<String> requiredColumnNames,
+            List<String> optionalColumnNames) {
+
+        if (supplyPlanId == null) {
+            throw new IllegalArgumentException(
+                    "Supply Plan id is required to reset recalculated quantities from "
+                            + tableName
+                            + ".");
+        }
+
+        Set<String> existingColumnNames = getExistingColumnNames(tableName);
+        List<String> missingRequiredColumnNames = requiredColumnNames.stream()
+                .filter(columnName -> !existingColumnNames.contains(columnName))
+                .toList();
+
+        if (!missingRequiredColumnNames.isEmpty()) {
+            throw new IllegalStateException(
+                    "Table "
+                            + tableName
+                            + " is missing required Community columns: "
+                            + String.join(", ", missingRequiredColumnNames)
+                            + ".");
+        }
+
+        List<String> columnNamesToReset = new ArrayList<>(requiredColumnNames);
+        optionalColumnNames.stream()
+                .filter(existingColumnNames::contains)
+                .forEach(columnNamesToReset::add);
+
+        String setClause = columnNamesToReset.stream()
+                .map(columnName -> columnName + " = 0")
+                .collect(Collectors.joining(", "));
+
+        jdbcTemplate.update(
+                "update " + tableName + " SET " + setClause + " where supply_plan_id = ?",
+                supplyPlanId);
+
+    }
+
+    /**
+     * Le os nomes de coluna diretamente do ResultSet metadata sem consultar
+     * linhas funcionais da tabela.
+     *
+     * <p>A consulta vazia e portavel entre SQLite e MySQL, ao contrario de
+     * PRAGMA ou INFORMATION_SCHEMA. Os nomes sao normalizados para lower case
+     * porque drivers podem devolver identificadores com casing diferente.</p>
+     *
+     * @param tableName tabela conhecida de output do Supply Plan.
+     * @return nomes fisicos de coluna normalizados.
+     */
+    private Set<String> getExistingColumnNames(String tableName) {
+
+        return jdbcTemplate.query(
+                "select * from " + tableName + " where 1 = 0",
+                resultSet -> {
+                    ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+                    Set<String> existingColumnNames = new LinkedHashSet<>();
+
+                    for (int columnIndex = 1;
+                            columnIndex <= resultSetMetaData.getColumnCount();
+                            columnIndex++) {
+                        existingColumnNames.add(
+                                resultSetMetaData.getColumnName(columnIndex)
+                                        .toLowerCase(Locale.ROOT));
+                    }
+
+                    return existingColumnNames;
+                });
+
     }
 
     /**
@@ -1791,10 +1904,9 @@ public class SupplyPlanService {
         }
 
         validaProductionPlanLinhasParaPersistenciaCommunity(productionPlanLinhas);
-        List<ProductionPlanLinha> productionPlanLinhasSalvas =
-                productionPlanLinhaRepository.saveAll(productionPlanLinhas);
+        productionPlanLinhaDAO.saveInBatch(productionPlanLinhas);
         validaProductionPlanLinhasSalvasCommunity(
-                productionPlanLinhasSalvas,
+                productionPlanLinhas,
                 productionPlanLinhas.size());
 
     }
@@ -1823,7 +1935,7 @@ public class SupplyPlanService {
         if (productionPlanLinhasZerados.isEmpty()) return;
 
         validaProductionPlanLinhasParaDeleteCommunity(productionPlanLinhasZerados);
-        productionPlanLinhaRepository.deleteAll(productionPlanLinhasZerados);
+        productionPlanLinhaDAO.deleteInBatch(productionPlanLinhasZerados);
     }
 
     /**

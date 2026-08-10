@@ -90,7 +90,9 @@ public class ConfiguredViewFacadeTest {
                         "showAverageHistoricalSales",
                         "showDfusWithoutHistoricalSalesOverHistoricalPeriod",
                         "demandPlanWorkflowId",
-                        "demandPlanWorkflowStageId"),
+                        "demandPlanWorkflowStageId",
+                        "materialIdFilterList",
+                        "locationIdFilterList"),
                 getDeclaredFieldNames(ConfiguredViewDTO.class));
 
     }

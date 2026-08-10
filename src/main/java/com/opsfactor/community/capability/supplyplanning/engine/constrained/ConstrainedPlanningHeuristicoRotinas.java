@@ -350,9 +350,18 @@ public class ConstrainedPlanningHeuristicoRotinas {
                     quantidadeCarteiraTransicional -= modificacaoCarteiraTransicional;
                     quantidadeOutboundAtendimentoDemandaDireta -= modificacaoTotalAtendimentoDemandaDireta;
                     demandaNaoAtendidaRestante -= modificacaoTotalAtendimentoDemandaDireta;
-                   
+
                 }
-                                
+
+                /*
+                 * Os outbounds para clientes podem ter sido reduzidos tanto na
+                 * etapa planejada quanto na etapa firme. A parcela de
+                 * atendimento e uma decomposicao da propria ordem e nunca pode
+                 * permanecer acima do volume restrito efetivamente expedido.
+                 */
+                limitaParcelasAtendimentoDemandaDiretaAoVolumeRestrito(
+                        distributionPlanItemsOutboundClientesFinais);
+
                 // ARREDONDA PARA LOTE MINIMO E MULTIPLO
                 double modificacaoLoteMinimo = 0;
                 double modificacaoMultiplo = 0;
@@ -415,7 +424,39 @@ public class ConstrainedPlanningHeuristicoRotinas {
                     supplyPlanningProjection, posicaoPeriodo, material, Constantes.TipoPlano.PLANO_RESTRITO);
         }
         return houveRestricaoPlano;
-    }    
+    }
+
+    /**
+     * Limita as parcelas de atendimento direto de clientes ao volume restrito
+     * da respectiva ordem de distribuicao.
+     *
+     * <p>Sem este ajuste, uma restricao de estoque/capacidade pode reduzir o
+     * inbound do cliente sem reduzir a medida de fulfilled demand, produzindo
+     * um indicador maior que a propria expedicao.</p>
+     */
+    static void limitaParcelasAtendimentoDemandaDiretaAoVolumeRestrito(
+            Collection<DistributionPlanItem> distributionPlanItemsClientesFinais) {
+
+        for (DistributionPlanItem distributionPlanItem : distributionPlanItemsClientesFinais) {
+            for (Constantes.FirmePlanejado firmePlanejado : List.of(
+                    Constantes.FirmePlanejado.PLANEJADO,
+                    Constantes.FirmePlanejado.ORDEM)) {
+                double quantidadeRestrita = distributionPlanItem.getQuantidade(
+                        firmePlanejado,
+                        Constantes.TipoPlano.PLANO_RESTRITO);
+                double parcelaAtendimentoRestrita =
+                        distributionPlanItem.getParcelaParaAtendimentoIndiretoDemandaDireta(
+                                firmePlanejado,
+                                Constantes.TipoPlano.PLANO_RESTRITO);
+
+                distributionPlanItem.setParcelaParaAtendimentoDemandaDireta(
+                        Math.min(parcelaAtendimentoRestrita, quantidadeRestrita),
+                        firmePlanejado,
+                        Constantes.TipoPlano.PLANO_RESTRITO);
+            }
+        }
+
+    }
     
     /**
      * Restringe ordens produção e plano produção com base na disponibilidade de insumos
@@ -458,7 +499,7 @@ public class ConstrainedPlanningHeuristicoRotinas {
                             supplyPlanningProjectionInsumos,posicaoPeriodo-1, posicaoPeriodo, materialInput, Constantes.TipoPlano.PLANO_RESTRITO, unidadeMedidaPadraoMaterialInput,
                             true, true, false, true)
                     + quantidadeInputNecessariaTotal);
-            
+
             if (quantidadeInputDisponivelSemConsumoProducao >= quantidadeInputNecessariaTotal) continue;
             
             Set<Produto> materiaisOutput = supplyPlanningProjectionLowLevelCodeAtual.getProductionPlanLinhaInput(posicaoPeriodo, materialInput).stream()

@@ -148,6 +148,78 @@ public class SupplyPlanningBiProjection {
 
     }
 
+    /**
+     * Remove sugestoes geradas por uma rodada anterior antes de reconstruir o
+     * baseline heuristico irrestrito.
+     *
+     * <p>Ordens firmes e a fotografia de demanda permanecem intactas. Somente
+     * campos calculados de producao e distribuicao sao zerados, evitando que
+     * uma alternativa criada pelo capacity leveling anterior reapareca como
+     * necessidade original durante a reexecucao do mesmo Supply Plan.</p>
+     */
+    public void preparaBaselineIrrestritoParaExecucaoHeuristica() {
+
+        productionPlanLinhaBiProjection.getTodosProductionPlanLinhas().forEach(productionPlanLinha -> {
+            productionPlanLinha.setQuantidadeOrdemPlanejadaProducaoIrrestrita(0.0);
+            productionPlanLinha.setQuantidadeOrdemPlanejadaProducaoRestrita(0.0);
+            productionPlanLinha.setQuantidadeOrdemPlanejadaProducaoTrabalho(0.0);
+        });
+        getTodosDistributionPlanItems().forEach(distributionPlanItem -> {
+            distributionPlanItem.setQuantidadeOrdemPlanejadaIrrestrita(0.0);
+            distributionPlanItem.setQuantidadeOrdemPlanejadaRestrita(0.0);
+            distributionPlanItem.setQuantidadeOrdemPlanejadaTrabalho(0.0);
+            distributionPlanItem.setParcelaOrdemPlanejadaIrrestritaAtendimentoDemandaDireta(0.0);
+            distributionPlanItem.setParcelaOrdemPlanejadaRestritaAtendimentoDemandaDireta(0.0);
+        });
+
+    }
+
+    /**
+     * Materializa o ponto de partida restrito nas mesmas instancias alteradas
+     * pelo capacity leveling.
+     *
+     * <p>O reset por bulk update do repository nao atualiza objetos que ja
+     * pertencem a esta fotografia. Copiar os valores aqui evita que uma linha
+     * alternativa criada ou realocada pelo nivelamento mantenha quantidade
+     * restrita antiga enquanto o campo irrestrito ja contem a producao
+     * correta.</p>
+     */
+    public void atualizaPlanoRestritoComPlanoIrrestrito() {
+
+        productionPlanLinhaBiProjection.getTodosProductionPlanLinhas().forEach(productionPlanLinha -> {
+            productionPlanLinha.setQuantidadeOrdemPlanejadaProducaoRestrita(
+                    productionPlanLinha.getQuantidadeOrdemPlanejadaProducaoIrrestrita());
+            productionPlanLinha.setQuantidadeOrdemFirmeProducaoRestrita(
+                    productionPlanLinha.getQuantidadeOrdemFirmeProducaoIrrestrita());
+        });
+        getTodosDistributionPlanItems().forEach(distributionPlanItem -> {
+            distributionPlanItem.setQuantidadeOrdemPlanejadaRestrita(
+                    distributionPlanItem.getQuantidadeOrdemPlanejadaIrrestrita());
+            distributionPlanItem.setQuantidadeOrdemFirmeRestrita(
+                    distributionPlanItem.getQuantidadeOrdemFirmeIrrestrita());
+            distributionPlanItem.setParcelaOrdemPlanejadaRestritaAtendimentoDemandaDireta(
+                    distributionPlanItem.getParcelaOrdemPlanejadaIrrestritaAtendimentoDemandaDireta());
+            distributionPlanItem.setParcelaOrdemFirmeRestritaAtendimentoDemandaDireta(
+                    distributionPlanItem.getParcelaOrdemFirmeIrrestritaAtendimentoDemandaDireta());
+        });
+        inventoryPlanLinhaBiProjection.getTodosInventoryPlanLinhas().forEach(inventoryPlanLinha -> {
+            inventoryPlanLinha.setQuantidadeEstoqueSegurancaRestrito(
+                    inventoryPlanLinha.getQuantidadeEstoqueSegurancaIrrestrito());
+            inventoryPlanLinha.setQuantidadeEstoqueMaximoRestrito(
+                    inventoryPlanLinha.getQuantidadeEstoqueMaximoIrrestrito());
+            inventoryPlanLinha.setQuantidadeEstoqueProjetadoRestrito(
+                    inventoryPlanLinha.getQuantidadeEstoqueProjetadoIrrestrito());
+        });
+        demandaDiretaConsideradaProjection.getAllDemandaDiretaConsideradaLinha()
+                .forEach(demandaDiretaConsideradaLinha -> {
+                    demandaDiretaConsideradaLinha.setQuantidadeDemandaDiretaPlanoDemandaRestrita(
+                            demandaDiretaConsideradaLinha.getQuantidadeDemandaDiretaPlanoDemandaIrrestrita());
+                    demandaDiretaConsideradaLinha.setQuantidadeDemandaDiretaCarteiraRestrita(
+                            demandaDiretaConsideradaLinha.getQuantidadeDemandaDiretaCarteiraIrrestrita());
+                });
+
+    }
+
 }
 
 /** View curta entre a fotografia central e a API de rotina ainda orientada por location. */

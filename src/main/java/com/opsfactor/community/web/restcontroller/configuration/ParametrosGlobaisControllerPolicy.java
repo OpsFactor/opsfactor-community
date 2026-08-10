@@ -42,6 +42,9 @@ public class ParametrosGlobaisControllerPolicy {
         validaTipoDocumentoVenda(dto.getTipoDocumentoVenda());
         validaModeloDemandaBase(dto.getModeloDemandaBase());
         validaParametrosOperacionaisCommunity(dto);
+        validaBooleanEnterpriseDesabilitado(
+                dto.getDpArredondaParaUnidadeVenda(),
+                "Forecast rounding to sales UOM");
         validaParametrosLimpezaHistorico(dto);
         validaInteiroDesabilitado(dto.getDiasHistoricosDoh(), "Stockout normalization DOH");
         validaInteiroDesabilitado(dto.getDiasHistoricosDohStockout(), "Stockout normalization threshold");
@@ -76,6 +79,7 @@ public class ParametrosGlobaisControllerPolicy {
             ParametrosGlobaisController.ParametrosGlobaisDTO dto) {
 
         parametrosGlobais.setTipoDocumentoVenda(Constantes.TipoDocumentoVenda.SELLOUT);
+        parametrosGlobais.setDpArredondaParaUnidadeVenda(false);
         /*
          * Pedidos transacionais/backlog pertencem ao Enterprise. Este setter
          * limpa valores antigos eventualmente persistidos antes do recorte

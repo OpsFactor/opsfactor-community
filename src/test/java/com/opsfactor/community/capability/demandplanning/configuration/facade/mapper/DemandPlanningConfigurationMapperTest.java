@@ -478,6 +478,29 @@ public class DemandPlanningConfigurationMapperTest {
     }
 
     @Test
+    public void validaConfiguracoesEnterpriseCommunityShouldRejectProAggregationAndSalesUomRounding() throws Exception {
+
+        DemandPlanningConfigurationMapper demandPlanningConfigurationMapper = new DemandPlanningConfigurationMapper();
+
+        DemandPlanningClusterLevelConfigurationDTO bottomUpConfigurationDTO =
+                getCommunityDemandPlanningClusterLevelConfigurationDTO();
+        bottomUpConfigurationDTO.demandPlanningGeneralParameters.materialAggregationType =
+                Constantes.DPNivelAgregacao.BOTTOM_UP;
+
+        DemandPlanningClusterLevelConfigurationDTO salesUomRoundingConfigurationDTO =
+                getCommunityDemandPlanningClusterLevelConfigurationDTO();
+        salesUomRoundingConfigurationDTO.demandPlanningGeneralParameters.roundToSalesUnit = true;
+
+        assertRequiresEnterpriseVersionException(
+                demandPlanningConfigurationMapper,
+                bottomUpConfigurationDTO);
+        assertRequiresEnterpriseVersionException(
+                demandPlanningConfigurationMapper,
+                salesUomRoundingConfigurationDTO);
+
+    }
+
+    @Test
     public void validaConfiguracoesEnterpriseCommunityShouldRejectBudgetAndNewProductTreatment() throws Exception {
 
         DemandPlanningConfigurationMapper demandPlanningConfigurationMapper = new DemandPlanningConfigurationMapper();
@@ -704,10 +727,10 @@ public class DemandPlanningConfigurationMapperTest {
 
         Assertions.assertEquals(true, demandPlanningGeneralParametersDTO.executeDemandPlan);
         Assertions.assertEquals("CX", demandPlanningGeneralParametersDTO.uomId);
-        Assertions.assertEquals(true, demandPlanningGeneralParametersDTO.roundToSalesUnit);
+        Assertions.assertEquals(false, demandPlanningGeneralParametersDTO.roundToSalesUnit);
         Assertions.assertEquals(false, demandPlanningGeneralParametersDTO.considerHistoricalSalesOfInactiveDfus);
         Assertions.assertEquals(true, demandPlanningGeneralParametersDTO.generateForecastForDiscontinuedMaterials);
-        Assertions.assertEquals(Constantes.DPNivelAgregacao.BOTTOM_UP, demandPlanningGeneralParametersDTO.materialAggregationType);
+        Assertions.assertEquals(Constantes.DPNivelAgregacao.TOP_DOWN, demandPlanningGeneralParametersDTO.materialAggregationType);
         Assertions.assertEquals(Constantes.DPNivelAgregacao.TOP_DOWN, demandPlanningGeneralParametersDTO.locationAggregationType);
         Assertions.assertEquals(180, demandPlanningGeneralParametersDTO.daysSalesHistory);
 
@@ -982,6 +1005,9 @@ public class DemandPlanningConfigurationMapperTest {
 
         DemandPlanningGeneralParametersDTO demandPlanningGeneralParametersDTO = new DemandPlanningGeneralParametersDTO();
         demandPlanningGeneralParametersDTO.useExecutionProfileAutofitModel = false;
+        demandPlanningGeneralParametersDTO.roundToSalesUnit = false;
+        demandPlanningGeneralParametersDTO.materialAggregationType = Constantes.DPNivelAgregacao.TOP_DOWN;
+        demandPlanningGeneralParametersDTO.locationAggregationType = Constantes.DPNivelAgregacao.TOP_DOWN;
         demandPlanningGeneralParametersDTO.budgetId = null;
         demandPlanningGeneralParametersDTO.daysAsNewMaterial = 0;
         demandPlanningGeneralParametersDTO.regressionTimeSeries = List.of();

@@ -151,28 +151,30 @@ public class ConfiguredViewFacadeCommunityTest {
     }
 
     @Test
-    public void saveConfiguredViewDTOShouldRejectMaterialCharacteristicFilterCommunity() {
+    public void validateConfiguredViewDTOShouldAcceptMaterialCharacteristicFilterCommunity() {
 
         ConfiguredViewDTO configuredViewDTO = getDemandPlanningBookConfiguredViewDTO();
         ConfiguredViewCaracteristicaDTO configuredViewCaracteristicaDTO = new ConfiguredViewCaracteristicaDTO();
-        configuredViewCaracteristicaDTO.characteristicId = "BRAND";
-        configuredViewCaracteristicaDTO.filteredValues = List.of("B1");
+        configuredViewCaracteristicaDTO.characteristicId = "MATERIAL_STATUS";
+        configuredViewCaracteristicaDTO.filteredValues = List.of("Regular");
         configuredViewDTO.materialCharacteristicDetailList = List.of(configuredViewCaracteristicaDTO);
 
-        assertRequiresEnterpriseVersion(configuredViewDTO);
+        Assertions.assertDoesNotThrow(
+                () -> new ConfiguredViewFacadeProbe().validateCommunity(configuredViewDTO));
 
     }
 
     @Test
-    public void saveConfiguredViewDTOShouldRejectLocationCharacteristicFilterCommunity() {
+    public void validateConfiguredViewDTOShouldAcceptLocationCharacteristicFilterCommunity() {
 
         ConfiguredViewDTO configuredViewDTO = getDemandPlanningBookConfiguredViewDTO();
         ConfiguredViewCaracteristicaDTO configuredViewCaracteristicaDTO = new ConfiguredViewCaracteristicaDTO();
-        configuredViewCaracteristicaDTO.characteristicId = "REGION";
-        configuredViewCaracteristicaDTO.filteredValues = List.of("SOUTH");
+        configuredViewCaracteristicaDTO.characteristicId = "COUNTRY";
+        configuredViewCaracteristicaDTO.filteredValues = List.of("BR");
         configuredViewDTO.locationCharacteristicDetailList = List.of(configuredViewCaracteristicaDTO);
 
-        assertRequiresEnterpriseVersion(configuredViewDTO);
+        Assertions.assertDoesNotThrow(
+                () -> new ConfiguredViewFacadeProbe().validateCommunity(configuredViewDTO));
 
     }
 
@@ -214,6 +216,7 @@ public class ConfiguredViewFacadeCommunityTest {
 
         ConfiguredViewDTO configuredViewDTO = getConfiguredViewDTOBase();
         configuredViewDTO.viewType = ConfiguredView.TipoView.SUPPLYPLANNINGBOOK;
+        configuredViewDTO.keyFigureList = List.of();
         return configuredViewDTO;
 
     }
@@ -225,7 +228,33 @@ public class ConfiguredViewFacadeCommunityTest {
         configuredViewDTO.viewName = "Default";
         configuredViewDTO.showMaterialLevel = true;
         configuredViewDTO.showLocationLevel = true;
+        configuredViewDTO.keyFigureList = getPredefinedDemandKeyFigures();
         return configuredViewDTO;
+
+    }
+
+    private List<ConfiguredViewKeyFigureDTO> getPredefinedDemandKeyFigures() {
+
+        ConfiguredViewKeyFigureDTO directDemand = new ConfiguredViewKeyFigureDTO();
+        directDemand.keyFigure = "Direct Demand";
+        directDemand.allowChanges = true;
+        ConfiguredViewKeyFigureDTO baseline = new ConfiguredViewKeyFigureDTO();
+        baseline.keyFigure = "Baseline";
+        baseline.allowChanges = false;
+        ConfiguredViewKeyFigureDTO demandAdjustment = new ConfiguredViewKeyFigureDTO();
+        demandAdjustment.keyFigure = "Demand Adjustment";
+        demandAdjustment.allowChanges = true;
+        return List.of(directDemand, baseline, demandAdjustment);
+
+    }
+
+    private static class ConfiguredViewFacadeProbe extends ConfiguredViewFacade {
+
+        private void validateCommunity(ConfiguredViewDTO configuredViewDTO) {
+
+            validaConfiguredViewDTOCommunity(configuredViewDTO);
+
+        }
 
     }
 

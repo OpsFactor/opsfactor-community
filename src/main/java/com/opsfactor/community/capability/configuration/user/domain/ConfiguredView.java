@@ -11,16 +11,21 @@ import org.springframework.lang.NonNull;
 
 import jakarta.persistence.*;
 import java.io.Serializable;
+import java.util.LinkedHashSet;
 import java.util.Set;
+
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 /**
  * Configuracao Community de uma view de Planning Book.
  *
  * <p>O Community persiste preferencias basicas de view, unidade de medida,
  * janela historica, comportamento de edicao e a selecao de key figures
- * standard dos catalogos publicos. Agrupamentos por caracteristica, filtros
- * DFU por material/location e key figures privadas/customizadas pertencem ao
- * Enterprise e sao bloqueados nas services de front. Os identificadores
+ * standard dos catalogos publicos. Filtros por atributos públicos de material
+ * e location também pertencem ao Community; agrupamentos por característica,
+ * filtros DFU e key figures privadas/customizadas pertencem ao Enterprise e
+ * são bloqueados nas services de front. Os identificadores
  * escalares de workflow permanecem no agregado compartilhado para que o
  * overlay Enterprise possa reconcilia-los sem introduzir uma tabela de
  * vinculo; o Community nao os interpreta nem permite configura-los.</p>
@@ -114,6 +119,51 @@ public class ConfiguredView {
     private Boolean exibeMateriaisDescontinuados;
     
     private Boolean exibeDfusSemFaturamentoNoHorizonteHistorico;
+
+    /**
+     * Filtro Community persistido por identificadores de material.
+     *
+     * <p>A coleção vazia significa todos os materiais ativos. A coleção é
+     * carregada por subselect quando uma lista de views é aberta, evitando uma
+     * consulta adicional por view e sem introduzir o modelo de características
+     * dinâmicas reservado ao Enterprise.</p>
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "configured_view_material_id_filter")
+    @Column(name = "material_id", length = 100, nullable = false)
+    @Fetch(FetchMode.SUBSELECT)
+    private Set<String> materialIdFilterSet = new LinkedHashSet<>();
+
+    /**
+     * Filtro Community persistido por identificadores de location.
+     *
+     * <p>A semântica e a estratégia de carregamento são idênticas ao filtro de
+     * materiais: vazio representa todas as locations ativas e o snapshot é
+     * carregado em lote para a tela de User Views.</p>
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "configured_view_location_id_filter")
+    @Column(name = "location_id", length = 100, nullable = false)
+    @Fetch(FetchMode.SUBSELECT)
+    private Set<String> locationIdFilterSet = new LinkedHashSet<>();
+
+    /**
+     * Filtros por atributos públicos de material, sem semântica de agrupamento.
+     *
+     * <p>Entradas da mesma característica são alternativas (OR); características
+     * diferentes são cumulativas (AND). O carregamento por subselect evita uma
+     * consulta por view na administração.</p>
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "configured_view_material_characteristic_filter")
+    @Fetch(FetchMode.SUBSELECT)
+    private Set<ConfiguredViewCharacteristicFilter> materialCharacteristicFilterSet = new LinkedHashSet<>();
+
+    /** Filtros equivalentes aplicados aos atributos públicos de location. */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "configured_view_location_characteristic_filter")
+    @Fetch(FetchMode.SUBSELECT)
+    private Set<ConfiguredViewCharacteristicFilter> locationCharacteristicFilterSet = new LinkedHashSet<>();
     
     public TipoView getTipoView() {
         return getConfiguredViewCompositeKey().getTipoView();
@@ -182,7 +232,7 @@ public class ConfiguredView {
     }
         
     public boolean getSubmissaoAutomaticaAlteracoes() {
-        return (submissaoAutomaticaAlteracoes == null) ? true : submissaoAutomaticaAlteracoes;
+        return (submissaoAutomaticaAlteracoes == null) ? false : submissaoAutomaticaAlteracoes;
     }
     public Boolean getSubmissaoAutomaticaAlteracoesCadastrado() {
         return submissaoAutomaticaAlteracoes;

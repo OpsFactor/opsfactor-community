@@ -52,6 +52,17 @@ public abstract class Task<DTOPARAMETROS,SERVICE> implements Runnable {
      * compartilhados.</p>
      */
     private final SERVICE service;
+
+    /**
+     * Resultado persistido da ultima chamada a {@link #run()} nesta instancia.
+     *
+     * <p>Cada {@code Task} representa uma unica execucao e nao e singleton do
+     * Spring. Manter o resultado na propria instancia permite que o caminho
+     * sincrono Community confirme se a regra funcional terminou com erro depois
+     * de o diagnostico ter sido salvo no Process Status. Runners assíncronos
+     * Enterprise continuam usando apenas o contrato {@link Runnable}.</p>
+     */
+    private ScheduledTaskExecution lastScheduledTaskExecution;
     
     public Task(
             ScheduledTaskAbstract scheduledTaskAbstract,
@@ -107,6 +118,7 @@ public abstract class Task<DTOPARAMETROS,SERVICE> implements Runnable {
 
         ScheduledTaskExecution scheduledTaskExecution =
                 scheduledTaskPersistenceService.createAndSaveExecution(scheduledTaskAbstract);
+        lastScheduledTaskExecution = scheduledTaskExecution;
 
         try {
             // mapper Jackson mapa <-> dto 
@@ -141,6 +153,20 @@ public abstract class Task<DTOPARAMETROS,SERVICE> implements Runnable {
             scheduledTaskPersistenceService.saveScheduledTask(scheduledTaskAbstract);
         }
                 
+    }
+
+    /**
+     * Devolve o resultado materializado pela ultima chamada a {@link #run()}.
+     *
+     * <p>O retorno e nulo somente quando a task estava inativa e, portanto, nao
+     * abriu uma ocorrencia de execucao. Uma mensagem de erro preenchida indica
+     * que a regra funcional falhou, embora o proprio {@code run()} tenha
+     * persistido o diagnostico sem relancar a causa para runners assíncronos.</p>
+     */
+    public ScheduledTaskExecution getLastScheduledTaskExecution() {
+
+        return lastScheduledTaskExecution;
+
     }
     
     private void executaTask(DTOPARAMETROS dtoParametros) {

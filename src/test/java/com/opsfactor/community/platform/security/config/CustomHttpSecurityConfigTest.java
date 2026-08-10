@@ -62,7 +62,13 @@ class CustomHttpSecurityConfigTest {
         Set<String> publicRequestMatcherSet = Arrays.stream(publicRequestMatchers).collect(Collectors.toSet());
 
         Assertions.assertEquals(
-                Set.of("/h2-console/**", "/api/open/**", "/health-status", "/actuator/health"),
+                Set.of(
+                        "/h2-console/**",
+                        "/api/open/**",
+                        "/app/swagger-ui/**",
+                        "/app/api-docs/**",
+                        "/health-status",
+                        "/actuator/health"),
                 publicRequestMatcherSet);
 
     }

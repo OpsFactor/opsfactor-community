@@ -20,16 +20,26 @@ public class SQLiteFunctionContributor extends AbstractDateFunctionContributor {
 
     @Override
     protected String getUltimoDiaMesSemHorarioPattern() {
-        return "date(?1, 'start of month','+1 month','-1 day')";
+
+        /*
+         * O SQLiteDialect do Hibernate persiste LocalDateTime como epoch em
+         * milissegundos. As funcoes date/datetime do SQLite esperam segundos
+         * quando o modificador unixepoch e usado. O resultado volta a epoch
+         * em milissegundos para o JDBC materializar LocalDate sem depender do
+         * parser textual especifico do driver SQLite.
+         */
+        return "CAST(strftime('%s', date(?1 / 1000, 'unixepoch', 'start of month','+1 month','-1 day')) AS INTEGER) * 1000";
     }
 
     @Override
     protected String getDomingoDaSemanaSemHorarioPattern() {
-        return "date(?1,'weekday 0')";
+
+        return "CAST(strftime('%s', date(?1 / 1000, 'unixepoch', 'weekday 0')) AS INTEGER) * 1000";
     }
 
     @Override
     protected String getDataSemHorarioPattern() {
-        return "DATE(?1)";
+
+        return "CAST(strftime('%s', date(?1 / 1000, 'unixepoch')) AS INTEGER) * 1000";
     }
 }

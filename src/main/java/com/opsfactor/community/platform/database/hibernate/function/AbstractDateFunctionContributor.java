@@ -29,13 +29,19 @@ public abstract class AbstractDateFunctionContributor implements FunctionContrib
         }
 
         SqmFunctionRegistry functionRegistry = functionContributions.getFunctionRegistry();
-        var dateBasicType = functionContributions.getTypeConfiguration()
+        /*
+         * As projections de agregacao expõem LocalDate. Registrar as funcoes
+         * como java.sql.Date funciona no H2/MariaDB por conversao implicita,
+         * mas no SQLite o proxy de interface recebe null para o alias de data.
+         * O tipo Java 8 explicito mantém o contrato igual nos três dialetos.
+         */
+        var localDateBasicType = functionContributions.getTypeConfiguration()
                 .getBasicTypeRegistry()
-                .resolve(StandardBasicTypes.DATE);
+                .resolve(StandardBasicTypes.LOCAL_DATE);
 
-        functionRegistry.registerPattern("ULTIMO_DIA_MES_SEM_HORARIO", getUltimoDiaMesSemHorarioPattern(), dateBasicType);
-        functionRegistry.registerPattern("DOMINGO_DA_SEMANA_SEM_HORARIO", getDomingoDaSemanaSemHorarioPattern(), dateBasicType);
-        functionRegistry.registerPattern("DATA_SEM_HORARIO", getDataSemHorarioPattern(), dateBasicType);
+        functionRegistry.registerPattern("ULTIMO_DIA_MES_SEM_HORARIO", getUltimoDiaMesSemHorarioPattern(), localDateBasicType);
+        functionRegistry.registerPattern("DOMINGO_DA_SEMANA_SEM_HORARIO", getDomingoDaSemanaSemHorarioPattern(), localDateBasicType);
+        functionRegistry.registerPattern("DATA_SEM_HORARIO", getDataSemHorarioPattern(), localDateBasicType);
     }
 
     /**

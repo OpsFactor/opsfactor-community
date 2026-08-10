@@ -51,12 +51,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
             "considerInitialStock",
             "saveInventoryPlan",
             "targetStockModel",
-            "generateUnconstrainedPlan",
-            "ignoreProductionConstraintsForUnconstrainedPlan",
             "considerProductionConstraints",
-            "heuristicUnconstrainedPlanCapacityLeveling",
-            "consolidateClientDemand",
-            "demandConsolidationMode",
             "generateProfitLoss",
             "allowSalesProfitLossBomRetroaction",
             "directDemandFairShare",
@@ -612,27 +607,23 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     }
 
     @Test
-    public void savePerfilExecucaoSupplyPlanDTOShouldPersistHeuristicCapacityLeveling() throws Exception {
+    public void savePerfilExecucaoSupplyPlanDTOShouldRejectUnconstrainedPlanConfiguration() throws Exception {
 
         /*
-         * O nivelamento pertence ao heuristico Community. O teste percorre a
-         * borda completa de save com repositorios e mapper controlados para
-         * provar que o flag nao e mais tratado como capability Enterprise.
+         * O nivelamento continua fazendo parte do fluxo heuristico, mas a aba
+         * de configuracao do plano irrestrito pertence ao Pro/Enterprise. O
+         * Community usa o valor fixo definido pelo mapper/runtime.
          */
-        PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan =
-                criaPerfilExecucaoSupplyPlanParaTeste("supply-profile");
-        perfilExecucaoSupplyPlan.setHeuristicUnconstrainedPlanCapacityLeveling(true);
         PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService =
-                criaPerfilExecucaoSupplyPlanFrontServiceParaSaveSnapshotTest(
-                        perfilExecucaoSupplyPlan,
-                        perfilExecucaoSupplyPlan);
+                new PerfilExecucaoSupplyPlanFacade();
         PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO =
                 criaPerfilExecucaoSupplyPlanDTOCommunityMinimoParaTeste();
         perfilExecucaoSupplyPlanDTO.setHeuristicUnconstrainedPlanCapacityLeveling(true);
 
-        perfilExecucaoSupplyPlanFrontService.savePerfilExecucaoSupplyPlanDTO(perfilExecucaoSupplyPlanDTO);
-
-        Assertions.assertTrue(perfilExecucaoSupplyPlan.getHeuristicUnconstrainedPlanCapacityLeveling());
+        Assertions.assertThrows(
+                RequiresEnterpriseVersionException.class,
+                () -> perfilExecucaoSupplyPlanFrontService
+                        .savePerfilExecucaoSupplyPlanDTO(perfilExecucaoSupplyPlanDTO));
 
     }
 
@@ -1642,6 +1633,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
             case "customerOrdersAndForecastReconciliationModelForProjectedInventory",
                     "customerOrdersAndForecastReconciliationModelForSafetyStock" ->
                     PerfilExecucaoSupplyPlan.ModeloMajoracaoDemandaDireta.PLANO_DEMANDA_MAIS_CARTEIRA;
+            case "demandConsolidationMode" ->
+                    PerfilExecucaoSupplyPlan.ModoPropagacaoDemanda.PROPAGACAO_DEMANDA_LOCATIONS_INTERNAS;
             case "objectiveFunctionTemporalImpactDecayModel" ->
                     PerfilExecucaoSupplyPlan.ModeloDecaimentoImpactoTemporal.EXPONENCIAL;
             case "salesMeasure" -> Constantes.TipoQuantidadeValor.GROSS;

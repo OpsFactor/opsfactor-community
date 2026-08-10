@@ -33,6 +33,8 @@ public class CustomHttpSecurityConfig {
     private static final String[] PUBLIC_REQUEST_MATCHERS = {
             "/h2-console/**",
             "/api/open/**",
+            "/app/swagger-ui/**",
+            "/app/api-docs/**",
             "/health-status",
             "/actuator/health"
     };

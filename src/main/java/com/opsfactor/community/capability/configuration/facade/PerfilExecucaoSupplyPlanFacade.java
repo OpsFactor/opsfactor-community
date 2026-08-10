@@ -122,6 +122,7 @@ public class PerfilExecucaoSupplyPlanFacade {
         validaCurvasSplitTemporalCommunity(perfilExecucaoSupplyPlanDTO);
         validaFiltroMateriaisCommunity(perfilExecucaoSupplyPlanDTO);
         validaModoExecucaoCommunity(perfilExecucaoSupplyPlanDTO);
+        validaPlanoIrrestritoEDemandaCommunity(perfilExecucaoSupplyPlanDTO);
         validaPerfilLocationLevelCommunity(perfilExecucaoSupplyPlanDTO);
         validaParametrosModeloOtimizadoCommunity(perfilExecucaoSupplyPlanDTO);
         validaPedidosTransacionaisCommunity(perfilExecucaoSupplyPlanDTO);
@@ -554,6 +555,35 @@ public class PerfilExecucaoSupplyPlanFacade {
         if (Boolean.FALSE.equals(perfilExecucaoSupplyPlanDTO.getConsiderForecastForMto())) {
             throw new RequiresEnterpriseVersionException("Supply Planning fully make-to-order");
         }
+
+    }
+
+    /**
+     * Bloqueia na API Community as duas abas reservadas ao Pro/Enterprise.
+     *
+     * <p>O runtime Community continua gerando o plano irrestrito, aplica o
+     * capacity leveling e sempre encadeia o constrained plan. Esses valores
+     * sao defaults fixos do produto, nao opcoes editaveis do perfil. A fonte
+     * de demanda Community tambem permanece fixa no Demand Plan.</p>
+     */
+    private void validaPlanoIrrestritoEDemandaCommunity(
+            PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO) {
+
+        validaCampoEnterprisePreenchido(
+                perfilExecucaoSupplyPlanDTO.getGenerateUnconstrainedPlan(),
+                "Supply Planning unconstrained plan settings");
+        validaCampoEnterprisePreenchido(
+                perfilExecucaoSupplyPlanDTO.getHeuristicUnconstrainedPlanCapacityLeveling(),
+                "Supply Planning unconstrained plan settings");
+        validaCampoEnterprisePreenchido(
+                perfilExecucaoSupplyPlanDTO.getIgnoreProductionConstraintsForUnconstrainedPlan(),
+                "Supply Planning unconstrained plan settings");
+        validaCampoEnterprisePreenchido(
+                perfilExecucaoSupplyPlanDTO.getConsolidateClientDemand(),
+                "Supply Planning demand settings");
+        validaCampoEnterprisePreenchido(
+                perfilExecucaoSupplyPlanDTO.getDemandConsolidationMode(),
+                "Supply Planning demand settings");
 
     }
 

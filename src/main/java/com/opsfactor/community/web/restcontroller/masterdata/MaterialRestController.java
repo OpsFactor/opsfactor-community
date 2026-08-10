@@ -33,8 +33,13 @@ public class MaterialRestController {
 
     /**
      * Lista os materiais cadastrados no Community.
+     *
+     * <p>O alias {@code /api/secured/product} preserva o contrato de leitura
+     * consumido pelo Planning Front. Ambos os caminhos executam exatamente a
+     * mesma consulta e devolvem o mesmo DTO; o contrato público preferencial
+     * da edição Community continua sendo {@code /api/secured/material}.</p>
      */
-    @GetMapping("/api/secured/material")
+    @GetMapping({"/api/secured/material", "/api/secured/product"})
     @Secured("ROLE_ADMIN")
     @ResponseBody @ResponseStatus(HttpStatus.OK)
     public List<ProdutoDTO> getMateriais() {

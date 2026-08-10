@@ -50,9 +50,9 @@ public class PerfilExecucaoDemandPlanAutoMapperCommunityTest {
         Assertions.assertEquals(Constantes.TipoDocumentoVenda.SELLOUT, perfilExecucaoDemandPlanDTO.historicalSalesDocumentType);
         Assertions.assertEquals(Constantes.TamanhoBucket.MENSAL, perfilExecucaoDemandPlanDTO.bucketSize);
         Assertions.assertEquals(12, perfilExecucaoDemandPlanDTO.planningHorizonInPeriods);
-        Assertions.assertEquals(true, perfilExecucaoDemandPlanDTO.constrainPlanEditPeriods);
-        Assertions.assertEquals(1, perfilExecucaoDemandPlanDTO.initialPlanEditPeriod);
-        Assertions.assertEquals(3, perfilExecucaoDemandPlanDTO.finalPlanEditPeriod);
+        Assertions.assertEquals(false, perfilExecucaoDemandPlanDTO.constrainPlanEditPeriods);
+        Assertions.assertNull(perfilExecucaoDemandPlanDTO.initialPlanEditPeriod);
+        Assertions.assertNull(perfilExecucaoDemandPlanDTO.finalPlanEditPeriod);
         Assertions.assertEquals("UN", perfilExecucaoDemandPlanDTO.defaultDemandPlanningUomId);
         assertEnterpriseFieldsHidden(perfilExecucaoDemandPlanDTO);
 

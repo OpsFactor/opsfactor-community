@@ -42,7 +42,8 @@ public class MasterdataControllersCommunityContractTest {
                         new ControllerEndpoint("GET", "api/secured/material"),
                         new ControllerEndpoint("GET", "api/secured/material/cluster"),
                         new ControllerEndpoint("GET", "api/secured/material/cluster/{clusterId}/materials"),
-                        new ControllerEndpoint("GET", "api/secured/material/status")));
+                        new ControllerEndpoint("GET", "api/secured/material/status"),
+                        new ControllerEndpoint("GET", "api/secured/product")));
 
     }
 
