@@ -8,19 +8,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DTO historico de caracteristica de location.
+ * DTO público do catálogo de características de location.
  *
- * <p>Caracteristicas dinamicas de location pertencem ao Enterprise. O DTO fica
- * no Community apenas para compatibilidade com payloads do front compartilhado
- * e para permitir que services bloqueiem a tentativa de uso com erro de versao
- * em vez de ignorar silenciosamente a selecao.</p>
+ * <p>O Community publica id, descrição, tipo e atributos para seletores de
+ * escopo e integrações de dados mestres.</p>
  */
 @Data @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CaracteristicaLocationDTO {
     public String caracteristicaId;
     public String descricao;
     public TipoCaracteristicaDTO tipoCaracteristica;
-    // Campo Enterprise/compatibilidade: no Community nao ha catalogo dinamico de atributos.
+    /** Valores disponíveis para seleção no catálogo Community. */
     public List<String> listaAtributos = new ArrayList<>();
     public String atributo;
 

@@ -5,9 +5,8 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 /**
  * Pseudo-caracteristica Community que expõe somente o id tecnico da location.
  *
- * <p>Ela existe para manter fluxos compartilhados capazes de tratar locationId
- * como atributo tecnico sem depender do cadastro dinamico de caracteristicas
- * Enterprise.</p>
+ * <p>Ela coexiste com o catálogo dinâmico público para manter fluxos capazes de
+ * tratar `locationId` como atributo técnico.</p>
  */
 public class CaracteristicaLocationId implements CaracteristicaLocationInterface {
 

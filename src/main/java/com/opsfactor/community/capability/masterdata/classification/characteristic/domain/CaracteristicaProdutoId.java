@@ -5,9 +5,8 @@ import com.opsfactor.community.capability.masterdata.product.material.domain.Pro
 /**
  * Pseudo-caracteristica Community que expõe somente o id tecnico do material.
  *
- * <p>Ela existe para manter fluxos compartilhados capazes de tratar materialId
- * como atributo tecnico sem depender do cadastro dinamico de caracteristicas
- * Enterprise.</p>
+ * <p>Ela coexiste com o catálogo dinâmico público para manter fluxos capazes de
+ * tratar `materialId` como atributo técnico.</p>
  */
 public class CaracteristicaProdutoId implements CaracteristicaProdutoInterface {
 

@@ -1,6 +1,7 @@
 package com.opsfactor.community.capability.masterdata.demand.dfu.projection;
 
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaLocation;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.network.location.domain.LocationAbstract;
@@ -12,9 +13,10 @@ import java.util.stream.Collectors;
 /**
  * Factory de escopos de locations usados por projections em memoria.
  *
- * <p>No Community ela monta o escopo completo ou subconjuntos tecnicos. O
- * conceito de Location Level configuravel e filtros/agrupadores de location
- * permanece reservado ao Enterprise.</p>
+ * <p>Além dos subconjuntos técnicos, esta classe é a dona compartilhada da
+ * semântica pública de seleção por ids e características: ids explícitos são
+ * intersectados com as características, características diferentes usam AND
+ * e valores da mesma característica usam OR.</p>
  */
 public class LocationProjectionFactory {
 
@@ -79,6 +81,71 @@ public class LocationProjectionFactory {
         
         return getProjectionSetLocations(locations, clusterEParametrosProjection);
         
+    }
+
+    /**
+     * Converte ids públicos de características e locations no recorte
+     * canônico sobre o snapshot central.
+     *
+     * <p>O método recupera o contrato do legado sem realizar consultas por
+     * item: características, seus valores e locations já estão indexados no
+     * {@link ClusterEParametrosProjection}.</p>
+     */
+    public static LocationProjection getLocationProjectionFiltroCombinacoesCaracteristicasIds(
+            Map<String, ? extends Collection<String>> valuesByLocationCharacteristicId,
+            Collection<String> locationIds,
+            ClusterEParametrosProjection clusterEParametrosProjection,
+            boolean activeLocationsOnly) {
+
+        validaClusterEParametrosProjection(clusterEParametrosProjection);
+
+        return getLocationProjectionFiltroCombinacoesCaracteristicasIds(
+                valuesByLocationCharacteristicId,
+                locationIds,
+                clusterEParametrosProjection.getLocations(activeLocationsOnly),
+                clusterEParametrosProjection);
+
+    }
+
+    /**
+     * Aplica a mesma semântica canônica sobre candidatos previamente
+     * restringidos pelo caller.
+     *
+     * <p>Este overload permite ao Enterprise compor filtros privados ou salvos
+     * depois do recorte físico comum, sem duplicar a resolução de ids e
+     * características.</p>
+     */
+    public static LocationProjection getLocationProjectionFiltroCombinacoesCaracteristicasIds(
+            Map<String, ? extends Collection<String>> valuesByLocationCharacteristicId,
+            Collection<String> locationIds,
+            Collection<Location> candidateLocations,
+            ClusterEParametrosProjection clusterEParametrosProjection) {
+
+        validaClusterEParametrosProjection(clusterEParametrosProjection);
+        validaLocations(candidateLocations);
+
+        Map<CaracteristicaLocation, Set<String>> valuesByLocationCharacteristic =
+                resolveLocationCharacteristicValues(
+                        valuesByLocationCharacteristicId,
+                        clusterEParametrosProjection);
+        Set<Location> filteredLocations = new LinkedHashSet<>(candidateLocations);
+
+        if (locationIds != null && !locationIds.isEmpty()) {
+            Set<Location> explicitlySelectedLocations = locationIds.stream()
+                    .map(clusterEParametrosProjection::getLocationPersistida)
+                    .collect(Collectors.toSet());
+            filteredLocations.retainAll(explicitlySelectedLocations);
+        }
+
+        if (!valuesByLocationCharacteristic.isEmpty()) {
+            filteredLocations.removeIf(location ->
+                    !matchesAllLocationCharacteristics(
+                            location,
+                            valuesByLocationCharacteristic));
+        }
+
+        return getProjectionSetLocations(filteredLocations, clusterEParametrosProjection);
+
     }
 
     /**
@@ -200,6 +267,64 @@ public class LocationProjectionFactory {
             }
             indice++;
         }
+
+    }
+
+    /**
+     * Resolve ids de características no mapa indexado do snapshot e descarta
+     * somente dimensões com seleção vazia, que não restringem o escopo.
+     */
+    private static Map<CaracteristicaLocation, Set<String>> resolveLocationCharacteristicValues(
+            Map<String, ? extends Collection<String>> valuesByLocationCharacteristicId,
+            ClusterEParametrosProjection clusterEParametrosProjection) {
+
+        if (valuesByLocationCharacteristicId == null) {
+            return Map.of();
+        }
+
+        Map<CaracteristicaLocation, Set<String>> resolvedValues = new LinkedHashMap<>();
+        for (Map.Entry<String, ? extends Collection<String>> entry :
+                valuesByLocationCharacteristicId.entrySet()) {
+            if (entry.getValue() == null) {
+                throw new IllegalArgumentException(
+                        "Location characteristic values must not be null.");
+            }
+            if (entry.getValue().isEmpty()) {
+                continue;
+            }
+
+            CaracteristicaLocation locationCharacteristic =
+                    clusterEParametrosProjection.getCaracteristicaLocationDeId(entry.getKey());
+            Set<String> selectedValues = new LinkedHashSet<>();
+            for (String selectedValue : entry.getValue()) {
+                if (selectedValue == null) {
+                    throw new IllegalArgumentException(
+                            "Location characteristic values must not contain null.");
+                }
+                selectedValues.add(selectedValue);
+            }
+            resolvedValues.put(locationCharacteristic, selectedValues);
+        }
+
+        return Collections.unmodifiableMap(resolvedValues);
+
+    }
+
+    /**
+     * Implementa AND entre características e OR entre os valores selecionados
+     * da mesma característica, com comparação case-insensitive do legado.
+     */
+    private static boolean matchesAllLocationCharacteristics(
+            Location location,
+            Map<CaracteristicaLocation, Set<String>> valuesByLocationCharacteristic) {
+
+        return valuesByLocationCharacteristic.entrySet().stream()
+                .allMatch(entry -> entry.getKey()
+                        .findValorCaracteristicaDeLocation(location)
+                        .map(configuredValue -> entry.getValue().stream()
+                                .anyMatch(selectedValue ->
+                                        selectedValue.equalsIgnoreCase(configuredValue)))
+                        .orElse(false));
 
     }
 

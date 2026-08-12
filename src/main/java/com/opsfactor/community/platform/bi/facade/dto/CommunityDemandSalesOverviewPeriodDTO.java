@@ -1,6 +1,7 @@
 package com.opsfactor.community.platform.bi.facade.dto;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * Valor quantitativo de Sales e Demand Plan por DFU e fechamento de período.
@@ -12,6 +13,8 @@ import java.time.LocalDateTime;
 public record CommunityDemandSalesOverviewPeriodDTO(
         String locationId,
         String materialId,
+        Map<String, String> valuesByLocationCharacteristicId,
+        Map<String, String> valuesByMaterialCharacteristicId,
         LocalDateTime referenceDate,
         double historicalSales,
         double unconstrainedPlan) {

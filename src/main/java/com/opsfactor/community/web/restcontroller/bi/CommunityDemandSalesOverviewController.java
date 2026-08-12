@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Borda REST Community da comparação quantitativa de Sales e Demand Plan.
  *
- * <p>A rota não publica valores monetários, Custom Key Figures, filtros por
- * característica nem agregação. Esses recursos requerem capacidades
- * Enterprise que não devem vazar para uma consulta Community simples.</p>
+ * <p>A rota aceita IDs e características públicas de material/location. Ela
+ * não publica valores monetários, Custom Key Figures nem agregações privadas,
+ * que continuam fora do contrato Community.</p>
  */
 @RestController
 public class CommunityDemandSalesOverviewController {

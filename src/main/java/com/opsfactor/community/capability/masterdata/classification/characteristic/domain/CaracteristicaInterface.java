@@ -2,12 +2,11 @@ package com.opsfactor.community.capability.masterdata.classification.characteris
 
 
 /**
- * Contrato mínimo de pseudo-características Community.
+ * Contrato comum das características públicas de material/location.
  *
- * <p>Caracteristicas dinamicas reais de material/location pertencem ao
- * Enterprise. No Community, este contrato fica restrito a identificadores
- * tecnicos simples, como materialId e locationId, quando algum fluxo precisa
- * tratar a dimensao como atributo.</p>
+ * <p>Ele também é implementado pelas dimensões técnicas `materialId` e
+ * `locationId`, preservando os adapters históricos que tratam IDs como
+ * características.</p>
  */
 public interface CaracteristicaInterface {
 

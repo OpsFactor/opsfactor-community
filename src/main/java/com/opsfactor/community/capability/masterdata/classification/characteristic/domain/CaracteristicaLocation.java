@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Collectors;
 @Entity
 @Getter
@@ -31,9 +32,9 @@ public class CaracteristicaLocation extends com.opsfactor.community.capability.m
      * Tabela que determina quais são as principais características de um cluster locations
      */
     /*
-     * ClusterLocations e entidade compartilhada do Community. Esta relacao
-     * Enterprise pode persistir/atualizar a associacao quando a caracteristica
-     * e salva, mas nao pode propagar remocao para o cluster em uma relacao
+     * ClusterLocations e a característica são entidades públicas. Esta relação
+     * pode persistir/atualizar a associação quando a característica é salva,
+     * mas não pode propagar remoção para o cluster em uma relação
      * ManyToMany.
      */
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
@@ -66,10 +67,9 @@ public class CaracteristicaLocation extends com.opsfactor.community.capability.m
     public String getValorCaracteristicaDeLocation(Location location) {
 
         /*
-         * Location Community conhece apenas o contrato comum de caracteristica.
-         * A tabela dinamica de valores pertence ao Enterprise; por isso a
-         * entidade Enterprise resolve o valor sem empurrar dependencia privada
-         * para Location.
+         * Location conhece apenas o contrato comum de característica. A
+         * entidade dona da tabela pública resolve o valor sem empurrar a
+         * persistência da classificação para Location.
          */
         return listaValorCaracteristicaLocation.stream()
                 .filter(valorCaracteristicaLocation ->
@@ -80,8 +80,21 @@ public class CaracteristicaLocation extends com.opsfactor.community.capability.m
                                 + location.getId()
                                 + " and Location Characteristic "
                                 + getId()
-                                + ". Enterprise characteristic filters require a value for every referenced Location."))
+                                + ". Characteristic filters require a value for every referenced Location."))
                 .getAtributo();
+
+    }
+
+    /**
+     * Finds a public value without turning a legitimate non-applicable
+     * characteristic into malformed master data.
+     */
+    public Optional<String> findValorCaracteristicaDeLocation(Location location) {
+
+        return listaValorCaracteristicaLocation.stream()
+                .filter(valorCaracteristicaLocation -> location.equals(valorCaracteristicaLocation.getLocation()))
+                .map(ValorCaracteristicaLocation::getAtributo)
+                .findFirst();
 
     }
 

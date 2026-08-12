@@ -9,6 +9,7 @@ import com.opsfactor.community.platform.bi.service.CommunityInventoryOverviewCov
 import com.opsfactor.community.platform.bi.service.CommunityInventoryOverviewProjectionLoader;
 import com.opsfactor.community.platform.bi.service.CommunityInventoryOverviewProjectionLoader.CommunityInventoryOverviewProjectionContext;
 import com.opsfactor.community.platform.bi.facade.dto.CommunityInventoryOverviewDTO;
+import com.opsfactor.community.platform.bi.facade.dto.CommunityInventoryOverviewMaterialLocationDetailDTO;
 import com.opsfactor.community.platform.bi.facade.dto.CommunityInventoryOverviewPeriodDTO;
 import com.opsfactor.community.platform.bi.facade.dto.CommunityInventoryOverviewSelectionDTO;
 import com.opsfactor.community.platform.calendar.Calendario;
@@ -17,7 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Publica a visão física do estoque projetado e seu esgotamento agregado.
@@ -61,10 +64,14 @@ public class CommunityInventoryOverviewService {
         double[] constrainedConsumption = new double[numberOfDisplayedPeriods];
         double[] unconstrainedConsumption = new double[numberOfDisplayedPeriods];
         double[] daysByPeriod = new double[numberOfDisplayedPeriods];
+        List<Double> daysInPeriod = new ArrayList<>();
+        List<CommunityInventoryOverviewMaterialLocationDetailDTO> materialLocationDetails = new ArrayList<>();
 
         for (int period = firstFuturePeriod; period <= finalFuturePeriod; period++) {
 
-            daysByPeriod[period - firstFuturePeriod] = calendar.getNumeroDiasNoPeriodo(period);
+            double days = calendar.getNumeroDiasNoPeriodo(period);
+            daysByPeriod[period - firstFuturePeriod] = days;
+            daysInPeriod.add(days);
         }
 
         for (Location location : projectionContext.eligibleLocations()) {
@@ -79,16 +86,17 @@ public class CommunityInventoryOverviewService {
                 if (!clusterAndParametersProjection.isDfuAtiva(material, location)) {
                     continue;
                 }
-                addMaterialLocationSeries(
+                CommunityInventoryOverviewMaterialLocationDetailDTO materialLocationDetail = getMaterialLocationDetail(
                         locationProjection,
                         material,
                         projectionContext,
                         firstFuturePeriod,
-                        finalFuturePeriod,
-                        constrainedStock,
-                        unconstrainedStock,
-                        constrainedConsumption,
-                        unconstrainedConsumption);
+                        finalFuturePeriod);
+                materialLocationDetails.add(materialLocationDetail);
+                addToAggregate(constrainedStock, materialLocationDetail.constrainedProjectedStock());
+                addToAggregate(unconstrainedStock, materialLocationDetail.unconstrainedProjectedStock());
+                addToAggregate(constrainedConsumption, materialLocationDetail.constrainedConsumption());
+                addToAggregate(unconstrainedConsumption, materialLocationDetail.unconstrainedConsumption());
             }
         }
 
@@ -110,22 +118,26 @@ public class CommunityInventoryOverviewService {
                         constrainedStock,
                         unconstrainedStock,
                         constrainedCoverageDays,
-                        unconstrainedCoverageDays));
+                        unconstrainedCoverageDays),
+                daysInPeriod,
+                materialLocationDetails);
         return new CommunityInventoryOverviewPhysicalRead(inventoryOverview, projectionContext);
 
     }
 
     /** Soma estoque fechado e somente os dois fluxos físicos que o consomem. */
-    private void addMaterialLocationSeries(
+    private CommunityInventoryOverviewMaterialLocationDetailDTO getMaterialLocationDetail(
             SupplyPlanningProjection locationProjection,
             Produto material,
             CommunityInventoryOverviewProjectionContext projectionContext,
             int firstFuturePeriod,
-            int finalFuturePeriod,
-            double[] constrainedStock,
-            double[] unconstrainedStock,
-            double[] constrainedConsumption,
-            double[] unconstrainedConsumption) {
+            int finalFuturePeriod) {
+
+        int numberOfDisplayedPeriods = finalFuturePeriod - firstFuturePeriod + 1;
+        double[] constrainedStock = new double[numberOfDisplayedPeriods];
+        double[] unconstrainedStock = new double[numberOfDisplayedPeriods];
+        double[] constrainedConsumption = new double[numberOfDisplayedPeriods];
+        double[] unconstrainedConsumption = new double[numberOfDisplayedPeriods];
 
         for (int period = firstFuturePeriod; period <= finalFuturePeriod; period++) {
 
@@ -153,6 +165,54 @@ public class CommunityInventoryOverviewService {
                     Constantes.TipoPlano.PLANO_IRRESTRITO,
                     projectionContext);
         }
+
+        return new CommunityInventoryOverviewMaterialLocationDetailDTO(
+                locationProjection.getLocation().getId(),
+                locationProjection.getLocation().getDescricao(),
+                material.getId(),
+                material.getDescricao(),
+                getLocationCharacteristicValues(locationProjection.getLocation(), projectionContext),
+                getMaterialCharacteristicValues(material, projectionContext),
+                constrainedStock,
+                unconstrainedStock,
+                constrainedConsumption,
+                unconstrainedConsumption);
+
+    }
+
+    /** Adds one already-materialized physical series to the report aggregate without another projection read. */
+    private void addToAggregate(double[] aggregate, double[] materialLocationSeries) {
+
+        for (int periodIndex = 0; periodIndex < aggregate.length; periodIndex++) {
+
+            aggregate[periodIndex] += materialLocationSeries[periodIndex];
+        }
+
+    }
+
+    /** Includes only assigned values; a characteristic can legitimately not apply to a given location. */
+    private Map<String, String> getLocationCharacteristicValues(
+            Location location,
+            CommunityInventoryOverviewProjectionContext projectionContext) {
+
+        Map<String, String> values = new LinkedHashMap<>();
+        projectionContext.locationCharacteristics().forEach((characteristicId, characteristic) ->
+                characteristic.findValorCaracteristicaDeLocation(location)
+                        .ifPresent(value -> values.put(characteristicId, value)));
+        return values;
+
+    }
+
+    /** Includes only assigned values; a characteristic can legitimately not apply to a given material. */
+    private Map<String, String> getMaterialCharacteristicValues(
+            Produto material,
+            CommunityInventoryOverviewProjectionContext projectionContext) {
+
+        Map<String, String> values = new LinkedHashMap<>();
+        projectionContext.materialCharacteristics().forEach((characteristicId, characteristic) ->
+                characteristic.findValorCaracteristicaDeProduto(material)
+                        .ifPresent(value -> values.put(characteristicId, value)));
+        return values;
 
     }
 

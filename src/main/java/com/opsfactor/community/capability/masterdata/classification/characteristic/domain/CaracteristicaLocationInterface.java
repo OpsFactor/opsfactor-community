@@ -6,12 +6,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Pseudo-caracteristica de location aceita no Community.
+ * Contrato Community para características públicas de location.
  *
- * <p>Implementacoes reais baseadas em cadastro dinamico pertencem ao
- * Enterprise. A implementacao Community viva e {@link CaracteristicaLocationId},
- * usada apenas quando o fluxo precisa acessar o id da location pelo contrato
- * historico de caracteristicas.</p>
+ * <p>{@link CaracteristicaLocation} representa o catálogo dinâmico e
+ * {@link CaracteristicaLocationId} preserva a dimensão técnica do ID.</p>
  */
 public interface CaracteristicaLocationInterface extends CaracteristicaInterface {
 

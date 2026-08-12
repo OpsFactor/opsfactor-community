@@ -1,6 +1,7 @@
 package com.opsfactor.community.capability.masterdata.demand.dfu.projection;
 
 import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutos;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProduto;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
@@ -11,14 +12,14 @@ import java.util.stream.Collectors;
 /**
  * Factory de escopos de materiais usados por projections em memoria.
  *
- * <p>A classe substituiu a antiga factory de filtros, mas no Community nao
- * reabre o conceito funcional de "Material Filter" do perfil Supply. Os
- * metodos podem montar subconjuntos tecnicos para uma rotina especifica; o
- * perfil Community sempre usa o escopo completo.</p>
+ * <p>Além dos subconjuntos técnicos, esta classe é a dona compartilhada da
+ * semântica pública de seleção por ids e características: ids explícitos são
+ * intersectados com as características, características diferentes usam AND
+ * e valores da mesma característica usam OR.</p>
  */
 public class MaterialProjectionFactory {
 
-    /** Única pseudo-característica material suportada pelo modelo Community. */
+    /** Compatibilidade temporária com o payload antigo de Production Overview. */
     private static final String MATERIAL_ID_CHARACTERISTIC_ID = "materialId";
 
     // não se criam instâncias desta classe
@@ -84,20 +85,12 @@ public class MaterialProjectionFactory {
     }
 
     /**
-     * Recorta o snapshot de materiais já carregado pelo único atributo técnico
-     * de material publicado no Community: {@code materialId}.
+     * Mantém compatibilidade com o adapter antigo que representa material ids
+     * como a pseudo-característica {@code materialId}.
      *
-     * <p>Esta operação é deliberadamente menor que o filtro dinâmico legado.
-     * Características de material cadastráveis pertencem ao Enterprise e não
-     * são reintroduzidas aqui. Não há repository, join ou query: a factory
-     * percorre uma vez o conjunto que já está no
-     * {@link ClusterEParametrosProjection} e devolve uma projection imutável.</p>
-     *
-     * @param valuesByMaterialCharacteristicId valores do corpo legado; listas
-     *                                         vazias não restringem o escopo
-     * @param clusterEParametrosProjection fotografia base em memória
-     * @param activeMaterialsOnly define se a fotografia inicial inclui somente
-     *                            materiais ativos
+     * <p>Novos fluxos devem usar
+     * {@link #getMaterialProjectionFiltroCombinacoesCaracteristicasIds(Map, Collection, ClusterEParametrosProjection, boolean)},
+     * que recebe ids e características em dimensões separadas.</p>
      */
     public static MaterialProjection getProjectionByMaterialCharacteristicValues(
             Map<String, ? extends Collection<String>> valuesByMaterialCharacteristicId,
@@ -117,6 +110,71 @@ public class MaterialProjectionFactory {
                 .filter(material -> requestedMaterialIds.stream()
                         .anyMatch(requestedId -> requestedId.equalsIgnoreCase(material.getId())))
                 .collect(Collectors.toSet());
+        return getProjectionSetMateriais(filteredMaterials, clusterEParametrosProjection);
+
+    }
+
+    /**
+     * Converte ids públicos de características e materiais no recorte
+     * canônico sobre o snapshot central.
+     *
+     * <p>O método recupera o contrato do legado sem realizar consultas por
+     * item: características, seus valores e materiais já estão indexados no
+     * {@link ClusterEParametrosProjection}.</p>
+     */
+    public static MaterialProjection getMaterialProjectionFiltroCombinacoesCaracteristicasIds(
+            Map<String, ? extends Collection<String>> valuesByMaterialCharacteristicId,
+            Collection<String> materialIds,
+            ClusterEParametrosProjection clusterEParametrosProjection,
+            boolean activeMaterialsOnly) {
+
+        validaClusterEParametrosProjection(clusterEParametrosProjection);
+
+        return getMaterialProjectionFiltroCombinacoesCaracteristicasIds(
+                valuesByMaterialCharacteristicId,
+                materialIds,
+                clusterEParametrosProjection.getMateriais(activeMaterialsOnly),
+                clusterEParametrosProjection);
+
+    }
+
+    /**
+     * Aplica a mesma semântica canônica sobre candidatos previamente
+     * restringidos pelo caller.
+     *
+     * <p>Este overload permite ao Enterprise compor filtros privados ou salvos
+     * depois do recorte físico comum, sem duplicar a resolução de ids e
+     * características.</p>
+     */
+    public static MaterialProjection getMaterialProjectionFiltroCombinacoesCaracteristicasIds(
+            Map<String, ? extends Collection<String>> valuesByMaterialCharacteristicId,
+            Collection<String> materialIds,
+            Collection<Produto> candidateMaterials,
+            ClusterEParametrosProjection clusterEParametrosProjection) {
+
+        validaClusterEParametrosProjection(clusterEParametrosProjection);
+        validaMateriais(candidateMaterials);
+
+        Map<CaracteristicaProduto, Set<String>> valuesByMaterialCharacteristic =
+                resolveMaterialCharacteristicValues(
+                        valuesByMaterialCharacteristicId,
+                        clusterEParametrosProjection);
+        Set<Produto> filteredMaterials = new LinkedHashSet<>(candidateMaterials);
+
+        if (materialIds != null && !materialIds.isEmpty()) {
+            Set<Produto> explicitlySelectedMaterials = materialIds.stream()
+                    .map(clusterEParametrosProjection::getMaterialPersistido)
+                    .collect(Collectors.toSet());
+            filteredMaterials.retainAll(explicitlySelectedMaterials);
+        }
+
+        if (!valuesByMaterialCharacteristic.isEmpty()) {
+            filteredMaterials.removeIf(material ->
+                    !matchesAllMaterialCharacteristics(
+                            material,
+                            valuesByMaterialCharacteristic));
+        }
+
         return getProjectionSetMateriais(filteredMaterials, clusterEParametrosProjection);
 
     }
@@ -201,7 +259,7 @@ public class MaterialProjectionFactory {
 
     }
 
-    /** Recusa atributos Enterprise em vez de ignorar filtro e ampliar o escopo. */
+    /** Valida o payload de compatibilidade da pseudo-característica materialId. */
     private static void validateCommunityMaterialCharacteristicFilters(
             Map<String, ? extends Collection<String>> valuesByMaterialCharacteristicId) {
 
@@ -241,6 +299,64 @@ public class MaterialProjectionFactory {
         return materialIds.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+
+    }
+
+    /**
+     * Resolve ids de características no mapa indexado do snapshot e descarta
+     * somente dimensões com seleção vazia, que não restringem o escopo.
+     */
+    private static Map<CaracteristicaProduto, Set<String>> resolveMaterialCharacteristicValues(
+            Map<String, ? extends Collection<String>> valuesByMaterialCharacteristicId,
+            ClusterEParametrosProjection clusterEParametrosProjection) {
+
+        if (valuesByMaterialCharacteristicId == null) {
+            return Map.of();
+        }
+
+        Map<CaracteristicaProduto, Set<String>> resolvedValues = new LinkedHashMap<>();
+        for (Map.Entry<String, ? extends Collection<String>> entry :
+                valuesByMaterialCharacteristicId.entrySet()) {
+            if (entry.getValue() == null) {
+                throw new IllegalArgumentException(
+                        "Material characteristic values must not be null.");
+            }
+            if (entry.getValue().isEmpty()) {
+                continue;
+            }
+
+            CaracteristicaProduto materialCharacteristic =
+                    clusterEParametrosProjection.getCaracteristicaProdutoDeId(entry.getKey());
+            Set<String> selectedValues = new LinkedHashSet<>();
+            for (String selectedValue : entry.getValue()) {
+                if (selectedValue == null) {
+                    throw new IllegalArgumentException(
+                            "Material characteristic values must not contain null.");
+                }
+                selectedValues.add(selectedValue);
+            }
+            resolvedValues.put(materialCharacteristic, selectedValues);
+        }
+
+        return Collections.unmodifiableMap(resolvedValues);
+
+    }
+
+    /**
+     * Implementa AND entre características e OR entre os valores selecionados
+     * da mesma característica, com comparação case-insensitive do legado.
+     */
+    private static boolean matchesAllMaterialCharacteristics(
+            Produto material,
+            Map<CaracteristicaProduto, Set<String>> valuesByMaterialCharacteristic) {
+
+        return valuesByMaterialCharacteristic.entrySet().stream()
+                .allMatch(entry -> entry.getKey()
+                        .findValorCaracteristicaDeProduto(material)
+                        .map(configuredValue -> entry.getValue().stream()
+                                .anyMatch(selectedValue ->
+                                        selectedValue.equalsIgnoreCase(configuredValue)))
+                        .orElse(false));
 
     }
 

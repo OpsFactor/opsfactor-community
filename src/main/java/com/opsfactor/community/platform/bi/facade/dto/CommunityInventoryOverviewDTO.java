@@ -11,5 +11,7 @@ import java.util.List;
  */
 public record CommunityInventoryOverviewDTO(
         String unitOfMeasureId,
-        List<CommunityInventoryOverviewPeriodDTO> periods) {
+        List<CommunityInventoryOverviewPeriodDTO> periods,
+        List<Double> daysInPeriod,
+        List<CommunityInventoryOverviewMaterialLocationDetailDTO> materialLocationDetails) {
 }

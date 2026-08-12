@@ -1,6 +1,7 @@
 package com.opsfactor.community.platform.bi.facade.dto;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Recorte físico do Inventory Overview Community.
@@ -14,5 +15,7 @@ public record CommunityInventoryOverviewSelectionDTO(
         String unitOfMeasureId,
         List<String> materialIds,
         List<String> locationIds,
+        Map<String, List<String>> valuesByMaterialCharacteristicId,
+        Map<String, List<String>> valuesByLocationCharacteristicId,
         CommunityInventoryOverviewPostHorizonPolicy postHorizonPolicy) {
 }

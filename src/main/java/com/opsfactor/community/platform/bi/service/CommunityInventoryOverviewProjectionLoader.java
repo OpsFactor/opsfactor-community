@@ -3,15 +3,17 @@ package com.opsfactor.community.platform.bi.service;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.network.location.domain.LocationAbstract;
-import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
-import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
-import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjectionFactory;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaLocation;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProduto;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.facade.dto.FiltroMaterialLocationDeCombinacaoCaracteristicasDTO;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.facade.mapper.FiltroLocationDeCombinacaoCaracteristicasMapper;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.facade.mapper.FiltroMaterialDeCombinacaoCaracteristicasMapper;
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.projection.PoliticaEstoquesProjection;
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.projection.PoliticaEstoquesProjectionFactory;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
@@ -27,10 +29,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Carrega as projections físicas mínimas do Inventory Overview.
@@ -88,8 +89,18 @@ public class CommunityInventoryOverviewProjectionLoader {
                 .getSupplyNetworkProjectionCompletoDeCache();
         Calendario calendar = supplyPlan.getCalendarioDoSupplyPlan(
                 clusterAndParametersProjection.getParametrosGlobais());
-        LocationProjection locationProjection = getLocationProjection(selectionDTO.locationIds(), clusterAndParametersProjection);
-        MaterialProjection materialProjection = getMaterialProjection(selectionDTO.materialIds(), clusterAndParametersProjection);
+        FiltroMaterialLocationDeCombinacaoCaracteristicasDTO filterDTO =
+                getMaterialLocationFilter(selectionDTO);
+        LocationProjection locationProjection =
+                FiltroLocationDeCombinacaoCaracteristicasMapper.getLocationProjection(
+                        filterDTO,
+                        clusterAndParametersProjection,
+                        true);
+        MaterialProjection materialProjection =
+                FiltroMaterialDeCombinacaoCaracteristicasMapper.getMaterialProjection(
+                        filterDTO,
+                        clusterAndParametersProjection,
+                        true);
         PoliticaEstoquesProjection inventoryPolicyProjection = inventoryPolicyProjectionFactory
                 .getPoliticaEstoquesProjection(
                         calendar,
@@ -109,7 +120,9 @@ public class CommunityInventoryOverviewProjectionLoader {
                 targetUnitOfMeasure,
                 materialProjection,
                 supplyPlanningBiProjection,
-                getEligibleLocations(locationProjection));
+                getEligibleLocations(locationProjection),
+                clusterAndParametersProjection.getCaracteristicaProdutoMap(),
+                clusterAndParametersProjection.getCaracteristicaLocationMap());
 
     }
 
@@ -129,48 +142,6 @@ public class CommunityInventoryOverviewProjectionLoader {
 
     }
 
-    /** Limita locations por ids explícitos, sem transportar DTOs ou agrupamentos legados. */
-    private LocationProjection getLocationProjection(
-            List<String> locationIds,
-            ClusterEParametrosProjection clusterAndParametersProjection) {
-
-        if (locationIds == null || locationIds.isEmpty()) {
-            return LocationProjectionFactory.getLocationProjectionCompleto(clusterAndParametersProjection);
-        }
-        if (new LinkedHashSet<>(locationIds).size() != locationIds.size()) {
-            throw new IllegalArgumentException("Inventory Overview locationIds must not contain duplicates");
-        }
-        return LocationProjectionFactory.getProjectionSetLocationIds(locationIds, clusterAndParametersProjection);
-
-    }
-
-    /** Valida cada id de material contra o snapshot em cache e monta o menor escopo necessário. */
-    private MaterialProjection getMaterialProjection(
-            List<String> materialIds,
-            ClusterEParametrosProjection clusterAndParametersProjection) {
-
-        Set<Produto> activeMaterials = clusterAndParametersProjection.getMateriaisAtivos();
-        if (materialIds == null || materialIds.isEmpty()) {
-            return MaterialProjectionFactory.getProjectionSetMateriais(activeMaterials, clusterAndParametersProjection);
-        }
-        if (new LinkedHashSet<>(materialIds).size() != materialIds.size()) {
-            throw new IllegalArgumentException("Inventory Overview materialIds must not contain duplicates");
-        }
-        Set<String> requestedMaterialIds = new LinkedHashSet<>(materialIds);
-        Set<Produto> selectedMaterials = activeMaterials.stream()
-                .filter(material -> requestedMaterialIds.contains(material.getId()))
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-        if (selectedMaterials.size() != requestedMaterialIds.size()) {
-            Set<String> selectedMaterialIds = selectedMaterials.stream()
-                    .map(Produto::getId)
-                    .collect(Collectors.toSet());
-            requestedMaterialIds.removeAll(selectedMaterialIds);
-            throw new IllegalArgumentException("Unknown or inactive Inventory Overview material ids: " + requestedMaterialIds);
-        }
-        return MaterialProjectionFactory.getProjectionSetMateriais(selectedMaterials, clusterAndParametersProjection);
-
-    }
-
     /** Mantém somente as locations que possuem saldo projetado na semântica de Supply. */
     private Set<Location> getEligibleLocations(LocationProjection locationProjection) {
 
@@ -181,13 +152,31 @@ public class CommunityInventoryOverviewProjectionLoader {
 
     }
 
+    /** Adapta o record específico da tela ao contrato compartilhado do legado. */
+    private FiltroMaterialLocationDeCombinacaoCaracteristicasDTO getMaterialLocationFilter(
+            CommunityInventoryOverviewSelectionDTO selectionDTO) {
+
+        FiltroMaterialLocationDeCombinacaoCaracteristicasDTO filterDTO =
+                new FiltroMaterialLocationDeCombinacaoCaracteristicasDTO();
+        filterDTO.materialIds = selectionDTO.materialIds();
+        filterDTO.locationIds = selectionDTO.locationIds();
+        filterDTO.valuesByMaterialCharacteristicId =
+                selectionDTO.valuesByMaterialCharacteristicId();
+        filterDTO.valuesByLocationCharacteristicId =
+                selectionDTO.valuesByLocationCharacteristicId();
+        return filterDTO;
+
+    }
+
     /** Projections imutáveis, descartadas ao fim da requisição. */
     public record CommunityInventoryOverviewProjectionContext(
             Calendario calendar,
             UnidadeMedida targetUnitOfMeasure,
             MaterialProjection materialProjection,
             SupplyPlanningBiProjection supplyPlanningBiProjection,
-            Collection<Location> eligibleLocations) {
+            Collection<Location> eligibleLocations,
+            Map<String, CaracteristicaProduto> materialCharacteristics,
+            Map<String, CaracteristicaLocation> locationCharacteristics) {
     }
 
 }

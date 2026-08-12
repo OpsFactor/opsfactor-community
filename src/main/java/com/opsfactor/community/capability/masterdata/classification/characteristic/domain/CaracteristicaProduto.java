@@ -15,6 +15,7 @@ import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 @Entity
@@ -26,12 +27,11 @@ public class CaracteristicaProduto extends com.opsfactor.community.capability.ma
 
     /**
      * Clusters de material que selecionam esta característica para modelos
-     * analíticos Enterprise, como o modelo exponomial de escolha.
+     * analíticos e regras de agrupamento.
      *
-     * <p>A relação permanece unidirecional no lado privado: `ClusterProdutos`
-     * é compartilhado pelo Community e não recebe coleção inversa nem tipo
-     * Enterprise. A tabela de associação usa o mapeamento padrão do provider,
-     * sem nomes físicos legados presos no código.</p>
+     * <p>A relação pública permanece unidirecional: `ClusterProdutos` não
+     * recebe coleção inversa. A tabela de associação usa o mapeamento padrão
+     * do provider, sem nomes físicos legados presos no código.</p>
      */
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<ClusterProdutos> materialClusters = new HashSet<>();
@@ -57,10 +57,9 @@ public class CaracteristicaProduto extends com.opsfactor.community.capability.ma
     public String getValorCaracteristicaDeProduto(Produto produto) {
 
         /*
-         * Produto Community conhece apenas o contrato comum de caracteristica.
-         * O cadastro dinamico e a tabela de valores sao Enterprise, entao a
-         * resolucao concreta fica nesta entidade Enterprise sem exigir metodo
-         * Enterprise em Produto.
+         * Produto conhece apenas o contrato comum de característica. A
+         * resolução concreta permanece na entidade dona da tabela pública de
+         * valores, sem acoplar o material à persistência da classificação.
          */
         return listaValorCaracteristicaProduto.stream()
                 .filter(valorCaracteristicaProduto ->
@@ -71,8 +70,25 @@ public class CaracteristicaProduto extends com.opsfactor.community.capability.ma
                                 + produto.getId()
                                 + " and Material Characteristic "
                                 + getId()
-                                + ". Enterprise characteristic filters require a value for every referenced Material."))
+                                + ". Characteristic filters require a value for every referenced Material."))
                 .getAtributo();
+
+    }
+
+    /**
+     * Finds a value without treating absence as a malformed master-data record.
+     *
+     * <p>Characteristics can legitimately apply to a subset of materials. A
+     * cluster rule therefore needs a non-throwing lookup so that a material
+     * without a value simply does not match that rule and can continue to the
+     * next cluster or the default cluster.</p>
+     */
+    public Optional<String> findValorCaracteristicaDeProduto(Produto produto) {
+
+        return listaValorCaracteristicaProduto.stream()
+                .filter(valorCaracteristicaProduto -> produto.equals(valorCaracteristicaProduto.getProduto()))
+                .map(ValorCaracteristicaProduto::getAtributo)
+                .findFirst();
 
     }
 

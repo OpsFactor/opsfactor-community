@@ -1,19 +1,27 @@
 package com.opsfactor.community.platform.bi.facade.dto;
 
+import com.opsfactor.community.platform.utility.Constantes;
+
 import java.util.List;
+import java.util.Map;
 
 /**
  * Seleção explícita da visão Community de vendas e Demand Plan.
  *
- * <p>A visão é deliberadamente limitada a um Demand Plan e a séries
- * quantitativas no nível material/location. Filtros vazios representam o
- * escopo ativo completo do snapshot; valores preenchidos são ids explícitos,
- * nunca valores de característica ou agrupamentos Enterprise.</p>
+ * <p>A visão aceita um Demand Plan opcional. Sem plano, publica somente uma
+ * série histórica do documento explicitamente escolhido; com plano, acrescenta
+ * a série quantitativa irrestrita. Filtros vazios representam o escopo ativo
+ * completo do snapshot. IDs e características públicas podem restringir as
+ * duas dimensões; valores financeiros e agrupamentos privados permanecem fora
+ * do contrato Community.</p>
  */
 public record CommunityDemandSalesOverviewSelectionDTO(
         Long demandPlanId,
+        Constantes.TipoDocumentoVenda historicalSalesDocumentType,
         String unitOfMeasureId,
         Integer historicalPeriods,
         List<String> materialIds,
-        List<String> locationIds) {
+        List<String> locationIds,
+        Map<String, List<String>> valuesByMaterialCharacteristicId,
+        Map<String, List<String>> valuesByLocationCharacteristicId) {
 }

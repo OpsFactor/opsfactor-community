@@ -6,12 +6,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Pseudo-caracteristica de material aceita no Community.
+ * Contrato Community para características públicas de material.
  *
- * <p>Implementacoes reais baseadas em cadastro dinamico pertencem ao
- * Enterprise. A implementacao Community viva e {@link CaracteristicaProdutoId},
- * usada apenas quando o fluxo precisa acessar o id do material pelo contrato
- * historico de caracteristicas.</p>
+ * <p>{@link CaracteristicaProduto} representa o catálogo dinâmico e
+ * {@link CaracteristicaProdutoId} preserva a dimensão técnica do ID.</p>
  */
 public interface CaracteristicaProdutoInterface extends CaracteristicaInterface {
 
