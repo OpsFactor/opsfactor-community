@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.service;
 
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
 import com.opsfactor.community.capability.demandplanning.forecast.preprocessing.engine.DemandForecastStockoutContext;
@@ -237,16 +237,16 @@ public class DemandPlanningServiceCommunityContractTest {
         clusterLocationsValido.setId(1L);
         clusterLocationListComItemNulo.add(clusterLocationsValido);
         clusterLocationListComItemNulo.add(null);
-        List<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningListComItemNulo = new ArrayList<>();
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanningValido =
-                new ClusterProdutosDemandPlanning("MATERIAL_CLUSTER", false, 1);
+        List<ClusterMateriais> clusterMateriaisDemandPlanningListComItemNulo = new ArrayList<>();
+        ClusterMateriais clusterMateriaisDemandPlanningValido =
+                new ClusterMateriais("MATERIAL_CLUSTER", false, 1);
         clusterMateriaisDemandPlanningValido.setId(1L);
         clusterMateriaisDemandPlanningListComItemNulo.add(clusterMateriaisDemandPlanningValido);
         clusterMateriaisDemandPlanningListComItemNulo.add(null);
         List<ClusterLocations> clusterLocationListComItemSemId = List.of(
                 new ClusterLocations("LOCATION_CLUSTER_WITHOUT_ID", false, 1));
-        List<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningListComItemSemId = List.of(
-                new ClusterProdutosDemandPlanning("MATERIAL_CLUSTER_WITHOUT_ID", false, 1));
+        List<ClusterMateriais> clusterMateriaisDemandPlanningListComItemSemId = List.of(
+                new ClusterMateriais("MATERIAL_CLUSTER_WITHOUT_ID", false, 1));
 
         InvocationTargetException clusterLocationCollectionAusenteException = Assertions.assertThrows(
                 InvocationTargetException.class,
@@ -431,7 +431,7 @@ public class DemandPlanningServiceCommunityContractTest {
                 new ParametrosDemandPlanNivelClusterProjectionSimples(
                         perfilExecucaoDemandPlan,
                         new ClusterLocations("LOCATION_CLUSTER", true, 1),
-                        new ClusterProdutosDemandPlanning("MATERIAL_CLUSTER", true, 1),
+                        new ClusterMateriais("MATERIAL_CLUSTER", true, 1),
                         new ParametrosGeraisDemandPlanningProjection(
                                 true,
                                 new ParametrosAgregacaoForecast(
@@ -2096,16 +2096,16 @@ public class DemandPlanningServiceCommunityContractTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static List<ClusterProdutosDemandPlanning> invokeGetClusterMateriaisDemandPlanningParaExecucaoCommunity(
+    private static List<ClusterMateriais> invokeGetClusterMateriaisDemandPlanningParaExecucaoCommunity(
             DemandPlanningService demandPlanningService,
-            List<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningList) throws Exception {
+            List<ClusterMateriais> clusterMateriaisDemandPlanningList) throws Exception {
 
         Method getClusterMateriaisDemandPlanningParaExecucaoCommunityMethod =
                 DemandPlanningService.class.getDeclaredMethod(
                         "getClusterMateriaisDemandPlanningParaExecucaoCommunity",
                         List.class);
         getClusterMateriaisDemandPlanningParaExecucaoCommunityMethod.setAccessible(true);
-        return (List<ClusterProdutosDemandPlanning>) getClusterMateriaisDemandPlanningParaExecucaoCommunityMethod.invoke(
+        return (List<ClusterMateriais>) getClusterMateriaisDemandPlanningParaExecucaoCommunityMethod.invoke(
                 demandPlanningService,
                 clusterMateriaisDemandPlanningList);
 
@@ -2133,14 +2133,14 @@ public class DemandPlanningServiceCommunityContractTest {
             DemandPlanningService demandPlanningService,
             ParametrosDemandPlanNivelClusterProjection parametrosDemandPlanNivelClusterProjection,
             ClusterLocations clusterLocations,
-            ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning) throws Exception {
+            ClusterMateriais clusterMateriaisDemandPlanning) throws Exception {
 
         Method getParametrosDemandPlanNivelClusterProjectionObrigatoriaMethod =
                 DemandPlanningService.class.getDeclaredMethod(
                         "getParametrosDemandPlanNivelClusterProjectionObrigatoria",
                         ParametrosDemandPlanNivelClusterProjection.class,
                         ClusterLocations.class,
-                        ClusterProdutosDemandPlanning.class);
+                        ClusterMateriais.class);
         getParametrosDemandPlanNivelClusterProjectionObrigatoriaMethod.setAccessible(true);
         return (ParametrosDemandPlanNivelClusterProjection) getParametrosDemandPlanNivelClusterProjectionObrigatoriaMethod.invoke(
                 demandPlanningService,

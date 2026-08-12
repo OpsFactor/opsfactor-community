@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.service;
 
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
@@ -28,7 +28,7 @@ import com.opsfactor.community.capability.demandplanning.demandplan.projection.D
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjection;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionMaterialLocation;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanProjectionFactory;
-import com.opsfactor.community.capability.cluster.repository.material.ClusterProdutosDemandPlanningRepository;
+import com.opsfactor.community.capability.cluster.repository.material.ClusterMateriaisRepository;
 import com.opsfactor.community.capability.demandplanning.configuration.repository.PerfilExecucaoDemandPlanRepository;
 import com.opsfactor.community.capability.demandplanning.demandplan.repository.DemandPlanItemRepository;
 import com.opsfactor.community.capability.demandplanning.demandplan.repository.DemandPlanRepository;
@@ -118,7 +118,7 @@ public class DemandPlanningService {
      * Repository transicional do cluster de materiais de Demand Planning.
      */
     @Autowired
-    private ClusterProdutosDemandPlanningRepository clusterMateriaisDemandPlanningRepository;
+    private ClusterMateriaisRepository clusterMateriaisDemandPlanningRepository;
 
     /**
      * Repository de Demand Plan usado para criar, consultar e remover versoes.
@@ -353,8 +353,8 @@ public class DemandPlanningService {
      * nulo ou cluster sem id deve falhar antes do sort e antes de gerar qualquer
      * linha parcial do plano.</p>
      */
-    private List<ClusterProdutosDemandPlanning> getClusterMateriaisDemandPlanningParaExecucaoCommunity(
-            List<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningList) {
+    private List<ClusterMateriais> getClusterMateriaisDemandPlanningParaExecucaoCommunity(
+            List<ClusterMateriais> clusterMateriaisDemandPlanningList) {
 
         if (clusterMateriaisDemandPlanningList == null) {
             throw new IllegalArgumentException(
@@ -362,7 +362,7 @@ public class DemandPlanningService {
         }
 
         int indiceClusterMateriaisDemandPlanning = 0;
-        for (ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning : clusterMateriaisDemandPlanningList) {
+        for (ClusterMateriais clusterMateriaisDemandPlanning : clusterMateriaisDemandPlanningList) {
             if (clusterMateriaisDemandPlanning == null) {
                 throw new IllegalArgumentException(
                         "Demand Planning material cluster at index "
@@ -489,11 +489,11 @@ public class DemandPlanningService {
          * Tipo fisico transicional: ClusterProdutosDemandPlanning. Conceito
          * publico Community: clusters de materiais usados para Demand Planning.
          */
-        List<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningList =
+        List<ClusterMateriais> clusterMateriaisDemandPlanningList =
                 getClusterMateriaisDemandPlanningParaExecucaoCommunity(
                         clusterMateriaisDemandPlanningRepository.findAll());
         // Comecamos rodando os clusters materiais de menor prioridade.
-        clusterMateriaisDemandPlanningList.sort(Comparator.comparingInt(ClusterProdutosDemandPlanning::getPrioridade).reversed());
+        clusterMateriaisDemandPlanningList.sort(Comparator.comparingInt(ClusterMateriais::getPrioridade).reversed());
 
         // Projection de unidade medida usada para converter tudo para a unidade
         // alvo da combinacao cluster material / cluster location definida nos parametros DP.
@@ -541,12 +541,20 @@ public class DemandPlanningService {
 
             DemandPlan demandPlanParaLambda = demandPlan;
 
-            clusterLocationList.parallelStream().forEach(clusterLocations -> {
+            /*
+             * Cada combinacao de clusters termina em uma transacao `saveAll` do
+             * mesmo Demand Plan. Executa-las em parallelStream cria writers
+             * concorrentes e quebra o runtime SQLite Community com SQLITE_BUSY.
+             * A iteracao serial preserva o batch por combinacao e a atomicidade
+             * funcional do plano sem transformar repositories JPA em estado
+             * compartilhado entre workers.
+             */
+            clusterLocationList.stream().forEach(clusterLocations -> {
 
                 log.info("Gerando o Demand Plan para ClusterLocations " + clusterLocations.getDescricao());
                 if (clusterLocations.getParametrosClusterLocations().getPlanejaDP()) {
 
-                    clusterMateriaisDemandPlanningList.parallelStream().forEach(clusterMateriaisDemandPlanning -> {
+                    clusterMateriaisDemandPlanningList.stream().forEach(clusterMateriaisDemandPlanning -> {
 
                         ParametrosDemandPlanNivelClusterProjection parametrosDemandPlanNivelClusterProjection =
                                 parametrosDemandPlanProjection.getParametrosDemandPlanNivelClusterProjection(
@@ -1053,7 +1061,7 @@ public class DemandPlanningService {
                 clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
 
         ClusterLocations clusterLocations = parametrosDemandPlanNivelClusterProjection.getClusterLocations();
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning = parametrosDemandPlanNivelClusterProjection.getClusterMateriaisDemandPlanning();
+        ClusterMateriais clusterMateriaisDemandPlanning = parametrosDemandPlanNivelClusterProjection.getClusterMateriaisDemandPlanning();
         boolean consideraDfusInativos = parametrosGeraisDemandPlanningProjection.isDpUsaHistoricoDemandaInativos();
         UnidadeMedida unidadeMedidaPadraoDp = parametrosGeraisDemandPlanningProjection.getUnidadeMedidaDP();
 

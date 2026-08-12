@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.demandplan.projection;
 
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
@@ -570,7 +570,7 @@ public class DemandPlanningProjection {
                     return demandPlanItemReferencia.getUnidadeMedida(clusterEParametrosProjection.getParametrosGlobais());
                 } else {
                     ClusterLocations clusterLocations = clusterEParametrosProjection.getClusterLocationsDeLocation(location);
-                    ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
+                    ClusterMateriais clusterMateriaisDemandPlanning =
                             clusterEParametrosProjection.getClusterMateriaisDemandPlanning(material, location);
                     return parametrosDemandPlanProjection
                             .getParametrosDemandPlanNivelClusterProjection(clusterLocations, clusterMateriaisDemandPlanning)

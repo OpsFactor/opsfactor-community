@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.cluster.facade.mapper.ClusterLocations
 import com.opsfactor.community.capability.cluster.facade.mapper.ClusterProdutosMapper;
 import com.opsfactor.community.capability.demandplanning.configuration.facade.mapper.DemandPlanningConfigurationMapper;
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.ParametrosDemandPlanNivelCluster;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
@@ -25,7 +25,7 @@ import com.opsfactor.community.capability.transactionaldata.sales.saleshistory.p
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjection;
-import com.opsfactor.community.capability.cluster.repository.material.ClusterProdutosDemandPlanningRepository;
+import com.opsfactor.community.capability.cluster.repository.material.ClusterMateriaisRepository;
 import com.opsfactor.community.capability.demandplanning.configuration.repository.ParametrosDemandPlanNivelClusterRepository;
 import com.opsfactor.community.capability.demandplanning.configuration.repository.PerfilExecucaoDemandPlanRepository;
 import com.opsfactor.community.capability.cluster.service.ClusterLocationService;
@@ -96,7 +96,7 @@ public class DemandSimulationFacade {
      * `Produtos`, mas a borda publica e a variavel local falam em materiais.
      */
     @Autowired
-    private ClusterProdutosDemandPlanningRepository clusterMateriaisDemandPlanningRepository;
+    private ClusterMateriaisRepository clusterMateriaisDemandPlanningRepository;
 
     /**
      * Repository do perfil de execucao Demand Planning usado para bucket,
@@ -144,7 +144,7 @@ public class DemandSimulationFacade {
          * borda Community e o front novo trabalham com o conceito publico de
          * cluster de materiais.
          */
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
+        ClusterMateriais clusterMateriaisDemandPlanning =
                 clusterMateriaisDemandPlanningRepository.findById(materialClusterId).get();
         ClusterLocations clusterLocations =
                 clusterLocationService.getClusterLocation(locationClusterId).get();
@@ -200,7 +200,7 @@ public class DemandSimulationFacade {
          * Mantemos o tipo JPA transicional, mas deste ponto em diante o nome da
          * variavel acompanha o contrato Community: material cluster.
          */
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
+        ClusterMateriais clusterMateriaisDemandPlanning =
                 clusterMateriaisDemandPlanningRepository.findById(
                         demandPlanningClusterLevelConfigurationDTO.materialClusterId).get();
         ClusterLocations clusterLocations =
@@ -390,7 +390,7 @@ public class DemandSimulationFacade {
                 perfilExecucaoDemandPlanRepository.findById(
                         demandPlanningClusterLevelConfigurationDTO.demandPlanExecutionProfileId).get();
         ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning = clusterEParametrosProjection.getClusterMateriaisDemandPlanningDeId(
+        ClusterMateriais clusterMateriaisDemandPlanning = clusterEParametrosProjection.getClusterMateriaisDemandPlanningDeId(
                         demandPlanningClusterLevelConfigurationDTO.materialClusterId)
                 .orElseThrow(() -> new NoResultException(
                         "Demand Planning Material Cluster "
@@ -515,7 +515,7 @@ public class DemandSimulationFacade {
      */
     private ParametrosDemandPlanNivelCluster getParametrosDemandPlanNivelClusterExistenteOuNovoCommunity(
             PerfilExecucaoDemandPlan perfilExecucaoDemandPlan,
-            ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning,
+            ClusterMateriais clusterMateriaisDemandPlanning,
             ClusterLocations clusterLocations) {
 
         Optional<ParametrosDemandPlanNivelCluster> optionalParametrosDemandPlanNivelCluster =

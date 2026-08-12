@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.demandplanning.configuration.facade.dt
 import com.opsfactor.community.capability.demandplanning.configuration.facade.dto.DemandPlanningPreviaForecastRequestDTO;
 import com.opsfactor.community.capability.demandplanning.configuration.facade.mapper.DemandPlanningConfigurationMapper;
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.ParametrosDemandPlanNivelCluster;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
@@ -27,7 +27,7 @@ import com.opsfactor.community.capability.transactionaldata.sales.saleshistory.p
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjection;
-import com.opsfactor.community.capability.cluster.repository.material.ClusterProdutosDemandPlanningRepository;
+import com.opsfactor.community.capability.cluster.repository.material.ClusterMateriaisRepository;
 import com.opsfactor.community.capability.demandplanning.configuration.repository.ParametrosDemandPlanNivelClusterRepository;
 import com.opsfactor.community.capability.demandplanning.configuration.repository.PerfilExecucaoDemandPlanRepository;
 import com.opsfactor.community.capability.cluster.service.ClusterLocationService;
@@ -198,8 +198,8 @@ public class DemandSimulationFacadeCommunityContractTest {
 
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = new PerfilExecucaoDemandPlan();
         perfilExecucaoDemandPlan.setId("DP_PROFILE");
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
-                new ClusterProdutosDemandPlanning();
+        ClusterMateriais clusterMateriaisDemandPlanning =
+                new ClusterMateriais();
         clusterMateriaisDemandPlanning.setId(13L);
         ClusterLocations clusterLocations = new ClusterLocations();
         clusterLocations.setId(12L);
@@ -281,8 +281,8 @@ public class DemandSimulationFacadeCommunityContractTest {
 
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = new PerfilExecucaoDemandPlan();
         perfilExecucaoDemandPlan.setId("DP_PROFILE");
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
-                new ClusterProdutosDemandPlanning();
+        ClusterMateriais clusterMateriaisDemandPlanning =
+                new ClusterMateriais();
         ClusterLocations clusterLocations = new ClusterLocations();
         clusterLocations.setId(12L);
         ParametrosDemandPlanNivelCluster parametrosDemandPlanNivelClusterSemMaterialId =
@@ -575,8 +575,8 @@ public class DemandSimulationFacadeCommunityContractTest {
         DemandSimulationFacade demandSimulationFrontService = getDemandSimulationFrontService();
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = new PerfilExecucaoDemandPlan();
         perfilExecucaoDemandPlan.setId("DP_PROFILE");
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
-                new ClusterProdutosDemandPlanning();
+        ClusterMateriais clusterMateriaisDemandPlanning =
+                new ClusterMateriais();
         clusterMateriaisDemandPlanning.setId(13L);
         ClusterLocations clusterLocations = new ClusterLocations();
         clusterLocations.setId(12L);
@@ -614,8 +614,8 @@ public class DemandSimulationFacadeCommunityContractTest {
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan =
                 new PerfilExecucaoDemandPlan("DP_PROFILE");
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
-                new ClusterProdutosDemandPlanning();
+        ClusterMateriais clusterMateriaisDemandPlanning =
+                new ClusterMateriais();
         clusterMateriaisDemandPlanning.setId(13L);
         ClusterLocations clusterLocations = new ClusterLocations();
         clusterLocations.setId(12L);
@@ -689,7 +689,7 @@ public class DemandSimulationFacadeCommunityContractTest {
 
     private ParametrosDemandPlanNivelClusterProjection getParametrosDemandPlanNivelClusterProjectionParaSimulacao(
             PerfilExecucaoDemandPlan perfilExecucaoDemandPlan,
-            ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning,
+            ClusterMateriais clusterMateriaisDemandPlanning,
             ClusterLocations clusterLocations,
             UnidadeMedida unidadeMedida,
             ParametrosGlobais parametrosGlobais) {
@@ -726,12 +726,12 @@ public class DemandSimulationFacadeCommunityContractTest {
 
     }
 
-    private static ClusterProdutosDemandPlanningRepository getClusterMateriaisDemandPlanningRepositoryStub(
-            Optional<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningOptional) {
+    private static ClusterMateriaisRepository getClusterMateriaisDemandPlanningRepositoryStub(
+            Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional) {
 
-        return (ClusterProdutosDemandPlanningRepository) Proxy.newProxyInstance(
-                ClusterProdutosDemandPlanningRepository.class.getClassLoader(),
-                new Class<?>[]{ClusterProdutosDemandPlanningRepository.class},
+        return (ClusterMateriaisRepository) Proxy.newProxyInstance(
+                ClusterMateriaisRepository.class.getClassLoader(),
+                new Class<?>[]{ClusterMateriaisRepository.class},
                 (proxy, method, args) -> {
 
                     if ("findById".equals(method.getName())) {
@@ -849,7 +849,7 @@ public class DemandSimulationFacadeCommunityContractTest {
         }
 
         private TestClusterEParametrosProjectionFactory(
-                Optional<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningOptional,
+                Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional,
                 ClusterLocations clusterLocations) {
 
             this(new TestClusterEParametrosProjection(
@@ -870,14 +870,14 @@ public class DemandSimulationFacadeCommunityContractTest {
 
     private static class TestClusterEParametrosProjection extends ClusterEParametrosProjection {
 
-        private final Optional<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningOptional;
+        private final Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional;
         private final ClusterLocations clusterLocations;
         private final ParametrosGlobais parametrosGlobais;
         private final Set<Produto> materialSet;
         private final Set<Location> locationSet;
 
         private TestClusterEParametrosProjection(
-                Optional<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningOptional,
+                Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional,
                 ClusterLocations clusterLocations,
                 ParametrosGlobais parametrosGlobais) {
 
@@ -891,7 +891,7 @@ public class DemandSimulationFacadeCommunityContractTest {
         }
 
         private TestClusterEParametrosProjection(
-                Optional<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningOptional,
+                Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional,
                 ClusterLocations clusterLocations,
                 ParametrosGlobais parametrosGlobais,
                 Set<Produto> materialSet,
@@ -913,7 +913,7 @@ public class DemandSimulationFacadeCommunityContractTest {
         }
 
         @Override
-        public Optional<ClusterProdutosDemandPlanning> getClusterMateriaisDemandPlanningDeId(Long clusterMateriaisId) {
+        public Optional<ClusterMateriais> getClusterMateriaisDemandPlanningDeId(Long clusterMateriaisId) {
 
             return clusterMateriaisDemandPlanningOptional;
 
@@ -928,7 +928,7 @@ public class DemandSimulationFacadeCommunityContractTest {
 
         @Override
         public Set<Produto> getMateriaisDeClusterMateriaisDemandPlanning(
-                ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning,
+                ClusterMateriais clusterMateriaisDemandPlanning,
                 boolean somenteDfusAtivos) {
 
             return materialSet;
@@ -937,7 +937,7 @@ public class DemandSimulationFacadeCommunityContractTest {
 
         @Override
         public Set<Produto> getMateriaisDeClusterProdutosDemandPlanning(
-                ClusterProdutosDemandPlanning clusterProdutosDemandPlanning,
+                ClusterMateriais clusterMateriais,
                 boolean somenteMateriaisAtivos) {
 
             return materialSet;
@@ -996,7 +996,7 @@ public class DemandSimulationFacadeCommunityContractTest {
         private TestParametrosDemandPlanNivelClusterProjection(
                 PerfilExecucaoDemandPlan perfilExecucaoDemandPlan,
                 ClusterLocations clusterLocations,
-                ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning,
+                ClusterMateriais clusterMateriaisDemandPlanning,
                 ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
                 ParametrosForecastProjection parametrosForecastProjection) {
 

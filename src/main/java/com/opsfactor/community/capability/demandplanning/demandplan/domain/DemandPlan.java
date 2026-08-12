@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.demandplan.domain;
 
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
@@ -209,7 +209,7 @@ public class DemandPlan {
      */
     public Calendario getCalendarioDoDemandPlan(
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
-            ClusterProdutosDemandPlanning clusterProdutosDemandPlanning,
+            ClusterMateriais clusterMateriais,
             ClusterLocations clusterLocations) {
         
         Constantes.TamanhoBucket tamanhoBucketConsiderado = (getTamanhoBucket() == null) ? Constantes.TamanhoBucket.MENSAL : getTamanhoBucket();
@@ -228,7 +228,8 @@ public class DemandPlan {
                 tamanhoBucketConsiderado, 
                 dataInicial.minusDays(
                         parametrosDemandPlanProjection
-                                .getParametrosDemandPlanNivelClusterProjection(clusterLocations, clusterProdutosDemandPlanning)
+                                .getParametrosDemandPlanNivelClusterProjection(clusterLocations,
+                                        clusterMateriais)
                                 .getParametrosGeraisDemandPlanningProjection()
                                 .diasHistoricosForecastEstatistico),
                 dataInicial, dataFinal);
