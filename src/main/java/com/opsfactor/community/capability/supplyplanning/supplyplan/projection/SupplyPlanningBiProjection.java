@@ -220,6 +220,43 @@ public class SupplyPlanningBiProjection {
 
     }
 
+    /**
+     * Usa a solução restrita como ponto de partida do plano irrestrito sem
+     * sobrescrever a demanda irrestrita original.
+     *
+     * <p>A passada irrestrita seguinte parte das ordens e estoques já viáveis
+     * e materializa somente o residual ainda não atendido nas origens
+     * primárias, sem aplicar capacidade novamente.</p>
+     */
+    public void atualizaPlanoIrrestritoComPlanoRestritoSemSobrescreverDemanda() {
+
+        productionPlanLinhaBiProjection.getTodosProductionPlanLinhas().forEach(productionPlanLinha -> {
+            productionPlanLinha.setQuantidadeOrdemPlanejadaProducaoIrrestrita(
+                    productionPlanLinha.getQuantidadeOrdemPlanejadaProducaoRestrita());
+            productionPlanLinha.setQuantidadeOrdemFirmeProducaoIrrestrita(
+                    productionPlanLinha.getQuantidadeOrdemFirmeProducaoRestrita());
+        });
+        getTodosDistributionPlanItems().forEach(distributionPlanItem -> {
+            distributionPlanItem.setQuantidadeOrdemPlanejadaIrrestrita(
+                    distributionPlanItem.getQuantidadeOrdemPlanejadaRestrita());
+            distributionPlanItem.setQuantidadeOrdemFirmeIrrestrita(
+                    distributionPlanItem.getQuantidadeOrdemFirmeRestrita());
+            distributionPlanItem.setParcelaOrdemPlanejadaIrrestritaAtendimentoDemandaDireta(
+                    distributionPlanItem.getParcelaOrdemPlanejadaRestritaAtendimentoDemandaDireta());
+            distributionPlanItem.setParcelaOrdemFirmeIrrestritaAtendimentoDemandaDireta(
+                    distributionPlanItem.getParcelaOrdemFirmeRestritaAtendimentoDemandaDireta());
+        });
+        inventoryPlanLinhaBiProjection.getTodosInventoryPlanLinhas().forEach(inventoryPlanLinha -> {
+            inventoryPlanLinha.setQuantidadeEstoqueSegurancaIrrestrito(
+                    inventoryPlanLinha.getQuantidadeEstoqueSegurancaRestrito());
+            inventoryPlanLinha.setQuantidadeEstoqueMaximoIrrestrito(
+                    inventoryPlanLinha.getQuantidadeEstoqueMaximoRestrito());
+            inventoryPlanLinha.setQuantidadeEstoqueProjetadoIrrestrito(
+                    inventoryPlanLinha.getQuantidadeEstoqueProjetadoRestrito());
+        });
+
+    }
+
 }
 
 /** View curta entre a fotografia central e a API de rotina ainda orientada por location. */

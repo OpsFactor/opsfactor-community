@@ -266,7 +266,6 @@ public class SupplyPlanServiceCommunityContractTest {
                 HeuristicoService.class,
                 true,
                 "supplyPlanService",
-                "constrainedPlanService",
                 "supplyPlanBiProjectionFactory",
                 "nivelamentoCapacidadePlanoIrrestritoHeuristicoService");
 

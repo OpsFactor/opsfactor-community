@@ -50,13 +50,6 @@ public class HeuristicoService {
     @Lazy
     private SupplyPlanService supplyPlanService;
 
-    /**
-     * Service que aplica o plano restrito heuristico quando o perfil Community
-     * encadeia a restricao apos o plano irrestrito.
-     */
-    @Autowired
-    private ConstrainedPlanService constrainedPlanService;
-
     /** Redistribui a produção irrestrita quando o perfil habilita nivelamento. */
     @Autowired
     private NivelamentoCapacidadePlanoIrrestritoHeuristicoService nivelamentoCapacidadePlanoIrrestritoHeuristicoService;
@@ -131,11 +124,13 @@ public class HeuristicoService {
         supplyPlanningBiProjection.preparaBaselineIrrestritoParaExecucaoHeuristica();
 
         /*
-         * Executa os planos de producao e distribuicao por low level code. A
-         * ordem preserva dependencias de insumos e abastecimento antes de
-         * chegar nas DFUs de demanda.
+         * A demanda original nasce no irrestrito. Como o baseline calculado foi
+         * zerado acima, a cópia inicializa demanda, ordens firmes e estoque do
+         * restrito sem carregar sugestões planejadas de uma rodada anterior.
          */
-        executaPlanoIrrestritoPorLowLevelCode(
+        supplyPlanningBiProjection.atualizaPlanoRestritoComPlanoIrrestrito();
+
+        executaPlanoRestritoNiveladoPorLowLevelCode(
                 supplyPlan,
                 perfilExecucaoSupplyPlan,
                 materialProjection,
@@ -144,55 +139,42 @@ public class HeuristicoService {
                 clusterEParametrosProjection,
                 supplyPlanningProjectionLocationPolicy,
                 supplyPlanningBiProjection,
-                false);
+                supplyNetworkProjection,
+                biProjectionCapacidadeProdutiva);
 
         /*
-         * O Constrained Plan é obrigatório. O plano irrestrito calculado acima
-         * é o baseline da rodada; a restrição materializa a série viável que o
-         * Working Plan usará por padrão. Projeções econômicas de preço/COGS
-         * pertenciam apenas à explicabilidade legada, mantida no Enterprise.
+         * A última passagem LLC pode recalcular uma compra depois que o estoque
+         * do respectivo insumo já foi visitado. Reprojetamos a fotografia
+         * restrita completa somente após todos os níveis, sem criar ordens
+         * adicionais nem refazer decisões de capacidade.
          */
-        salvaCheckpointSupplyPlanningBiProjection(supplyPlanningBiProjection, false);
+        nivelamentoCapacidadePlanoIrrestritoHeuristicoService.atualizaEstoquesDoPlano(
+                perfilExecucaoSupplyPlan,
+                supplyPlanningBiProjection,
+                Constantes.TipoPlano.PLANO_RESTRITO);
+        nivelamentoCapacidadePlanoIrrestritoHeuristicoService
+                .reconciliaComprasPlanejadasDeFornecedoresComPlanoRestrito(
+                        perfilExecucaoSupplyPlan,
+                        supplyPlanningBiProjection);
 
-        boolean nivelamentoAplicado = nivelamentoCapacidadePlanoIrrestritoHeuristicoService.aplica(
+        /*
+         * O irrestrito parte da solução restrita e preserva a demanda original.
+         * Uma única passada LLC, sem capacidade, joga somente o residual nas
+         * origens primárias e propaga seus insumos até a compra.
+         */
+        supplyPlanningBiProjection.atualizaPlanoIrrestritoComPlanoRestritoSemSobrescreverDemanda();
+        executaPlanoPorLowLevelCode(
                 supplyPlan,
                 perfilExecucaoSupplyPlan,
-                supplyPlan.getCalendarioDoSupplyPlan(clusterEParametrosProjection.getParametrosGlobais()),
-                supplyNetworkProjection,
-                biProjectionCapacidadeProdutiva,
-                supplyPlanningBiProjection);
-        if (nivelamentoAplicado) {
-            /*
-             * O nivelamento pode mudar a location produtiva e, com isso,
-             * criar novas necessidades de insumos e transferencias. Uma nova
-             * passagem fornecedores -> demanda completa o baseline irrestrito
-             * ja nivelado antes que o constrained aplique qualquer corte.
-             */
-            executaPlanoIrrestritoPorLowLevelCode(
-                    supplyPlan,
-                    perfilExecucaoSupplyPlan,
-                    materialProjection,
-                    locationProjection,
-                    lowLevelCode,
-                    clusterEParametrosProjection,
-                    supplyPlanningProjectionLocationPolicy,
-                    supplyPlanningBiProjection,
-                    true);
-
-            /* Linhas primárias podem ir a zero depois da realocação; o segundo
-             * checkpoint precisa persistir esses zeros antes do plano restrito. */
-            salvaCheckpointSupplyPlanningBiProjection(supplyPlanningBiProjection, true);
-        }
-
-        constrainedPlanService.restringePlano(
-                supplyPlan,
-                perfilExecucaoSupplyPlan,
-                supplyPlan.getCalendarioDoSupplyPlan(clusterEParametrosProjection.getParametrosGlobais()),
-                supplyNetworkProjection,
-                biProjectionCapacidadeProdutiva,
-                politicaEstoquesProjection,
+                materialProjection,
+                locationProjection,
                 lowLevelCode,
-                supplyPlanningBiProjection);
+                clusterEParametrosProjection,
+                supplyPlanningProjectionLocationPolicy,
+                supplyPlanningBiProjection,
+                Constantes.TipoPlano.PLANO_IRRESTRITO,
+                true);
+        salvaCheckpointSupplyPlanningBiProjection(supplyPlanningBiProjection, true);
 
         // atualiza o plano de trabalho (working plan)
         supplyPlanService.atualizaPlanoTrabalhoComRestritoOuIrrestrito(supplyPlan);
@@ -200,15 +182,16 @@ public class HeuristicoService {
     }
 
     /**
-     * Propaga demanda dependente e materializa producao/distribuicao por low
-     * level code no snapshot irrestrito da rodada.
+     * Gera e nivela o plano restrito na própria ordem do low level code.
      *
-     * <p>A primeira passagem cria o baseline heuristico. Quando o capacity
-     * leveling altera locations ou periodos produtivos, a segunda passagem
-     * completa somente os gaps dependentes gerados por essa nova alocacao,
-     * preservando o output ja nivelado.</p>
+     * <p>Cada nível é concluído antes de gerar o seguinte. Assim, quando o
+     * nivelamento desloca um acabado para outra fábrica, a necessidade de skid
+     * ainda não foi materializada: ela nasce diretamente na fábrica escolhida.
+     * A mesma regra se repete de skid para bobina e de bobina para matéria-prima.
+     * Isso evita preservar como carga fixa uma produção dependente calculada
+     * para uma decisão de fábrica que já deixou de existir.</p>
      */
-    private void executaPlanoIrrestritoPorLowLevelCode(
+    private void executaPlanoRestritoNiveladoPorLowLevelCode(
             SupplyPlan supplyPlan,
             PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
             MaterialProjection materialProjection,
@@ -217,50 +200,149 @@ public class HeuristicoService {
             ClusterEParametrosProjection clusterEParametrosProjection,
             SupplyPlanningProjectionLocationPolicy supplyPlanningProjectionLocationPolicy,
             SupplyPlanningBiProjection supplyPlanningBiProjection,
+            SupplyNetworkProjection supplyNetworkProjection,
+            BIProjectionCapacidadeProdutiva biProjectionCapacidadeProdutiva) {
+
+        int ultimoLowLevelCode = lowLevelCode.getUltimoLowLevelCode().getAsInt();
+        for (int posicaoLowLevelCode = 1;
+                posicaoLowLevelCode <= ultimoLowLevelCode;
+                posicaoLowLevelCode++) {
+            NivelamentoCapacidadePlanoIrrestritoHeuristicoService.FotografiaPlanoIrrestrito
+                    fotografiaAntesDoNivel = nivelamentoCapacidadePlanoIrrestritoHeuristicoService
+                    .capturaFotografiaPlano(
+                            supplyNetworkProjection,
+                            supplyPlanningBiProjection,
+                            Constantes.TipoPlano.PLANO_RESTRITO);
+
+            executaPlanoPosicaoLowLevelCode(
+                    supplyPlan,
+                    perfilExecucaoSupplyPlan,
+                    materialProjection,
+                    locationProjection,
+                    lowLevelCode,
+                    clusterEParametrosProjection,
+                    supplyPlanningProjectionLocationPolicy,
+                    supplyPlanningBiProjection,
+                    Constantes.TipoPlano.PLANO_RESTRITO,
+                    false,
+                    posicaoLowLevelCode,
+                    ultimoLowLevelCode);
+
+            /*
+             * Somente a produção criada neste nível entra na rodada de
+             * capacidade. As decisões de níveis anteriores já estão fixas e
+             * reduzem a capacidade residual; o residual do restrito não volta
+             * à origem primária quando nenhuma alternativa consegue absorvê-lo.
+             */
+            nivelamentoCapacidadePlanoIrrestritoHeuristicoService.aplicaIncrementosGeradosApos(
+                    fotografiaAntesDoNivel,
+                    supplyPlan,
+                    perfilExecucaoSupplyPlan,
+                    supplyPlan.getCalendarioDoSupplyPlan(
+                            clusterEParametrosProjection.getParametrosGlobais()),
+                    supplyNetworkProjection,
+                    biProjectionCapacidadeProdutiva,
+                    supplyPlanningBiProjection,
+                    Constantes.TipoPlano.PLANO_RESTRITO,
+                    false,
+                    lowLevelCode,
+                    posicaoLowLevelCode);
+        }
+
+    }
+
+    /**
+     * Propaga o residual irrestrito por low level code depois de o plano
+     * restrito estar completo.
+     *
+     * <p>Nesta passada final não há consulta de capacidade. O método preserva
+     * a fotografia restrita e materializa nas origens primárias somente a
+     * demanda ainda residual e suas dependências.</p>
+     */
+    private void executaPlanoPorLowLevelCode(
+            SupplyPlan supplyPlan,
+            PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
+            MaterialProjection materialProjection,
+            LocationProjection locationProjection,
+            LowLevelCode lowLevelCode,
+            ClusterEParametrosProjection clusterEParametrosProjection,
+            SupplyPlanningProjectionLocationPolicy supplyPlanningProjectionLocationPolicy,
+            SupplyPlanningBiProjection supplyPlanningBiProjection,
+            Constantes.TipoPlano tipoPlano,
             boolean recalculoPosNivelamento) {
 
         int ultimoLowLevelCode = lowLevelCode.getUltimoLowLevelCode().getAsInt();
         for (int posicaoLowLevelCode = 1;
                 posicaoLowLevelCode <= ultimoLowLevelCode;
                 posicaoLowLevelCode++) {
-            log.info(
-                    "{} Distribution / Production Planning para Low Level Code {}/{} , com {} DFUs material/location",
-                    recalculoPosNivelamento ? "Recalculando" : "Executando",
+            executaPlanoPosicaoLowLevelCode(
+                    supplyPlan,
+                    perfilExecucaoSupplyPlan,
+                    materialProjection,
+                    locationProjection,
+                    lowLevelCode,
+                    clusterEParametrosProjection,
+                    supplyPlanningProjectionLocationPolicy,
+                    supplyPlanningBiProjection,
+                    tipoPlano,
+                    recalculoPosNivelamento,
                     posicaoLowLevelCode,
-                    ultimoLowLevelCode,
-                    lowLevelCode.getNumeroDFUsLowLevelCode(posicaoLowLevelCode));
+                    ultimoLowLevelCode);
+        }
 
-            for (Location location : lowLevelCode.getLocationsLowLevelCode(posicaoLowLevelCode)) {
-                /*
-                 * Clientes que apenas propagam demanda nao geram plano nesta
-                 * etapa. A demanda direta considerada ja foi preparada antes
-                 * da execucao heuristica e o loop de producao/distribuicao
-                 * trabalha apenas com locations que realmente planejam fluxo.
-                 */
-                if (perfilExecucaoSupplyPlan.getLocationsClienteApenasPropagamDemanda()
-                        && perfilExecucaoSupplyPlan.getModoPropagacaoDemanda().verificaSeRealizaPropagacao(location)) {
-                    continue;
-                }
+    }
 
-                log.info(
-                        "{} Supply Plan {} para Location {}",
-                        recalculoPosNivelamento ? "Recalculando" : "Gerando",
-                        supplyPlan.getId(),
-                        location.getId());
-                Set<Produto> produtosLocation = lowLevelCode.getMateriaisLowLevelCodeEmLocation(
-                        posicaoLowLevelCode,
-                        location);
-                executaPlanoIrrestritoLocation(
-                        perfilExecucaoSupplyPlan,
-                        materialProjection,
-                        locationProjection,
-                        clusterEParametrosProjection,
-                        supplyPlanningProjectionLocationPolicy,
-                        supplyPlanningBiProjection,
-                        location,
-                        produtosLocation,
-                        recalculoPosNivelamento);
+    /** Executa todas as DFUs material/location pertencentes a um único nível. */
+    private void executaPlanoPosicaoLowLevelCode(
+            SupplyPlan supplyPlan,
+            PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
+            MaterialProjection materialProjection,
+            LocationProjection locationProjection,
+            LowLevelCode lowLevelCode,
+            ClusterEParametrosProjection clusterEParametrosProjection,
+            SupplyPlanningProjectionLocationPolicy supplyPlanningProjectionLocationPolicy,
+            SupplyPlanningBiProjection supplyPlanningBiProjection,
+            Constantes.TipoPlano tipoPlano,
+            boolean recalculoPosNivelamento,
+            int posicaoLowLevelCode,
+            int ultimoLowLevelCode) {
+
+        log.info(
+                "{} Distribution / Production Planning para Low Level Code {}/{} , com {} DFUs material/location",
+                recalculoPosNivelamento ? "Recalculando" : "Executando",
+                posicaoLowLevelCode,
+                ultimoLowLevelCode,
+                lowLevelCode.getNumeroDFUsLowLevelCode(posicaoLowLevelCode));
+
+        for (Location location : lowLevelCode.getLocationsLowLevelCode(posicaoLowLevelCode)) {
+            /*
+             * Clientes que apenas propagam demanda não geram plano nesta
+             * etapa. A demanda direta considerada já foi preparada antes da
+             * execução e o loop trabalha apenas com locations de fluxo real.
+             */
+            if (perfilExecucaoSupplyPlan.getLocationsClienteApenasPropagamDemanda()
+                    && perfilExecucaoSupplyPlan.getModoPropagacaoDemanda().verificaSeRealizaPropagacao(location)) {
+                continue;
             }
+
+            log.info(
+                    "{} Supply Plan {} para Location {}",
+                    recalculoPosNivelamento ? "Recalculando" : "Gerando",
+                    supplyPlan.getId(),
+                    location.getId());
+            Set<Produto> produtosLocation = lowLevelCode.getMateriaisLowLevelCodeEmLocation(
+                    posicaoLowLevelCode,
+                    location);
+            executaPlanoLocation(
+                    perfilExecucaoSupplyPlan,
+                    materialProjection,
+                    locationProjection,
+                    clusterEParametrosProjection,
+                    supplyPlanningProjectionLocationPolicy,
+                    supplyPlanningBiProjection,
+                    location,
+                    produtosLocation,
+                    tipoPlano);
         }
 
     }
@@ -269,7 +351,7 @@ public class HeuristicoService {
      * Executa a geracao irrestrita para um recorte material/location e devolve
      * imediatamente as linhas alteradas ao snapshot compartilhado da rodada.
      */
-    private void executaPlanoIrrestritoLocation(
+    private void executaPlanoLocation(
             PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
             MaterialProjection materialProjection,
             LocationProjection locationProjection,
@@ -278,7 +360,7 @@ public class HeuristicoService {
             SupplyPlanningBiProjection supplyPlanningBiProjection,
             Location location,
             Set<Produto> produtosLocation,
-            boolean priorizaInboundPosNivelamento) {
+            Constantes.TipoPlano tipoPlano) {
 
         MaterialProjection materialProjectionMateriaisLowLevelCodeLocationAtuais =
                 MaterialProjectionFactory.getProjectionSetMateriais(
@@ -296,16 +378,17 @@ public class HeuristicoService {
                 supplyPlanningProjection,
                 materialProjection,
                 locationProjection,
-                priorizaInboundPosNivelamento);
+                tipoPlano);
 
         if (!perfilExecucaoSupplyPlan.getPermiteBacklogDemanda()) {
             SupplyPlanning.limitaEstoquesNegativosAZero(
-                    Constantes.TipoPlano.PLANO_IRRESTRITO,
+                    tipoPlano,
                     supplyPlanningProjection);
         }
 
         SupplyPlanning.atualizaDistributionPlanItemComParcelaAtendimentoDemandaDireta(
-                supplyPlanningProjection);
+                supplyPlanningProjection,
+                tipoPlano);
         supplyPlanningBiProjection.sincroniza(supplyPlanningProjection);
 
     }

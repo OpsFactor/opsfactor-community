@@ -16,6 +16,7 @@ import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.Deman
 import com.opsfactor.community.capability.supplyplanning.distributionplan.domain.DistributionPlanItem;
 import com.opsfactor.community.capability.supplyplanning.inventoryplan.domain.InventoryPlanLinha;
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
+import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.platform.exception.UnitOfMeasureConversionException;
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
@@ -1090,26 +1091,8 @@ public class SupplyPlanning {
     public static void geraRequisicoesESugestoesProducao(
             SupplyPlanningProjection supplyPlanningProjection,
             MaterialProjection materialProjectionPerfilExecucaoSupplyPlan,
-            LocationProjection locationProjectionPerfilExecucaoSupplyPlan) {
-
-        geraRequisicoesESugestoesProducao(
-                supplyPlanningProjection,
-                materialProjectionPerfilExecucaoSupplyPlan,
-                locationProjectionPerfilExecucaoSupplyPlan,
-                false);
-
-    }
-
-    /**
-     * Gera os reabastecimentos irrestritos e, quando solicitado pelo passe
-     * pos-leveling, prefere uma rota inbound viavel para materiais que tambem
-     * poderiam ser produzidos na nova location.
-     */
-    public static void geraRequisicoesESugestoesProducao(
-            SupplyPlanningProjection supplyPlanningProjection,
-            MaterialProjection materialProjectionPerfilExecucaoSupplyPlan,
             LocationProjection locationProjectionPerfilExecucaoSupplyPlan,
-            boolean priorizaInboundProducaoViavel) {
+            TipoPlano tipoPlano) {
         
         Calendario calendario = supplyPlanningProjection.getCalendario();        
         VersaoMalha versaoMalha = supplyPlanningProjection.getSupplyPlan().getVersaoMalha();
@@ -1131,7 +1114,7 @@ public class SupplyPlanning {
         // atualiza somente para produtos / locations DRP
         atualizaEstoqueSeguranca(
                 supplyPlanningProjection,
-                Constantes.TipoPlano.PLANO_IRRESTRITO);
+                tipoPlano);
         
         Location location = supplyPlanningProjection.getLocation();
         
@@ -1164,10 +1147,10 @@ public class SupplyPlanning {
             }
             for (int i=supplyPlanningProjection.getCalendario().getPosicaoPeriodoPresente(); i<supplyPlanningProjection.getCalendario().getNumeroPeriodosTotais(); i++) {
 
-                double estoqueSeguranca = supplyPlanningProjection.getQuantidadeEstoqueSeguranca(i, material, Constantes.TipoPlano.PLANO_IRRESTRITO, unidadeMedidaPadrao);
-                double estoqueMaximo = supplyPlanningProjection.getQuantidadeEstoqueMaximo(i, material, Constantes.TipoPlano.PLANO_IRRESTRITO, unidadeMedidaPadrao);
+            double estoqueSeguranca = supplyPlanningProjection.getQuantidadeEstoqueSeguranca(i, material, tipoPlano, unidadeMedidaPadrao);
+            double estoqueMaximo = supplyPlanningProjection.getQuantidadeEstoqueMaximo(i, material, tipoPlano, unidadeMedidaPadrao);
 
-                double estoqueProjetado = getEstoqueProjetado(supplyPlanningProjection, i-1, i, material, Constantes.TipoPlano.PLANO_IRRESTRITO, unidadeMedidaPadrao, true, true, false, permiteEstoqueNegativo);
+            double estoqueProjetado = getEstoqueProjetado(supplyPlanningProjection, i-1, i, material, tipoPlano, unidadeMedidaPadrao, true, true, false, permiteEstoqueNegativo);
 
                 double gapEstoqueSeguranca = -Math.min(0,
                         estoqueProjetado - estoqueSeguranca);
@@ -1193,8 +1176,8 @@ public class SupplyPlanning {
                         switch (politicaEstoquesProjection.getSNPModeloReabastecimento(i, material, location)) {
                             case KANBAN:
                                 valorReposicaoTotal = -Math.min(0, 
-                                        supplyPlanningProjection.getQuantidadeEstoqueProjetado(-1, material, Constantes.TipoPlano.PLANO_IRRESTRITO, unidadeMedidaPadrao)
-                                        - supplyPlanningProjection.getQuantidadeEstoqueSeguranca(-1, material, Constantes.TipoPlano.PLANO_IRRESTRITO, unidadeMedidaPadrao));
+                                    supplyPlanningProjection.getQuantidadeEstoqueProjetado(-1, material, tipoPlano, unidadeMedidaPadrao)
+                                    - supplyPlanningProjection.getQuantidadeEstoqueSeguranca(-1, material, tipoPlano, unidadeMedidaPadrao));
                                 break;
                             default:
                                 throw new IllegalStateException(
@@ -1202,17 +1185,12 @@ public class SupplyPlanning {
                                                 + politicaEstoquesProjection.getSNPModeloReabastecimento(i, material, location));
                         }
                         
-                        double quantidadePedidosInbound = supplyPlanningProjection.getQuantidadeDistributionPlanInbound(ReferenciaPeriodo.DISPONIBILIZACAO_MATERIAL, i, material, FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_IRRESTRITO, unidadeMedidaPadrao);
-                        double quantidadeRequisicoesInbound = supplyPlanningProjection.getQuantidadeDistributionPlanInbound(ReferenciaPeriodo.DISPONIBILIZACAO_MATERIAL, i, material, FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_IRRESTRITO, unidadeMedidaPadrao);
-                        double quantidadeOrdensProducao = supplyPlanningProjection.getQuantidadeProductionPlan(i, material, Constantes.TipoPlano.PLANO_IRRESTRITO, Constantes.FirmePlanejado.ORDEM, unidadeMedidaPadrao);
+                    double quantidadePedidosInbound = supplyPlanningProjection.getQuantidadeDistributionPlanInbound(ReferenciaPeriodo.DISPONIBILIZACAO_MATERIAL, i, material, FirmePlanejado.ORDEM, tipoPlano, unidadeMedidaPadrao);
+                    double quantidadeRequisicoesInbound = supplyPlanningProjection.getQuantidadeDistributionPlanInbound(ReferenciaPeriodo.DISPONIBILIZACAO_MATERIAL, i, material, FirmePlanejado.PLANEJADO, tipoPlano, unidadeMedidaPadrao);
+                    double quantidadeOrdensProducao = supplyPlanningProjection.getQuantidadeProductionPlan(i, material, tipoPlano, Constantes.FirmePlanejado.ORDEM, unidadeMedidaPadrao);
                            
                         // seta produção, considerando o que já há de pedidos inbound/requisicoes inbound/ordens para reposição do kanban/PR
                         if (supplyPlanningProjection.isGeneratePlannedProductionOrder()
-                            && !(priorizaInboundProducaoViavel
-                                    && perfilExecucaoSupplyPlan
-                                            .getGeraRequisicoesInboundParaMateriaisComProducaoViavel()
-                                    && supplyPlanningProjection.isGenerateInbound()
-                                    && optionalLinhaTransporteInboundPrioritaria.isPresent())
                             && supplyNetworkProjection
                                     .getTipoRessuprimento(
                                             versaoMalha, 
@@ -1251,7 +1229,7 @@ public class SupplyPlanning {
                                 supplyPlanningProjection.modificaProductionPlan(
                                         i, material, versaoProducao,
                                         valorReposicaoTotal - quantidadePedidosInbound - quantidadeRequisicoesInbound - quantidadeOrdensProducao,
-                                        Constantes.TipoPlano.PLANO_IRRESTRITO, Constantes.FirmePlanejado.PLANEJADO,
+                                    tipoPlano, Constantes.FirmePlanejado.PLANEJADO,
                                         unidadeMedidaPadrao);
                             }
                         // seta inbound, considerando o que já há de pedidos inbound/ordens para reposição do kanban/PR
@@ -1273,8 +1251,7 @@ public class SupplyPlanning {
                                             materialProjectionPerfilExecucaoSupplyPlan.getMateriaisAtivosOuNuloSeMaterialProjectionCompleto())
                                     .equals(Constantes.SNPOrigemReabastecimento.PRODUCAO)
                                     || (perfilExecucaoSupplyPlan.getGeraRequisicoesInboundParaMateriaisComProducaoViavel()
-                                            && (priorizaInboundProducaoViavel
-                                                    || !supplyPlanningProjection.isGeneratePlannedProductionOrder()))) {
+                                            && !supplyPlanningProjection.isGeneratePlannedProductionOrder())) {
                             
                                 // O proprio bloco exige linha inbound prioritaria; por isso a origem
                                 // deve estar materializada antes de gravarmos a requisicao planejada.
@@ -1313,7 +1290,7 @@ public class SupplyPlanning {
                                             valorReposicaoTotal - quantidadePedidosInbound - quantidadeOrdensProducao, 
                                             unidadeMedidaPadrao,
                                             FirmePlanejado.PLANEJADO,
-                                            Constantes.TipoPlano.PLANO_IRRESTRITO);
+                                        tipoPlano);
                                     
                                 }
                             }
@@ -1326,6 +1303,35 @@ public class SupplyPlanning {
                 // é feito um split do gap total em função gaps individuais    
                 } else if (estoqueFaltanteTotal > 0) {
 
+                    /*
+                     * O plano restrito considera somente lanes capazes de
+                     * atender a data. O irrestrito conserva a origem primária,
+                     * mesmo quando uma secundária tem lead time menor.
+                     */
+                    Optional<LinhaTransporte> optionalLinhaTransporteInboundConsiderada =
+                            tipoPlano.equals(TipoPlano.PLANO_RESTRITO)
+                                    ? getLinhaTransporteInboundViavelParaDataNecessidade(
+                                            supplyPlanningProjection,
+                                            material,
+                                            i,
+                                            locationProjectionPerfilExecucaoSupplyPlan)
+                                    : optionalLinhaTransporteInboundPrioritaria;
+                    Integer leadTimeConsiderado = optionalLinhaTransporteInboundConsiderada
+                            .map(linhaTransporte -> supplyNetworkProjection
+                                    .getLeadTimePeriodosEntreOrigemDestinoParaMaterial(
+                                            versaoMalha,
+                                            linhaTransporte.getLocationOrigem(),
+                                            location,
+                                            material,
+                                            calendario,
+                                            calendario.getDataHorarioInicialPresente())
+                                    .orElseThrow(() -> new IllegalStateException(
+                                            "Missing lead time for viable transportation lane "
+                                                    + linhaTransporte.getLocationOrigem().getId()
+                                                    + " -> " + location.getId()
+                                                    + " and material " + material.getId())))
+                            .orElse(null);
+
                     // adiciona à necessidade de reabastecimento o volume relativo à frequência de ressuprimento,
                     // reduzindo a frequência de reabatecimento futura por gerar estoque de ciclo acima do estoque de segurança
                     // só adiciona esse estoque de ciclo caso o estoque esteja abaixo da segurança (estoqueFaltanteTotal > 0)
@@ -1336,14 +1342,6 @@ public class SupplyPlanning {
 
                     // SE HA ROTEIRO + LISTA TECNICA, ATUALIZA SUGESTAO DE PRODUCAO
                     if (supplyPlanningProjection.isGeneratePlannedProductionOrder()
-                        && !(priorizaInboundProducaoViavel
-                                && perfilExecucaoSupplyPlan
-                                        .getGeraRequisicoesInboundParaMateriaisComProducaoViavel()
-                                && supplyPlanningProjection.isGenerateInbound()
-                                && optionalLinhaTransporteInboundPrioritaria.isPresent()
-                                && (!location.getConsideraRestricaoLinhaInbound()
-                                        || i >= supplyPlanningProjection.getCalendario()
-                                                .getPosicaoPeriodoPresente() + leadTime))
                         && supplyNetworkProjection
                                 .getTipoRessuprimento(
                                         versaoMalha, 
@@ -1384,7 +1382,7 @@ public class SupplyPlanning {
                         double novaOrdemPlanejadaProducao = estoqueFaltanteTotal - acumulado; //Math.min(estoqueFaltanteTotal - acumulado, gapEstoqueSegurancaBaseline);
                         supplyPlanningProjection.modificaProductionPlan(
                                 i, material, versaoProducao, novaOrdemPlanejadaProducao,
-                                Constantes.TipoPlano.PLANO_IRRESTRITO,
+                            tipoPlano,
                                 Constantes.FirmePlanejado.PLANEJADO,
                                 unidadeMedidaPadrao);
 
@@ -1394,9 +1392,10 @@ public class SupplyPlanning {
                     // no caso de se tratar de fornecedor sem alternativa produção/inbound não se gerarão
                     // requisições porém o plano será limitado a zero no método executaSupplyPlanHeuristico do SupplyPlanningService
                     } else if (supplyPlanningProjection.isGenerateInbound() && 
-                            optionalLinhaTransporteInboundPrioritaria.isPresent() && (
+                            optionalLinhaTransporteInboundConsiderada.isPresent() && (
                             !location.getConsideraRestricaoLinhaInbound() ||
-                            i >= supplyPlanningProjection.getCalendario().getPosicaoPeriodoPresente() + leadTime)) {
+                            i >= supplyPlanningProjection.getCalendario().getPosicaoPeriodoPresente()
+                                    + leadTimeConsiderado)) {
                         
                         // não gerar requisição inbound se:
                         // 1) perfil execução não permitir geração de ordens planejadas produção
@@ -1413,15 +1412,14 @@ public class SupplyPlanning {
                                         materialProjectionPerfilExecucaoSupplyPlan.getMateriaisAtivosOuNuloSeMaterialProjectionCompleto())
                                 .equals(Constantes.SNPOrigemReabastecimento.PRODUCAO) 
                                 || (perfilExecucaoSupplyPlan.getGeraRequisicoesInboundParaMateriaisComProducaoViavel()
-                                        && (priorizaInboundProducaoViavel
-                                                || !supplyPlanningProjection.isGeneratePlannedProductionOrder()))) {
+                                        && !supplyPlanningProjection.isGeneratePlannedProductionOrder())) {
                         
                             // se não consideramos restrições inbound e não há linha transporte inbound,
                             // location origem = location destino para a requisição (auto-ressuprimento)
                             // exemplo : fornecedores
                             // O proprio bloco exige linha inbound prioritaria; por isso a origem
                             // deve estar materializada antes de gravarmos a requisicao planejada.
-                            Location locationOrigem = optionalLinhaTransporteInboundPrioritaria
+                            Location locationOrigem = optionalLinhaTransporteInboundConsiderada
                                     .orElseThrow(() -> getMissingInboundLineForHeuristicReplenishmentException(
                                             material,
                                             location))
@@ -1448,15 +1446,63 @@ public class SupplyPlanning {
                             // planejadas. Componentes Enterprise de demanda
                             // permanecem zerados no Community.
                             double novaRequisicaoBaseline = estoqueFaltanteTotal - acumulado; //Math.min(estoqueFaltanteTotal - acumulado, gapEstoqueSegurancaBaseline);
-                            supplyPlanningProjection.setQuantidadeDistributionPlanInbound(ReferenciaPeriodo.DISPONIBILIZACAO_MATERIAL, i, material, locationOrigem, novaRequisicaoBaseline, unidadeMedidaPadrao, FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_IRRESTRITO);
+                        supplyPlanningProjection.setQuantidadeDistributionPlanInbound(ReferenciaPeriodo.DISPONIBILIZACAO_MATERIAL, i, material, locationOrigem, novaRequisicaoBaseline, unidadeMedidaPadrao, FirmePlanejado.PLANEJADO, tipoPlano);
                         }
                     }
                 }
                 // atualiza os Inventory Plan Linhas com a projeção dadas as novas sugestões de produção e requisições
-                SupplyPlanning.atualizaEstoqueProjetadoSemLimitarAZero(supplyPlanningProjection, i, material, Constantes.TipoPlano.PLANO_IRRESTRITO);
-                if (!perfilExecucaoSupplyPlan.getPermiteBacklogDemanda()) limitaEstoqueNegativoAZero(TipoPlano.PLANO_IRRESTRITO, supplyPlanningProjection, material, i);
+            SupplyPlanning.atualizaEstoqueProjetadoSemLimitarAZero(supplyPlanningProjection, i, material, tipoPlano);
+            if (!perfilExecucaoSupplyPlan.getPermiteBacklogDemanda()) limitaEstoqueNegativoAZero(tipoPlano, supplyPlanningProjection, material, i);
             }
         });
+    }
+
+    /**
+     * Seleciona por prioridade entre as lanes cujo lead time ainda permite
+     * expedir no período presente ou depois dele.
+     */
+    static Optional<LinhaTransporte> getLinhaTransporteInboundViavelParaDataNecessidade(
+            SupplyPlanningProjection supplyPlanningProjection,
+            Produto material,
+            int posicaoPeriodoNecessidade,
+            LocationProjection locationProjectionPerfilExecucaoSupplyPlan) {
+
+        SupplyNetworkProjection supplyNetworkProjection =
+                supplyPlanningProjection.getSupplyNetworkProjection();
+        SupplyPlan supplyPlan = supplyPlanningProjection.getSupplyPlan();
+        Location locationDestino = supplyPlanningProjection.getLocation();
+        Calendario calendario = supplyPlanningProjection.getCalendario();
+        LocalDateTime dataReferencia = calendario.getDataHorarioInicialPresente();
+        Collection<Location> locationsOrigem = locationProjectionPerfilExecucaoSupplyPlan
+                .getLocationsAtivasOuNuloSeLocationProjectionCompleto();
+
+        return supplyNetworkProjection
+                .getLinhaTransporteInboundViavelListOrdenadaPorPrioridade(
+                        supplyPlan.getVersaoMalha(),
+                        locationDestino,
+                        material,
+                        dataReferencia,
+                        locationsOrigem)
+                .stream()
+                .filter(linhaTransporte -> {
+                    int leadTimePeriodos = supplyNetworkProjection
+                            .getLeadTimePeriodosEntreOrigemDestinoParaMaterial(
+                                    supplyPlan.getVersaoMalha(),
+                                    linhaTransporte.getLocationOrigem(),
+                                    locationDestino,
+                                    material,
+                                    calendario,
+                                    dataReferencia)
+                            .orElseThrow(() -> new IllegalStateException(
+                                    "Missing lead time for viable transportation lane "
+                                            + linhaTransporte.getLocationOrigem().getId()
+                                            + " -> " + locationDestino.getId()
+                                            + " and material " + material.getId()));
+                    return posicaoPeriodoNecessidade - leadTimePeriodos
+                            >= calendario.getPosicaoPeriodoPresente();
+                })
+                .findFirst();
+
     }
 
     /**
@@ -1465,7 +1511,8 @@ public class SupplyPlanning {
      * para atender carteira própria / de destinos
      */
     public static void atualizaDistributionPlanItemComParcelaAtendimentoDemandaDireta(
-            SupplyPlanningProjection supplyPlanningProjection) {
+            SupplyPlanningProjection supplyPlanningProjection,
+            TipoPlano tipoPlano) {
 
         ClusterEParametrosProjection clusterEparametrosProjection = supplyPlanningProjection.getClusterEParametrosProjection();
         MaterialProjection materialProjection = supplyPlanningProjection.getMaterialProjection();
@@ -1479,18 +1526,18 @@ public class SupplyPlanning {
             // fluxos planejados com destino em clientes finais
             double ordensTransferenciaPlanejadasEFirmesParaClientes =
                     supplyPlanningProjection.getQuantidadeDistributionPlanOutboundParaClientes(
-                            material, FirmePlanejado.TOTAL, TipoPlano.PLANO_IRRESTRITO, unidadeMedidaPadrao);
+                            material, FirmePlanejado.TOTAL, tipoPlano, unidadeMedidaPadrao);
             // atendimento de demanda direta considerada no Supply Plan (sem destino especificado)
             double demandaDiretaSemClienteEspecificado = supplyPlanningProjection.getDemandaDiretaConsideradaProjection().getQuantidadeConsideradaSupplyPlan(
                     location,
                     material,
                     DemandaDiretaConsideradaLinha.UsoDemandaDireta.PROJECAO_ESTOQUE,
-                    TipoPlano.PLANO_IRRESTRITO,
+                    tipoPlano,
                     unidadeMedidaPadrao);
 
             double estoqueDisponivelInicial = supplyPlanningProjection.getQuantidadeEstoqueProjetado(
                     supplyPlanningProjection.getCalendario().getPosicaoPeriodoPresente() - 1,
-                    material, TipoPlano.PLANO_IRRESTRITO, unidadeMedidaPadrao);
+                    material, tipoPlano, unidadeMedidaPadrao);
 
             // demanda direta considerada nesta location + parcela planejada em requisições outbound - estoque disponível inicial.
             // Desta forma, se estoque disponível inicial < 0, o valor devido é tratado com a mesma prioridade da demanda
@@ -1503,10 +1550,10 @@ public class SupplyPlanning {
 
                 if (valorRestanteParaAtendimentoDemandaDiretaOuIndireta <= 0) break;
 
-                double quantidadeProducaoPlanejada = supplyPlanningProjection.getQuantidadeProductionPlan(i, material, Constantes.TipoPlano.PLANO_IRRESTRITO, Constantes.FirmePlanejado.PLANEJADO, unidadeMedidaPadrao);
-                double quantidadeProducaoFirme = supplyPlanningProjection.getQuantidadeProductionPlan(i, material, Constantes.TipoPlano.PLANO_IRRESTRITO, Constantes.FirmePlanejado.ORDEM, unidadeMedidaPadrao);
-                double quantidadeDistributionPlanPlanejada = supplyPlanningProjection.getQuantidadeDistributionPlanInbound(ReferenciaPeriodo.DISPONIBILIZACAO_MATERIAL, i, material, FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_IRRESTRITO, unidadeMedidaPadrao);
-                double quantidadeDistributionPlanFirme = supplyPlanningProjection.getQuantidadeDistributionPlanInbound(ReferenciaPeriodo.DISPONIBILIZACAO_MATERIAL, i, material, FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_IRRESTRITO, unidadeMedidaPadrao);
+                double quantidadeProducaoPlanejada = supplyPlanningProjection.getQuantidadeProductionPlan(i, material, tipoPlano, Constantes.FirmePlanejado.PLANEJADO, unidadeMedidaPadrao);
+                double quantidadeProducaoFirme = supplyPlanningProjection.getQuantidadeProductionPlan(i, material, tipoPlano, Constantes.FirmePlanejado.ORDEM, unidadeMedidaPadrao);
+                double quantidadeDistributionPlanPlanejada = supplyPlanningProjection.getQuantidadeDistributionPlanInbound(ReferenciaPeriodo.DISPONIBILIZACAO_MATERIAL, i, material, FirmePlanejado.PLANEJADO, tipoPlano, unidadeMedidaPadrao);
+                double quantidadeDistributionPlanFirme = supplyPlanningProjection.getQuantidadeDistributionPlanInbound(ReferenciaPeriodo.DISPONIBILIZACAO_MATERIAL, i, material, FirmePlanejado.ORDEM, tipoPlano, unidadeMedidaPadrao);
                 double quantidadeEmTransito = supplyPlanningProjection.getQuantidadeEstoqueTransito(i, material, unidadeMedidaPadrao);
 
                 // parcela do estoque em trânsito alocado para atendimento direto/indireto da demanda
@@ -1543,12 +1590,12 @@ public class SupplyPlanning {
                 supplyPlanningProjection.setQuantidadeDistributionPlanInboundParaAtendimentoDemandaDiretaEmUnidadeValor(
                         ReferenciaPeriodo.DISPONIBILIZACAO_MATERIAL, i, material,
                         volumePedidosInboundParaAtendimentoDemandaDiretaOuIndireta,
-                        unidadeMedidaPadrao, Constantes.TipoPlano.PLANO_IRRESTRITO, Constantes.FirmePlanejado.ORDEM);
+                        unidadeMedidaPadrao, tipoPlano, Constantes.FirmePlanejado.ORDEM);
 
                 supplyPlanningProjection.setQuantidadeDistributionPlanInboundParaAtendimentoDemandaDiretaEmUnidadeValor(
                         ReferenciaPeriodo.DISPONIBILIZACAO_MATERIAL, i, material,
                         volumeRequisicoesInboundParaAtendimentoDemandaDiretaOuIndireta,
-                        unidadeMedidaPadrao, Constantes.TipoPlano.PLANO_IRRESTRITO, Constantes.FirmePlanejado.PLANEJADO);
+                        unidadeMedidaPadrao, tipoPlano, Constantes.FirmePlanejado.PLANEJADO);
 
             }
         }

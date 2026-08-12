@@ -1,11 +1,16 @@
 package com.opsfactor.community.capability.supplyplanning.service.heuristic;
 
+import com.opsfactor.community.capability.lowlevelcode.engine.LowLevelCode;
+import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
+import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,48 +28,50 @@ class NivelamentoCapacidadePlanoIrrestritoHeuristicoServiceCommunityContractTest
     }
 
     @Test
-    void heuristicServiceDevePersistirBaselineAntesDaRestricaoESegundoCheckpointComZeros() throws Exception {
+    void heuristicServiceDeveGerarRestritoAntesDoResidualIrrestrito() throws Exception {
 
         Path sourcePath = Path.of("src/main/java/com/opsfactor/community/capability/supplyplanning/service/heuristic/HeuristicoService.java");
         String source = Files.readString(sourcePath, StandardCharsets.UTF_8);
-        int baselineCheckpoint = source.indexOf("salvaCheckpointSupplyPlanningBiProjection(supplyPlanningBiProjection, false)");
-        int leveling = source.indexOf("nivelamentoCapacidadePlanoIrrestritoHeuristicoService.aplica(");
-        int zeroCheckpoint = source.indexOf("salvaCheckpointSupplyPlanningBiProjection(supplyPlanningBiProjection, true)");
-        int constrainedPlan = source.indexOf("constrainedPlanService.restringePlano(");
+        int inicializacaoRestrita = source.indexOf("supplyPlanningBiProjection.atualizaPlanoRestritoComPlanoIrrestrito()");
+        int geracaoRestrita = source.indexOf("executaPlanoRestritoNiveladoPorLowLevelCode(");
+        int inicializacaoIrrestrita = source.indexOf(
+                "supplyPlanningBiProjection.atualizaPlanoIrrestritoComPlanoRestritoSemSobrescreverDemanda()");
+        int geracaoIrrestrita = source.indexOf(
+                "Constantes.TipoPlano.PLANO_IRRESTRITO,",
+                inicializacaoIrrestrita);
+        int checkpointFinal = source.indexOf(
+                "salvaCheckpointSupplyPlanningBiProjection(supplyPlanningBiProjection, true)");
 
-        assertTrue(baselineCheckpoint >= 0 && baselineCheckpoint < leveling,
-                "O baseline irrestrito deve ser persistido antes do nivelamento opcional.");
-        assertTrue(leveling < zeroCheckpoint && zeroCheckpoint < constrainedPlan,
-                "O nivelamento deve persistir zeros em checkpoint próprio antes do plano restrito.");
-        assertTrue(source.contains("if (nivelamentoAplicado)"),
-                "O segundo checkpoint deve ser condicional a uma realocação efetiva.");
-        assertTrue(source.contains("lowLevelCode,\n                supplyPlanningBiProjection);"),
-                "O constrained plan deve receber a mesma fotografia alterada pelo nivelamento.");
+        assertTrue(inicializacaoRestrita >= 0
+                        && inicializacaoRestrita < geracaoRestrita
+                        && geracaoRestrita < inicializacaoIrrestrita,
+                "O plano restrito deve ser gerado e nivelado antes da complementação irrestrita.");
+        assertTrue(inicializacaoIrrestrita < geracaoIrrestrita
+                        && geracaoIrrestrita < checkpointFinal,
+                "O irrestrito deve partir do restrito e acrescentar somente o residual antes do checkpoint.");
+        assertFalse(source.contains("if (nivelamentoAplicado)"),
+                "A cadeia dependente não deve nascer inteira antes do primeiro nivelamento.");
+        assertFalse(source.contains("constrainedPlanService.restringePlano("),
+                "O restrito já nivelado não pode sofrer uma segunda passada de restrição.");
+        assertTrue(source.contains("atualizaEstoquesDoPlano(")
+                        && source.indexOf("atualizaEstoquesDoPlano(") < inicializacaoIrrestrita,
+                "O estoque restrito deve ser reprojetado depois dos níveis e antes da cópia ao irrestrito.");
 
     }
 
     @Test
-    void constrainedDeveCopiarIrrestritoNiveladoNaMesmaFotografia() throws Exception {
+    void residualIrrestritoDevePartirDoRestritoSemSobrescreverDemanda() throws Exception {
 
-        Path constrainedSourcePath = Path.of(
-                "src/main/java/com/opsfactor/community/capability/supplyplanning/service/heuristic/"
-                        + "ConstrainedPlanService.java");
-        String constrainedSource = Files.readString(constrainedSourcePath, StandardCharsets.UTF_8);
         Path projectionSourcePath = Path.of(
                 "src/main/java/com/opsfactor/community/capability/supplyplanning/supplyplan/projection/"
                         + "SupplyPlanningBiProjection.java");
         String projectionSource = Files.readString(projectionSourcePath, StandardCharsets.UTF_8);
 
-        int resetSnapshot = constrainedSource.indexOf(
-                "supplyPlanningBiProjection.atualizaPlanoRestritoComPlanoIrrestrito()");
-        int constrainedLoop = constrainedSource.indexOf("for (int i");
-
-        assertTrue(resetSnapshot >= 0 && resetSnapshot < constrainedLoop,
-                "A baseline restrita deve ser materializada no snapshot antes dos cortes de capacidade.");
         assertTrue(projectionSource.contains(
-                        "setQuantidadeOrdemPlanejadaProducaoRestrita(\n"
-                                + "                    productionPlanLinha.getQuantidadeOrdemPlanejadaProducaoIrrestrita())"),
-                "A produção realocada no irrestrito precisa iniciar o constrained na mesma linha em memória.");
+                        "atualizaPlanoIrrestritoComPlanoRestritoSemSobrescreverDemanda()")
+                        && projectionSource.contains(
+                        "productionPlanLinha.getQuantidadeOrdemPlanejadaProducaoRestrita()"),
+                "O residual irrestrito deve partir da produção restrita da mesma fotografia.");
 
     }
 
@@ -105,6 +112,99 @@ class NivelamentoCapacidadePlanoIrrestritoHeuristicoServiceCommunityContractTest
         assertTrue(source.contains("posicaoPeriodoExpedicao() - antecipacao")
                         && source.contains("getPosicaoPeriodoPresente()"),
                 "Build-ahead deve caminhar de expedição para períodos anteriores sem atravessar o presente.");
+
+    }
+
+    @Test
+    void origemAlternativaDeveEstarEmLowLevelCodeEstritamentePosterior() {
+
+        NivelamentoCapacidadePlanoIrrestritoHeuristicoService service =
+                new NivelamentoCapacidadePlanoIrrestritoHeuristicoService();
+        LowLevelCode lowLevelCode = Mockito.mock(LowLevelCode.class);
+        Location locationOrigem = Mockito.mock(Location.class);
+        Produto material = Mockito.mock(Produto.class);
+
+        Mockito.when(lowLevelCode.getLowLevelCode(locationOrigem, material))
+                .thenReturn(Optional.of(2), Optional.of(3), Optional.of(4), Optional.empty());
+
+        assertFalse(service.origemAlternativaPertenceALowLevelCodePosterior(
+                        lowLevelCode, 3, locationOrigem, material),
+                "Uma DFU já processada não pode ser reaberta pelo rebalanceamento.");
+        assertFalse(service.origemAlternativaPertenceALowLevelCodePosterior(
+                        lowLevelCode, 3, locationOrigem, material),
+                "Uma DFU do mesmo nível também deve ser rejeitada, independentemente da ordem das locations.");
+        assertTrue(service.origemAlternativaPertenceALowLevelCodePosterior(
+                        lowLevelCode, 3, locationOrigem, material),
+                "Somente uma DFU de nível posterior pode receber produção rebalanceada.");
+        assertFalse(service.origemAlternativaPertenceALowLevelCodePosterior(
+                        lowLevelCode, 3, locationOrigem, material),
+                "Uma DFU sem posição topológica não pode ser usada como alternativa.");
+        assertFalse(service.origemAlternativaPertenceALowLevelCodePosterior(
+                        null, 3, locationOrigem, material),
+                "Sem contexto topológico, o fluxo deve falhar fechado para origens remotas.");
+
+    }
+
+    @Test
+    void planoRestritoDeveNivelarCadaLowLevelCodeAntesDeGerarOProximo() throws Exception {
+
+        Path heuristicSourcePath = Path.of(
+                "src/main/java/com/opsfactor/community/capability/supplyplanning/service/heuristic/"
+                        + "HeuristicoService.java");
+        String heuristicSource = Files.readString(heuristicSourcePath, StandardCharsets.UTF_8);
+        Path supplyPlanningSourcePath = Path.of(
+                "src/main/java/com/opsfactor/community/capability/supplyplanning/engine/SupplyPlanning.java");
+        String supplyPlanningSource = Files.readString(supplyPlanningSourcePath, StandardCharsets.UTF_8);
+        String levelingSource = readLevelingSource();
+
+        assertFalse(supplyPlanningSource.contains("priorizaInboundProducaoViavel"),
+                "Uma lane inbound não pode suprimir a produção local viável.");
+        int metodoRestrito = heuristicSource.indexOf("executaPlanoRestritoNiveladoPorLowLevelCode(");
+        int loopLowLevelCode = heuristicSource.indexOf("for (int posicaoLowLevelCode", metodoRestrito);
+        int fotografiaAntesDoNivel = heuristicSource.indexOf("capturaFotografiaPlano(", loopLowLevelCode);
+        int geracaoDoNivel = heuristicSource.indexOf("executaPlanoPosicaoLowLevelCode(", fotografiaAntesDoNivel);
+        int nivelamentoDoNivel = heuristicSource.indexOf("aplicaIncrementosGeradosApos(", geracaoDoNivel);
+
+        assertTrue(metodoRestrito >= 0
+                        && loopLowLevelCode > metodoRestrito
+                        && fotografiaAntesDoNivel > loopLowLevelCode
+                        && geracaoDoNivel > fotografiaAntesDoNivel
+                        && nivelamentoDoNivel > geracaoDoNivel,
+                "Cada nível deve ser gerado e nivelado antes de avançar para seus componentes.");
+        assertFalse(heuristicSource.contains("possuiAlteracoes("),
+                "O fluxo acíclico por nível não deve preservar uma cadeia dependente antiga em passagens globais.");
+        assertTrue(heuristicSource.contains("lowLevelCode,")
+                        && heuristicSource.contains("posicaoLowLevelCode);"),
+                "O nivelamento deve receber a posição topológica corrente para filtrar origens remotas.");
+        assertTrue(levelingSource.contains("quantidadePlanejadaTotal - quantidadeNivelavel")
+                        && levelingSource.contains("quantidadeAtual - necessidade.quantidadeOriginal()"),
+                "A capacidade existente deve ficar reservada e somente o novo delta pode ser realocado.");
+
+    }
+
+    @Test
+    void restritoDeveDescartarResidualSemCapacidadeEIrrestritoDeveReporNaPrimaria() throws Exception {
+
+        String source = readLevelingSource();
+        assertTrue(source.contains("boolean mantemResidualNaOrigemPrimaria")
+                        && source.contains(
+                        "if (mantemResidualNaOrigemPrimaria && necessidade.quantidadeResidual() > EPSILON)"),
+                "Somente o irrestrito pode devolver residual sem capacidade à origem primária.");
+
+    }
+
+    @Test
+    void restritoDeveSelecionarLaneSecundariaQueAtendaLeadTime() throws Exception {
+
+        Path supplyPlanningSourcePath = Path.of(
+                "src/main/java/com/opsfactor/community/capability/supplyplanning/engine/SupplyPlanning.java");
+        String source = Files.readString(supplyPlanningSourcePath, StandardCharsets.UTF_8);
+
+        assertTrue(source.contains("getLinhaTransporteInboundViavelParaDataNecessidade(")
+                        && source.contains("getLinhaTransporteInboundViavelListOrdenadaPorPrioridade(")
+                        && source.contains("posicaoPeriodoNecessidade - leadTimePeriodos")
+                        && source.contains(".findFirst()"),
+                "O restrito deve escolher a primeira lane por prioridade que ainda cumpra a data necessária.");
 
     }
 
