@@ -138,8 +138,7 @@ public class CommunityMcpCapabilityRegistry {
             case "data.planning.inventory-plan" -> toJson(inventoryPlanIntegrationService.getInventoryPlanDTOList(
                     requiredLong(payload, "supplyPlanId")));
             case "data.planning.fulfilled-demand" -> toJson(fulfilledDemandIntegrationService.getFulfilledDemandDtoList(
-                    requiredLong(payload, "supplyPlanId"),
-                    requiredText(payload, "unitOfMeasureId")));
+                    requiredLong(payload, "supplyPlanId")));
             case "configuration.demand.execution-profile" -> toJson(
                     perfilExecucaoDemandPlanFacade.getPerfilExecucaoDemandPlanDTOSet());
             case "configuration.supply.execution-profile" -> toJson(

@@ -215,7 +215,7 @@ public class CommunityMcpCatalog {
                 branch("supply-planning", "Supply Planning", "Supply Plan output datasets.", McpCatalogNodeType.GROUP, "planning-data",
                         branch("outputs", "Outputs", "Read-only physical planning results.", McpCatalogNodeType.SECTION, "planning-data/supply-planning",
                                 leaf("inventory-plan", "Inventory Plan", "Inventory projection for a Supply Plan.", "data.planning.inventory-plan", List.of(McpCapabilityOperation.QUERY), "{supplyPlanId}", "List<InventoryPlanIntegrationDataDto>", false),
-                                leaf("fulfilled-demand", "Fulfilled Demand", "Demand fulfilled by a Supply Plan and unit of measure.", "data.planning.fulfilled-demand", List.of(McpCapabilityOperation.QUERY), "{supplyPlanId, unitOfMeasureId}", "List<FulfilledDemandIntegrationDataDto>", false))));
+                                leaf("fulfilled-demand", "Fulfilled Demand", "Demand fulfilled by a Supply Plan in its persisted physical units.", "data.planning.fulfilled-demand", List.of(McpCapabilityOperation.QUERY), "{supplyPlanId}", "List<FulfilledDemandIntegrationDataDto>", false))));
 
         McpCatalogNode report = branch("report", "Report", "Community analytical reports.", McpCatalogNodeType.THEME, "",
                 branch("supply-planning", "Supply Planning", "Supply analysis outputs.", McpCatalogNodeType.GROUP, "report",

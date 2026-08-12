@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -30,13 +31,24 @@ import java.util.List;
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true) // permite o uso de @Secured, @RolesAllowed
 public class CustomHttpSecurityConfig {
 
+    /**
+     * Retorna 401 sem {@code WWW-Authenticate} para a SPA tratar a falha de
+     * credencial no proprio formulario, sem acionar o dialogo nativo do navegador.
+     */
+    private static final AuthenticationEntryPoint SPA_AUTHENTICATION_ENTRY_POINT =
+            (request, response, authenticationException) ->
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+
     private static final String[] PUBLIC_REQUEST_MATCHERS = {
             "/h2-console/**",
             "/api/open/**",
-            "/app/swagger-ui/**",
-            "/app/api-docs/**",
             "/health-status",
             "/actuator/health"
+    };
+
+    private static final String[] OPENAPI_PUBLIC_REQUEST_MATCHERS = {
+            "/app/swagger-ui/**",
+            "/app/api-docs/**"
     };
 
     /**
@@ -47,6 +59,9 @@ public class CustomHttpSecurityConfig {
      */
     @Value("${enforce.https:false}")
     private Boolean enforceHttps;
+
+    @Value("${opsfactor.openapi.enabled:false}")
+    private Boolean openApiEnabled;
 
     /**
      * Encoder padrao da edicao Community para credenciais locais.
@@ -76,14 +91,15 @@ public class CustomHttpSecurityConfig {
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(PUBLIC_REQUEST_MATCHERS).permitAll()
+                        .requestMatchers(publicRequestMatchers()).permitAll()
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable)
-                .httpBasic(Customizer.withDefaults())
+                // O handler padrao de HTTP Basic inclui WWW-Authenticate e abre
+                // um popup nativo quando a senha do formulario esta incorreta.
+                .httpBasic(httpBasic -> httpBasic.authenticationEntryPoint(SPA_AUTHENTICATION_ENTRY_POINT))
                 .formLogin(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exceptionHandling -> exceptionHandling
-                        .authenticationEntryPoint((request, response, authException) ->
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
+                        .authenticationEntryPoint(SPA_AUTHENTICATION_ENTRY_POINT))
                 .logout(logout -> logout
                         .clearAuthentication(true)
                         .invalidateHttpSession(true)
@@ -93,6 +109,29 @@ public class CustomHttpSecurityConfig {
                                 response.setStatus(HttpServletResponse.SC_NO_CONTENT)));
 
         return httpSecurity.build();
+    }
+
+    /**
+     * Mantem o conjunto publico minimo do Community e acrescenta a
+     * documentacao somente no overlay Enterprise que a disponibiliza.
+     */
+    private String[] publicRequestMatchers() {
+
+        if (!Boolean.TRUE.equals(openApiEnabled)) {
+            return PUBLIC_REQUEST_MATCHERS;
+        }
+
+        String[] publicRequestMatchers = new String[
+                PUBLIC_REQUEST_MATCHERS.length + OPENAPI_PUBLIC_REQUEST_MATCHERS.length];
+        System.arraycopy(PUBLIC_REQUEST_MATCHERS, 0, publicRequestMatchers, 0, PUBLIC_REQUEST_MATCHERS.length);
+        System.arraycopy(
+                OPENAPI_PUBLIC_REQUEST_MATCHERS,
+                0,
+                publicRequestMatchers,
+                PUBLIC_REQUEST_MATCHERS.length,
+                OPENAPI_PUBLIC_REQUEST_MATCHERS.length);
+        return publicRequestMatchers;
+
     }
 
     /**

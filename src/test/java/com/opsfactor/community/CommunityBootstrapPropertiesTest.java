@@ -44,6 +44,18 @@ class CommunityBootstrapPropertiesTest {
     }
 
     @Test
+    void communityDefaultsShouldDisableOpenApiAndSwagger() throws IOException {
+
+        Properties communityDefaults = loadProperties(
+                "src/main/resources/application-community-defaults.properties");
+
+        Assertions.assertEquals("false", communityDefaults.getProperty("springdoc.api-docs.enabled"));
+        Assertions.assertEquals("false", communityDefaults.getProperty("springdoc.swagger-ui.enabled"));
+        Assertions.assertNull(communityDefaults.getProperty("opsfactor.openapi.enabled"));
+
+    }
+
+    @Test
     void communityMariadbProfileShouldUseOpenDriverAndDialect() throws IOException {
 
         Properties mariadbApplicationProperties = loadProperties(

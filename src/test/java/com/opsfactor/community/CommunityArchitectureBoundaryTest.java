@@ -870,6 +870,7 @@ class CommunityArchitectureBoundaryTest {
             "bi/dto/CommunityDemandSalesOverviewSelectionDTO.java",
             "bi/dto/CommunityDemandPlanSalesReportRowDTO.java",
             "bi/dto/CommunityInventoryOverviewDTO.java",
+            "bi/dto/CommunityInventoryOverviewMaterialLocationDetailDTO.java",
             "bi/dto/CommunityInventoryOverviewPeriodDTO.java",
             "bi/dto/CommunityInventoryOverviewSelectionDTO.java",
             "bi/dto/CommunityMaterialCharacteristicGroupingDTO.java",

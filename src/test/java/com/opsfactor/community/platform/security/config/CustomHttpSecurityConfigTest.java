@@ -4,10 +4,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
@@ -65,11 +68,33 @@ class CustomHttpSecurityConfigTest {
                 Set.of(
                         "/h2-console/**",
                         "/api/open/**",
+                        "/health-status",
+                        "/actuator/health"),
+                publicRequestMatcherSet);
+
+    }
+
+    @Test
+    void swaggerShouldBePublicOnlyWhenTheEnterpriseOverlayEnablesOpenApi() throws Exception {
+
+        CustomHttpSecurityConfig customHttpSecurityConfig = new CustomHttpSecurityConfig();
+        Field openApiEnabledField = CustomHttpSecurityConfig.class.getDeclaredField("openApiEnabled");
+        openApiEnabledField.setAccessible(true);
+        openApiEnabledField.set(customHttpSecurityConfig, true);
+
+        var publicRequestMatchersMethod = CustomHttpSecurityConfig.class.getDeclaredMethod("publicRequestMatchers");
+        publicRequestMatchersMethod.setAccessible(true);
+        String[] publicRequestMatchers = (String[]) publicRequestMatchersMethod.invoke(customHttpSecurityConfig);
+
+        Assertions.assertEquals(
+                Set.of(
+                        "/h2-console/**",
+                        "/api/open/**",
                         "/app/swagger-ui/**",
                         "/app/api-docs/**",
                         "/health-status",
                         "/actuator/health"),
-                publicRequestMatcherSet);
+                Arrays.stream(publicRequestMatchers).collect(Collectors.toSet()));
 
     }
 
@@ -125,6 +150,46 @@ class CustomHttpSecurityConfigTest {
                     "Community security configuration must stay HTTP Basic only and not call "
                             + forbiddenSecurityConfigurerToken);
         }
+
+    }
+
+    @Test
+    void invalidBasicCredentialsShouldNotTriggerTheBrowserNativeAuthenticationDialog() throws IOException {
+
+        Path customHttpSecurityConfigPath = resolveCommunitySecurityModuleDirectory().resolve(
+                "src/main/java/com/opsfactor/community/platform/security/config/CustomHttpSecurityConfig.java");
+        String customHttpSecurityConfigSource = Files.readString(customHttpSecurityConfigPath, StandardCharsets.UTF_8);
+
+        /*
+         * A SPA envia a credencial Basic no header. Quando ela e invalida, o
+         * entry point do filtro Basic tambem precisa evitar WWW-Authenticate;
+         * configurar somente exceptionHandling nao cobre essa falha do filtro.
+         */
+        Assertions.assertTrue(customHttpSecurityConfigSource.contains(
+                ".httpBasic(httpBasic -> httpBasic.authenticationEntryPoint(SPA_AUTHENTICATION_ENTRY_POINT))"));
+        Assertions.assertFalse(customHttpSecurityConfigSource.contains(".httpBasic(Customizer.withDefaults())"));
+        Assertions.assertTrue(customHttpSecurityConfigSource.contains(
+                ".authenticationEntryPoint(SPA_AUTHENTICATION_ENTRY_POINT)"));
+
+    }
+
+    @Test
+    void spaAuthenticationEntryPointShouldReturnUnauthorizedWithoutBasicChallenge() throws Exception {
+
+        Field authenticationEntryPointField = CustomHttpSecurityConfig.class.getDeclaredField(
+                "SPA_AUTHENTICATION_ENTRY_POINT");
+        authenticationEntryPointField.setAccessible(true);
+        AuthenticationEntryPoint authenticationEntryPoint =
+                (AuthenticationEntryPoint) authenticationEntryPointField.get(null);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        authenticationEntryPoint.commence(
+                new MockHttpServletRequest("GET", "/api/secured/user/rolelist"),
+                response,
+                new InsufficientAuthenticationException("Invalid Basic credential"));
+
+        Assertions.assertEquals(401, response.getStatus());
+        Assertions.assertNull(response.getHeader("WWW-Authenticate"));
 
     }
 

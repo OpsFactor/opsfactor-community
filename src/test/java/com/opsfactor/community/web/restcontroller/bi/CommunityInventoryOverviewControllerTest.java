@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 
 class CommunityInventoryOverviewControllerTest {
 
@@ -35,8 +36,8 @@ class CommunityInventoryOverviewControllerTest {
         CommunityInventoryOverviewController controller = new CommunityInventoryOverviewController();
         ReflectionTestUtils.setField(controller, "communityInventoryOverviewService", service);
         CommunityInventoryOverviewSelectionDTO selection =
-                new CommunityInventoryOverviewSelectionDTO(10L, "PC", List.of(), List.of(), null);
-        CommunityInventoryOverviewDTO expected = new CommunityInventoryOverviewDTO("PC", List.of());
+                new CommunityInventoryOverviewSelectionDTO(10L, "PC", List.of(), List.of(), Map.of(), Map.of(), null);
+        CommunityInventoryOverviewDTO expected = new CommunityInventoryOverviewDTO("PC", List.of(), List.of(), List.of());
         Mockito.when(service.getInventoryOverview(selection)).thenReturn(expected);
 
         ResponseEntity<CommunityInventoryOverviewDTO> response = controller.getInventoryOverview(selection);

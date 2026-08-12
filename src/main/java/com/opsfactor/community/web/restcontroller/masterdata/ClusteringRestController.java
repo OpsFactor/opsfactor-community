@@ -23,12 +23,11 @@ import java.util.List;
 /**
  * API Community de clusters de material e location.
  *
- * <p>Clusters continuam no Community porque Demand Planning precisa executar
- * forecasts por combinacoes cluster material/location. O recorte aberto aceita
- * apenas clusters de material para processo DP, regras de material por status
- * permitido e regras de location por pais/estado ou tipo de location. Regras
- * por caracteristicas dinamicas, clusters de Pricing e agregadores genericos
- * permanecem Enterprise e sao bloqueados na service layer.</p>
+ * <p>Clusters continuam no Community porque os fluxos de planejamento usam
+ * combinacoes material/location. A API publica um esquema unico: materiais e
+ * locations sao dimensoes da mesma configuracao, sem um cluster por processo.
+ * Regras dinamicas fora do recorte aberto continuam bloqueadas na service
+ * layer.</p>
  *
  * <p>Os paths publicos usam `materialclustering`, alinhado ao vocabulario
  * Community/Enterprise.</p>
@@ -106,14 +105,14 @@ public class ClusteringRestController {
     }
 
     /**
-     * Carrega um cluster de materiais para o processo solicitado.
+     * Carrega um cluster de materiais pelo identificador funcional.
      */
-    @GetMapping("api/secured/materialclustering/{id}/{process}")
+    @GetMapping("api/secured/materialclustering/{id}")
     @Secured("ROLE_ADMIN")
     @ResponseBody @ResponseStatus(HttpStatus.OK)
-    public ClusterProdutosDTO getMaterialClusterDTOByIdAndProcess(@PathVariable String id, @PathVariable String process) {
+    public ClusterProdutosDTO getMaterialClusterDTOById(@PathVariable String id) {
 
-        return clusteringFrontService.getClusterProdutosDTO(id,process);
+        return clusteringFrontService.getClusterProdutosDTO(id);
 
     }
 

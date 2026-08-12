@@ -140,7 +140,7 @@ public class MasterdataControllersCommunityContractTest {
                         new ControllerEndpoint("GET", "api/secured/locationclustering/{id}"),
                         new ControllerEndpoint("GET", "api/secured/materialclustering"),
                         new ControllerEndpoint("GET", "api/secured/materialclustering/DFU"),
-                        new ControllerEndpoint("GET", "api/secured/materialclustering/{id}/{process}"),
+                new ControllerEndpoint("GET", "api/secured/materialclustering/{id}"),
                         new ControllerEndpoint("POST", "api/secured/locationclustering/save"),
                         new ControllerEndpoint("POST", "api/secured/materialclustering/save")));
 

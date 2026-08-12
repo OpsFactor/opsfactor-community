@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 
 class CommunityDemandSalesOverviewControllerTest {
 
@@ -31,7 +32,15 @@ class CommunityDemandSalesOverviewControllerTest {
         CommunityDemandSalesOverviewController controller = new CommunityDemandSalesOverviewController();
         ReflectionTestUtils.setField(controller, "communityDemandSalesOverviewService", service);
         CommunityDemandSalesOverviewSelectionDTO selection =
-                new CommunityDemandSalesOverviewSelectionDTO(10L, "PC", 2, List.of("MAT-1"), List.of("LOC-1"));
+                new CommunityDemandSalesOverviewSelectionDTO(
+                        10L,
+                        null,
+                        "PC",
+                        2,
+                        List.of("MAT-1"),
+                        List.of("LOC-1"),
+                        Map.of("CATEGORY", List.of("Paper")),
+                        Map.of("REGION", List.of("South")));
         CommunityDemandSalesOverviewDTO expected = new CommunityDemandSalesOverviewDTO(List.of(), List.of());
         Mockito.when(service.getDemandSalesOverview(selection)).thenReturn(expected);
 
