@@ -10,8 +10,8 @@ import java.util.List;
 /**
  * Envelope historico usado pelos endpoints de exclusao de clusters.
  *
- * <p>No Community os endpoints usam apenas `id`, `name`, `criterion`,
- * `process` e `priority`. `characteristics` e `attributes` permanecem no DTO
+ * <p>No Community os endpoints usam apenas `id`, `name`, `criterion` e
+ * `priority`. `characteristics` e `attributes` permanecem no DTO
  * para tolerar payloads antigos do front compartilhado, mas nao reabrem
  * criterios por caracteristica dinamica: criacao/edicao dessas regras falha no
  * `ClusteringFrontService`.</p>
@@ -21,7 +21,6 @@ public class ClusterRuleDTO {
     private Long id;
     private String name;
     private String criterion;
-    private String process;
     private Integer priority;
     /**
      * Campo tolerado apenas para payloads antigos do front compartilhado.

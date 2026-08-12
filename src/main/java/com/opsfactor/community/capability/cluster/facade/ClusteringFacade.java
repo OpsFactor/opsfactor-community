@@ -1,6 +1,7 @@
 package com.opsfactor.community.capability.cluster.facade;
 
 import com.opsfactor.community.capability.cluster.facade.dto.*;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProduto;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.facade.dto.CaracteristicaProdutoDTO;
 import com.opsfactor.community.capability.cluster.facade.dto.allocation.AlocacaoClusterLocationDTO;
 import com.opsfactor.community.capability.cluster.facade.dto.allocation.AlocacaoClusterMaterialDTO;
@@ -13,10 +14,11 @@ import com.opsfactor.community.capability.masterdata.product.material.domain.Pro
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
 import com.opsfactor.community.capability.cluster.repository.location.ClusterLocationsRepository;
-import com.opsfactor.community.capability.cluster.repository.material.ClusterProdutosDemandPlanningRepository;
+import com.opsfactor.community.capability.cluster.repository.material.ClusterMateriaisRepository;
 import com.opsfactor.community.capability.cluster.repository.material.ClusterProdutosRepository;
 import com.opsfactor.community.capability.configuration.repository.cluster.location.RegraAlocacaoClusterLocationsRepository;
 import com.opsfactor.community.capability.configuration.repository.cluster.produto.RegraAlocacaoClusterProdutosRepository;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.repository.CaracteristicaMaterialRepository;
 import com.opsfactor.community.capability.cluster.facade.dto.ClusterRuleDTO;
 import com.opsfactor.community.capability.masterdata.demand.dfu.facade.dto.DFUDTO;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
@@ -33,22 +35,25 @@ import java.util.stream.Collectors;
 /**
  * Service front de clusterizacao Community.
  *
- * <p>Clusters fazem parte do Community porque Demand Planning usa a abertura
- * por cluster material/location para construir forecasts. O recorte publico,
- * porem, nao transforma clusters em uma estrutura generica de caracteristicas:
- * regras por caracteristicas dinamicas, clusters de Pricing e status NEW ficam
- * reservados ao Enterprise.</p>
+ * <p>Clusters fazem parte do Community porque os fluxos de planejamento usam
+ * a abertura por material e location. O recorte publico mantem um esquema
+ * unico de clusters e aceita apenas as regras cadastradas no catalogo
+ * Community.</p>
  */
 @Service
 public class ClusteringFacade {
 
     /**
      * Repository das regras de alocacao de clusters de materiais. No Community
-     * ele persiste apenas regras por status de material permitidas para Demand
+     * ele persiste regras por status e por caracteristica publica para Demand
      * Planning.
      */
     @Autowired
     private RegraAlocacaoClusterProdutosRepository regraAlocacaoClusterProdutosRepository;
+
+    /** Catalogo Community de caracteristicas reais dos materiais, carregado sem N+1 para validar regras. */
+    @Autowired
+    private CaracteristicaMaterialRepository caracteristicaMaterialRepository;
 
     /**
      * Repository dos clusters de locations usados por Demand Planning e
@@ -58,11 +63,10 @@ public class ClusteringFacade {
     private ClusterLocationsRepository clusterLocationsRepository;
 
     /**
-     * Repository dos clusters de materiais especificos de Demand Planning. O
-     * Community nao publica clusters de Pricing.
+     * Repository da definicao unica de clusters de materiais.
      */
     @Autowired
-    private ClusterProdutosDemandPlanningRepository clusterMateriaisDemandPlanningRepository;
+    private ClusterMateriaisRepository clusterMateriaisDemandPlanningRepository;
 
     /**
      * Repository base de clusters de materiais, usado apenas em delecoes por id
@@ -140,7 +144,26 @@ public class ClusteringFacade {
                     }
                     break;
                 case CARACTERISTICA:
-                    throw new RequiresEnterpriseVersionException("Material characteristic cluster allocation");
+                    regraAlocacaoClusterProdutos.setRegraAlocacaoTipo(
+                            Constantes.RegraAlocacaoClusterProdutosTipo.CARACTERISTICA);
+                    CaracteristicaProduto caracteristicaProduto = getCaracteristicaProdutoCommunity(
+                            regraAlocacaoClusterDTO.getCaracteristicaDTO().getCaracteristicaId());
+                    for (String atributoCaracteristica : regraAlocacaoClusterDTO.getCaracteristicaDTO().getListaAtributos()) {
+                        if (!caracteristicaProduto.getValoresCaracteristica().contains(atributoCaracteristica)) {
+                            throw new IllegalArgumentException(
+                                    "Material characteristic value is not published by the Community catalog: "
+                                            + atributoCaracteristica);
+                        }
+                        RegraAlocacaoClusterProdutosCaracteristica regraCaracteristica =
+                                new RegraAlocacaoClusterProdutosCaracteristica(
+                                        new RegraAlocacaoClusterProdutosCaracteristica
+                                                .RegraAlocacaoClusterProdutosCaracteristicaCompositeKey(
+                                                        regraAlocacaoClusterProdutos,
+                                                        caracteristicaProduto,
+                                                        atributoCaracteristica));
+                        regraAlocacaoClusterProdutos.addRegraAlocacaoCaracteristica(regraCaracteristica);
+                    }
+                    break;
             }
         }
     }
@@ -206,15 +229,14 @@ public class ClusteringFacade {
     }
 
     /**
-     * Community permite apenas regras de cluster de material por status.
+     * Community permite regras de cluster de material por status e por
+     * caracteristicas cadastradas no catalogo publico.
      *
      * <p>Mesmo dentro das regras por status, o status NEW e Enterprise porque
      * depende da janela funcional de new materials. O Community preserva o enum
      * por compatibilidade de schema/DTO, mas nao permite criar regras que
      * dependam dessa classificacao.</p>
      *
-     * <p>Regras por caracteristica dependem do cadastro Enterprise de
-     * caracteristicas e, portanto, falham antes de qualquer escrita.</p>
      */
     void validaRegrasAlocacaoClusterProdutosCommunity(ClusterProdutosDTO clusterProdutosDTO) {
 
@@ -229,14 +251,14 @@ public class ClusteringFacade {
             if (regraAlocacaoClusterDTO.getCriterio() == null) {
                 throw new IllegalArgumentException("Material cluster allocation rule criterion is required");
             }
-            if (Constantes.RegraAlocacaoClusterProdutosTipo.CARACTERISTICA.equals(regraAlocacaoClusterDTO.getCriterio())) {
-                throw new RequiresEnterpriseVersionException("Material characteristic cluster allocation");
-            }
             if (isRegraAlocacaoClusterProdutosStatusNovo(regraAlocacaoClusterDTO)) {
                 throw new RequiresEnterpriseVersionException("New material cluster allocation");
             }
             if (Constantes.RegraAlocacaoClusterProdutosTipo.STATUS_PRODUTO.equals(regraAlocacaoClusterDTO.getCriterio())) {
                 validaRegraStatusMaterialCommunity(regraAlocacaoClusterDTO);
+            }
+            if (Constantes.RegraAlocacaoClusterProdutosTipo.CARACTERISTICA.equals(regraAlocacaoClusterDTO.getCriterio())) {
+                validaRegraCaracteristicaMaterialCommunity(regraAlocacaoClusterDTO);
             }
         }
 
@@ -264,6 +286,38 @@ public class ClusteringFacade {
                     "Material cluster status allocation description is required");
         }
 
+    }
+
+    /**
+     * Validates the public wire shape before resolving the catalog entity.
+     *
+     * <p>Every characteristic rule is deliberately limited to one
+     * characteristic and one-or-more values. Values are OR alternatives within
+     * that characteristic; separate rules remain AND conditions of a cluster.</p>
+     */
+    private void validaRegraCaracteristicaMaterialCommunity(
+            RegraAlocaoClusterProdutosDTO regraAlocacaoClusterDTO) {
+
+        CaracteristicaProdutoDTO caracteristicaProdutoDTO = regraAlocacaoClusterDTO.getCaracteristicaDTO();
+        if (caracteristicaProdutoDTO == null || caracteristicaProdutoDTO.getCaracteristicaId() == null
+                || caracteristicaProdutoDTO.getCaracteristicaId().isBlank()) {
+            throw new IllegalArgumentException("Material cluster characteristic is required");
+        }
+        List<String> atributoList = Optional.ofNullable(caracteristicaProdutoDTO.getListaAtributos())
+                .orElseGet(Collections::emptyList);
+        if (atributoList.isEmpty() || atributoList.stream().anyMatch(atributo -> atributo == null || atributo.isBlank())) {
+            throw new IllegalArgumentException("At least one material characteristic value is required");
+        }
+    }
+
+    /** Resolves and validates one characteristic against the preloaded Community catalog. */
+    private CaracteristicaProduto getCaracteristicaProdutoCommunity(String caracteristicaId) {
+
+        return caracteristicaMaterialRepository.findAllWithValues().stream()
+                .filter(caracteristicaProduto -> caracteristicaId.equals(caracteristicaProduto.getId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Material characteristic not found in the Community catalog: " + caracteristicaId));
     }
 
     /**
@@ -348,14 +402,13 @@ public class ClusteringFacade {
 
     }
 
-    public ClusterProdutosDTO getClusterProdutosDTO(String id, String process) {
+    public ClusterProdutosDTO getClusterProdutosDTO(String id) {
 
-        validaProcessoClusterMateriaisDemandPlanningCommunity(process);
         Long clusterMateriaisId = parseLongIdObrigatorioCommunity(
                 id,
                 "Material cluster id");
 
-        Optional<ClusterProdutosDemandPlanning> optionalClusterProdutosDemandPlanning =
+        Optional<ClusterMateriais> optionalClusterProdutosDemandPlanning =
                 clusterMateriaisDemandPlanningRepository.findById(clusterMateriaisId);
         /*
          * Cluster inexistente continua retornando null para preservar o
@@ -419,19 +472,14 @@ public class ClusteringFacade {
 
     public List<ClusterProdutosDTO> getListaTodosClusterProdutosDTOExcetoPadrao() {
         List<ClusterProdutosDTO> clusterRuleDTOList = new ArrayList<>();
-        List<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningList =
+        List<ClusterMateriais> clusterMateriaisList =
                 clusterMateriaisDemandPlanningRepository
                         .customFindAllByPadraoIsFalseComRegrasAlocacaoEStatusProduto();
-        validaClusterMateriaisDemandPlanningListCarregadaCommunity(
-                clusterMateriaisDemandPlanningList,
+        validaClusterMateriaisListCarregadaCommunity(
+                clusterMateriaisList,
                 "non-default material cluster listing");
 
-        /*
-         * Community expõe apenas clusters de Demand Planning. Clusters de Pricing
-         * continuam como conceito Enterprise e não devem aparecer para seleção ou
-         * manutenção via tela compartilhada.
-         */
-        clusterMateriaisDemandPlanningList.stream()
+        clusterMateriaisList.stream()
                 .map(ClusterProdutosMapper::convertComRegrasAlocacaoDTO).forEach(clusterRuleDTOList::add);
         return clusterRuleDTOList;
     }
@@ -448,15 +496,15 @@ public class ClusteringFacade {
                 .collect(Collectors.toList());
     }
 
-    public List<ClusterProdutosDTO> getListaClusterProdutosDemandPlanningDTO() {
+    public List<ClusterProdutosDTO> getListaClusterMateriaisDTO() {
         List<ClusterProdutosDTO> clusterRuleDTOList = new ArrayList<>();
-        List<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningList =
+        List<ClusterMateriais> clusterMateriaisList =
                 clusterMateriaisDemandPlanningRepository
                         .customFindAllComRegrasAlocacaoEStatusProduto();
-        validaClusterMateriaisDemandPlanningListCarregadaCommunity(
-                clusterMateriaisDemandPlanningList,
-                "Demand Planning material cluster listing");
-        clusterMateriaisDemandPlanningList.stream()
+        validaClusterMateriaisListCarregadaCommunity(
+                clusterMateriaisList,
+                "material cluster listing");
+        clusterMateriaisList.stream()
                 .map(ClusterProdutosMapper::convertComRegrasAlocacaoDTO).forEach(clusterRuleDTOList::add);
         return clusterRuleDTOList;
     }
@@ -469,31 +517,30 @@ public class ClusteringFacade {
      * montar seletores e configuracoes de cluster sem acessar capacidades
      * Enterprise de caracteristicas dinamicas.</p>
      */
-    private void validaClusterMateriaisDemandPlanningListCarregadaCommunity(
-            List<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningList,
+    private void validaClusterMateriaisListCarregadaCommunity(
+            List<ClusterMateriais> clusterMateriaisList,
             String contextoListagem) {
 
-        if (clusterMateriaisDemandPlanningList == null) {
+        if (clusterMateriaisList == null) {
             throw new IllegalStateException("Material cluster snapshot is required for " + contextoListagem + ".");
         }
 
-        for (int index = 0; index < clusterMateriaisDemandPlanningList.size(); index++) {
-            ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
-                    clusterMateriaisDemandPlanningList.get(index);
+        for (int index = 0; index < clusterMateriaisList.size(); index++) {
+            ClusterMateriais clusterMateriais = clusterMateriaisList.get(index);
 
-            if (clusterMateriaisDemandPlanning == null) {
+            if (clusterMateriais == null) {
                 throw new IllegalStateException(
                         "Material cluster at index " + index + " is required for " + contextoListagem + ".");
             }
-            if (clusterMateriaisDemandPlanning.getId() == null) {
+            if (clusterMateriais.getId() == null) {
                 throw new IllegalStateException(
                         "Material cluster at index " + index + " has no id for " + contextoListagem + ".");
             }
-            if (clusterMateriaisDemandPlanning.getPadrao() == null) {
+            if (clusterMateriais.getPadrao() == null) {
                 throw new IllegalStateException(
                         "Material cluster at index " + index + " has no default flag for " + contextoListagem + ".");
             }
-            if (clusterMateriaisDemandPlanning.getRegrasAlocacaoClusterProdutos() == null) {
+            if (clusterMateriais.getRegrasAlocacaoClusterProdutos() == null) {
                 throw new IllegalStateException(
                         "Material cluster at index " + index + " has no allocation rules snapshot for " + contextoListagem + ".");
             }
@@ -603,7 +650,7 @@ public class ClusteringFacade {
     }
 
     /**
-     * Salva o cluster Community de materiais de Demand Planning e invalida a projection de parametros.
+     * Salva a definicao unica de cluster de materiais e invalida a projection de parametros.
      *
      * <p>O metodo sincroniza descricao, prioridade e regras filhas recebidas do
      * DTO compartilhado. Como esse cadastro alimenta diretamente
@@ -615,70 +662,47 @@ public class ClusteringFacade {
 
         validaPayloadClusterMateriaisCommunity(clusterProdutosDTO);
 
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning;
+        ClusterMateriais clusterMateriais;
         if (clusterProdutosDTO.getId() == null) {
             clusterProdutosDTO.setId(-1L); // para não gerar erro na linha abaixo ao jogar null
         }
-        Optional<ClusterProdutosDemandPlanning> optionalClusterMateriaisDemandPlanning =
+        Optional<ClusterMateriais> optionalClusterMateriais =
                 clusterMateriaisDemandPlanningRepository.findById(clusterProdutosDTO.getId());
 
         /*
-         * Cluster ausente representa criacao funcional de novo cluster DP.
+         * Cluster ausente representa criacao funcional de novo cluster.
          * Optional nulo deve falhar antes do save inicial, para nao esconder
          * repository quebrado como criacao normal.
          */
-        if (optionalClusterMateriaisDemandPlanning == null) {
+        if (optionalClusterMateriais == null) {
             throw new IllegalStateException(
                     "Material cluster repository returned null Optional for Community save id "
                             + clusterProdutosDTO.getId()
                             + ".");
         }
 
-        clusterMateriaisDemandPlanning = optionalClusterMateriaisDemandPlanning
+        clusterMateriais = optionalClusterMateriais
                 .orElseGet(() -> {
                     /*
-                     * Id nulo/nao encontrado representa criacao de cluster DP.
+                     * Id nulo/nao encontrado representa criacao de cluster.
                      * O save inicial materializa o id antes de sincronizar
                      * regras filhas e orphanRemoval.
                      */
-                    ClusterProdutosDemandPlanning novoClusterMateriaisDemandPlanning =
-                            new ClusterProdutosDemandPlanning(null, false, null);
-                    ClusterProdutosDemandPlanning clusterMateriaisDemandPlanningSalvo =
-                            clusterMateriaisDemandPlanningRepository.save(novoClusterMateriaisDemandPlanning);
-                    validaClusterMateriaisDemandPlanningSalvoCommunity(clusterMateriaisDemandPlanningSalvo);
-                    return clusterMateriaisDemandPlanningSalvo;
+                    ClusterMateriais novoClusterMateriais =
+                            new ClusterMateriais(null, false, null);
+                    ClusterMateriais clusterMateriaisSalvo =
+                            clusterMateriaisDemandPlanningRepository.save(novoClusterMateriais);
+                    validaClusterMateriaisSalvoCommunity(clusterMateriaisSalvo);
+                    return clusterMateriaisSalvo;
                 });
-        mapClusterProdutos(clusterMateriaisDemandPlanning, clusterProdutosDTO);
-        clusterMateriaisDemandPlanning.setPrioridade(clusterProdutosDTO.getPriority());
-        clusterMateriaisDemandPlanning.setDescricao(clusterProdutosDTO.getDescription());
-        removeRegrasAlocacaoClusterProdutosAusentes(clusterMateriaisDemandPlanning, clusterProdutosDTO);
-        alocaRegrasAoClusterProdutos(clusterProdutosDTO, clusterMateriaisDemandPlanning);
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanningSalvo =
-                clusterMateriaisDemandPlanningRepository.save(clusterMateriaisDemandPlanning);
-        validaClusterMateriaisDemandPlanningSalvoCommunity(clusterMateriaisDemandPlanningSalvo);
-
-    }
-
-    /**
-     * Community mantém somente clusters de material para Demand Planning.
-     *
-     * <p>O payload compartilhado possui o campo `process` porque o Enterprise
-     * tambem atende Pricing. No Community, qualquer processo diferente de DP
-     * precisa falhar explicitamente para evitar retorno nulo ou save
-     * silencioso.</p>
-     */
-    void validaProcessoClusterMateriaisDemandPlanningCommunity(String process) {
-
-        if (process == null || process.isBlank()) {
-            throw new IllegalArgumentException("Community material cluster process is required.");
-        }
-        if ("DP".equalsIgnoreCase(process)) {
-            return;
-        }
-        if ("PRICING".equalsIgnoreCase(process)) {
-            throw new RequiresEnterpriseVersionException("Pricing cluster configuration");
-        }
-        throw new IllegalArgumentException("Community material clusters support only process DP. Received process: " + process);
+        mapClusterProdutos(clusterMateriais, clusterProdutosDTO);
+        clusterMateriais.setPrioridade(clusterProdutosDTO.getPriority());
+        clusterMateriais.setDescricao(clusterProdutosDTO.getDescription());
+        removeRegrasAlocacaoClusterProdutosAusentes(clusterMateriais, clusterProdutosDTO);
+        alocaRegrasAoClusterProdutos(clusterProdutosDTO, clusterMateriais);
+        ClusterMateriais clusterMateriaisSalvo =
+                clusterMateriaisDemandPlanningRepository.save(clusterMateriais);
+        validaClusterMateriaisSalvoCommunity(clusterMateriaisSalvo);
 
     }
 
@@ -746,9 +770,6 @@ public class ClusteringFacade {
         validaClusterRuleDTOParaDeleteCommunity(
                 clusterRuleDTO,
                 "Material cluster delete payload id is required");
-        if (clusterRuleDTO.getProcess() != null && !clusterRuleDTO.getProcess().isBlank()) {
-            validaProcessoClusterMateriaisDemandPlanningCommunity(clusterRuleDTO.getProcess());
-        }
         // Remove regras primeiro porque o endpoint apaga somente clusters de materiais DP validados pela borda.
         regraAlocacaoClusterProdutosRepository.deleteAllByClusterProdutosId(clusterRuleDTO.getId());
         clusterProdutosRepository.deleteById(clusterRuleDTO.getId());
@@ -784,19 +805,19 @@ public class ClusteringFacade {
     }
 
     /**
-     * Valida a fotografia salva do cluster de materiais de Demand Planning.
+     * Valida a fotografia salva do cluster de materiais.
      *
      * <p>O id do cluster e usado logo depois para regras de alocacao e
      * parametros nivel cluster. Um repository que devolve snapshot nulo ou sem
      * id nao pode ser tratado como sucesso de configuracao Community.</p>
      */
-    private void validaClusterMateriaisDemandPlanningSalvoCommunity(
-            ClusterProdutosDemandPlanning clusterMateriaisDemandPlanningSalvo) {
+    private void validaClusterMateriaisSalvoCommunity(
+            ClusterMateriais clusterMateriaisSalvo) {
 
-        if (clusterMateriaisDemandPlanningSalvo == null) {
+        if (clusterMateriaisSalvo == null) {
             throw new IllegalStateException("Saved material cluster snapshot is required.");
         }
-        if (clusterMateriaisDemandPlanningSalvo.getId() == null) {
+        if (clusterMateriaisSalvo.getId() == null) {
             throw new IllegalStateException("Saved material cluster id is required.");
         }
 
@@ -873,8 +894,8 @@ public class ClusteringFacade {
      * Valida o payload minimo de save de cluster de materiais.
      *
      * <p>Id continua opcional porque ausencia de id representa criacao. O
-     * processo, porem, e obrigatorio para diferenciar o cluster DP Community de
-     * clusters Pricing Enterprise antes de qualquer repository.</p>
+     * contrato nao recebe processo: ha uma unica definicao de clusters de
+     * materiais.</p>
      */
     private void validaPayloadClusterMateriaisCommunity(
             ClusterProdutosDTO clusterProdutosDTO) {
@@ -882,7 +903,6 @@ public class ClusteringFacade {
         if (clusterProdutosDTO == null) {
             throw new IllegalArgumentException("Material cluster payload is required");
         }
-        validaProcessoClusterMateriaisDemandPlanningCommunity(clusterProdutosDTO.getProcess());
         validaRegrasAlocacaoClusterProdutosCommunity(clusterProdutosDTO);
 
     }
@@ -964,10 +984,10 @@ public class ClusteringFacade {
 
         List<AlocacaoClusterMaterialDTO> alocacaoDemandPlanning = clusterEParametrosProjection.getMateriaisAtivos().stream()
                 .map(material -> {
-                    ClusterProdutosDemandPlanning clusterProdutosDemandPlanning = clusterEParametrosProjection.getClusterProdutosDemandPlanning(material);
+                    ClusterMateriais clusterMateriais = clusterEParametrosProjection.getClusterProdutosDemandPlanning(material);
                     return AlocacaoClusterMaterialDTO.builder()
-                            .clusterId(clusterProdutosDemandPlanning.getId())
-                            .clusterDescription(clusterProdutosDemandPlanning.getDescricao())
+                            .clusterId(clusterMateriais.getId())
+                            .clusterDescription(clusterMateriais.getDescricao())
                             .materialId(material.getId())
                             .materialDescription(material.getDescricao())
                             .build();

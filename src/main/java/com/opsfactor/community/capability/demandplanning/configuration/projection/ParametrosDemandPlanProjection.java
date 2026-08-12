@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.configuration.projection;
 
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
@@ -23,20 +23,20 @@ public class ParametrosDemandPlanProjection {
     @Getter
     ParametrosGlobais parametrosGlobais;
 
-    Map<ClusterLocations, Map<ClusterProdutosDemandPlanning, ParametrosDemandPlanNivelClusterProjection>> mapaParametrosPorClusterLocationsClusterMateriais = new HashMap<>();
+    Map<ClusterLocations, Map<ClusterMateriais, ParametrosDemandPlanNivelClusterProjection>> mapaParametrosPorClusterLocationsClusterMateriais = new HashMap<>();
 
     /**
      * Recupera a configuracao efetiva de Demand Planning para a combinacao
      * cluster location / cluster material.
      *
-     * <p>O tipo fisico ainda se chama {@link ClusterProdutosDemandPlanning}
+     * <p>O tipo fisico ainda se chama {@link ClusterMateriais}
      * porque a entidade JPA transicional herda de `ClusterProdutos`. O
      * parametro local usa a nomenclatura funcional do Community: cluster de
      * materiais.</p>
      */
     public ParametrosDemandPlanNivelClusterProjection getParametrosDemandPlanNivelClusterProjection(
             ClusterLocations clusterLocations,
-            ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning) {
+            ClusterMateriais clusterMateriaisDemandPlanning) {
         return mapaParametrosPorClusterLocationsClusterMateriais
                 .getOrDefault(clusterLocations, new HashMap<>())
                 .get(clusterMateriaisDemandPlanning);
@@ -63,7 +63,7 @@ public class ParametrosDemandPlanProjection {
             ClusterEParametrosProjection clusterEParametrosProjection) {
 
         ClusterLocations clusterLocations = clusterEParametrosProjection.getClusterLocationsDeLocation(location);
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
+        ClusterMateriais clusterMateriaisDemandPlanning =
                 clusterEParametrosProjection.getClusterMateriaisDemandPlanning(material, location);
 
         return getParametrosDemandPlanNivelClusterProjection(clusterLocations, clusterMateriaisDemandPlanning);

@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.configuration.repository;
 
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.ParametrosDemandPlanNivelCluster;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
 import jakarta.persistence.LockModeType;
@@ -33,7 +33,7 @@ public interface ParametrosDemandPlanNivelClusterRepository extends CrudReposito
     @Query("SELECT pcpdpcl FROM ParametrosDemandPlanNivelCluster pcpdpcl " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.perfilExecucaoDemandPlan pedp " +
             "LEFT JOIN FETCH pedp.unidadeMedidaPadraoDP uomdp " +
-            "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterProdutosDemandPlanning cpdp " +
+            "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterMateriais cpdp " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterLocations cl " +
             "WHERE pedp = :perfilExecucaoDemandPlan")
     public List<ParametrosDemandPlanNivelCluster> customFindAllDePerfilExecucaoDemandPlan(
@@ -42,14 +42,14 @@ public interface ParametrosDemandPlanNivelClusterRepository extends CrudReposito
     @Query("SELECT pcpdpcl FROM ParametrosDemandPlanNivelCluster pcpdpcl " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.perfilExecucaoDemandPlan pedp " +
             "LEFT JOIN FETCH pedp.unidadeMedidaPadraoDP uomdp " +
-            "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterProdutosDemandPlanning cpdp " +
+            "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterMateriais cpdp " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterLocations cl " +
-            "WHERE cpdp = :clusterProdutosDemandPlanning " +
+            "WHERE cpdp = :clusterMateriais " +
             "AND cl = :clusterLocations " +
             "AND pedp = :perfilExecucaoDemandPlan")
     public Optional<ParametrosDemandPlanNivelCluster> findByParametrosClusterProdutosDemandPlanningClusterLocationsCompositeKeyClusterProdutosDemandPlanningAndParametrosClusterProdutosDemandPlanningClusterLocationsCompositeKeyClusterLocations(
             PerfilExecucaoDemandPlan perfilExecucaoDemandPlan,
-            ClusterProdutosDemandPlanning clusterProdutosDemandPlanning,
+            ClusterMateriais clusterMateriais,
             ClusterLocations clusterLocations);
 
     /*
@@ -60,7 +60,7 @@ public interface ParametrosDemandPlanNivelClusterRepository extends CrudReposito
     @Query("SELECT pcpdpcl FROM ParametrosDemandPlanNivelCluster pcpdpcl " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.perfilExecucaoDemandPlan pedp " +
             "LEFT JOIN FETCH pedp.unidadeMedidaPadraoDP uomdp " +
-            "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterProdutosDemandPlanning cpdp " +
+            "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterMateriais cpdp " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterLocations cl " +
             "WHERE cpdp.id = :clusterProdutosDemandPlanningId " +
             "AND cl.id = :clusterLocationsId " +
@@ -81,7 +81,7 @@ public interface ParametrosDemandPlanNivelClusterRepository extends CrudReposito
     @Query("SELECT pcpdpcl FROM ParametrosDemandPlanNivelCluster pcpdpcl " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.perfilExecucaoDemandPlan pedp " +
             "LEFT JOIN FETCH pedp.unidadeMedidaPadraoDP uomdp " +
-            "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterProdutosDemandPlanning cpdp " +
+            "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterMateriais cpdp " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterLocations cl " +
             "WHERE cpdp.id = :clusterProdutosDemandPlanningId " +
             "AND cl.id = :clusterLocationsId " +
@@ -99,7 +99,7 @@ public interface ParametrosDemandPlanNivelClusterRepository extends CrudReposito
     @Query("SELECT pcpdpcl FROM ParametrosDemandPlanNivelCluster pcpdpcl " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.perfilExecucaoDemandPlan pedp " +
             "LEFT JOIN FETCH pedp.unidadeMedidaPadraoDP uomdp " +
-            "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterProdutosDemandPlanning cpdp " +
+            "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterMateriais cpdp " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterLocations cl " +
             "WHERE pedp.id = :perfilExecucaoDemandPlanId")
     public List<ParametrosDemandPlanNivelCluster> findByPerfilExecucaoDemandPlanId(

@@ -4,7 +4,7 @@ import com.opsfactor.community.capability.demandplanning.configuration.facade.dt
 import com.opsfactor.community.capability.demandplanning.configuration.facade.dto.DemandPlanningForecastParametersDTO;
 import com.opsfactor.community.capability.demandplanning.configuration.facade.dto.DemandPlanningGeneralParametersDTO;
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.ParametrosDemandPlanNivelCluster;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.ParametrosModeloEstatisticoAbstract;
@@ -547,7 +547,7 @@ public class DemandPlanningConfigurationMapper {
                 clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
         ClusterLocations clusterLocations = clusterEParametrosProjection.getClusterLocationsDeId(
                 demandPlanningClusterLevelConfigurationDTO.locationClusterId);
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning = clusterEParametrosProjection
+        ClusterMateriais clusterMateriaisDemandPlanning = clusterEParametrosProjection
                 .getClusterMateriaisDemandPlanningDeId(
                         demandPlanningClusterLevelConfigurationDTO.materialClusterId)
                 .get();

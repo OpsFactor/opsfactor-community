@@ -1,6 +1,5 @@
 package com.opsfactor.community.capability.cluster.domain.produto;
 
-import com.opsfactor.community.platform.utility.Constantes;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -13,11 +12,11 @@ import java.util.Set;
 
 
 /**
- * Cluster de materiais usado pelas configuracoes Community de Demand Planning.
+ * Raiz persistida dos clusters de materiais.
  *
- * <p>No Community, a unica subclasse funcional e
- * {@link ClusterProdutosDemandPlanning}. Pricing, filtros dinamicos e demais
- * agrupamentos avancados pertencem ao Enterprise.</p>
+ * <p>A classificacao de materiais e unica para a plataforma: os consumidores
+ * usam o mesmo conjunto de clusters, prioridades e regras de alocacao, sem
+ * uma variante por processo.</p>
  */
 @Entity
 @Data
@@ -76,13 +75,6 @@ public class ClusterProdutos implements Serializable {
         }
     }
 
-    public Constantes.TipoCluster getTipoCluster() {
-        if (this instanceof ClusterProdutosDemandPlanning) {
-            return Constantes.TipoCluster.DP;
-        }
-        return null;
-    }
-    
     @Override
     public String toString() {
         return "{" +

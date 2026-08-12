@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.cluster.service;
 
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
-import com.opsfactor.community.capability.cluster.repository.material.ClusterProdutosDemandPlanningRepository;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
+import com.opsfactor.community.capability.cluster.repository.material.ClusterMateriaisRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +32,7 @@ public class ClusteringService {
      * que e uma dependencia gerenciada, nao estado local.</p>
      */
     @Autowired
-    private ClusterProdutosDemandPlanningRepository clusterMateriaisDemandPlanningRepository;
+    private ClusterMateriaisRepository clusterMateriaisDemandPlanningRepository;
 
     /**
      * Garante que os clusters padrao existam.
@@ -50,32 +50,32 @@ public class ClusteringService {
     /**
      * Retorna o cluster padrao de Demand Planning, criando-o se necessario.
      */
-    public ClusterProdutosDemandPlanning getClusterProdutosDemandPlanningDefault() {
+    public ClusterMateriais getClusterProdutosDemandPlanningDefault() {
 
-        ClusterProdutosDemandPlanning clusterProdutosDemandPlanning;
-        Optional<ClusterProdutosDemandPlanning> optionalClusterProdutos =
+        ClusterMateriais clusterMateriais;
+        Optional<ClusterMateriais> optionalClusterProdutos =
                 clusterMateriaisDemandPlanningRepository.findByDescricao(CLUSTER_PADRAO_HASH_DEMAND_PLANNING);
         validaOptionalClusterProdutosDemandPlanningDefaultCommunity(optionalClusterProdutos);
-        clusterProdutosDemandPlanning = optionalClusterProdutos.orElseGet(
+        clusterMateriais = optionalClusterProdutos.orElseGet(
                 () -> {
-                    ClusterProdutosDemandPlanning clusterProdutosDemandPlanningCriado =
-                            new ClusterProdutosDemandPlanning(
+                    ClusterMateriais clusterMateriaisCriado =
+                            new ClusterMateriais(
                                     CLUSTER_PADRAO_HASH_DEMAND_PLANNING,
                                     true,
                                     9999999);
-                    ClusterProdutosDemandPlanning clusterProdutosDemandPlanningSalvo =
-                            clusterMateriaisDemandPlanningRepository.save(clusterProdutosDemandPlanningCriado);
-                    validaClusterProdutosDemandPlanningDefaultCommunity(clusterProdutosDemandPlanningSalvo);
-                    return clusterProdutosDemandPlanningSalvo;
+                    ClusterMateriais clusterMateriaisSalvo =
+                            clusterMateriaisDemandPlanningRepository.save(clusterMateriaisCriado);
+                    validaClusterProdutosDemandPlanningDefaultCommunity(clusterMateriaisSalvo);
+                    return clusterMateriaisSalvo;
                 }
         );
-        validaClusterProdutosDemandPlanningDefaultCommunity(clusterProdutosDemandPlanning);
-        return clusterProdutosDemandPlanning;
+        validaClusterProdutosDemandPlanningDefaultCommunity(clusterMateriais);
+        return clusterMateriais;
 
     }
 
     private void validaOptionalClusterProdutosDemandPlanningDefaultCommunity(
-            Optional<ClusterProdutosDemandPlanning> optionalClusterProdutos) {
+            Optional<ClusterMateriais> optionalClusterProdutos) {
 
         if (optionalClusterProdutos == null) {
             throw new IllegalArgumentException("Default material DP cluster lookup result is required.");
@@ -84,15 +84,15 @@ public class ClusteringService {
     }
 
     private void validaClusterProdutosDemandPlanningDefaultCommunity(
-            ClusterProdutosDemandPlanning clusterProdutosDemandPlanning) {
+            ClusterMateriais clusterMateriais) {
 
-        if (clusterProdutosDemandPlanning == null) {
+        if (clusterMateriais == null) {
             throw new IllegalArgumentException("Default material DP cluster is required.");
         }
-        if (clusterProdutosDemandPlanning.getId() == null) {
+        if (clusterMateriais.getId() == null) {
             throw new IllegalArgumentException("Default material DP cluster must have an id.");
         }
-        if (!CLUSTER_PADRAO_HASH_DEMAND_PLANNING.equals(clusterProdutosDemandPlanning.getDescricao())) {
+        if (!CLUSTER_PADRAO_HASH_DEMAND_PLANNING.equals(clusterMateriais.getDescricao())) {
             throw new IllegalArgumentException(
                     "Default material DP cluster must have description "
                             + CLUSTER_PADRAO_HASH_DEMAND_PLANNING

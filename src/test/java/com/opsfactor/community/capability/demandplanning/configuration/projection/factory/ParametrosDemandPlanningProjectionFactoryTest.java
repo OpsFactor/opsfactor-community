@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.configuration.projection.factory;
 
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.ParametrosDemandPlanNivelCluster;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
@@ -33,7 +33,7 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
 
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = new PerfilExecucaoDemandPlan("DP_PROFILE");
         ClusterLocations clusterLocations = getClusterLocations(10L);
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
+        ClusterMateriais clusterMateriaisDemandPlanning =
                 getClusterMateriaisDemandPlanning(20L);
 
         ParametrosDemandPlanningProjectionFactory parametrosDemandPlanningProjectionFactory =
@@ -72,7 +72,7 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
 
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = new PerfilExecucaoDemandPlan("DP_PROFILE");
         ClusterLocations clusterLocations = getClusterLocations(10L);
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
+        ClusterMateriais clusterMateriaisDemandPlanning =
                 getClusterMateriaisDemandPlanning(20L);
         ParametrosDemandPlanNivelCluster persistedParameters = getParametrosDemandPlanNivelCluster(
                 perfilExecucaoDemandPlan,
@@ -312,7 +312,7 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
 
     private static ClusterEParametrosProjection getClusterEParametrosProjection(
             List<ClusterLocations> clusterLocationsList,
-            List<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningList) throws Exception {
+            List<ClusterMateriais> clusterMateriaisDemandPlanningList) throws Exception {
 
         ClusterEParametrosProjection clusterEParametrosProjection = new ClusterEParametrosProjection();
         setPrivateField(clusterEParametrosProjection, "parametrosGlobais", new ParametrosGlobais());
@@ -334,10 +334,10 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
 
     }
 
-    private static ClusterProdutosDemandPlanning getClusterMateriaisDemandPlanning(Long id) {
+    private static ClusterMateriais getClusterMateriaisDemandPlanning(Long id) {
 
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
-                new ClusterProdutosDemandPlanning();
+        ClusterMateriais clusterMateriaisDemandPlanning =
+                new ClusterMateriais();
         clusterMateriaisDemandPlanning.setId(id);
         return clusterMateriaisDemandPlanning;
 

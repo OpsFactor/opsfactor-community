@@ -10,6 +10,7 @@ import org.hibernate.annotations.ColumnDefault;
 
 import jakarta.persistence.*;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,6 +42,14 @@ public class RegraAlocacaoClusterProdutos {
     @OneToMany(mappedBy = "regraAlocacaoClusterProdutosStatusCompositeKey.regraAlocacaoClusterProdutos", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<RegraAlocacaoClusterProdutosStatus> regraAlocacaoClusterProdutosStatusSet = new HashSet<>();
 
+    /** Explicit characteristic values selected when this rule uses `CARACTERISTICA`. */
+    @OneToMany(
+            mappedBy = "regraAlocacaoClusterProdutosCaracteristicaCompositeKey.regraAlocacaoClusterProdutos",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
+    private Set<RegraAlocacaoClusterProdutosCaracteristica> regrasAlocacaoClusterProdutosCaracteristicaSet = new HashSet<>();
+
     public void addStatusProduto(Constantes.StatusProduto statusProduto) {
         Optional<RegraAlocacaoClusterProdutosStatus> optionalRegraAlocacaoStatus = regraAlocacaoClusterProdutosStatusSet.stream()
                 .filter(x -> x.getStatusProduto().equals(statusProduto))
@@ -57,6 +66,21 @@ public class RegraAlocacaoClusterProdutos {
         return regraAlocacaoClusterProdutosStatusSet.stream()
                 .map(RegraAlocacaoClusterProdutosStatus::getStatusProduto)
                 .collect(Collectors.toSet());
+    }
+
+    /** Adds one value of the selected material characteristic without duplicating the composite identity. */
+    public void addRegraAlocacaoCaracteristica(
+            RegraAlocacaoClusterProdutosCaracteristica regraAlocacaoClusterProdutosCaracteristica) {
+
+        regrasAlocacaoClusterProdutosCaracteristicaSet.add(regraAlocacaoClusterProdutosCaracteristica);
+    }
+
+    /** Returns the selected values only; the owning characteristic stays on each child entry. */
+    public List<String> getAtributo() {
+
+        return regrasAlocacaoClusterProdutosCaracteristicaSet.stream()
+                .map(RegraAlocacaoClusterProdutosCaracteristica::getAtributo)
+                .toList();
     }
 
     @ColumnDefault("0")

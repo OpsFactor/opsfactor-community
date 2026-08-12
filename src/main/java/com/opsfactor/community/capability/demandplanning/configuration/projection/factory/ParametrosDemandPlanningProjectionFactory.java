@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.configuration.projection.factory;
 
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.ParametrosDemandPlanNivelCluster;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
@@ -299,7 +299,7 @@ public class ParametrosDemandPlanningProjectionFactory {
      * combinacoes possiveis de parametros de forecast.
      */
     private void validaClusterMateriaisDemandPlanningList(
-            List<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningList,
+            List<ClusterMateriais> clusterMateriaisDemandPlanningList,
             String snapshotName) {
 
         if (clusterMateriaisDemandPlanningList == null) {
@@ -308,7 +308,7 @@ public class ParametrosDemandPlanningProjectionFactory {
 
         Set<Long> idsCarregados = new HashSet<>();
         for (int indice = 0; indice < clusterMateriaisDemandPlanningList.size(); indice++) {
-            ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
+            ClusterMateriais clusterMateriaisDemandPlanning =
                     clusterMateriaisDemandPlanningList.get(indice);
             if (clusterMateriaisDemandPlanning == null) {
                 throw new IllegalStateException(snapshotName + " returned null item at index " + indice + ".");
@@ -352,7 +352,7 @@ public class ParametrosDemandPlanningProjectionFactory {
     public ParametrosDemandPlanNivelClusterProjection getParametrosDemandPlanNivelClusterProjection(
             PerfilExecucaoDemandPlan perfilExecucaoDemandPlan,
             ClusterLocations clusterLocations,
-            ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning,
+            ClusterMateriais clusterMateriaisDemandPlanning,
             Map<Long, Map<Long, ParametrosDemandPlanNivelCluster>> mapaParametrosDemandPlanNivelCluster) {
 
         ParametrosDemandPlanNivelCluster parametrosDemandPlanNivelCluster = FuncoesMap.getElementoDeNestedMap(
@@ -387,7 +387,7 @@ public class ParametrosDemandPlanningProjectionFactory {
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = parametrosDemandPlanNivelCluster.getPerfilExecucaoDemandPlan();
 
         ClusterLocations clusterLocations = parametrosDemandPlanNivelCluster.getClusterLocations();
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
+        ClusterMateriais clusterMateriaisDemandPlanning =
                 parametrosDemandPlanNivelCluster.getClusterMateriaisDemandPlanning();
 
         ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();

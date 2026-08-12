@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.configuration.projection.aggregation;
 
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
@@ -27,19 +27,19 @@ public abstract class ParametrosDemandPlanNivelClusterProjection {
 
     private PerfilExecucaoDemandPlan perfilExecucaoDemandPlan;
     private ClusterLocations clusterLocations;
-    private ClusterProdutosDemandPlanning clusterProdutosDemandPlanning;
+    private ClusterMateriais clusterMateriais;
 
     /**
      * Alias funcional para a entidade transicional
-     * {@link ClusterProdutosDemandPlanning}.
+     * {@link ClusterMateriais}.
      *
      * <p>O getter gerado por Lombok (`getClusterProdutosDemandPlanning`) segue
      * existindo para os pontos ainda acoplados ao nome fisico legado. Codigo
      * novo no Community deve preferir este getter quando estiver tratando o
      * conceito de cluster de materiais.</p>
      */
-    public ClusterProdutosDemandPlanning getClusterMateriaisDemandPlanning() {
-        return clusterProdutosDemandPlanning;
+    public ClusterMateriais getClusterMateriaisDemandPlanning() {
+        return clusterMateriais;
     }
 
     /**
@@ -63,12 +63,12 @@ public abstract class ParametrosDemandPlanNivelClusterProjection {
     protected ParametrosDemandPlanNivelClusterProjection(
             PerfilExecucaoDemandPlan perfilExecucaoDemandPlan,
             ClusterLocations clusterLocations,
-            ClusterProdutosDemandPlanning clusterProdutosDemandPlanning,
+            ClusterMateriais clusterMateriais,
             ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection) {
 
         this.perfilExecucaoDemandPlan = perfilExecucaoDemandPlan;
         this.clusterLocations = clusterLocations;
-        this.clusterProdutosDemandPlanning = clusterProdutosDemandPlanning;
+        this.clusterMateriais = clusterMateriais;
         this.parametrosGeraisDemandPlanningProjection = parametrosGeraisDemandPlanningProjection;
         this.useExecutionProfileAutofitModel = true;
 

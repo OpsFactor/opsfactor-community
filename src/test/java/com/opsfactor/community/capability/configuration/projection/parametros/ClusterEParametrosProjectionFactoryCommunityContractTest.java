@@ -3,15 +3,18 @@ package com.opsfactor.community.capability.configuration.projection.parametros;
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.configuration.domain.ParametrosProdutoLocation;
 import com.opsfactor.community.capability.cluster.repository.location.ClusterLocationsRepository;
-import com.opsfactor.community.capability.cluster.repository.material.ClusterProdutosDemandPlanningRepository;
+import com.opsfactor.community.capability.cluster.repository.material.ClusterMateriaisRepository;
 import com.opsfactor.community.capability.configuration.repository.ParametrosProdutoLocationRepository;
 import com.opsfactor.community.capability.configuration.repository.cluster.location.RegraAlocacaoClusterLocationsPaisEstadoRepository;
 import com.opsfactor.community.capability.configuration.repository.cluster.location.RegraAlocacaoClusterLocationsTipoLocationRepository;
 import com.opsfactor.community.capability.configuration.repository.cluster.produto.RegraAlocacaoClusterProdutosStatusRepository;
+import com.opsfactor.community.capability.configuration.repository.cluster.produto.RegraAlocacaoClusterProdutosCaracteristicaRepository;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.repository.CaracteristicaLocationRepository;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.repository.CaracteristicaMaterialRepository;
 import com.opsfactor.community.capability.cluster.service.ClusteringService;
 import com.opsfactor.community.capability.configuration.service.ParametrosGlobaisService;
 import org.junit.jupiter.api.Assertions;
@@ -157,14 +160,14 @@ class ClusterEParametrosProjectionFactoryCommunityContractTest {
     }
 
     private static ClusterEParametrosProjectionFactory getFactoryComClusterMaterialRepositoryResult(
-            List<ClusterProdutosDemandPlanning> clusterMateriaisList)
+            List<ClusterMateriais> clusterMateriaisList)
             throws Exception {
 
         ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory =
                 new ClusterEParametrosProjectionFactory();
-        ClusterProdutosDemandPlanningRepository clusterProdutosDemandPlanningRepository =
-                Mockito.mock(ClusterProdutosDemandPlanningRepository.class);
-        Mockito.when(clusterProdutosDemandPlanningRepository.findAll())
+        ClusterMateriaisRepository clusterMateriaisRepository =
+                Mockito.mock(ClusterMateriaisRepository.class);
+        Mockito.when(clusterMateriaisRepository.findAll())
                 .thenReturn(clusterMateriaisList);
 
         setPrivateField(
@@ -174,24 +177,26 @@ class ClusterEParametrosProjectionFactoryCommunityContractTest {
         setPrivateField(
                 clusterEParametrosProjectionFactory,
                 "clusterMateriaisDemandPlanningRepository",
-                clusterProdutosDemandPlanningRepository);
+                clusterMateriaisRepository);
 
         return clusterEParametrosProjectionFactory;
 
     }
 
     private static ClusterEParametrosProjectionFactory getFactoryComSnapshotsDeRepositories(
-            List<ClusterProdutosDemandPlanning> clusterMateriaisList,
+            List<ClusterMateriais> clusterMateriaisList,
             List<ClusterLocations> clusterLocationsList,
             List<ParametrosProdutoLocation> parametrosProdutoLocationList)
             throws Exception {
 
         ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory =
                 new ClusterEParametrosProjectionFactory();
-        ClusterProdutosDemandPlanningRepository clusterProdutosDemandPlanningRepository =
-                Mockito.mock(ClusterProdutosDemandPlanningRepository.class);
+        ClusterMateriaisRepository clusterMateriaisRepository =
+                Mockito.mock(ClusterMateriaisRepository.class);
         RegraAlocacaoClusterProdutosStatusRepository regraAlocacaoClusterProdutosStatusRepository =
                 Mockito.mock(RegraAlocacaoClusterProdutosStatusRepository.class);
+        RegraAlocacaoClusterProdutosCaracteristicaRepository regraAlocacaoClusterProdutosCaracteristicaRepository =
+                Mockito.mock(RegraAlocacaoClusterProdutosCaracteristicaRepository.class);
         ClusterLocationsRepository clusterLocationsRepository =
                 Mockito.mock(ClusterLocationsRepository.class);
         RegraAlocacaoClusterLocationsPaisEstadoRepository regraAlocacaoClusterLocationsPaisEstadoRepository =
@@ -202,10 +207,16 @@ class ClusterEParametrosProjectionFactoryCommunityContractTest {
                 Mockito.mock(ParametrosGlobaisService.class);
         ParametrosProdutoLocationRepository parametrosProdutoLocationRepository =
                 Mockito.mock(ParametrosProdutoLocationRepository.class);
+        CaracteristicaMaterialRepository caracteristicaMaterialRepository =
+                Mockito.mock(CaracteristicaMaterialRepository.class);
+        CaracteristicaLocationRepository caracteristicaLocationRepository =
+                Mockito.mock(CaracteristicaLocationRepository.class);
 
-        Mockito.when(clusterProdutosDemandPlanningRepository.findAll())
+        Mockito.when(clusterMateriaisRepository.findAll())
                 .thenReturn(clusterMateriaisList);
         Mockito.when(regraAlocacaoClusterProdutosStatusRepository.findAll())
+                .thenReturn(List.of());
+        Mockito.when(regraAlocacaoClusterProdutosCaracteristicaRepository.findAll())
                 .thenReturn(List.of());
         Mockito.when(clusterLocationsRepository.customFindAll())
                 .thenReturn(clusterLocationsList);
@@ -217,6 +228,10 @@ class ClusterEParametrosProjectionFactoryCommunityContractTest {
                 .thenReturn(Mockito.mock(ParametrosGlobais.class));
         Mockito.when(parametrosProdutoLocationRepository.customFindAllComFetchAtributosManyToOne())
                 .thenReturn(parametrosProdutoLocationList);
+        Mockito.when(caracteristicaMaterialRepository.findAllWithValues())
+                .thenReturn(List.of());
+        Mockito.when(caracteristicaLocationRepository.findAllWithValues())
+                .thenReturn(List.of());
 
         setPrivateField(
                 clusterEParametrosProjectionFactory,
@@ -225,11 +240,15 @@ class ClusterEParametrosProjectionFactoryCommunityContractTest {
         setPrivateField(
                 clusterEParametrosProjectionFactory,
                 "clusterMateriaisDemandPlanningRepository",
-                clusterProdutosDemandPlanningRepository);
+                clusterMateriaisRepository);
         setPrivateField(
                 clusterEParametrosProjectionFactory,
                 "regraAlocacaoClusterProdutosStatusRepository",
                 regraAlocacaoClusterProdutosStatusRepository);
+        setPrivateField(
+                clusterEParametrosProjectionFactory,
+                "regraAlocacaoClusterProdutosCaracteristicaRepository",
+                regraAlocacaoClusterProdutosCaracteristicaRepository);
         setPrivateField(
                 clusterEParametrosProjectionFactory,
                 "clusterLocationsRepository",
@@ -250,17 +269,25 @@ class ClusterEParametrosProjectionFactoryCommunityContractTest {
                 clusterEParametrosProjectionFactory,
                 "parametrosProdutoLocationRepository",
                 parametrosProdutoLocationRepository);
+        setPrivateField(
+                clusterEParametrosProjectionFactory,
+                "caracteristicaMaterialRepository",
+                caracteristicaMaterialRepository);
+        setPrivateField(
+                clusterEParametrosProjectionFactory,
+                "caracteristicaLocationRepository",
+                caracteristicaLocationRepository);
 
         return clusterEParametrosProjectionFactory;
 
     }
 
-    private static ClusterProdutosDemandPlanning getClusterProdutosDemandPlanning(Long id) {
+    private static ClusterMateriais getClusterProdutosDemandPlanning(Long id) {
 
-        ClusterProdutosDemandPlanning clusterProdutosDemandPlanning =
-                new ClusterProdutosDemandPlanning("Cluster Material", false, 1);
-        clusterProdutosDemandPlanning.setId(id);
-        return clusterProdutosDemandPlanning;
+        ClusterMateriais clusterMateriais =
+                new ClusterMateriais("Cluster Material", false, 1);
+        clusterMateriais.setId(id);
+        return clusterMateriais;
 
     }
 

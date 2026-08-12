@@ -13,29 +13,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Cluster de materiais usado pela configuracao de Demand Planning.
+ * Definicao concreta de um cluster de materiais.
  *
  * <p>O nome fisico ainda usa `Produtos`, mas o contrato funcional Community
- * trata este agrupamento como cluster de materiais. Ele agrupa materiais com
- * comportamento de demanda semelhante para definir parametros de forecast por
- * combinacao cluster material/location.</p>
+ * trata este agregado como a definicao unica de cluster de materiais. Os
+ * consumidores podem combinar materiais e locations sem criar uma
+ * classificacao paralela por processo.</p>
  */
 @Getter
 @Setter
 @Entity
 @NoArgsConstructor
 @DiscriminatorValue("demandplanning")
-public class ClusterProdutosDemandPlanning extends ClusterProdutos {
+public class ClusterMateriais extends ClusterProdutos {
 
-    public ClusterProdutosDemandPlanning(String descricao, Boolean padrao, Integer prioridade) {
+    public ClusterMateriais(String descricao, Boolean padrao, Integer prioridade) {
         super(descricao, padrao, prioridade);
     }
 
     /**
      * Parametros de forecast associados a este cluster de materiais em cada
      * cluster de location.
+     *
+     * <p>O discriminador legado permanece apenas para leitura das linhas ja
+     * persistidas; ele nao participa do contrato nem da classificacao
+     * funcional.</p>
      */
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "parametrosDemandPlanNivelClusterCompositeKey.clusterProdutosDemandPlanning", orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "parametrosDemandPlanNivelClusterCompositeKey.clusterMateriais", orphanRemoval = true)
     private List<ParametrosDemandPlanNivelCluster> parametrosDemandPlanNivelCluster = new ArrayList<>();
 
 }

@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.configuration.domain;
 
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.platform.utility.Constantes;
 import lombok.*;
@@ -45,7 +45,7 @@ public class ParametrosDemandPlanNivelCluster extends ParametrosModeloEstatistic
 
         @ManyToOne(optional = false)
         @NonNull
-        private ClusterProdutosDemandPlanning clusterProdutosDemandPlanning;
+        private ClusterMateriais clusterMateriais;
 
         @ManyToOne(optional = false)
         @NonNull
@@ -126,19 +126,19 @@ public class ParametrosDemandPlanNivelCluster extends ParametrosModeloEstatistic
     public PerfilExecucaoDemandPlan getPerfilExecucaoDemandPlan() {
         return parametrosDemandPlanNivelClusterCompositeKey.getPerfilExecucaoDemandPlan();
     }
-    public ClusterProdutosDemandPlanning getClusterProdutosDemandPlanning() {
-        return parametrosDemandPlanNivelClusterCompositeKey.getClusterProdutosDemandPlanning();
+    public ClusterMateriais getClusterProdutosDemandPlanning() {
+        return parametrosDemandPlanNivelClusterCompositeKey.getClusterMateriais();
     }
 
     /**
      * Alias funcional para o cluster de materiais do Demand Planning.
      *
-     * <p>O campo do embedded-id permanece `clusterProdutosDemandPlanning` para
-     * preservar o mapeamento JPA transicional baseado em `ClusterProdutos`.
+     * <p>O campo do embedded-id usa `clusterMateriais`, preservando o
+     * relacionamento físico transicional baseado em `ClusterProdutos`.
      * Services/projections que tratam o conceito funcional devem preferir este
      * getter.</p>
      */
-    public ClusterProdutosDemandPlanning getClusterMateriaisDemandPlanning() {
+    public ClusterMateriais getClusterMateriaisDemandPlanning() {
         return getClusterProdutosDemandPlanning();
     }
 

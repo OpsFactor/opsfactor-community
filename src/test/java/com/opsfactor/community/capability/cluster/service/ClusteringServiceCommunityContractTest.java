@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.cluster.service;
 
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
-import com.opsfactor.community.capability.cluster.repository.material.ClusterProdutosDemandPlanningRepository;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
+import com.opsfactor.community.capability.cluster.repository.material.ClusterMateriaisRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -23,16 +23,17 @@ public class ClusteringServiceCommunityContractTest {
     @Test
     public void getClusterProdutosDemandPlanningDefaultShouldReturnExistingDefaultCluster() throws Exception {
 
-        ClusterProdutosDemandPlanning clusterProdutosDemandPlanning =
+        ClusterMateriais clusterMateriais =
                 getClusterProdutosDemandPlanningDefault(1L);
         RepositoryState repositoryState =
-                new RepositoryState(Optional.of(clusterProdutosDemandPlanning), null);
+                new RepositoryState(Optional.of(clusterMateriais), null);
         ClusteringService clusteringService = getClusteringService(repositoryState);
 
-        ClusterProdutosDemandPlanning clusterProdutosDemandPlanningRetornado =
+        ClusterMateriais clusterMateriaisRetornado =
                 clusteringService.getClusterProdutosDemandPlanningDefault();
 
-        Assertions.assertSame(clusterProdutosDemandPlanning, clusterProdutosDemandPlanningRetornado);
+        Assertions.assertSame(clusterMateriais,
+                clusterMateriaisRetornado);
         Assertions.assertFalse(repositoryState.saveCalled);
 
     }
@@ -40,16 +41,18 @@ public class ClusteringServiceCommunityContractTest {
     @Test
     public void getClusterProdutosDemandPlanningDefaultShouldCreateMissingDefaultCluster() throws Exception {
 
-        ClusterProdutosDemandPlanning clusterProdutosDemandPlanningSalvo =
+        ClusterMateriais clusterMateriaisSalvo =
                 getClusterProdutosDemandPlanningDefault(1L);
         RepositoryState repositoryState =
-                new RepositoryState(Optional.empty(), clusterProdutosDemandPlanningSalvo);
+                new RepositoryState(Optional.empty(),
+                        clusterMateriaisSalvo);
         ClusteringService clusteringService = getClusteringService(repositoryState);
 
-        ClusterProdutosDemandPlanning clusterProdutosDemandPlanningRetornado =
+        ClusterMateriais clusterMateriaisRetornado =
                 clusteringService.getClusterProdutosDemandPlanningDefault();
 
-        Assertions.assertSame(clusterProdutosDemandPlanningSalvo, clusterProdutosDemandPlanningRetornado);
+        Assertions.assertSame(clusterMateriaisSalvo,
+                clusterMateriaisRetornado);
         Assertions.assertTrue(repositoryState.saveCalled);
         Assertions.assertEquals(
                 CLUSTER_PADRAO_HASH_DEMAND_PLANNING,
@@ -79,10 +82,10 @@ public class ClusteringServiceCommunityContractTest {
     @Test
     public void getClusterProdutosDemandPlanningDefaultShouldRejectExistingClusterWithoutId() throws Exception {
 
-        ClusterProdutosDemandPlanning clusterProdutosDemandPlanning =
+        ClusterMateriais clusterMateriais =
                 getClusterProdutosDemandPlanningDefault(null);
         RepositoryState repositoryState =
-                new RepositoryState(Optional.of(clusterProdutosDemandPlanning), null);
+                new RepositoryState(Optional.of(clusterMateriais), null);
         ClusteringService clusteringService = getClusteringService(repositoryState);
 
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
@@ -114,11 +117,12 @@ public class ClusteringServiceCommunityContractTest {
     @Test
     public void getClusterProdutosDemandPlanningDefaultShouldRejectSavedClusterWithWrongDescription() throws Exception {
 
-        ClusterProdutosDemandPlanning clusterProdutosDemandPlanning =
+        ClusterMateriais clusterMateriais =
                 getClusterProdutosDemandPlanningDefault(1L);
-        clusterProdutosDemandPlanning.setDescricao("Broken Cluster");
+        clusterMateriais.setDescricao("Broken Cluster");
         RepositoryState repositoryState =
-                new RepositoryState(Optional.empty(), clusterProdutosDemandPlanning);
+                new RepositoryState(Optional.empty(),
+                        clusterMateriais);
         ClusteringService clusteringService = getClusteringService(repositoryState);
 
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
@@ -143,19 +147,19 @@ public class ClusteringServiceCommunityContractTest {
 
     }
 
-    private static ClusterProdutosDemandPlanningRepository getClusterProdutosDemandPlanningRepository(
+    private static ClusterMateriaisRepository getClusterProdutosDemandPlanningRepository(
             RepositoryState repositoryState) {
 
-        return (ClusterProdutosDemandPlanningRepository) Proxy.newProxyInstance(
-                ClusterProdutosDemandPlanningRepository.class.getClassLoader(),
-                new Class<?>[]{ClusterProdutosDemandPlanningRepository.class},
+        return (ClusterMateriaisRepository) Proxy.newProxyInstance(
+                ClusterMateriaisRepository.class.getClassLoader(),
+                new Class<?>[]{ClusterMateriaisRepository.class},
                 (proxy, method, args) -> {
                     if ("findByDescricao".equals(method.getName())) {
                         return repositoryState.findByDescricaoResult;
                     }
                     if ("save".equals(method.getName())) {
                         repositoryState.saveCalled = true;
-                        repositoryState.savedEntity = (ClusterProdutosDemandPlanning) args[0];
+                        repositoryState.savedEntity = (ClusterMateriais) args[0];
                         return repositoryState.saveResult;
                     }
                     if ("toString".equals(method.getName())) {
@@ -174,16 +178,16 @@ public class ClusteringServiceCommunityContractTest {
 
     }
 
-    private static ClusterProdutosDemandPlanning getClusterProdutosDemandPlanningDefault(
+    private static ClusterMateriais getClusterProdutosDemandPlanningDefault(
             Long id) {
 
-        ClusterProdutosDemandPlanning clusterProdutosDemandPlanning =
-                new ClusterProdutosDemandPlanning(
+        ClusterMateriais clusterMateriais =
+                new ClusterMateriais(
                         CLUSTER_PADRAO_HASH_DEMAND_PLANNING,
                         true,
                         9999999);
-        clusterProdutosDemandPlanning.setId(id);
-        return clusterProdutosDemandPlanning;
+        clusterMateriais.setId(id);
+        return clusterMateriais;
 
     }
 
@@ -200,17 +204,17 @@ public class ClusteringServiceCommunityContractTest {
 
     private static class RepositoryState {
 
-        private final Optional<ClusterProdutosDemandPlanning> findByDescricaoResult;
+        private final Optional<ClusterMateriais> findByDescricaoResult;
 
-        private final ClusterProdutosDemandPlanning saveResult;
+        private final ClusterMateriais saveResult;
 
         private boolean saveCalled;
 
-        private ClusterProdutosDemandPlanning savedEntity;
+        private ClusterMateriais savedEntity;
 
         private RepositoryState(
-                Optional<ClusterProdutosDemandPlanning> findByDescricaoResult,
-                ClusterProdutosDemandPlanning saveResult) {
+                Optional<ClusterMateriais> findByDescricaoResult,
+                ClusterMateriais saveResult) {
 
             this.findByDescricaoResult = findByDescricaoResult;
             this.saveResult = saveResult;

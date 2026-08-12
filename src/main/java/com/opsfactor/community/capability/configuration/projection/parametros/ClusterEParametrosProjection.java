@@ -6,7 +6,9 @@ import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais.ModeloCadastroProdutoLocation;
 import com.opsfactor.community.capability.configuration.domain.ParametrosProdutoLocation;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaLocationInterface;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaLocation;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProdutoInterface;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProduto;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
@@ -29,10 +31,10 @@ import java.util.stream.Collectors;
  *
  * <p>Esta classe e o snapshot em memoria usado por Demand Planning, Supply
  * Planning e projections auxiliares para evitar consultas JPA durante calculos.
- * Caracteristicas dinamicas, filtros por caracteristica e agregadores
- * configuraveis pertencem ao Enterprise; no Community a projection trabalha
- * diretamente com material, location, clusters padrao e parametros
- * material/location.</p>
+ * Características públicas de material/location também integram a fotografia,
+ * permitindo que filtros físicos sejam resolvidos sem consultas JPA durante
+ * os cálculos. Agrupadores configuráveis e filtros salvos privados continuam
+ * pertencendo ao Enterprise.</p>
  */
 public class ClusterEParametrosProjection {
 
@@ -71,6 +73,14 @@ public class ClusterEParametrosProjection {
     @Getter
     protected Map<String,Location> locationMap;
 
+    /** Índice público de características materiais, com seus valores já carregados. */
+    @Getter
+    protected Map<String, CaracteristicaProduto> caracteristicaProdutoMap;
+
+    /** Índice público de características de location, com seus valores já carregados. */
+    @Getter
+    protected Map<String, CaracteristicaLocation> caracteristicaLocationMap;
+
     /**
      * Location efetiva para ler parametros material/location de cada location
      * do snapshot.
@@ -85,21 +95,24 @@ public class ClusterEParametrosProjection {
     // Alocacoes de materiais em clusters de Demand Planning.
     // Os nomes internos preservam ClusterProdutos* por heranca JPA transicional.
     @Getter
-    protected ClusterProdutosDemandPlanning clusterProdutosPadraoDP;
+    protected ClusterMateriais clusterProdutosPadraoDP;
     @Getter
-    protected List<ClusterProdutosDemandPlanning> clusterProdutosDemandPlanningList; // ordenados por prioridade
+    protected List<ClusterMateriais> clusterMateriaisList; // ordenados por prioridade
     @Getter
-    protected Map<Long,ClusterProdutosDemandPlanning> clusterProdutosDemandPlanningMap;
+    protected Map<Long, ClusterMateriais> clusterProdutosDemandPlanningMap;
     // mapa pre-calculado de alocação produto -> ClusterProdutosDemandPlanning (instanciado na criação do projection)
-    protected Map<Produto,ClusterProdutosDemandPlanning> clusterProdutosDemandPlanningPorMaterial;
+    protected Map<Produto, ClusterMateriais> clusterProdutosDemandPlanningPorMaterial;
 
     protected Map<RegraAlocacaoClusterProdutos, Set<RegraAlocacaoClusterProdutosStatus>> valoresStatusRegraAlocacaoClusterProdutos;
+
+    /** Preloaded characteristic values selected by each material allocation rule. */
+    protected Map<RegraAlocacaoClusterProdutos, Set<RegraAlocacaoClusterProdutosCaracteristica>> valoresCaracteristicaRegraAlocacaoClusterProdutos;
 
     /**
      * Alias funcional para o cluster padrao de materiais usado por Demand
      * Planning.
      */
-    public ClusterProdutosDemandPlanning getClusterMateriaisPadraoDP() {
+    public ClusterMateriais getClusterMateriaisPadraoDP() {
         return clusterProdutosPadraoDP;
     }
 
@@ -107,14 +120,14 @@ public class ClusterEParametrosProjection {
      * Alias funcional para a lista ordenada de clusters de materiais Demand
      * Planning.
      */
-    public List<ClusterProdutosDemandPlanning> getClusterMateriaisDemandPlanningList() {
-        return clusterProdutosDemandPlanningList;
+    public List<ClusterMateriais> getClusterMateriaisDemandPlanningList() {
+        return clusterMateriaisList;
     }
 
     /**
      * Alias funcional para o mapa id -> cluster de materiais Demand Planning.
      */
-    public Map<Long,ClusterProdutosDemandPlanning> getClusterMateriaisDemandPlanningMap() {
+    public Map<Long, ClusterMateriais> getClusterMateriaisDemandPlanningMap() {
         return clusterProdutosDemandPlanningMap;
     }
     
@@ -145,6 +158,30 @@ public class ClusterEParametrosProjection {
         Location location = locationMap.get(locationId);
         if (location == null) throw new NoResultException("Location " + locationId + " not available in Projection");
         return location;
+    }
+
+    /** Resolve uma característica material da mesma fotografia usada pelo cálculo. */
+    public CaracteristicaProduto getCaracteristicaProdutoDeId(String caracteristicaProdutoId) {
+
+        CaracteristicaProduto caracteristicaProduto = caracteristicaProdutoMap.get(caracteristicaProdutoId);
+        if (caracteristicaProduto == null) {
+            throw new NoResultException(
+                    "Material Characteristic " + caracteristicaProdutoId + " not available in Projection");
+        }
+        return caracteristicaProduto;
+
+    }
+
+    /** Resolve uma característica de location da mesma fotografia usada pelo cálculo. */
+    public CaracteristicaLocation getCaracteristicaLocationDeId(String caracteristicaLocationId) {
+
+        CaracteristicaLocation caracteristicaLocation = caracteristicaLocationMap.get(caracteristicaLocationId);
+        if (caracteristicaLocation == null) {
+            throw new NoResultException(
+                    "Location Characteristic " + caracteristicaLocationId + " not available in Projection");
+        }
+        return caracteristicaLocation;
+
     }
     
     /**
@@ -509,20 +546,14 @@ public class ClusterEParametrosProjection {
     }
     
     public String getValorCaracteristicaProduto(Produto material, CaracteristicaProdutoInterface caracteristica) {
-        /*
-         * Community preserva apenas pseudo-caracteristicas tecnicas, como ID do
-         * material. Caracteristicas dinamicas reais nao existem mais no modelo
-         * Community e sao bloqueadas antes de chegarem a este ponto.
-         */
+
+        // A própria característica pública resolve seu valor no material do snapshot.
         return caracteristica.getValorCaracteristicaDeProduto(material);
     }
-    
+
     public String getValorCaracteristicaLocation(Location location, CaracteristicaLocationInterface caracteristica) {
-        /*
-         * Community preserva apenas pseudo-caracteristicas tecnicas, como ID da
-         * location. Caracteristicas dinamicas reais nao existem mais no modelo
-         * Community e sao bloqueadas antes de chegarem a este ponto.
-         */
+
+        // A própria característica pública resolve seu valor na location do snapshot.
         return caracteristica.getValorCaracteristicaDeLocation(location);
     }
 
@@ -542,7 +573,7 @@ public class ClusterEParametrosProjection {
         return getLocationsDeClusterLocations(clusterLocations, true);
     }
 
-    public ClusterProdutosDemandPlanning getClusterProdutosDemandPlanning(Produto material, Location locationReferencia) {
+    public ClusterMateriais getClusterProdutosDemandPlanning(Produto material, Location locationReferencia) {
         return getClusterProdutosDemandPlanning(material);
     }
 
@@ -554,21 +585,21 @@ public class ClusterEParametrosProjection {
      * expressando regra funcional de Demand Planning deve usar este alias para
      * deixar claro que o conceito exibido/publicado e cluster de materiais.</p>
      */
-    public ClusterProdutosDemandPlanning getClusterMateriaisDemandPlanning(Produto material, Location locationReferencia) {
+    public ClusterMateriais getClusterMateriaisDemandPlanning(Produto material, Location locationReferencia) {
         return getClusterProdutosDemandPlanning(material, locationReferencia);
     }
 
-    public ClusterProdutosDemandPlanning getClusterProdutosDemandPlanning(Produto material) {
-        ClusterProdutosDemandPlanning clusterProdutosDemandPlanning = clusterProdutosDemandPlanningPorMaterial.get(material);
-        if (clusterProdutosDemandPlanning == null) throw new NoResultException("Material " + material.getId() + " not mapped to ClusterProdutosDemandPlanning in Projection");
-        return clusterProdutosDemandPlanning;
+    public ClusterMateriais getClusterProdutosDemandPlanning(Produto material) {
+        ClusterMateriais clusterMateriais = clusterProdutosDemandPlanningPorMaterial.get(material);
+        if (clusterMateriais == null) throw new NoResultException("Material " + material.getId() + " not mapped to ClusterProdutosDemandPlanning in Projection");
+        return clusterMateriais;
     }
 
     /**
      * Alias funcional para a consulta do cluster de materiais de uma entidade
      * material.
      */
-    public ClusterProdutosDemandPlanning getClusterMateriaisDemandPlanning(Produto material) {
+    public ClusterMateriais getClusterMateriaisDemandPlanning(Produto material) {
         return getClusterProdutosDemandPlanning(material);
     }
 
@@ -576,19 +607,19 @@ public class ClusterEParametrosProjection {
      * Cálculo explícito de alocação de cluster sem uso de mapa pré-populado.
      * Usado apenas no bootstrap do projection para materializar o mapa final.
      */
-    protected ClusterProdutosDemandPlanning getClusterProdutosDemandPlanningSemCache(Produto material) {
+    protected ClusterMateriais getClusterProdutosDemandPlanningSemCache(Produto material) {
         return getClusterProdutosDeMaterialSemCache(
                 material,
-                clusterProdutosDemandPlanningList,
+                clusterMateriaisList,
                 clusterProdutosPadraoDP);
     }
 
     public ClusterProdutos getClusterProdutosDeId(Long clusterProdutosId) {
-        Optional<ClusterProdutosDemandPlanning> optionalClusterProdutosDemandPlanning = Optional.ofNullable(clusterProdutosDemandPlanningMap.get(clusterProdutosId));
+        Optional<ClusterMateriais> optionalClusterProdutosDemandPlanning = Optional.ofNullable(clusterProdutosDemandPlanningMap.get(clusterProdutosId));
         return optionalClusterProdutosDemandPlanning.orElse(null);
     }
 
-    public Optional<ClusterProdutosDemandPlanning> getClusterProdutosDemandPlanningDeId(Long clusterProdutosId) {
+    public Optional<ClusterMateriais> getClusterProdutosDemandPlanningDeId(Long clusterProdutosId) {
         return Optional.ofNullable(clusterProdutosDemandPlanningMap.get(clusterProdutosId));
     }
 
@@ -596,15 +627,15 @@ public class ClusterEParametrosProjection {
      * Alias funcional para localizar um cluster de materiais de Demand Planning
      * por id, preservando a entidade transicional `ClusterProdutosDemandPlanning`.
      */
-    public Optional<ClusterProdutosDemandPlanning> getClusterMateriaisDemandPlanningDeId(Long clusterMateriaisId) {
+    public Optional<ClusterMateriais> getClusterMateriaisDemandPlanningDeId(Long clusterMateriaisId) {
         return getClusterProdutosDemandPlanningDeId(clusterMateriaisId);
     }
 
     
     public Set<Produto> getMateriaisDeClusterProdutos(ClusterProdutos clusterProdutos, boolean somenteMateriaisAtivos) {
                 
-        if (clusterProdutos instanceof ClusterProdutosDemandPlanning) {
-            return getMateriaisDeClusterProdutosDemandPlanning((ClusterProdutosDemandPlanning) clusterProdutos, somenteMateriaisAtivos);
+        if (clusterProdutos instanceof ClusterMateriais) {
+            return getMateriaisDeClusterProdutosDemandPlanning((ClusterMateriais) clusterProdutos, somenteMateriaisAtivos);
         }
         
         return new HashSet<>();
@@ -636,9 +667,9 @@ public class ClusterEParametrosProjection {
         
     }
     
-    public Set<Produto> getMateriaisDeClusterProdutosDemandPlanning(ClusterProdutosDemandPlanning clusterProdutosDemandPlanning, boolean somenteMateriaisAtivos) {
+    public Set<Produto> getMateriaisDeClusterProdutosDemandPlanning(ClusterMateriais clusterMateriais, boolean somenteMateriaisAtivos) {
         return getMaterialSet().stream()
-                .filter(x -> getClusterProdutosDemandPlanning(x).equals(clusterProdutosDemandPlanning))
+                .filter(x -> getClusterProdutosDemandPlanning(x).equals(clusterMateriais))
                 .filter(x -> !somenteMateriaisAtivos || x.getAtivo())
                 .collect(Collectors.toSet());
     }
@@ -648,7 +679,7 @@ public class ClusterEParametrosProjection {
      * Demand Planning.
      */
     public Set<Produto> getMateriaisDeClusterMateriaisDemandPlanning(
-            ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning,
+            ClusterMateriais clusterMateriaisDemandPlanning,
             boolean somenteMateriaisAtivos) {
         return getMateriaisDeClusterProdutosDemandPlanning(
                 clusterMateriaisDemandPlanning,
@@ -656,8 +687,8 @@ public class ClusterEParametrosProjection {
     }
 
     public Set<Produto> getMateriaisAtivosDeClusterProdutosDemandPlanning(
-            ClusterProdutosDemandPlanning clusterProdutosDemandPlanning) {
-        return getMateriaisDeClusterProdutosDemandPlanning(clusterProdutosDemandPlanning, true);
+            ClusterMateriais clusterMateriais) {
+        return getMateriaisDeClusterProdutosDemandPlanning(clusterMateriais, true);
     }
 
     /**
@@ -665,15 +696,15 @@ public class ClusterEParametrosProjection {
      * Planning.
      */
     public Set<Produto> getMateriaisAtivosDeClusterMateriaisDemandPlanning(
-            ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning) {
+            ClusterMateriais clusterMateriaisDemandPlanning) {
         return getMateriaisDeClusterMateriaisDemandPlanning(clusterMateriaisDemandPlanning, true);
     }
 
     public Set<Produto> getMateriaisDeClusterProdutosDemandPlanningAtivosNaLocation(
-            ClusterProdutosDemandPlanning clusterProdutosDemandPlanning,
+            ClusterMateriais clusterMateriais,
             Location location) {
         return getMateriaisAtivosEmLocation(location).stream()
-                .filter(x -> getClusterProdutosDemandPlanning(x).equals(clusterProdutosDemandPlanning))
+                .filter(x -> getClusterProdutosDemandPlanning(x).equals(clusterMateriais))
                 .collect(Collectors.toSet());
     }
 
@@ -682,7 +713,7 @@ public class ClusterEParametrosProjection {
      * cluster de materiais Demand Planning.
      */
     public Set<Produto> getMateriaisDeClusterMateriaisDemandPlanningAtivosNaLocation(
-            ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning,
+            ClusterMateriais clusterMateriaisDemandPlanning,
             Location location) {
         return getMateriaisDeClusterProdutosDemandPlanningAtivosNaLocation(
                 clusterMateriaisDemandPlanning,
@@ -726,7 +757,33 @@ public class ClusterEParametrosProjection {
                             materialNoCluster = false;
                         break;
                     case CARACTERISTICA:
-                        throw new RequiresEnterpriseVersionException("Material characteristic cluster allocation");
+                        Map<CaracteristicaProduto, List<String>> atributosConsideradosPorCaracteristica =
+                                valoresCaracteristicaRegraAlocacaoClusterProdutos
+                                        .getOrDefault(regraAlocacaoClusterProdutos, new HashSet<>())
+                                        .stream()
+                                        .collect(Collectors.groupingBy(
+                                                RegraAlocacaoClusterProdutosCaracteristica::getCaracteristica,
+                                                Collectors.mapping(
+                                                        RegraAlocacaoClusterProdutosCaracteristica::getAtributo,
+                                                        Collectors.toList())));
+
+                        for (Map.Entry<CaracteristicaProduto, List<String>> atributoEntry
+                                : atributosConsideradosPorCaracteristica.entrySet()) {
+                            /*
+                             * A characteristic may be intentionally absent for
+                             * this material. Absence is a non-match for this
+                             * rule, not a malformed calculation input: the
+                             * material can still match a later cluster or the
+                             * default cluster.
+                             */
+                            if (atributoEntry.getKey().findValorCaracteristicaDeProduto(material)
+                                    .filter(atributoEntry.getValue()::contains)
+                                    .isEmpty()) {
+                                materialNoCluster = false;
+                                break;
+                            }
+                        }
+                        break;
                 }
             }
             // se não houve nenhum impedimento (material passou por todas as regras), retorna cluster

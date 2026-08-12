@@ -21,8 +21,6 @@ public class ClusterProdutosDTO {
     private Long id;
     private String description;
     private Integer priority;
-    private String process;
-
     private List<RegraAlocaoClusterProdutosDTO> regraAlocacaoClusterDTOList = new ArrayList<>();
 
     @Nullable

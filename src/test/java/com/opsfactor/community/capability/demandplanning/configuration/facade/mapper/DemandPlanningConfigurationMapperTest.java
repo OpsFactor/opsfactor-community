@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.demandplanning.configuration.facade.dt
 import com.opsfactor.community.capability.demandplanning.configuration.facade.dto.DemandPlanningForecastParametersDTO;
 import com.opsfactor.community.capability.demandplanning.configuration.facade.dto.DemandPlanningGeneralParametersDTO;
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.ParametrosDemandPlanNivelCluster;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
@@ -122,7 +122,7 @@ public class DemandPlanningConfigurationMapperTest {
                 demandPlanningConfigurationMapper,
                 getParametrosDemandPlanNivelCluster(
                         getDemandPlanExecutionProfile("DP_PROFILE"),
-                        new ClusterProdutosDemandPlanning(),
+                        new ClusterMateriais(),
                         getLocationCluster(12L)),
                 "Demand Planning material cluster id is required for cluster-level configuration");
 
@@ -891,14 +891,14 @@ public class DemandPlanningConfigurationMapperTest {
 
     private static ParametrosDemandPlanNivelCluster getParametrosDemandPlanNivelCluster(
             PerfilExecucaoDemandPlan perfilExecucaoDemandPlan,
-            ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning,
+            ClusterMateriais clusterMateriaisDemandPlanning,
             ClusterLocations clusterLocations) {
 
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlanParaEmbeddedId =
                 perfilExecucaoDemandPlan == null ? new PerfilExecucaoDemandPlan() : perfilExecucaoDemandPlan;
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanningParaEmbeddedId =
+        ClusterMateriais clusterMateriaisDemandPlanningParaEmbeddedId =
                 clusterMateriaisDemandPlanning == null
-                        ? new ClusterProdutosDemandPlanning()
+                        ? new ClusterMateriais()
                         : clusterMateriaisDemandPlanning;
         ClusterLocations clusterLocationsParaEmbeddedId =
                 clusterLocations == null ? new ClusterLocations() : clusterLocations;
@@ -906,7 +906,7 @@ public class DemandPlanningConfigurationMapperTest {
         ParametrosDemandPlanNivelCluster.ParametrosDemandPlanNivelClusterCompositeKey compositeKey =
                 new ParametrosDemandPlanNivelCluster.ParametrosDemandPlanNivelClusterCompositeKey();
         compositeKey.setPerfilExecucaoDemandPlan(perfilExecucaoDemandPlanParaEmbeddedId);
-        compositeKey.setClusterProdutosDemandPlanning(clusterMateriaisDemandPlanningParaEmbeddedId);
+        compositeKey.setClusterMateriais(clusterMateriaisDemandPlanningParaEmbeddedId);
         compositeKey.setClusterLocations(clusterLocationsParaEmbeddedId);
 
         /*
@@ -942,9 +942,9 @@ public class DemandPlanningConfigurationMapperTest {
 
     }
 
-    private static ClusterProdutosDemandPlanning getMaterialCluster(Long id) {
+    private static ClusterMateriais getMaterialCluster(Long id) {
 
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning = new ClusterProdutosDemandPlanning();
+        ClusterMateriais clusterMateriaisDemandPlanning = new ClusterMateriais();
         clusterMateriaisDemandPlanning.setId(id);
 
         return clusterMateriaisDemandPlanning;
@@ -1144,14 +1144,14 @@ public class DemandPlanningConfigurationMapperTest {
 
     private static class TestClusterEParametrosProjectionFactory extends ClusterEParametrosProjectionFactory {
 
-        private final Optional<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningOptional;
+        private final Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional;
         private final ClusterLocations clusterLocations;
         private final boolean demandPlanningGenerateForecastForDiscontinuedMaterials;
 
         private TestClusterEParametrosProjectionFactory() {
 
             this(
-                    Optional.of(new ClusterProdutosDemandPlanning()),
+                    Optional.of(new ClusterMateriais()),
                     new ClusterLocations(),
                     true);
 
@@ -1161,14 +1161,14 @@ public class DemandPlanningConfigurationMapperTest {
                 boolean demandPlanningGenerateForecastForDiscontinuedMaterials) {
 
             this(
-                    Optional.of(new ClusterProdutosDemandPlanning()),
+                    Optional.of(new ClusterMateriais()),
                     new ClusterLocations(),
                     demandPlanningGenerateForecastForDiscontinuedMaterials);
 
         }
 
         private TestClusterEParametrosProjectionFactory(
-                Optional<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningOptional,
+                Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional,
                 ClusterLocations clusterLocations) {
 
             this(
@@ -1179,7 +1179,7 @@ public class DemandPlanningConfigurationMapperTest {
         }
 
         private TestClusterEParametrosProjectionFactory(
-                Optional<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningOptional,
+                Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional,
                 ClusterLocations clusterLocations,
                 boolean demandPlanningGenerateForecastForDiscontinuedMaterials) {
 
@@ -1224,11 +1224,11 @@ public class DemandPlanningConfigurationMapperTest {
 
     private static class TestClusterEParametrosProjection extends ClusterEParametrosProjection {
 
-        private final Optional<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningOptional;
+        private final Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional;
         private final ClusterLocations clusterLocations;
 
         private TestClusterEParametrosProjection(
-                Optional<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningOptional,
+                Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional,
                 ClusterLocations clusterLocations,
                 boolean demandPlanningGenerateForecastForDiscontinuedMaterials) {
 
@@ -1242,7 +1242,7 @@ public class DemandPlanningConfigurationMapperTest {
         }
 
         @Override
-        public Optional<ClusterProdutosDemandPlanning> getClusterMateriaisDemandPlanningDeId(Long clusterMateriaisId) {
+        public Optional<ClusterMateriais> getClusterMateriaisDemandPlanningDeId(Long clusterMateriaisId) {
 
             return clusterMateriaisDemandPlanningOptional;
 

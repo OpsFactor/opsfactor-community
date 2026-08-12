@@ -8,11 +8,11 @@ import com.opsfactor.community.capability.cluster.facade.dto.RegraAlocaoClusterP
 import com.opsfactor.community.capability.masterdata.classification.characteristic.facade.dto.CaracteristicaProdutoDTO;
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
 import com.opsfactor.community.capability.cluster.domain.location.RegraAlocacaoClusterLocations;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.cluster.domain.produto.RegraAlocacaoClusterProdutos;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.cluster.repository.location.ClusterLocationsRepository;
-import com.opsfactor.community.capability.cluster.repository.material.ClusterProdutosDemandPlanningRepository;
+import com.opsfactor.community.capability.cluster.repository.material.ClusterMateriaisRepository;
 import com.opsfactor.community.capability.configuration.repository.cluster.location.RegraAlocacaoClusterLocationsRepository;
 import com.opsfactor.community.capability.configuration.repository.cluster.produto.RegraAlocacaoClusterProdutosRepository;
 import com.opsfactor.community.capability.cluster.facade.dto.ClusterRuleDTO;
@@ -32,24 +32,27 @@ import java.util.Optional;
 /**
  * Contrato Community da configuracao de clusters.
  *
- * <p>Clusters continuam disponiveis no Community, mas regras por
- * caracteristica e regras de material por status NEW dependem de capacidades
- * Enterprise e devem falhar antes de qualquer escrita parcial.</p>
+ * <p>Clusters continuam disponiveis no Community. Caracteristicas publicadas
+ * pelo catalogo Community podem definir regras de material; status NEW segue
+ * como capacidade Enterprise e deve falhar antes de qualquer escrita parcial.</p>
  */
 public class ClusteringFacadeCommunityContractTest {
 
     @Test
-    public void validaRegrasAlocacaoClusterProdutosCommunityShouldRejectCharacteristicRule() {
+    public void validaRegrasAlocacaoClusterProdutosCommunityShouldAcceptCompleteCharacteristicRule() {
 
         ClusteringFacade clusteringFrontService = new ClusteringFacade();
         ClusterProdutosDTO clusterProdutosDTO = new ClusterProdutosDTO();
 
         RegraAlocaoClusterProdutosDTO regraAlocaoClusterProdutosDTO = new RegraAlocaoClusterProdutosDTO();
         regraAlocaoClusterProdutosDTO.setCriterio(Constantes.RegraAlocacaoClusterProdutosTipo.CARACTERISTICA);
+        CaracteristicaProdutoDTO caracteristicaProdutoDTO = new CaracteristicaProdutoDTO();
+        caracteristicaProdutoDTO.setCaracteristicaId("BRAND");
+        caracteristicaProdutoDTO.setListaAtributos(List.of("White Paper"));
+        regraAlocaoClusterProdutosDTO.setCaracteristicaDTO(caracteristicaProdutoDTO);
         clusterProdutosDTO.getRegraAlocacaoClusterDTOList().add(regraAlocaoClusterProdutosDTO);
 
-        Assertions.assertThrows(
-                RequiresEnterpriseVersionException.class,
+        Assertions.assertDoesNotThrow(
                 () -> clusteringFrontService.validaRegrasAlocacaoClusterProdutosCommunity(clusterProdutosDTO));
 
     }
@@ -74,26 +77,10 @@ public class ClusteringFacadeCommunityContractTest {
     }
 
     @Test
-    public void saveClusterProdutosDTOShouldRejectMissingProcessBeforeRepositories() {
-
-        ClusteringFacade clusteringFrontService = new ClusteringFacade();
-        ClusterProdutosDTO clusterProdutosDTO = new ClusterProdutosDTO();
-
-        IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> clusteringFrontService.saveClusterProdutosDTO(clusterProdutosDTO));
-        Assertions.assertEquals(
-                "Community material cluster process is required.",
-                illegalArgumentException.getMessage());
-
-    }
-
-    @Test
     public void saveClusterProdutosDTOShouldRejectIncompleteStatusRuleBeforeRepositories() {
 
         ClusteringFacade clusteringFrontService = new ClusteringFacade();
         ClusterProdutosDTO clusterProdutosDTO = new ClusterProdutosDTO();
-        clusterProdutosDTO.setProcess("DP");
 
         RegraAlocaoClusterProdutosDTO regraAlocaoClusterProdutosDTO =
                 new RegraAlocaoClusterProdutosDTO();
@@ -126,7 +113,7 @@ public class ClusteringFacadeCommunityContractTest {
          */
         IllegalStateException materialClusterException = Assertions.assertThrows(
                 IllegalStateException.class,
-                () -> clusteringFrontServiceComMaterialClusterQuebrado.getClusterProdutosDTO("10", "DP"));
+                () -> clusteringFrontServiceComMaterialClusterQuebrado.getClusterProdutosDTO("10"));
         Assertions.assertEquals(
                 "Material cluster repository returned null Optional for Community lookup id 10.",
                 materialClusterException.getMessage());
@@ -156,9 +143,9 @@ public class ClusteringFacadeCommunityContractTest {
 
         IllegalStateException nullDemandPlanningListException = Assertions.assertThrows(
                 IllegalStateException.class,
-                serviceComListaNula::getListaClusterProdutosDemandPlanningDTO);
+                serviceComListaNula::getListaClusterMateriaisDTO);
         Assertions.assertEquals(
-                "Material cluster snapshot is required for Demand Planning material cluster listing.",
+                "Material cluster snapshot is required for material cluster listing.",
                 nullDemandPlanningListException.getMessage());
 
         IllegalStateException nullNonDefaultListException = Assertions.assertThrows(
@@ -174,23 +161,23 @@ public class ClusteringFacadeCommunityContractTest {
 
         IllegalStateException nullItemException = Assertions.assertThrows(
                 IllegalStateException.class,
-                serviceComItemNulo::getListaClusterProdutosDemandPlanningDTO);
+                serviceComItemNulo::getListaClusterMateriaisDTO);
         Assertions.assertEquals(
-                "Material cluster at index 0 is required for Demand Planning material cluster listing.",
+                "Material cluster at index 0 is required for material cluster listing.",
                 nullItemException.getMessage());
 
         ClusteringFacade serviceComClusterSemId =
                 criaClusteringFrontServiceComListaClusterMateriais(
-                        List.of(new ClusterProdutosDemandPlanning()));
+                        List.of(new ClusterMateriais()));
 
         IllegalStateException missingIdException = Assertions.assertThrows(
                 IllegalStateException.class,
-                serviceComClusterSemId::getListaClusterProdutosDemandPlanningDTO);
+                serviceComClusterSemId::getListaClusterMateriaisDTO);
         Assertions.assertEquals(
-                "Material cluster at index 0 has no id for Demand Planning material cluster listing.",
+                "Material cluster at index 0 has no id for material cluster listing.",
                 missingIdException.getMessage());
 
-        ClusterProdutosDemandPlanning clusterMateriaisSemPadrao =
+        ClusterMateriais clusterMateriaisSemPadrao =
                 criaClusterMateriaisDemandPlanningComId(1L);
         clusterMateriaisSemPadrao.setPadrao(null);
 
@@ -200,12 +187,12 @@ public class ClusteringFacadeCommunityContractTest {
 
         IllegalStateException missingDefaultFlagException = Assertions.assertThrows(
                 IllegalStateException.class,
-                serviceComClusterSemPadrao::getListaClusterProdutosDemandPlanningDTO);
+                serviceComClusterSemPadrao::getListaClusterMateriaisDTO);
         Assertions.assertEquals(
-                "Material cluster at index 0 has no default flag for Demand Planning material cluster listing.",
+                "Material cluster at index 0 has no default flag for material cluster listing.",
                 missingDefaultFlagException.getMessage());
 
-        ClusterProdutosDemandPlanning clusterMateriaisSemRegras =
+        ClusterMateriais clusterMateriaisSemRegras =
                 criaClusterMateriaisDemandPlanningComId(1L);
         clusterMateriaisSemRegras.setRegrasAlocacaoClusterProdutos(null);
 
@@ -215,9 +202,9 @@ public class ClusteringFacadeCommunityContractTest {
 
         IllegalStateException missingRulesException = Assertions.assertThrows(
                 IllegalStateException.class,
-                serviceComClusterSemRegras::getListaClusterProdutosDemandPlanningDTO);
+                serviceComClusterSemRegras::getListaClusterMateriaisDTO);
         Assertions.assertEquals(
-                "Material cluster at index 0 has no allocation rules snapshot for Demand Planning material cluster listing.",
+                "Material cluster at index 0 has no allocation rules snapshot for material cluster listing.",
                 missingRulesException.getMessage());
 
     }
@@ -225,10 +212,10 @@ public class ClusteringFacadeCommunityContractTest {
     @Test
     public void materialClusterAdministrativeListQueriesShouldFetchRulesAndStatuses() throws Exception {
 
-        Query allClustersQuery = ClusterProdutosDemandPlanningRepository.class
+        Query allClustersQuery = ClusterMateriaisRepository.class
                 .getMethod("customFindAllComRegrasAlocacaoEStatusProduto")
                 .getAnnotation(Query.class);
-        Query nonDefaultClustersQuery = ClusterProdutosDemandPlanningRepository.class
+        Query nonDefaultClustersQuery = ClusterMateriaisRepository.class
                 .getMethod("customFindAllByPadraoIsFalseComRegrasAlocacaoEStatusProduto")
                 .getAnnotation(Query.class);
 
@@ -319,7 +306,6 @@ public class ClusteringFacadeCommunityContractTest {
             throws Exception {
 
         ClusterProdutosDTO clusterProdutosDTO = new ClusterProdutosDTO();
-        clusterProdutosDTO.setProcess("DP");
         clusterProdutosDTO.setId(20L);
 
         ClusteringFacade clusteringFrontServiceComMaterialClusterQuebrado =
@@ -364,7 +350,6 @@ public class ClusteringFacadeCommunityContractTest {
             throws Exception {
 
         ClusterProdutosDTO clusterProdutosDTO = new ClusterProdutosDTO();
-        clusterProdutosDTO.setProcess("DP");
 
         ClusteringFacade clusteringFrontServiceComSnapshotNulo =
                 criaClusteringFrontServiceComClusterMateriaisSalvo(null);
@@ -378,7 +363,7 @@ public class ClusteringFacadeCommunityContractTest {
 
         ClusteringFacade clusteringFrontServiceComSnapshotSemId =
                 criaClusteringFrontServiceComClusterMateriaisSalvo(
-                        new ClusterProdutosDemandPlanning(null, false, null));
+                        new ClusterMateriais(null, false, null));
 
         IllegalStateException snapshotSemIdException = Assertions.assertThrows(
                 IllegalStateException.class,
@@ -393,8 +378,8 @@ public class ClusteringFacadeCommunityContractTest {
     public void alocaRegrasAoClusterProdutosShouldRejectBrokenSavedRuleSnapshot()
             throws Exception {
 
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
-                new ClusterProdutosDemandPlanning(null, false, null);
+        ClusterMateriais clusterMateriaisDemandPlanning =
+                new ClusterMateriais(null, false, null);
         clusterMateriaisDemandPlanning.setId(20L);
 
         ClusterProdutosDTO clusterProdutosDTO = new ClusterProdutosDTO();
@@ -611,8 +596,8 @@ public class ClusteringFacadeCommunityContractTest {
     public void alocaRegrasAoClusterProdutosShouldMatchExistingRuleIdsByValue() {
 
         ClusteringFacade clusteringFrontService = new ClusteringFacade();
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
-                new ClusterProdutosDemandPlanning(null, false, null);
+        ClusterMateriais clusterMateriaisDemandPlanning =
+                new ClusterMateriais(null, false, null);
         RegraAlocacaoClusterProdutos regraAlocacaoClusterProdutosExistente =
                 new RegraAlocacaoClusterProdutos();
         Long regraAlocacaoClusterProdutosIdPersistido = Long.valueOf(1000L);
@@ -693,52 +678,20 @@ public class ClusteringFacadeCommunityContractTest {
     }
 
     @Test
-    public void validaProcessoClusterMateriaisDemandPlanningCommunityShouldRejectPricingProcess() {
-
-        ClusteringFacade clusteringFrontService = new ClusteringFacade();
-
-        Assertions.assertThrows(
-                RequiresEnterpriseVersionException.class,
-                () -> clusteringFrontService.validaProcessoClusterMateriaisDemandPlanningCommunity("PRICING"));
-
-    }
-
-    @Test
-    public void validaProcessoClusterMateriaisDemandPlanningCommunityShouldRejectUnknownProcess() {
-
-        ClusteringFacade clusteringFrontService = new ClusteringFacade();
-
-        Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> clusteringFrontService.validaProcessoClusterMateriaisDemandPlanningCommunity("SNP"));
-
-    }
-
-    @Test
-    public void validaProcessoClusterMateriaisDemandPlanningCommunityShouldAcceptDemandPlanningProcess() {
-
-        ClusteringFacade clusteringFrontService = new ClusteringFacade();
-
-        Assertions.assertDoesNotThrow(
-                () -> clusteringFrontService.validaProcessoClusterMateriaisDemandPlanningCommunity("DP"));
-
-    }
-
-    @Test
     public void getClusterProdutosDTOShouldRejectInvalidIdBeforeRepository() {
 
         ClusteringFacade clusteringFrontService = new ClusteringFacade();
 
         IllegalArgumentException missingIdException = Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> clusteringFrontService.getClusterProdutosDTO(" ", "DP"));
+                () -> clusteringFrontService.getClusterProdutosDTO(" "));
         Assertions.assertEquals(
                 "Material cluster id is required",
                 missingIdException.getMessage());
 
         IllegalArgumentException invalidIdException = Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> clusteringFrontService.getClusterProdutosDTO("ABC", "DP"));
+                () -> clusteringFrontService.getClusterProdutosDTO("ABC"));
         Assertions.assertEquals(
                 "Material cluster id must be numeric: ABC",
                 invalidIdException.getMessage());
@@ -767,7 +720,7 @@ public class ClusteringFacadeCommunityContractTest {
     }
 
     @Test
-    public void deleteClusterProdutosShouldRejectMissingPayloadOrEnterpriseProcessBeforeRepositories() {
+    public void deleteClusterProdutosShouldRejectMissingPayloadOrIdBeforeRepositories() {
 
         ClusteringFacade clusteringFrontService = new ClusteringFacade();
 
@@ -786,13 +739,6 @@ public class ClusteringFacadeCommunityContractTest {
                 "Material cluster delete payload id is required",
                 idIllegalArgumentException.getMessage());
 
-        ClusterRuleDTO clusterRuleDTOPricing = new ClusterRuleDTO();
-        clusterRuleDTOPricing.setId(100L);
-        clusterRuleDTOPricing.setProcess("PRICING");
-        Assertions.assertThrows(
-                RequiresEnterpriseVersionException.class,
-                () -> clusteringFrontService.deleteClusterProdutos(clusterRuleDTOPricing));
-
     }
 
     private CaracteristicaProdutoDTO criaStatusProdutoDTO(String descricao) {
@@ -804,7 +750,7 @@ public class ClusteringFacadeCommunityContractTest {
     }
 
     private static ClusteringFacade criaClusteringFrontServiceComClusterMateriaisSalvo(
-            ClusterProdutosDemandPlanning clusterMateriaisDemandPlanningSalvo) throws Exception {
+            ClusterMateriais clusterMateriaisDemandPlanningSalvo) throws Exception {
 
         ClusteringFacade clusteringFrontService = new ClusteringFacade();
         setPrivateField(
@@ -817,7 +763,7 @@ public class ClusteringFacadeCommunityContractTest {
     }
 
     private static ClusteringFacade criaClusteringFrontServiceComListaClusterMateriais(
-            List<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningList) throws Exception {
+            List<ClusterMateriais> clusterMateriaisDemandPlanningList) throws Exception {
 
         ClusteringFacade clusteringFrontService = new ClusteringFacade();
         setPrivateField(
@@ -829,18 +775,18 @@ public class ClusteringFacadeCommunityContractTest {
 
     }
 
-    private static ClusterProdutosDemandPlanning criaClusterMateriaisDemandPlanningComId(Long id) {
+    private static ClusterMateriais criaClusterMateriaisDemandPlanningComId(Long id) {
 
-        ClusterProdutosDemandPlanning clusterMateriaisDemandPlanning =
-                new ClusterProdutosDemandPlanning();
+        ClusterMateriais clusterMateriaisDemandPlanning =
+                new ClusterMateriais();
         clusterMateriaisDemandPlanning.setId(id);
         return clusterMateriaisDemandPlanning;
 
     }
 
-    private static ClusterProdutosDemandPlanningRepository
+    private static ClusterMateriaisRepository
     getClusterProdutosDemandPlanningRepositoryComListagemRetornando(
-            List<ClusterProdutosDemandPlanning> clusterMateriaisDemandPlanningList) {
+            List<ClusterMateriais> clusterMateriaisDemandPlanningList) {
 
         InvocationHandler invocationHandler = (proxy, method, args) -> {
             if ("customFindAllComRegrasAlocacaoEStatusProduto".equals(method.getName())
@@ -854,16 +800,16 @@ public class ClusteringFacadeCommunityContractTest {
                     "Metodo nao esperado no proxy de teste: " + method.getName());
         };
 
-        return (ClusterProdutosDemandPlanningRepository) Proxy.newProxyInstance(
-                ClusterProdutosDemandPlanningRepository.class.getClassLoader(),
-                new Class<?>[]{ClusterProdutosDemandPlanningRepository.class},
+        return (ClusterMateriaisRepository) Proxy.newProxyInstance(
+                ClusterMateriaisRepository.class.getClassLoader(),
+                new Class<?>[]{ClusterMateriaisRepository.class},
                 invocationHandler);
 
     }
 
-    private static ClusterProdutosDemandPlanningRepository
+    private static ClusterMateriaisRepository
     getClusterProdutosDemandPlanningRepositoryComFindByIdRetornando(
-            Optional<ClusterProdutosDemandPlanning> optionalClusterProdutosDemandPlanning) {
+            Optional<ClusterMateriais> optionalClusterProdutosDemandPlanning) {
 
         InvocationHandler invocationHandler = (proxy, method, args) -> {
             if ("findById".equals(method.getName())) {
@@ -876,16 +822,16 @@ public class ClusteringFacadeCommunityContractTest {
                     "Metodo nao esperado no proxy de teste: " + method.getName());
         };
 
-        return (ClusterProdutosDemandPlanningRepository) Proxy.newProxyInstance(
-                ClusterProdutosDemandPlanningRepository.class.getClassLoader(),
-                new Class<?>[]{ClusterProdutosDemandPlanningRepository.class},
+        return (ClusterMateriaisRepository) Proxy.newProxyInstance(
+                ClusterMateriaisRepository.class.getClassLoader(),
+                new Class<?>[]{ClusterMateriaisRepository.class},
                 invocationHandler);
 
     }
 
-    private static ClusterProdutosDemandPlanningRepository
+    private static ClusterMateriaisRepository
     getClusterProdutosDemandPlanningRepositoryComSaveRetornando(
-            ClusterProdutosDemandPlanning clusterMateriaisDemandPlanningSalvo) {
+            ClusterMateriais clusterMateriaisDemandPlanningSalvo) {
 
         InvocationHandler invocationHandler = (proxy, method, args) -> {
             if ("findById".equals(method.getName())) {
@@ -901,9 +847,9 @@ public class ClusteringFacadeCommunityContractTest {
                     "Metodo nao esperado no proxy de teste: " + method.getName());
         };
 
-        return (ClusterProdutosDemandPlanningRepository) Proxy.newProxyInstance(
-                ClusterProdutosDemandPlanningRepository.class.getClassLoader(),
-                new Class<?>[]{ClusterProdutosDemandPlanningRepository.class},
+        return (ClusterMateriaisRepository) Proxy.newProxyInstance(
+                ClusterMateriaisRepository.class.getClassLoader(),
+                new Class<?>[]{ClusterMateriaisRepository.class},
                 invocationHandler);
 
     }

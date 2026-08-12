@@ -5,12 +5,14 @@ import com.opsfactor.community.capability.masterdata.product.material.facade.map
 import com.opsfactor.community.capability.cluster.domain.produto.*;
 import com.opsfactor.community.capability.cluster.facade.dto.ClusterProdutosDTO;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.facade.dto.CaracteristicaProdutoDTO;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProduto;
 import com.opsfactor.community.capability.cluster.facade.dto.RegraAlocaoClusterProdutosDTO;
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class ClusterProdutosMapper {
@@ -20,9 +22,6 @@ public abstract class ClusterProdutosMapper {
         dto.setDescription(clusterProdutos.getDescricao()) ;
         dto.setId(clusterProdutos.getId());
         dto.setPriority(clusterProdutos.getPrioridade());
-        if (clusterProdutos instanceof ClusterProdutosDemandPlanning){
-            dto.setProcess("DP");
-        }
         return dto;
     }
 
@@ -34,7 +33,29 @@ public abstract class ClusterProdutosMapper {
             regraDTO.setId(regrasAlocacaoClusterProduto.getId());
             switch (regrasAlocacaoClusterProduto.getRegraAlocacaoTipo()) {
                 case CARACTERISTICA:
-                    throw new RequiresEnterpriseVersionException("Material characteristic cluster allocation");
+                    Map<CaracteristicaProduto, List<String>> atributosPorCaracteristica =
+                            regrasAlocacaoClusterProduto.getRegrasAlocacaoClusterProdutosCaracteristicaSet()
+                                    .stream()
+                                    .collect(Collectors.groupingBy(
+                                            RegraAlocacaoClusterProdutosCaracteristica::getCaracteristica,
+                                            Collectors.mapping(
+                                                    RegraAlocacaoClusterProdutosCaracteristica::getAtributo,
+                                                    Collectors.toList())));
+                    if (atributosPorCaracteristica.size() != 1) {
+                        throw new IllegalStateException(
+                                "Material characteristic rule " + regrasAlocacaoClusterProduto.getId()
+                                        + " must contain exactly one characteristic.");
+                    }
+                    Map.Entry<CaracteristicaProduto, List<String>> atributoEntry =
+                            atributosPorCaracteristica.entrySet().iterator().next();
+                    CaracteristicaProdutoDTO caracteristicaProdutoDTO = new CaracteristicaProdutoDTO();
+                    caracteristicaProdutoDTO.setCaracteristicaId(atributoEntry.getKey().getId());
+                    caracteristicaProdutoDTO.setDescricao(atributoEntry.getKey().getDescricao());
+                    caracteristicaProdutoDTO.setListaAtributos(atributoEntry.getValue().stream().sorted().toList());
+                    caracteristicaProdutoDTO.setAtributo(atributoEntry.getValue().stream().findFirst().orElse(null));
+                    regraDTO.setCaracteristicaDTO(caracteristicaProdutoDTO);
+                    regraDTO.setCriterio(Constantes.RegraAlocacaoClusterProdutosTipo.CARACTERISTICA);
+                    break;
                 case STATUS_PRODUTO:
                     for (Constantes.StatusProduto statusProduto : regrasAlocacaoClusterProduto.getStatusProdutoSet()) {
                         /*
@@ -56,9 +77,6 @@ public abstract class ClusterProdutosMapper {
             if (regraDTO.getCriterio() != null) {
                 dto.getRegraAlocacaoClusterDTOList().add(regraDTO);
             }
-        }
-        if (clusterProdutos instanceof ClusterProdutosDemandPlanning){
-            dto.setProcess("DP");
         }
         return dto;
 

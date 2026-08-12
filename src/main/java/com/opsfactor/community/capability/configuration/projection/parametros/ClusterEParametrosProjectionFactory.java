@@ -4,18 +4,24 @@ import com.opsfactor.community.capability.cluster.domain.location.ClusterLocatio
 import com.opsfactor.community.capability.cluster.domain.location.RegraAlocacaoClusterLocationsPaisEstado;
 import com.opsfactor.community.capability.cluster.domain.location.RegraAlocacaoClusterLocationsTipoLocation;
 import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutos;
-import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutosDemandPlanning;
+import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.cluster.domain.produto.RegraAlocacaoClusterProdutos;
+import com.opsfactor.community.capability.cluster.domain.produto.RegraAlocacaoClusterProdutosCaracteristica;
 import com.opsfactor.community.capability.cluster.domain.produto.RegraAlocacaoClusterProdutosStatus;
 import com.opsfactor.community.capability.configuration.domain.ParametrosProdutoLocation;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaLocation;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProduto;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.repository.CaracteristicaLocationRepository;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.repository.CaracteristicaMaterialRepository;
 import com.opsfactor.community.capability.cluster.repository.location.ClusterLocationsRepository;
-import com.opsfactor.community.capability.cluster.repository.material.ClusterProdutosDemandPlanningRepository;
+import com.opsfactor.community.capability.cluster.repository.material.ClusterMateriaisRepository;
 import com.opsfactor.community.capability.configuration.repository.ParametrosProdutoLocationRepository;
 import com.opsfactor.community.capability.configuration.repository.cluster.location.RegraAlocacaoClusterLocationsPaisEstadoRepository;
 import com.opsfactor.community.capability.configuration.repository.cluster.location.RegraAlocacaoClusterLocationsTipoLocationRepository;
 import com.opsfactor.community.capability.configuration.repository.cluster.produto.RegraAlocacaoClusterProdutosStatusRepository;
+import com.opsfactor.community.capability.configuration.repository.cluster.produto.RegraAlocacaoClusterProdutosCaracteristicaRepository;
 import com.opsfactor.community.capability.cluster.service.ClusteringService;
 import com.opsfactor.community.capability.configuration.service.ParametrosGlobaisService;
 import com.opsfactor.community.capability.masterdata.network.location.service.LocationService;
@@ -34,8 +40,9 @@ import java.util.stream.Collectors;
  *
  * <p>O Community carrega somente material/location, parametros globais,
  * parametros material/location e regras de cluster permitidas na edicao. Regras
- * por caracteristica e filtros/agregadores dinamicos sao bloqueados e ficam no
- * overlay Enterprise.</p>
+ * por caracteristica e filtros/agregadores dinamicos usam somente o catalogo
+ * Community publicado; capacidades analiticas privadas continuam no overlay
+ * Enterprise.</p>
  */
 @Component
 public class ClusterEParametrosProjectionFactory {
@@ -65,6 +72,14 @@ public class ClusterEParametrosProjectionFactory {
     @Autowired
     private LocationService locationService;
 
+    /** Catálogo público de características materiais, carregado em lote no snapshot. */
+    @Autowired
+    private CaracteristicaMaterialRepository caracteristicaMaterialRepository;
+
+    /** Catálogo público de características de location, carregado em lote no snapshot. */
+    @Autowired
+    private CaracteristicaLocationRepository caracteristicaLocationRepository;
+
     /**
      * Service que resolve clusters padrao de materiais.
      */
@@ -75,7 +90,7 @@ public class ClusterEParametrosProjectionFactory {
      * Repository dos clusters de materiais usados pelo Demand Planning.
      */
     @Autowired
-    private ClusterProdutosDemandPlanningRepository clusterMateriaisDemandPlanningRepository;
+    private ClusterMateriaisRepository clusterMateriaisDemandPlanningRepository;
 
     /**
      * Repository dos clusters de locations.
@@ -88,6 +103,10 @@ public class ClusterEParametrosProjectionFactory {
      */
     @Autowired
     private RegraAlocacaoClusterProdutosStatusRepository regraAlocacaoClusterProdutosStatusRepository;
+
+    /** Valores de caracteristica das regras de alocacao de material. */
+    @Autowired
+    private RegraAlocacaoClusterProdutosCaracteristicaRepository regraAlocacaoClusterProdutosCaracteristicaRepository;
 
     /**
      * Valores de regra de alocacao por pais/estado de location.
@@ -154,18 +173,26 @@ public class ClusterEParametrosProjectionFactory {
         clusterEParametrosProjection.locationSet = Collections.unmodifiableSet(locationSet);
         clusterEParametrosProjection.locationMap = Collections.unmodifiableMap(locationSet.stream()
                 .collect(Collectors.toMap(x -> x.getId(), x -> x)));
+
+        /*
+         * O legado resolve filtros pelo snapshot central. Mantemos o mesmo
+         * desenho: dois fetches em lote carregam catálogo, valores e respectivos
+         * owners antes de qualquer loop de material/location.
+         */
+        clusterEParametrosProjection.caracteristicaProdutoMap = Collections.unmodifiableMap(
+                caracteristicaMaterialRepository.findAllWithValues().stream()
+                        .collect(Collectors.toMap(
+                                CaracteristicaProduto::getId,
+                                Function.identity())));
+        clusterEParametrosProjection.caracteristicaLocationMap = Collections.unmodifiableMap(
+                caracteristicaLocationRepository.findAllWithValues().stream()
+                        .collect(Collectors.toMap(
+                                CaracteristicaLocation::getId,
+                                Function.identity())));
         clusterEParametrosProjection.locationForProductLocationParametersMap =
                 getLocationForProductLocationParametersMap(
                         clusterEParametrosProjection.locationSet,
                         clusterEParametrosProjection.locationMap);
-
-        /*
-         * Caracteristicas de material/location/material-location, filtros por
-         * caracteristicas e regras de cluster por caracteristica pertencem ao
-         * Enterprise. O Community mantem somente material/location como
-         * dimensoes diretas e nao consulta as tabelas de caracteristicas ao
-         * montar a projection central.
-         */
 
         /*
          * Carrega os clusters de materiais de Demand Planning. Os campos
@@ -174,16 +201,25 @@ public class ClusterEParametrosProjectionFactory {
          * factory trabalha conceitualmente com materiais.
          */
         clusterEParametrosProjection.clusterProdutosPadraoDP = clusteringService.getClusterProdutosDemandPlanningDefault();
-        List<ClusterProdutosDemandPlanning> clusterProdutosDemandPlanningList =
+        List<ClusterMateriais> clusterMateriaisList =
                 clusterMateriaisDemandPlanningRepository.findAll()
                         .stream()
                         .sorted(Comparator.comparing(ClusterProdutos::getPrioridade))
                         .collect(Collectors.toList());
-        validaClustersMateriaisDemandPlanning(clusterProdutosDemandPlanningList);
-        clusterEParametrosProjection.clusterProdutosDemandPlanningList =
-                Collections.unmodifiableList(clusterProdutosDemandPlanningList);
-        clusterEParametrosProjection.clusterProdutosDemandPlanningMap = clusterEParametrosProjection.clusterProdutosDemandPlanningList.stream()
+        validaClustersMateriaisDemandPlanning(clusterMateriaisList);
+        clusterEParametrosProjection.clusterMateriaisList =
+                Collections.unmodifiableList(clusterMateriaisList);
+        clusterEParametrosProjection.clusterProdutosDemandPlanningMap = clusterEParametrosProjection.clusterMateriaisList.stream()
                 .collect(Collectors.toMap(x -> x.getId(), x -> x));
+
+        clusterEParametrosProjection.valoresCaracteristicaRegraAlocacaoClusterProdutos =
+                regraAlocacaoClusterProdutosCaracteristicaRepository.findAll()
+                        .stream()
+                        .collect(Collectors.groupingBy(
+                                RegraAlocacaoClusterProdutosCaracteristica::getRegraAlocacaoClusterProdutos,
+                                Collectors.toSet()));
+        FuncoesMap.convertToNestedUnmodifiableMap(
+                clusterEParametrosProjection.valoresCaracteristicaRegraAlocacaoClusterProdutos);
 
         clusterEParametrosProjection.valoresStatusRegraAlocacaoClusterProdutos = regraAlocacaoClusterProdutosStatusRepository.findAll()
                 .stream()
@@ -192,10 +228,11 @@ public class ClusterEParametrosProjectionFactory {
 
         // clusters de produtos já vêm com @OneToMany RegraAlocacaoClusterProdutos prepopulados
         // no entanto, cada RegraAlocacao possui dois @OneToMany que não são inicialmente populados : aqui se força a atualização pelo Hibernate
-        for (ClusterProdutos clusterProdutos : clusterEParametrosProjection.getClusterProdutosDemandPlanningList()) {
+        for (ClusterProdutos clusterProdutos : clusterEParametrosProjection.getClusterMateriaisList()) {
             for (RegraAlocacaoClusterProdutos regraAlocacaoClusterProdutos : clusterProdutos.getRegrasAlocacaoClusterProdutos()) {
                 // força a atualização dos @OneToMany a partir do banco de dados
                 regraAlocacaoClusterProdutos.getRegraAlocacaoClusterProdutosStatusSet();
+                regraAlocacaoClusterProdutos.getRegrasAlocacaoClusterProdutosCaracteristicaSet();
             }
         }
 
@@ -370,28 +407,28 @@ public class ClusterEParametrosProjectionFactory {
      * Planning.
      *
      * <p>Repository nulo ou item nulo ja falham em
-     * {@link #getRepositoryCollectionObrigatoria(Collection, String)}. Aqui a
+     * A validação geral de coleção obrigatória já rejeita esses casos. Aqui a
      * factory fecha o contrato funcional do snapshot: cada cluster de material
      * precisa ter id persistido e esse id deve ser unico, pois o mapa
      * `clusterProdutosDemandPlanningMap` e a alocacao material -> cluster
      * dependem dessa chave.</p>
      */
     private void validaClustersMateriaisDemandPlanning(
-            Collection<ClusterProdutosDemandPlanning> clusterProdutosDemandPlanningCollection) {
+            Collection<ClusterMateriais> clusterMateriaisCollection) {
 
         Set<Long> clusterProdutosDemandPlanningIds = new HashSet<>();
         int indice = 0;
-        for (ClusterProdutosDemandPlanning clusterProdutosDemandPlanning : clusterProdutosDemandPlanningCollection) {
-            if (clusterProdutosDemandPlanning.getId() == null) {
+        for (ClusterMateriais clusterMateriais : clusterMateriaisCollection) {
+            if (clusterMateriais.getId() == null) {
                 throw new IllegalStateException(
                         "Demand Planning material cluster repository item at index "
                                 + indice
                                 + " requires id for Cluster and parameters projection.");
             }
-            if (!clusterProdutosDemandPlanningIds.add(clusterProdutosDemandPlanning.getId())) {
+            if (!clusterProdutosDemandPlanningIds.add(clusterMateriais.getId())) {
                 throw new IllegalStateException(
                         "Demand Planning material cluster repository has duplicated id "
-                                + clusterProdutosDemandPlanning.getId()
+                                + clusterMateriais.getId()
                                 + " for Cluster and parameters projection.");
             }
             indice++;
