@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Controller Enterprise de carga/extracao de valores de caracteristica por location.
+ * Controller Community de carga/extração de valores de característica por location.
  */
 @Tags({
         @Tag(name = "Master Data"),

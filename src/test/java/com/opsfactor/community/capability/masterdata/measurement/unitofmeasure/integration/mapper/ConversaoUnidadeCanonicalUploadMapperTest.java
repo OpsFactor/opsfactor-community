@@ -7,6 +7,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.ConversaoUnidadeProduto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnitOfMeasureConversionLegacyRatioState;
+import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.integration.dto.ConversaoUnidadeIntegrationDataDto.ConversaoUnidadePrimaryKeyIntegrationDTO;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,28 @@ import org.junit.jupiter.api.Test;
  * canonico de quantidades e nao preservam a coluna direta depreciada.
  */
 class ConversaoUnidadeCanonicalUploadMapperTest {
+
+    @Test
+    void globalUploadShouldAllowConversionBetweenAnyRegisteredUnits() {
+
+        UnidadeMedida unidadeMedidaOrigem = new UnidadeMedida("ML");
+        UnidadeMedida unidadeMedidaDestino = new UnidadeMedida("G");
+        ConversaoUnidadeIntegrationMapper conversaoUnidadeIntegrationMapper =
+                new ConversaoUnidadeIntegrationMapper();
+
+        ConversaoUnidade conversaoUnidade = conversaoUnidadeIntegrationMapper
+                .createNewEntityWithPrimaryKeyFromPrimaryKeyDTO(
+                        new ConversaoUnidadePrimaryKeyIntegrationDTO("ML", "G"),
+                        ConversaoUnidadeIntegrationSupportData.builder()
+                                .uomPorId(java.util.Map.of(
+                                        "ML", unidadeMedidaOrigem,
+                                        "G", unidadeMedidaDestino))
+                                .build());
+
+        Assertions.assertSame(unidadeMedidaOrigem, conversaoUnidade.getUnidadeMedidaOrigem());
+        Assertions.assertSame(unidadeMedidaDestino, conversaoUnidade.getUnidadeMedidaDestino());
+
+    }
 
     @Test
     void globalCanonicalUploadShouldClearDeprecatedDirectRatio() {

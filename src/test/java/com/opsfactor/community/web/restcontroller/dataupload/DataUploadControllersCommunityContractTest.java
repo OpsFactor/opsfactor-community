@@ -691,8 +691,10 @@ public class DataUploadControllersCommunityContractTest {
         communityDeclaredEndpointsByController.put(
                 FulfilledDemandIntegrationController.class,
                 routes(
-                        route("GET", "api/secured/data/file/fulfilleddemand/{supplyPlanId}/{unitOfMeasureId}"),
-                        route("GET", "api/secured/data/fulfilleddemand/{supplyPlanId}/{unitOfMeasureId}")));
+                        route("GET", "api/secured/data/file/fulfilleddemand/{supplyPlanId}"),
+                        route("GET", "api/secured/data/fulfilleddemand/{supplyPlanId}"),
+                        route("GET", "api/secured/data/file/fulfilleddemand/{supplyPlanId}/period/{referenceDate}"),
+                        route("GET", "api/secured/data/fulfilleddemand/{supplyPlanId}/period/{referenceDate}")));
 
         communityDeclaredEndpointsByController.put(
                 InventoryPlanIntegrationController.class,
