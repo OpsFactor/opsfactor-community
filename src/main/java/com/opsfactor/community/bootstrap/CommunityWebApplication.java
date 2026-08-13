@@ -1,11 +1,13 @@
 package com.opsfactor.community.bootstrap;
 
+import com.opsfactor.community.platform.database.CommunityJpaConfiguration;
+import jakarta.annotation.PostConstruct;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 
-import jakarta.annotation.PostConstruct;
 import java.util.TimeZone;
 
 /**
@@ -35,15 +37,12 @@ import java.util.TimeZone;
         "com.opsfactor.community.platform.security"
 })
 @EnableCaching
+@Import(CommunityJpaConfiguration.class)
 public class CommunityWebApplication {
 
     public static void main(String[] args) {
 
-        new SpringApplicationBuilder()
-                .sources(CommunityModelApplication.class, CommunitySchedulerApplication.class,
-                        CommunityDtoApplication.class, CommunityServicesApplication.class,
-                        CommunityRoutinesApplication.class, CommunityWebApplication.class)
-                .run(args);
+        SpringApplication.run(CommunityWebApplication.class, args);
 
     }
 

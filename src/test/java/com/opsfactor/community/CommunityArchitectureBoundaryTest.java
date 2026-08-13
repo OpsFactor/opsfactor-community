@@ -1146,7 +1146,7 @@ class CommunityArchitectureBoundaryTest {
 
     private static final List<String> COMMUNITY_ALLOWED_WEB_RESOURCE_FILES = List.of(
             "application-community-defaults.properties",
-            "application-database-mariadb.properties",
+            "application-database-postgresql.properties",
             "application-dev.properties",
             "application-prd.properties",
             "application.properties",
@@ -1780,7 +1780,7 @@ class CommunityArchitectureBoundaryTest {
         Path communityWorkspaceDirectory = resolveCommunityWorkspaceDirectory();
         String communityWebApplicationSource = Files.readString(
                 communityWorkspaceDirectory.resolve(
-                        "src/main/java/com/opsfactor/community/web/WebApplication.java"),
+                        "src/main/java/com/opsfactor/community/bootstrap/CommunityWebApplication.java"),
                 StandardCharsets.UTF_8);
 
         /*
@@ -1816,8 +1816,8 @@ class CommunityArchitectureBoundaryTest {
 
         /*
          * O Community possui um unico artefato executavel no POM raiz. Classes
-         * auxiliares @SpringBootApplication continuam servindo como fontes de
-         * configuracao, mas nao existem mais POMs internos com repackage proprio.
+         * Não há bootstraps Spring auxiliares; também não existem POMs internos
+         * com repackage próprio.
          */
         for (Path pomPath : findWorkspaceFiles(communityWorkspaceDirectory, "pom.xml")) {
             boolean pomDeclaresSpringBootMavenPlugin =
@@ -3134,7 +3134,7 @@ class CommunityArchitectureBoundaryTest {
     }
 
     @Test
-    void communityWebBootstrapShouldUseOnlyCommunityDefaultsAndMariaDbProfile() throws IOException {
+    void communityWebBootstrapShouldUseOnlyCommunityDefaultsAndPostgreSqlProfile() throws IOException {
 
         Properties applicationProperties = loadWorkspaceProperties("src/main/resources/application.properties");
 
@@ -3142,7 +3142,7 @@ class CommunityArchitectureBoundaryTest {
                 COMMUNITY_CONFIG_IMPORT,
                 applicationProperties.getProperty("spring.config.import"));
         Assertions.assertEquals(
-                "prd,database-mariadb",
+                "prd,database-postgresql",
                 applicationProperties.getProperty("spring.profiles.active"));
 
     }
@@ -3209,23 +3209,26 @@ class CommunityArchitectureBoundaryTest {
     }
 
     @Test
-    void communityMariaDbProfileShouldUseCommunityDialectAndMariaDbDriver() throws IOException {
+    void communityPostgreSqlProfileShouldUsePostgreSqlDriverAndDialect() throws IOException {
 
-        Properties mariaDbApplicationProperties = loadWorkspaceProperties(
-                "src/main/resources/application-database-mariadb.properties");
+        Properties postgreSqlApplicationProperties = loadWorkspaceProperties(
+                "src/main/resources/application-database-postgresql.properties");
 
         Assertions.assertEquals(
-                "org.mariadb.jdbc.Driver",
-                mariaDbApplicationProperties.getProperty("spring.datasource.driver-class-name"));
+                "org.postgresql.Driver",
+                postgreSqlApplicationProperties.getProperty("spring.datasource.driver-class-name"));
         Assertions.assertEquals(
-                "com.opsfactor.community.platform.database.hibernate.dialect.PlanningMariaDBDialect",
-                mariaDbApplicationProperties.getProperty("spring.jpa.properties.hibernate.dialect"));
+                "com.opsfactor.community.platform.database.hibernate.dialect.PlanningPostgreSQLDialect",
+                postgreSqlApplicationProperties.getProperty("spring.jpa.properties.hibernate.dialect"));
+        Assertions.assertEquals(
+                "true",
+                postgreSqlApplicationProperties.getProperty("spring.jpa.properties.hibernate.globally_quoted_identifiers"));
         Assertions.assertEquals(
                 "${OPSFACTOR_DATASOURCE_USERNAME:opsfactor}",
-                mariaDbApplicationProperties.getProperty("spring.datasource.username"));
+                postgreSqlApplicationProperties.getProperty("spring.datasource.username"));
         Assertions.assertEquals(
                 "${OPSFACTOR_DATASOURCE_PASSWORD:}",
-                mariaDbApplicationProperties.getProperty("spring.datasource.password"));
+                postgreSqlApplicationProperties.getProperty("spring.datasource.password"));
 
     }
 

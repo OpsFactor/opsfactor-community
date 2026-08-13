@@ -31,7 +31,7 @@ public abstract class AbstractDateFunctionContributor implements FunctionContrib
         SqmFunctionRegistry functionRegistry = functionContributions.getFunctionRegistry();
         /*
          * As projections de agregacao expõem LocalDate. Registrar as funcoes
-         * como java.sql.Date funciona no H2/MariaDB por conversao implicita,
+         * como java.sql.Date funciona no H2/SQLite por conversao implicita,
          * mas no SQLite o proxy de interface recebe null para o alias de data.
          * O tipo Java 8 explicito mantém o contrato igual nos três dialetos.
          */

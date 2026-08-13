@@ -1,5 +1,5 @@
 # O Hibernate 6 descobre estes contributors via ServiceLoader.
 # Manter este arquivo alinhado com as classes em com.opsfactor.community.platform.database.hibernate.function.
 com.opsfactor.community.platform.database.hibernate.function.H2FunctionContributor
-com.opsfactor.community.platform.database.hibernate.function.MariaDBFunctionContributor
+com.opsfactor.community.platform.database.hibernate.function.PostgreSQLFunctionContributor
 com.opsfactor.community.platform.database.hibernate.function.SQLiteFunctionContributor

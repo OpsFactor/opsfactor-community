@@ -90,13 +90,37 @@ public class DemandaDiretaConsideradaLinhaDAOTest {
     }
 
     @Test
-    public void sqliteShouldUseNativeConflictUpsertInsteadOfMariaDbSyntax() throws Exception {
+    public void sqliteShouldUseNativeConflictUpsertInsteadOfMySqlSyntax() throws Exception {
 
         JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
         Connection connection = mock(Connection.class);
         DatabaseMetaData databaseMetaData = mock(DatabaseMetaData.class);
         when(connection.getMetaData()).thenReturn(databaseMetaData);
         when(databaseMetaData.getDatabaseProductName()).thenReturn("SQLite");
+        when(jdbcTemplate.execute(any(org.springframework.jdbc.core.ConnectionCallback.class)))
+                .thenAnswer(invocation -> ((org.springframework.jdbc.core.ConnectionCallback<?>) invocation
+                        .getArgument(0)).doInConnection(connection));
+
+        DemandaDiretaConsideradaLinhaDAO demandaDiretaConsideradaLinhaDAO =
+                new DemandaDiretaConsideradaLinhaDAO();
+        setField(demandaDiretaConsideradaLinhaDAO, "jdbcTemplate", jdbcTemplate);
+
+        String sql = invokeSqlResolver(demandaDiretaConsideradaLinhaDAO);
+
+        Assertions.assertTrue(sql.contains("ON CONFLICT"));
+        Assertions.assertTrue(sql.contains("excluded.quantidade_plano_demanda_original"));
+        Assertions.assertFalse(sql.contains("ON DUPLICATE KEY"));
+
+    }
+
+    @Test
+    public void postgreSqlShouldUseNativeConflictUpsertInsteadOfMySqlSyntax() throws Exception {
+
+        JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+        Connection connection = mock(Connection.class);
+        DatabaseMetaData databaseMetaData = mock(DatabaseMetaData.class);
+        when(connection.getMetaData()).thenReturn(databaseMetaData);
+        when(databaseMetaData.getDatabaseProductName()).thenReturn("PostgreSQL");
         when(jdbcTemplate.execute(any(org.springframework.jdbc.core.ConnectionCallback.class)))
                 .thenAnswer(invocation -> ((org.springframework.jdbc.core.ConnectionCallback<?>) invocation
                         .getArgument(0)).doInConnection(connection));

@@ -26,7 +26,7 @@ import com.opsfactor.community.capability.demandplanning.demandplan.repository.D
 import com.opsfactor.community.capability.lowlevelcode.engine.LowLevelCode;
 import com.opsfactor.community.capability.supplyplanning.engine.SupplyPlanning;
 import com.opsfactor.community.capability.supplyplanning.service.heuristic.ConstrainedPlanService;
-import com.opsfactor.community.bootstrap.CommunityServicesApplication;
+import com.opsfactor.community.bootstrap.CommunityWebApplication;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -54,7 +54,7 @@ import java.time.LocalDateTime;
 @ExtendWith(SpringExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS) // re-cria o banco de dados + spring context após a execução desses testes (evita interferência dos dados com testes futuros)
-@SpringBootTest(classes = CommunityServicesApplication.class)
+@SpringBootTest(classes = CommunityWebApplication.class)
 public class SupplyPlanServiceTest {
 
     /** Service principal de Supply Planning exercitado pelo teste end-to-end. */

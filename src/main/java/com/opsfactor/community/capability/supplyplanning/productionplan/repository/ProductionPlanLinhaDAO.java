@@ -171,7 +171,11 @@ public class ProductionPlanLinhaDAO {
         if (normalizedDatabaseProductName.contains("sqlite")) {
             return getSqlUpsertProductionPlanLinhaSQLite();
         }
-        return getSqlUpsertProductionPlanLinhaMariaDb();
+        if (normalizedDatabaseProductName.contains("postgresql")) {
+            return getSqlUpsertProductionPlanLinhaPostgreSql();
+        }
+        throw new IllegalStateException(
+                "Community supports PostgreSQL at runtime; unsupported JDBC database: " + databaseProductName);
 
     }
 
@@ -236,23 +240,12 @@ public class ProductionPlanLinhaDAO {
 
     }
 
-    private String getSqlUpsertProductionPlanLinhaMariaDb() {
+    /**
+     * PostgreSQL compartilha a sintaxe {@code ON CONFLICT} com SQLite.
+     */
+    private String getSqlUpsertProductionPlanLinhaPostgreSql() {
 
-        return getSqlInsertProductionPlanLinha() + """
-                ON DUPLICATE KEY UPDATE
-                    quantidade_ordem_firme_producao_irrestrita = VALUES(quantidade_ordem_firme_producao_irrestrita),
-                    quantidade_ordem_firme_producao_restrita = VALUES(quantidade_ordem_firme_producao_restrita),
-                    quantidade_ordem_firme_producao_trabalho = VALUES(quantidade_ordem_firme_producao_trabalho),
-                    quantidade_ordem_planejada_producao_irrestrita = VALUES(quantidade_ordem_planejada_producao_irrestrita),
-                    quantidade_ordem_planejada_producao_restrita = VALUES(quantidade_ordem_planejada_producao_restrita),
-                    quantidade_ordem_planejada_producao_trabalho = VALUES(quantidade_ordem_planejada_producao_trabalho),
-                    quantidade_ordem_producao_baseline = NULL,
-                    quantidade_ordem_producao_baseline_atendida = NULL,
-                    quantidade_sugestao_producao_baseline = NULL,
-                    quantidade_sugestao_producao_baseline_atendida = NULL,
-                    material_output_id = VALUES(material_output_id),
-                    unidade_medida_id = VALUES(unidade_medida_id)
-                """;
+        return getSqlUpsertProductionPlanLinhaSQLite();
 
     }
 

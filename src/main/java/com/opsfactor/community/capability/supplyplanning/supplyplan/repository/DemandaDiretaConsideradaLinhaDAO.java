@@ -66,7 +66,7 @@ public class DemandaDiretaConsideradaLinhaDAO {
      * transacao ou round-trip desnecessario. Quando ha dados, validamos a
      * chave composta antes de preparar o batch para que falhas de projection
      * aparecam como contrato quebrado, nao como `NullPointerException` dentro
-     * do setter JDBC. O metodo entao delega ao SQL especifico de MariaDB/H2
+     * do setter JDBC. O metodo entao delega ao SQL especifico de PostgreSQL/H2
      * para manter o comportamento de upsert.</p>
      */
     public void saveInBatch(Collection<DemandaDiretaConsideradaLinha> demandaDiretaConsideradaLinhas) {
@@ -163,43 +163,31 @@ public class DemandaDiretaConsideradaLinhaDAO {
     private String getSqlUpsertDemandaDiretaConsideradaLinha() {
 
         /*
-         * Community suporta MariaDB em execucao real e H2 nos testes de
-         * integracao. A semantica e a mesma: inserir a fotografia da demanda
-         * direta considerada ou atualizar a linha quando a chave composta ja
-         * existir para o supply plan/material/location/periodo.
+         * Community usa PostgreSQL em execução e H2/SQLite somente em testes
+         * ou desenvolvimento local. A semântica é inserir a fotografia da
+         * demanda direta considerada ou atualizar a linha quando a chave
+         * composta já existir para supply plan/material/location/período.
          */
-        if (isDatabaseH2()) {
+        String databaseProductName = jdbcTemplate.execute(
+                (ConnectionCallback<String>) connection -> connection.getMetaData().getDatabaseProductName());
+        String normalizedDatabaseProductName = databaseProductName == null
+                ? ""
+                : databaseProductName.toLowerCase(Locale.ROOT);
+
+        if (normalizedDatabaseProductName.contains("h2")) {
             return getSqlMergeDemandaDiretaConsideradaLinhaH2();
         }
 
-        if (isDatabaseSQLite()) {
+        if (normalizedDatabaseProductName.contains("sqlite")) {
             return getSqlUpsertDemandaDiretaConsideradaLinhaSQLite();
         }
 
-        return getSqlUpsertDemandaDiretaConsideradaLinhaMariaDb();
+        if (normalizedDatabaseProductName.contains("postgresql")) {
+            return getSqlUpsertDemandaDiretaConsideradaLinhaPostgreSql();
+        }
 
-    }
-
-    private boolean isDatabaseH2() {
-
-        String databaseProductName = jdbcTemplate.execute(
-                (ConnectionCallback<String>) connection -> connection.getMetaData().getDatabaseProductName());
-        return databaseProductName != null
-                && databaseProductName.toLowerCase(Locale.ROOT).contains("h2");
-
-    }
-
-    /**
-     * Identifica o SQLite usado pelo perfil local Community. O driver nao
-     * aceita `ON DUPLICATE KEY`, portanto precisa de seu `ON CONFLICT`
-     * equivalente para preservar o mesmo upsert em batch.
-     */
-    private boolean isDatabaseSQLite() {
-
-        String databaseProductName = jdbcTemplate.execute(
-                (ConnectionCallback<String>) connection -> connection.getMetaData().getDatabaseProductName());
-        return databaseProductName != null
-                && databaseProductName.toLowerCase(Locale.ROOT).contains("sqlite");
+        throw new IllegalStateException(
+                "Community supports PostgreSQL at runtime; unsupported JDBC database: " + databaseProductName);
 
     }
 
@@ -232,7 +220,7 @@ public class DemandaDiretaConsideradaLinhaDAO {
     }
 
     /**
-     * Upsert SQLite equivalente aos SQLs MariaDB/H2. `excluded` representa a
+     * Upsert SQLite equivalente ao SQL PostgreSQL. `excluded` representa a
      * linha do batch que colidiu com a chave composta já persistida.
      */
     private String getSqlUpsertDemandaDiretaConsideradaLinhaSQLite() {
@@ -274,37 +262,12 @@ public class DemandaDiretaConsideradaLinhaDAO {
 
     }
 
-    private String getSqlUpsertDemandaDiretaConsideradaLinhaMariaDb() {
+    /**
+     * PostgreSQL compartilha a sintaxe {@code ON CONFLICT} com SQLite.
+     */
+    private String getSqlUpsertDemandaDiretaConsideradaLinhaPostgreSql() {
 
-        return """
-                INSERT INTO demanda_direta_considerada_linha (
-                    data_referencia,
-                    quantidade_carteira_original,
-                    quantidade_carteira_original_propagada_location_interna,
-                    quantidade_demanda_direta_carteira_irrestrita,
-                    quantidade_demanda_direta_carteira_restrita,
-                    quantidade_demanda_direta_estoque_seguranca,
-                    quantidade_demanda_direta_plano_demanda_irrestrita,
-                    quantidade_demanda_direta_plano_demanda_restrita,
-                    quantidade_plano_demanda_original,
-                    quantidade_plano_demanda_original_propagada_location_interna,
-                    location_id,
-                    material_id,
-                    supply_plan_id,
-                    unidade_medida_id
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-                ON DUPLICATE KEY UPDATE
-                    quantidade_carteira_original = VALUES(quantidade_carteira_original),
-                    quantidade_carteira_original_propagada_location_interna = VALUES(quantidade_carteira_original_propagada_location_interna),
-                    quantidade_demanda_direta_carteira_irrestrita = VALUES(quantidade_demanda_direta_carteira_irrestrita),
-                    quantidade_demanda_direta_carteira_restrita = VALUES(quantidade_demanda_direta_carteira_restrita),
-                    quantidade_demanda_direta_estoque_seguranca = VALUES(quantidade_demanda_direta_estoque_seguranca),
-                    quantidade_demanda_direta_plano_demanda_irrestrita = VALUES(quantidade_demanda_direta_plano_demanda_irrestrita),
-                    quantidade_demanda_direta_plano_demanda_restrita = VALUES(quantidade_demanda_direta_plano_demanda_restrita),
-                    quantidade_plano_demanda_original = VALUES(quantidade_plano_demanda_original),
-                    quantidade_plano_demanda_original_propagada_location_interna = VALUES(quantidade_plano_demanda_original_propagada_location_interna),
-                    unidade_medida_id = VALUES(unidade_medida_id)
-                """;
+        return getSqlUpsertDemandaDiretaConsideradaLinhaSQLite();
 
     }
 
@@ -314,7 +277,7 @@ public class DemandaDiretaConsideradaLinhaDAO {
 
         /*
          * A ordem dos parametros precisa acompanhar exatamente a ordem dos
-         * placeholders dos SQLs MariaDB/H2 acima. Manter esse preenchimento em
+         * placeholders dos SQLs PostgreSQL/H2 acima. Manter esse preenchimento em
          * metodo unico reduz o risco de divergencia entre bancos.
          */
         preparedStatement.setTimestamp(1, Timestamp.valueOf(demandaDiretaConsideradaLinha.getDataReferencia()));

@@ -45,10 +45,10 @@ mvn -q -f pom.xml test "-Dmaven.repo.local=C:\Users\erick\IdeaProjects\.m2repo"
 
 ## Local configuration
 
-The MariaDB profile reads its connection from environment variables:
+The PostgreSQL profile reads its connection from environment variables:
 
 - `OPSFACTOR_DATASOURCE_HOST` (default: `localhost`)
-- `OPSFACTOR_DATASOURCE_PORT` (default: `3306`)
+- `OPSFACTOR_DATASOURCE_PORT` (default: `5432`)
 - `OPSFACTOR_DATASOURCE_DATABASE` (default: `opsfactor`)
 - `OPSFACTOR_DATASOURCE_USERNAME` (default: `opsfactor`)
 - `OPSFACTOR_DATASOURCE_PASSWORD` (default: empty)

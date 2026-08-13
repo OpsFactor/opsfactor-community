@@ -85,6 +85,29 @@ public class ProductionPlanLinhaDAOTest {
 
     }
 
+    @Test
+    public void postgreSqlShouldUseNativeConflictUpsertWithoutJpaMerge() throws Exception {
+
+        JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+        Connection connection = mock(Connection.class);
+        DatabaseMetaData databaseMetaData = mock(DatabaseMetaData.class);
+        when(connection.getMetaData()).thenReturn(databaseMetaData);
+        when(databaseMetaData.getDatabaseProductName()).thenReturn("PostgreSQL");
+        when(jdbcTemplate.execute(any(org.springframework.jdbc.core.ConnectionCallback.class)))
+                .thenAnswer(invocation -> ((org.springframework.jdbc.core.ConnectionCallback<?>) invocation
+                        .getArgument(0)).doInConnection(connection));
+
+        ProductionPlanLinhaDAO productionPlanLinhaDAO = new ProductionPlanLinhaDAO();
+        setField(productionPlanLinhaDAO, "jdbcTemplate", jdbcTemplate);
+
+        String sql = invokeSqlResolver(productionPlanLinhaDAO);
+
+        Assertions.assertTrue(sql.contains("ON CONFLICT"));
+        Assertions.assertTrue(sql.contains("excluded.quantidade_ordem_planejada_producao_irrestrita"));
+        Assertions.assertFalse(sql.contains("ON DUPLICATE KEY"));
+
+    }
+
     private static String invokeSqlResolver(
             ProductionPlanLinhaDAO productionPlanLinhaDAO) throws Exception {
 

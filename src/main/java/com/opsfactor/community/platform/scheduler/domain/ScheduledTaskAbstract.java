@@ -4,6 +4,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.*;
 import java.io.Serializable;
@@ -53,7 +55,11 @@ public abstract class ScheduledTaskAbstract implements Serializable {
      * dados de input. O Enterprise pode reintroduzir persistencia adicional de
      * auditoria quando trouxer filas e jobs assíncronos.</p>
      */
-    @Column(columnDefinition = "json")
+    /*
+     * Delega o tipo JSON ao dialeto ativo. Em PostgreSQL isto gera jsonb,
+     * que possui operador de igualdade e pode participar de SELECT DISTINCT.
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
     private String configuracoesExecucaoJson;
     
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy="scheduledTaskExecutionCompositeKey.scheduledTask", orphanRemoval = true, fetch = FetchType.LAZY)

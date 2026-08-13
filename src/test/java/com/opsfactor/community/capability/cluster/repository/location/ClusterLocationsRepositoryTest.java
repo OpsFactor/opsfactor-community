@@ -7,7 +7,7 @@ import com.opsfactor.community.capability.cluster.domain.location.RegraAlocacaoC
 import com.opsfactor.community.capability.configuration.domain.cluster.location.ParametrosClusterLocations;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.cluster.facade.mapper.ClusterLocationsMapper;
-import com.opsfactor.community.bootstrap.CommunityModelApplication;
+import com.opsfactor.community.platform.database.CommunityJpaConfiguration;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeAll;
@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ExtendWith(SpringExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DataJpaTest
-@ContextConfiguration(classes = CommunityModelApplication.class)
+@ContextConfiguration(classes = CommunityJpaConfiguration.class)
 public class ClusterLocationsRepositoryTest {
 
     /** Repository JPA sob teste. */

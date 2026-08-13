@@ -1,4 +1,4 @@
-package com.opsfactor.community.bootstrap;
+package com.opsfactor.community.bootstrap.devtools;
 
 import java.io.IOException;
 import java.nio.file.Files;

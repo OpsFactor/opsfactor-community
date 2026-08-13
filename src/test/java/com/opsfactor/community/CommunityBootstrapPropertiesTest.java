@@ -29,7 +29,7 @@ class CommunityBootstrapPropertiesTest {
             "classpath:application-community-defaults.properties";
 
     @Test
-    void communityWebShouldImportCommunityDefaultsAndUseMariadbProfile() throws IOException {
+    void communityWebShouldImportCommunityDefaultsAndUsePostgreSqlProfile() throws IOException {
 
         Properties webApplicationProperties = loadProperties(
                 "src/main/resources/application.properties");
@@ -38,7 +38,7 @@ class CommunityBootstrapPropertiesTest {
                 COMMUNITY_CONFIG_IMPORT,
                 webApplicationProperties.getProperty("spring.config.import"));
         Assertions.assertEquals(
-                "prd,database-mariadb",
+                "prd,database-postgresql",
                 webApplicationProperties.getProperty("spring.profiles.active"));
 
     }
@@ -56,23 +56,30 @@ class CommunityBootstrapPropertiesTest {
     }
 
     @Test
-    void communityMariadbProfileShouldUseOpenDriverAndDialect() throws IOException {
+    void communityPostgreSqlProfileShouldUseOpenDriverAndDialect() throws IOException {
 
-        Properties mariadbApplicationProperties = loadProperties(
-                "src/main/resources/application-database-mariadb.properties");
+        Properties postgreSqlApplicationProperties = loadProperties(
+                "src/main/resources/application-database-postgresql.properties");
 
         Assertions.assertEquals(
-                "org.mariadb.jdbc.Driver",
-                mariadbApplicationProperties.getProperty("spring.datasource.driver-class-name"));
+                "org.postgresql.Driver",
+                postgreSqlApplicationProperties.getProperty("spring.datasource.driver-class-name"));
         Assertions.assertEquals(
-                "com.opsfactor.community.platform.database.hibernate.dialect.PlanningMariaDBDialect",
-                mariadbApplicationProperties.getProperty("spring.jpa.properties.hibernate.dialect"));
+                "com.opsfactor.community.platform.database.hibernate.dialect.PlanningPostgreSQLDialect",
+                postgreSqlApplicationProperties.getProperty("spring.jpa.properties.hibernate.dialect"));
+        Assertions.assertEquals(
+                "true",
+                postgreSqlApplicationProperties.getProperty("spring.jpa.properties.hibernate.globally_quoted_identifiers"));
+        Assertions.assertEquals(
+                "true",
+                postgreSqlApplicationProperties.getProperty(
+                        "spring.jpa.properties.hibernate.globally_quoted_identifiers_skip_column_definitions"));
         Assertions.assertEquals(
                 "${OPSFACTOR_DATASOURCE_USERNAME:opsfactor}",
-                mariadbApplicationProperties.getProperty("spring.datasource.username"));
+                postgreSqlApplicationProperties.getProperty("spring.datasource.username"));
         Assertions.assertEquals(
                 "${OPSFACTOR_DATASOURCE_PASSWORD:}",
-                mariadbApplicationProperties.getProperty("spring.datasource.password"));
+                postgreSqlApplicationProperties.getProperty("spring.datasource.password"));
 
     }
 
@@ -80,7 +87,7 @@ class CommunityBootstrapPropertiesTest {
     void communityRuntimeDatabaseProfilesShouldUseDdlAutoUpdate() throws IOException {
 
         assertDdlAutoUpdate("src/main/resources/application-dev.properties");
-        assertDdlAutoUpdate("src/main/resources/application-database-mariadb.properties");
+        assertDdlAutoUpdate("src/main/resources/application-database-postgresql.properties");
 
     }
 
