@@ -34,6 +34,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
@@ -55,6 +56,7 @@ import java.time.LocalDateTime;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS) // re-cria o banco de dados + spring context após a execução desses testes (evita interferência dos dados com testes futuros)
 @SpringBootTest(classes = CommunityWebApplication.class)
+@Import(CommunitySupplyPlanningH2TestConfiguration.class)
 public class SupplyPlanServiceTest {
 
     /** Service principal de Supply Planning exercitado pelo teste end-to-end. */

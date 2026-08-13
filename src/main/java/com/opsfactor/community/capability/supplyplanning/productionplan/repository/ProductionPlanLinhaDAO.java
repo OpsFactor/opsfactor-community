@@ -3,7 +3,6 @@ package com.opsfactor.community.capability.supplyplanning.productionplan.reposit
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
@@ -13,7 +12,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Collection;
-import java.util.Locale;
 
 /**
  * Persiste o snapshot de producao do Supply Plan em batch JDBC.
@@ -154,66 +152,20 @@ public class ProductionPlanLinhaDAO {
     }
 
     /**
-     * Seleciona a sintaxe de upsert nativa do banco em execucao.
+     * Retorna o upsert Community PostgreSQL. O Enterprise sobrescreve somente
+     * este ponto para aplicar o SQL MySQL/MariaDB pelo bean primário, sem que o
+     * DAO consulte metadata do JDBC durante a escrita em lote.
      */
-    private String getSqlUpsertProductionPlanLinha() {
+    protected String getSqlUpsertProductionPlanLinha() {
 
-        String databaseProductName = jdbcTemplate.execute(
-                (ConnectionCallback<String>) connection ->
-                        connection.getMetaData().getDatabaseProductName());
-        String normalizedDatabaseProductName = databaseProductName == null
-                ? ""
-                : databaseProductName.toLowerCase(Locale.ROOT);
-
-        if (normalizedDatabaseProductName.contains("h2")) {
-            return getSqlMergeProductionPlanLinhaH2();
-        }
-        if (normalizedDatabaseProductName.contains("sqlite")) {
-            return getSqlUpsertProductionPlanLinhaSQLite();
-        }
-        if (normalizedDatabaseProductName.contains("postgresql")) {
-            return getSqlUpsertProductionPlanLinhaPostgreSql();
-        }
-        throw new IllegalStateException(
-                "Community supports PostgreSQL at runtime; unsupported JDBC database: " + databaseProductName);
+        return getSqlUpsertProductionPlanLinhaPostgreSql();
 
     }
 
-    private String getSqlMergeProductionPlanLinhaH2() {
-
-        return """
-                MERGE INTO production_plan_linha (
-                    data_referencia,
-                    quantidade_ordem_firme_producao_irrestrita,
-                    quantidade_ordem_firme_producao_restrita,
-                    quantidade_ordem_firme_producao_trabalho,
-                    quantidade_ordem_planejada_producao_irrestrita,
-                    quantidade_ordem_planejada_producao_restrita,
-                    quantidade_ordem_planejada_producao_trabalho,
-                    quantidade_ordem_producao_baseline,
-                    quantidade_ordem_producao_baseline_atendida,
-                    quantidade_sugestao_producao_baseline,
-                    quantidade_sugestao_producao_baseline_atendida,
-                    roteiro_id,
-                    location_id,
-                    lista_tecnica_id,
-                    supply_plan_id,
-                    versao_producao_id,
-                    material_output_id,
-                    unidade_medida_id
-                ) KEY (
-                    data_referencia,
-                    lista_tecnica_id,
-                    location_id,
-                    roteiro_id,
-                    supply_plan_id,
-                    versao_producao_id
-                ) VALUES (?,?,?,?,?,?,?,NULL,NULL,NULL,NULL,?,?,?,?,?,?,?)
-                """;
-
-    }
-
-    private String getSqlUpsertProductionPlanLinhaSQLite() {
+    /**
+     * Monta o upsert PostgreSQL da fotografia de produção.
+     */
+    private String getSqlUpsertProductionPlanLinhaPostgreSql() {
 
         return getSqlInsertProductionPlanLinha() + """
                 ON CONFLICT (
@@ -241,15 +193,11 @@ public class ProductionPlanLinhaDAO {
     }
 
     /**
-     * PostgreSQL compartilha a sintaxe {@code ON CONFLICT} com SQLite.
+     * Prefixo comum do insert de Production Plan. A extensão Enterprise usa a
+     * mesma lista de colunas e placeholders, trocando somente o sufixo de
+     * upsert conforme MySQL/MariaDB.
      */
-    private String getSqlUpsertProductionPlanLinhaPostgreSql() {
-
-        return getSqlUpsertProductionPlanLinhaSQLite();
-
-    }
-
-    private String getSqlInsertProductionPlanLinha() {
+    protected String getSqlInsertProductionPlanLinha() {
 
         return """
                 INSERT INTO production_plan_linha (

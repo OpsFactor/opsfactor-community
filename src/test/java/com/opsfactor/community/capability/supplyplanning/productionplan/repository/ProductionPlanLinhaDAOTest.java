@@ -3,17 +3,8 @@ package com.opsfactor.community.capability.supplyplanning.productionplan.reposit
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.jdbc.core.JdbcTemplate;
-
-import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Testes de contrato do batch JDBC de Production Plan.
@@ -63,21 +54,10 @@ public class ProductionPlanLinhaDAOTest {
     }
 
     @Test
-    public void sqliteShouldUseNativeConflictUpsertWithoutJpaMerge() throws Exception {
-
-        JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
-        Connection connection = mock(Connection.class);
-        DatabaseMetaData databaseMetaData = mock(DatabaseMetaData.class);
-        when(connection.getMetaData()).thenReturn(databaseMetaData);
-        when(databaseMetaData.getDatabaseProductName()).thenReturn("SQLite");
-        when(jdbcTemplate.execute(any(org.springframework.jdbc.core.ConnectionCallback.class)))
-                .thenAnswer(invocation -> ((org.springframework.jdbc.core.ConnectionCallback<?>) invocation
-                        .getArgument(0)).doInConnection(connection));
+    public void communityShouldUsePostgreSqlConflictUpsertWithoutJpaMerge() {
 
         ProductionPlanLinhaDAO productionPlanLinhaDAO = new ProductionPlanLinhaDAO();
-        setField(productionPlanLinhaDAO, "jdbcTemplate", jdbcTemplate);
-
-        String sql = invokeSqlResolver(productionPlanLinhaDAO);
+        String sql = productionPlanLinhaDAO.getSqlUpsertProductionPlanLinha();
 
         Assertions.assertTrue(sql.contains("ON CONFLICT"));
         Assertions.assertTrue(sql.contains("excluded.quantidade_ordem_planejada_producao_irrestrita"));
@@ -85,44 +65,4 @@ public class ProductionPlanLinhaDAOTest {
 
     }
 
-    @Test
-    public void postgreSqlShouldUseNativeConflictUpsertWithoutJpaMerge() throws Exception {
-
-        JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
-        Connection connection = mock(Connection.class);
-        DatabaseMetaData databaseMetaData = mock(DatabaseMetaData.class);
-        when(connection.getMetaData()).thenReturn(databaseMetaData);
-        when(databaseMetaData.getDatabaseProductName()).thenReturn("PostgreSQL");
-        when(jdbcTemplate.execute(any(org.springframework.jdbc.core.ConnectionCallback.class)))
-                .thenAnswer(invocation -> ((org.springframework.jdbc.core.ConnectionCallback<?>) invocation
-                        .getArgument(0)).doInConnection(connection));
-
-        ProductionPlanLinhaDAO productionPlanLinhaDAO = new ProductionPlanLinhaDAO();
-        setField(productionPlanLinhaDAO, "jdbcTemplate", jdbcTemplate);
-
-        String sql = invokeSqlResolver(productionPlanLinhaDAO);
-
-        Assertions.assertTrue(sql.contains("ON CONFLICT"));
-        Assertions.assertTrue(sql.contains("excluded.quantidade_ordem_planejada_producao_irrestrita"));
-        Assertions.assertFalse(sql.contains("ON DUPLICATE KEY"));
-
-    }
-
-    private static String invokeSqlResolver(
-            ProductionPlanLinhaDAO productionPlanLinhaDAO) throws Exception {
-
-        var method = ProductionPlanLinhaDAO.class
-                .getDeclaredMethod("getSqlUpsertProductionPlanLinha");
-        method.setAccessible(true);
-        return (String) method.invoke(productionPlanLinhaDAO);
-
-    }
-
-    private static void setField(Object target, String fieldName, Object value) throws Exception {
-
-        Field field = target.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(target, value);
-
-    }
 }

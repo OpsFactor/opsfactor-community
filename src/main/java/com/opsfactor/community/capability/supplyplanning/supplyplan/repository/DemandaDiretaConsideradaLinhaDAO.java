@@ -3,7 +3,6 @@ package com.opsfactor.community.capability.supplyplanning.supplyplan.repository;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.DemandaDiretaConsideradaLinha;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
@@ -13,7 +12,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Collection;
-import java.util.Locale;
 
 /**
  * DAO JDBC para persistencia em lote das linhas de demanda direta consideradas
@@ -66,8 +64,8 @@ public class DemandaDiretaConsideradaLinhaDAO {
      * transacao ou round-trip desnecessario. Quando ha dados, validamos a
      * chave composta antes de preparar o batch para que falhas de projection
      * aparecam como contrato quebrado, nao como `NullPointerException` dentro
-     * do setter JDBC. O metodo entao delega ao SQL especifico de PostgreSQL/H2
-     * para manter o comportamento de upsert.</p>
+     * do setter JDBC. O Community publica PostgreSQL, portanto o DAO usa a
+     * sintaxe de upsert desse motor diretamente.</p>
      */
     public void saveInBatch(Collection<DemandaDiretaConsideradaLinha> demandaDiretaConsideradaLinhas) {
 
@@ -160,70 +158,22 @@ public class DemandaDiretaConsideradaLinhaDAO {
 
     }
 
-    private String getSqlUpsertDemandaDiretaConsideradaLinha() {
+    /**
+     * Retorna o upsert Community PostgreSQL. O Enterprise sobrescreve somente
+     * este ponto para manter a infraestrutura JDBC comum e selecionar seu SQL
+     * MySQL/MariaDB pelo bean primário, sem consultar metadata em runtime.
+     */
+    protected String getSqlUpsertDemandaDiretaConsideradaLinha() {
 
-        /*
-         * Community usa PostgreSQL em execução e H2/SQLite somente em testes
-         * ou desenvolvimento local. A semântica é inserir a fotografia da
-         * demanda direta considerada ou atualizar a linha quando a chave
-         * composta já existir para supply plan/material/location/período.
-         */
-        String databaseProductName = jdbcTemplate.execute(
-                (ConnectionCallback<String>) connection -> connection.getMetaData().getDatabaseProductName());
-        String normalizedDatabaseProductName = databaseProductName == null
-                ? ""
-                : databaseProductName.toLowerCase(Locale.ROOT);
-
-        if (normalizedDatabaseProductName.contains("h2")) {
-            return getSqlMergeDemandaDiretaConsideradaLinhaH2();
-        }
-
-        if (normalizedDatabaseProductName.contains("sqlite")) {
-            return getSqlUpsertDemandaDiretaConsideradaLinhaSQLite();
-        }
-
-        if (normalizedDatabaseProductName.contains("postgresql")) {
-            return getSqlUpsertDemandaDiretaConsideradaLinhaPostgreSql();
-        }
-
-        throw new IllegalStateException(
-                "Community supports PostgreSQL at runtime; unsupported JDBC database: " + databaseProductName);
-
-    }
-
-    private String getSqlMergeDemandaDiretaConsideradaLinhaH2() {
-
-        return """
-                MERGE INTO demanda_direta_considerada_linha (
-                    data_referencia,
-                    quantidade_carteira_original,
-                    quantidade_carteira_original_propagada_location_interna,
-                    quantidade_demanda_direta_carteira_irrestrita,
-                    quantidade_demanda_direta_carteira_restrita,
-                    quantidade_demanda_direta_estoque_seguranca,
-                    quantidade_demanda_direta_plano_demanda_irrestrita,
-                    quantidade_demanda_direta_plano_demanda_restrita,
-                    quantidade_plano_demanda_original,
-                    quantidade_plano_demanda_original_propagada_location_interna,
-                    location_id,
-                    material_id,
-                    supply_plan_id,
-                    unidade_medida_id
-                ) KEY (
-                    data_referencia,
-                    location_id,
-                    material_id,
-                    supply_plan_id
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-                """;
+        return getSqlUpsertDemandaDiretaConsideradaLinhaPostgreSql();
 
     }
 
     /**
-     * Upsert SQLite equivalente ao SQL PostgreSQL. `excluded` representa a
+     * Upsert PostgreSQL. {@code excluded} representa a
      * linha do batch que colidiu com a chave composta já persistida.
      */
-    private String getSqlUpsertDemandaDiretaConsideradaLinhaSQLite() {
+    private String getSqlUpsertDemandaDiretaConsideradaLinhaPostgreSql() {
 
         return """
                 INSERT INTO demanda_direta_considerada_linha (
@@ -262,23 +212,14 @@ public class DemandaDiretaConsideradaLinhaDAO {
 
     }
 
-    /**
-     * PostgreSQL compartilha a sintaxe {@code ON CONFLICT} com SQLite.
-     */
-    private String getSqlUpsertDemandaDiretaConsideradaLinhaPostgreSql() {
-
-        return getSqlUpsertDemandaDiretaConsideradaLinhaSQLite();
-
-    }
-
     private void setValores(
             PreparedStatement preparedStatement,
             DemandaDiretaConsideradaLinha demandaDiretaConsideradaLinha) throws SQLException {
 
         /*
          * A ordem dos parametros precisa acompanhar exatamente a ordem dos
-         * placeholders dos SQLs PostgreSQL/H2 acima. Manter esse preenchimento em
-         * metodo unico reduz o risco de divergencia entre bancos.
+         * placeholders do SQL PostgreSQL acima. Manter esse preenchimento em
+         * metodo único impede divergência entre SQL e parâmetros JDBC.
          */
         preparedStatement.setTimestamp(1, Timestamp.valueOf(demandaDiretaConsideradaLinha.getDataReferencia()));
         preparedStatement.setObject(2, demandaDiretaConsideradaLinha.getQuantidadeCarteiraOriginal(), Types.DOUBLE);
