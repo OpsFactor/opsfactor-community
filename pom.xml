@@ -28,7 +28,6 @@
         <org.mapstruct.version>1.4.2.Final</org.mapstruct.version>
         <org.projectlombok.version>1.18.42</org.projectlombok.version>
         <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
-        <spring-ai.version>1.1.4</spring-ai.version>
     </properties>
 
     <dependencies>
@@ -60,13 +59,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
-        </dependency>
-
-        <!-- Servidor MCP HTTP da mesma aplicacao Spring MVC Community. -->
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
-            <version>${spring-ai.version}</version>
         </dependency>
 
         <!-- Seguranca Community simples. -->
