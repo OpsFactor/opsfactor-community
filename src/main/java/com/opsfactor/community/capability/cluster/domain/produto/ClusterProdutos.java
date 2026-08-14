@@ -46,7 +46,7 @@ public class ClusterProdutos implements Serializable {
      * Se true, este representa o cluster padrão que será usado 
      * em caso de materiais que não se enquadrem nos demais clusters.
      */
-    @ColumnDefault("0")
+    @ColumnDefault("false")
     private Boolean padrao = false;
 
     /**

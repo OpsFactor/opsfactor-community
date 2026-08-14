@@ -13,7 +13,7 @@
 
     <groupId>com.opsfactor.community</groupId>
     <artifactId>opsfactor-community</artifactId>
-    <version>0.1.0</version>
+    <version>2026.08.14</version>
     <packaging>jar</packaging>
 
     <name>opsfactor-community</name>
