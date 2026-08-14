@@ -1,9 +1,11 @@
 package com.opsfactor.community.capability.masterdata.network.location.integration.mapper;
 
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaLocation;
 import com.opsfactor.community.capability.masterdata.organization.economicgroup.domain.EconomicGroup;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import java.util.Map;
+import java.util.List;
 import lombok.Builder;
 
 /**
@@ -12,6 +14,8 @@ import lombok.Builder;
  */
 @Builder
 public class LocationIntegrationSupportData {
+
+    List<CaracteristicaLocation> caracteristicaLocationList;
     
     Map<String,UnidadeMedida> unidadeMedidaMap;
 
@@ -28,6 +32,13 @@ public class LocationIntegrationSupportData {
      * entre locations sem disparar uma consulta por linha de Data Upload.
      */
     Map<String, Location> locationMap;
+
+    /** Retorna o catalogo ordenado que define as colunas dinamicas do arquivo. */
+    public List<CaracteristicaLocation> getCaracteristicaLocationList() {
+
+        return caracteristicaLocationList;
+
+    }
 
     /**
      * Resolve uma UOM a partir da fotografia batch preparada pelo integration

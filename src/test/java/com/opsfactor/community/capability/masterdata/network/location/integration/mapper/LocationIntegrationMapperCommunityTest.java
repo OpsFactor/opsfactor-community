@@ -1,6 +1,8 @@
 package com.opsfactor.community.capability.masterdata.network.location.integration.mapper;
 
 import com.opsfactor.community.capability.masterdata.network.location.integration.dto.LocationIntegrationDataDto;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.Caracteristica;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaLocation;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
@@ -35,7 +37,8 @@ public class LocationIntegrationMapperCommunityTest {
             "finiteProductionCapacity",
             "defaultSNPUomId",
             "referenceLocationForProductLocationParameters",
-            "safetyStockConsiderIndirectDemand");
+            "safetyStockConsiderIndirectDemand",
+            "valueByCharacteristic");
 
     @Test
     public void locationShouldRejectLatitudeCommunity() {
@@ -114,21 +117,25 @@ public class LocationIntegrationMapperCommunityTest {
     }
 
     @Test
-    public void locationShouldRejectCharacteristicsCommunity() {
+    public void locationShouldSaveCharacteristicsCommunity() {
 
         LocationIntegrationMapper locationIntegrationMapper = new LocationIntegrationMapper();
+        CaracteristicaLocation caracteristicaLocation = getLocationCharacteristic("Region", "Region");
         LocationIntegrationDataDto locationIntegrationDataDto =
                 LocationIntegrationDataDto.builder()
                         .valueByCharacteristic(Map.of("Region", "South"))
                         .build();
+        Location location = new Location("LOC_01");
 
-        Assertions.assertThrows(
-                RequiresEnterpriseVersionException.class,
-                () -> locationIntegrationMapper.updateEntityNonPrimaryFieldsFromDTO(
-                        new Location("LOC_01"),
-                        locationIntegrationDataDto,
-                        getLocationIntegrationSupportData(),
-                        null));
+        locationIntegrationMapper.updateEntityNonPrimaryFieldsFromDTO(
+                location,
+                locationIntegrationDataDto,
+                getLocationIntegrationSupportData(caracteristicaLocation),
+                null);
+
+        Assertions.assertEquals(
+                "South",
+                location.getMapaLocationAtributo().get(caracteristicaLocation).getAtributo());
 
     }
 
@@ -288,6 +295,7 @@ public class LocationIntegrationMapperCommunityTest {
     private LocationIntegrationSupportData getLocationIntegrationSupportData() {
 
         return LocationIntegrationSupportData.builder()
+                .caracteristicaLocationList(List.of())
                 .unidadeMedidaMap(new HashMap<>())
                 .locationMap(new HashMap<>())
                 .build();
@@ -301,9 +309,31 @@ public class LocationIntegrationMapperCommunityTest {
     private LocationIntegrationSupportData getLocationIntegrationSupportData(Location referenceLocation) {
 
         return LocationIntegrationSupportData.builder()
+                .caracteristicaLocationList(List.of())
                 .unidadeMedidaMap(new HashMap<>())
                 .locationMap(Map.of(referenceLocation.getId(), referenceLocation))
                 .build();
+
+    }
+
+    private LocationIntegrationSupportData getLocationIntegrationSupportData(
+            CaracteristicaLocation caracteristicaLocation) {
+
+        return LocationIntegrationSupportData.builder()
+                .caracteristicaLocationList(List.of(caracteristicaLocation))
+                .unidadeMedidaMap(new HashMap<>())
+                .locationMap(new HashMap<>())
+                .build();
+
+    }
+
+    private CaracteristicaLocation getLocationCharacteristic(String id, String description) {
+
+        CaracteristicaLocation caracteristicaLocation = new CaracteristicaLocation();
+        caracteristicaLocation.setId(id);
+        caracteristicaLocation.setDescricao(description);
+        caracteristicaLocation.setTipoCaracteristica(Caracteristica.TipoCaracteristica.CATEGORICO);
+        return caracteristicaLocation;
 
     }
 

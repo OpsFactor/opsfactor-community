@@ -4,6 +4,8 @@ import com.opsfactor.community.capability.masterdata.network.location.integratio
 import com.opsfactor.community.capability.masterdata.network.location.integration.dto.LocationIntegrationFiltroDto;
 import com.opsfactor.community.capability.masterdata.network.location.integration.mapper.LocationIntegrationMapper;
 import com.opsfactor.community.capability.masterdata.network.location.integration.mapper.LocationIntegrationSupportData;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaLocation;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.repository.CaracteristicaLocationRepository;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.organization.economicgroup.domain.EconomicGroup;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
@@ -53,6 +55,10 @@ public class LocationIntegrationService implements IntegrationServiceInterface<L
      */
     @Autowired
     private EconomicGroupRepository economicGroupRepository;
+
+    /** Catalogo que define, por id, a ordem deterministica das colunas dinamicas. */
+    @Autowired
+    private CaracteristicaLocationRepository caracteristicaLocationRepository;
 
     /**
      * Mapper de integracao que converte linhas publicas de location para a
@@ -111,6 +117,13 @@ public class LocationIntegrationService implements IntegrationServiceInterface<L
                         locationRepository.findAll(),
                         Location::getId,
                         "Location reference snapshot"))
+                .caracteristicaLocationList(getMapaPorIdObrigatorio(
+                        caracteristicaLocationRepository.findAll(),
+                        CaracteristicaLocation::getId,
+                        "Location Characteristic snapshot")
+                        .values().stream()
+                        .sorted(Comparator.comparing(CaracteristicaLocation::getId))
+                        .toList())
                 .build();
     }
 
@@ -126,7 +139,7 @@ public class LocationIntegrationService implements IntegrationServiceInterface<L
         Set<String> idsInBatch = locationPrimaryKeyCollection.stream()
                 .map(dto -> dto.id)
                 .collect(Collectors.toSet());
-        return locationRepository.findAllById(idsInBatch);
+        return locationRepository.findAllByIdWithCharacteristics(idsInBatch);
     }
 
     @Override
@@ -136,9 +149,7 @@ public class LocationIntegrationService implements IntegrationServiceInterface<L
 
     @Override
     public Collection<Location> getAllPersistedEntities() {
-        return locationRepository.findAll().stream()
-                .filter(location -> !"0".equals(location.getId()))
-                .collect(Collectors.toList());
+        return locationRepository.customFindAllSemDefaultWithCharacteristics();
     }
 
     /**

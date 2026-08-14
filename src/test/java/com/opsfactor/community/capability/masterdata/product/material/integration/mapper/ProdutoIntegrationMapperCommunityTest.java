@@ -1,6 +1,8 @@
 package com.opsfactor.community.capability.masterdata.product.material.integration.mapper;
 
 import com.opsfactor.community.capability.masterdata.product.material.integration.dto.ProdutoIntegrationDataDto;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.Caracteristica;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProduto;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
@@ -20,8 +22,7 @@ import java.util.Set;
  * Valida o contrato Community do data upload de materiais.
  *
  * <p>O Community aceita o cadastro operacional do material e suas unidades de
- * medida basicas, mas caracteristicas dinamicas de material pertencem ao
- * Enterprise.</p>
+ * medida basicas e os valores das caracteristicas dinamicas cadastradas.</p>
  */
 public class ProdutoIntegrationMapperCommunityTest {
 
@@ -34,25 +35,29 @@ public class ProdutoIntegrationMapperCommunityTest {
             "discontinuationDate",
             "defaultUomId",
             "salesUomId",
-            "transferUomId");
+            "transferUomId",
+            "valueByCharacteristic");
 
     @Test
-    public void materialShouldRejectCharacteristicsCommunity() {
+    public void materialShouldSaveCharacteristicsCommunity() {
 
         ProdutoIntegrationMapper produtoIntegrationMapper = new ProdutoIntegrationMapper();
+        CaracteristicaProduto caracteristicaProduto = getMaterialCharacteristic("BRAND", "Brand");
         ProdutoIntegrationDataDto produtoIntegrationDataDto =
                 ProdutoIntegrationDataDto.builder()
-                        .valueByCharacteristic(new HashMap<>())
+                        .valueByCharacteristic(Map.of("BRAND", "A"))
                         .build();
-        produtoIntegrationDataDto.valueByCharacteristic.put("BRAND", "A");
+        Produto material = new Produto("MAT_01");
 
-        Assertions.assertThrows(
-                RequiresEnterpriseVersionException.class,
-                () -> produtoIntegrationMapper.updateEntityNonPrimaryFieldsFromDTO(
-                        new Produto("MAT_01"),
-                        produtoIntegrationDataDto,
-                        getProdutoIntegrationSupportData(),
-                        null));
+        produtoIntegrationMapper.updateEntityNonPrimaryFieldsFromDTO(
+                material,
+                produtoIntegrationDataDto,
+                getProdutoIntegrationSupportData(caracteristicaProduto),
+                null);
+
+        Assertions.assertEquals(
+                "A",
+                material.getMapaProdutoAtributo().get(caracteristicaProduto).getAtributo());
 
     }
 
@@ -62,9 +67,8 @@ public class ProdutoIntegrationMapperCommunityTest {
         ProdutoIntegrationMapper produtoIntegrationMapper = new ProdutoIntegrationMapper();
 
         /*
-         * Allowlist reflexiva do DTO de material Community. Hoje somente
-         * caracteristicas dinamicas ficam fora do contrato publico, mas o teste
-         * protege o recorte contra futuros campos Enterprise adicionados ao DTO
+         * Allowlist reflexiva do DTO de material Community. O teste protege o
+         * recorte contra futuros campos Enterprise adicionados ao DTO
          * compartilhado sem validacao explicita no mapper.
          */
         for (Field field : ProdutoIntegrationDataDto.class.getDeclaredFields()) {
@@ -90,14 +94,19 @@ public class ProdutoIntegrationMapperCommunityTest {
     }
 
     @Test
-    public void materialTemplateShouldNotExposeDynamicCharacteristicsCommunity() {
+    public void materialTemplateShouldExposeDynamicCharacteristicsAfterFixedColumns() {
 
         ProdutoIntegrationMapper produtoIntegrationMapper = new ProdutoIntegrationMapper();
+        CaracteristicaProduto caracteristicaProduto = getMaterialCharacteristic("BRAND", "Brand");
         List<String> processedFileHeaders = produtoIntegrationMapper.getProcessedFileHeaders();
+        ProcessedFileRow headerRow = produtoIntegrationMapper.getFileHeaderRows(
+                getProdutoIntegrationSupportData(caracteristicaProduto)).get(0);
 
         Assertions.assertTrue(ProdutoIntegrationMapper.class.isAnnotationPresent(Component.class));
         Assertions.assertFalse(processedFileHeaders.contains("BRAND"));
         Assertions.assertEquals(10, processedFileHeaders.size());
+        Assertions.assertEquals(11, headerRow.getRowSize());
+        Assertions.assertEquals("Brand", headerRow.getColumnValueAsString(10));
         Assertions.assertTrue(processedFileHeaders.stream().anyMatch(
                 header -> header.contains("Operational Model")));
         Assertions.assertThrows(
@@ -182,8 +191,29 @@ public class ProdutoIntegrationMapperCommunityTest {
     private ProdutoIntegrationSupportData getProdutoIntegrationSupportData() {
 
         return ProdutoIntegrationSupportData.builder()
+                .caracteristicaProdutoList(List.of())
                 .unidadeMedidaMap(new HashMap<>())
                 .build();
+
+    }
+
+    private ProdutoIntegrationSupportData getProdutoIntegrationSupportData(
+            CaracteristicaProduto... caracteristicaProdutoArray) {
+
+        return ProdutoIntegrationSupportData.builder()
+                .caracteristicaProdutoList(List.of(caracteristicaProdutoArray))
+                .unidadeMedidaMap(new HashMap<>())
+                .build();
+
+    }
+
+    private CaracteristicaProduto getMaterialCharacteristic(String id, String description) {
+
+        CaracteristicaProduto caracteristicaProduto = new CaracteristicaProduto();
+        caracteristicaProduto.setId(id);
+        caracteristicaProduto.setDescricao(description);
+        caracteristicaProduto.setTipoCaracteristica(Caracteristica.TipoCaracteristica.CATEGORICO);
+        return caracteristicaProduto;
 
     }
 

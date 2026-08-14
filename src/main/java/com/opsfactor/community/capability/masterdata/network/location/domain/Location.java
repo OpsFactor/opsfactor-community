@@ -2,7 +2,9 @@ package com.opsfactor.community.capability.masterdata.network.location.domain;
 
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.configuration.domain.ParametrosProdutoLocation;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaLocation;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaLocationInterface;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.ValorCaracteristicaLocation;
 import com.opsfactor.community.capability.masterdata.organization.economicgroup.domain.EconomicGroup;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.LinhaTransporte;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.LinhaTransporte.LinhaTransporteCompositeKey;
@@ -139,6 +141,19 @@ public class Location extends LocationAbstract implements Serializable, Comparab
     @OneToMany(mappedBy = "parametrosProdutoLocationCompositeKey.location", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @MapKeyJoinColumn(name = "produto_id")
     private Map<Produto, ParametrosProdutoLocation> mapaParametrosProdutoLocation = new HashMap<>();
+
+    /**
+     * Valores das caracteristicas dinamicas cadastradas para esta location.
+     * O mapeamento e equivalente ao agregado legado para permitir round-trip
+     * no mesmo arquivo mestre da location.
+     */
+    @OneToMany(
+            mappedBy = "valorCaracteristicaLocationCompositeKey.location",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
+    @MapKeyJoinColumn(name = "caracteristica_location_id")
+    private Map<CaracteristicaLocation, ValorCaracteristicaLocation> mapaLocationAtributo = new HashMap<>();
 
     /**
      * Cabeçalho do grupo econômico ao qual a location pertence.
@@ -569,14 +584,33 @@ public class Location extends LocationAbstract implements Serializable, Comparab
         }
     }
 
-    /**
-     * Retorna o valor de uma pseudo-caracteristica Community, como ID da
-     * location. Caracteristicas dinamicas reais sao Enterprise e nao possuem
-     * implementacao fisica no modelo Community.
-     * @return
-     */
+    /** Retorna o valor de uma caracteristica real ou sintetica da location. */
     public String getValorCaracteristica(CaracteristicaLocationInterface caracteristicaLocation) {
+
         return caracteristicaLocation.getValorCaracteristicaDeLocation(this);
+
+    }
+
+    /**
+     * Cria ou atualiza o valor de uma caracteristica dentro do aggregate da
+     * location, reproduzindo o comportamento usado pelo Data Upload legado.
+     */
+    public void setValorCaracteristica(
+            CaracteristicaLocation caracteristicaLocation,
+            String valorCaracteristica) {
+
+        ValorCaracteristicaLocation valorCaracteristicaLocation = mapaLocationAtributo.get(caracteristicaLocation);
+        if (valorCaracteristicaLocation == null) {
+            valorCaracteristicaLocation = new ValorCaracteristicaLocation(
+                    new ValorCaracteristicaLocation.ValorCaracteristicaLocationCompositeKey(
+                            this,
+                            caracteristicaLocation),
+                    valorCaracteristica);
+            mapaLocationAtributo.put(caracteristicaLocation, valorCaracteristicaLocation);
+        } else {
+            valorCaracteristicaLocation.setAtributo(valorCaracteristica);
+        }
+
     }
     
     // Métodos ligados ao planejamento de produção ----------------------

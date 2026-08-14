@@ -2,8 +2,9 @@ package com.opsfactor.community.capability.masterdata.product.material.domain;
 
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.configuration.domain.ParametrosProdutoLocation;
-import com.opsfactor.community.capability.transactionaldata.inventory.stock.domain.Estoque;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProduto;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProdutoInterface;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.ValorCaracteristicaProduto;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.LinhaTransporteProduto;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
@@ -14,6 +15,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlanItem;
 import com.opsfactor.community.capability.supplyplanning.distributionplan.domain.DistributionPlanItem;
 import com.opsfactor.community.capability.supplyplanning.inventoryplan.domain.InventoryPlanLinha;
+import com.opsfactor.community.capability.transactionaldata.inventory.stock.domain.Estoque;
 import com.opsfactor.community.platform.utility.Constantes;
 import lombok.*;
 
@@ -29,9 +31,8 @@ import java.util.stream.Collectors;
  * <p>O Community mantem os atributos fisicos e operacionais necessarios para
  * vendas historicas, Demand Planning estatistico, safety stock e Supply
  * Planning heuristico: ciclo de vida, modelo operacional, unidades de medida,
- * parametros por location e relacoes basicas de malha/producao. Custos,
- * precos, caracteristicas dinamicas e regras economicas pertencem ao
- * Enterprise.</p>
+ * parametros por location, caracteristicas cadastrais e relacoes basicas de
+ * malha/producao. Custos, precos e regras economicas pertencem ao Enterprise.</p>
  */
 @ToString(of="id")
 @Getter
@@ -144,6 +145,21 @@ public class Produto implements Serializable, Comparable<Produto> {
     @ManyToOne(fetch = FetchType.LAZY)
     private UnidadeMedida unitPriceUnitOfMeasure;
 
+    /**
+     * Valores das caracteristicas dinamicas cadastradas para este material.
+     *
+     * <p>O mapa preserva o mesmo aggregate e o mesmo contrato do legado: a
+     * caracteristica e a chave da coluna dinamica, enquanto a entidade de
+     * valor continua sendo a dona fisica da chave composta.</p>
+     */
+    @OneToMany(
+            mappedBy = "valorCaracteristicaProdutoCompositeKey.produto",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
+    @MapKeyJoinColumn(name = "caracteristica_produto_id")
+    private Map<CaracteristicaProduto, ValorCaracteristicaProduto> mapaProdutoAtributo = new HashMap<>();
+
     public Produto(String id) {
         this.id = id;
     }
@@ -175,13 +191,33 @@ public class Produto implements Serializable, Comparable<Produto> {
         
     }
 
-    /**
-     * Retorna o valor de uma pseudo-caracteristica Community, como ID do
-     * material. Caracteristicas dinamicas reais sao Enterprise e nao possuem
-     * implementacao fisica no modelo Community.
-     */
+    /** Retorna o valor de uma caracteristica real ou sintetica do material. */
     public String getValorCaracteristica(CaracteristicaProdutoInterface caracteristicaProduto) {
+
         return caracteristicaProduto.getValorCaracteristicaDeProduto(this);
+
+    }
+
+    /**
+     * Cria ou atualiza o valor de uma caracteristica dentro do aggregate do
+     * material, reproduzindo o comportamento usado pelo Data Upload legado.
+     */
+    public void setValorCaracteristica(
+            CaracteristicaProduto caracteristicaProduto,
+            String valorCaracteristica) {
+
+        ValorCaracteristicaProduto valorCaracteristicaProduto = mapaProdutoAtributo.get(caracteristicaProduto);
+        if (valorCaracteristicaProduto == null) {
+            valorCaracteristicaProduto = new ValorCaracteristicaProduto(
+                    new ValorCaracteristicaProduto.ValorCaracteristicaProdutoCompositeKey(
+                            this,
+                            caracteristicaProduto),
+                    valorCaracteristica);
+            mapaProdutoAtributo.put(caracteristicaProduto, valorCaracteristicaProduto);
+        } else {
+            valorCaracteristicaProduto.setAtributo(valorCaracteristica);
+        }
+
     }
 
     public boolean getInativo() {

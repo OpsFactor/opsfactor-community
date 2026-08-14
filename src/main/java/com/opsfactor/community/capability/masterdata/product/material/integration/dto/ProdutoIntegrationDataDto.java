@@ -23,8 +23,9 @@ import java.util.Map;
  * DTO de data upload Community para materiais.
  *
  * <p>O nome fisico ainda acompanha a entidade `Produto`, mas o contrato publico
- * novo deve ser lido como material. Caracteristicas dinamicas ficam no schema
- * compartilhado apenas para bloqueio explicito no mapper Community.</p>
+ * novo deve ser lido como material. Os valores das caracteristicas dinamicas
+ * participam do mesmo contrato mestre; as definicoes continuam em seu
+ * cadastro proprio.</p>
  */
 @SuperBuilder
 @AllArgsConstructor // necessário para que NoArgsConstrutor funcione com @Builder
@@ -64,9 +65,8 @@ public class ProdutoIntegrationDataDto extends IntegrationDataDtoAbstract<Produt
     public String unitCogsUnitOfMeasureId;
 
     /**
-     * Caracteristicas de material sao Enterprise. O campo permanece no DTO
-     * compartilhado para compatibilidade de contrato e para que o mapper
-     * Community consiga rejeitar payloads Enterprise com mensagem explicita.
+     * Valores das caracteristicas cadastradas, indexados pelo id da definicao.
+     * O mesmo mapa sustenta JSON e as colunas dinamicas do arquivo mestre.
      */
     public Map<String,String> valueByCharacteristic = new HashMap<>();
 

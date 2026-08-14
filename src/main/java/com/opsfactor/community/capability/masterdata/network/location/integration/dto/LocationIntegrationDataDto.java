@@ -62,9 +62,8 @@ public class LocationIntegrationDataDto extends IntegrationDataDtoAbstract<Locat
     public Integer orderFulfillmentTimeDays;
 
     /**
-     * Caracteristicas de location sao Enterprise. O campo permanece no DTO
-     * compartilhado para compatibilidade de contrato e para que o mapper
-     * Community consiga rejeitar payloads Enterprise com mensagem explicita.
+     * Valores das caracteristicas cadastradas, indexados pelo id da definicao.
+     * O mesmo mapa sustenta JSON e as colunas dinamicas do arquivo mestre.
      */
     public Map<String,String> valueByCharacteristic = new HashMap<>();
 

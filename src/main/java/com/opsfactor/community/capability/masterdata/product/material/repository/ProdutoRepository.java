@@ -1,6 +1,7 @@
 package com.opsfactor.community.capability.masterdata.product.material.repository;
 
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -30,12 +31,22 @@ public interface ProdutoRepository extends JpaRepository<Produto,String> {
      * O mapper Community usa as tres UOMs operacionais e o overlay Enterprise
      * usa tambem a UOM de COGS.</p>
      */
-    @Query("SELECT p FROM Produto p "
+    @Query("SELECT DISTINCT p FROM Produto p "
+            + "LEFT JOIN FETCH p.mapaProdutoAtributo "
             + "LEFT JOIN FETCH p.unidadeMedidaPadrao "
             + "LEFT JOIN FETCH p.unidadeMedidaVendas "
             + "LEFT JOIN FETCH p.unidadeMedidaTransferencia "
             + "LEFT JOIN FETCH p.unitCogsUnitOfMeasure")
     List<Produto> findAllWithUnitOfMeasures();
+
+    /**
+     * Carrega materiais e valores de caracteristicas para o merge de um lote,
+     * evitando inicializacao lazy material a material durante o upload.
+     */
+    @Query("SELECT DISTINCT p FROM Produto p "
+            + "LEFT JOIN FETCH p.mapaProdutoAtributo "
+            + "WHERE p.id IN :materialIds")
+    List<Produto> findAllByIdWithCharacteristics(Collection<String> materialIds);
 
     // OVERRIDES SAVE E DELETE PARA @CACHEEVICT -------------------------------------------------------------------------------------------
     // limpa caches dependentes em chamadas de saveAll e deleteAll (cacheEvict nao funciona em metodos @Override dos serviços de integração)

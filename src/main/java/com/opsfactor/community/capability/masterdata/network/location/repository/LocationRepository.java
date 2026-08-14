@@ -49,6 +49,22 @@ public interface LocationRepository extends JpaRepository<Location,String> {
             + "WHERE l.id <> '0'")
     List<Location> customFindAllSemDefault();
 
+    /**
+     * Carrega o arquivo mestre de locations com referencias e valores de
+     * caracteristicas em uma consulta batch, sem N+1 no mapper de download.
+     */
+    @Query("SELECT DISTINCT l FROM Location l "
+            + "LEFT JOIN FETCH l.mapaLocationAtributo "
+            + "LEFT JOIN FETCH l.referenceLocationForProductLocationParameters "
+            + "WHERE l.id <> '0'")
+    List<Location> customFindAllSemDefaultWithCharacteristics();
+
+    /** Carrega os valores existentes das locations recebidas para merge. */
+    @Query("SELECT DISTINCT l FROM Location l "
+            + "LEFT JOIN FETCH l.mapaLocationAtributo "
+            + "WHERE l.id IN :locationIds")
+    List<Location> findAllByIdWithCharacteristics(Collection<String> locationIds);
+
     /** Carrega em lote os três to-one de UOM usados pela capacidade logística estática. */
     @Query("SELECT DISTINCT l FROM Location l "
             + "LEFT JOIN FETCH l.unidadeMedidaCapacidadeArmazenagem "

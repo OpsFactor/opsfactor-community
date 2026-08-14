@@ -1,6 +1,8 @@
 package com.opsfactor.community.capability.masterdata.network.location.integration.mapper;
 
 import com.opsfactor.community.capability.masterdata.network.location.integration.dto.LocationIntegrationDataDto;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaLocation;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.ValorCaracteristicaLocation;
 import com.opsfactor.community.platform.integration.mapper.IntegrationMapperInterface;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.network.location.domain.LocationAbstract.TipoLocation;
@@ -14,14 +16,15 @@ import jakarta.annotation.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Mapper Community do cadastro operacional de locations.
  *
  * <p>Locations continuam no Community porque participam de Demand/Supply
  * Planning material/location. Campos ligados a mapa, deployment, visibility,
- * filtros/agregadores e caracteristicas dinamicas sao mantidos fora do arquivo
- * publico e rejeitados quando chegam por JSON.</p>
+ * filtros/agregadores avancados permanecem sujeitos ao recorte de edicao;
+ * valores de caracteristicas cadastrais integram o arquivo mestre.</p>
  */
 @Component
 public class LocationIntegrationMapper implements IntegrationMapperInterface<LocationIntegrationDataDto, LocationIntegrationDataDto.LocationPrimaryKeyIntegrationDTO,Location, LocationIntegrationSupportData> {
@@ -31,7 +34,7 @@ public class LocationIntegrationMapper implements IntegrationMapperInterface<Loc
      *
      * <p>A lista e imutavel porque estes nomes formam contrato publico de
      * arquivo. Coordenadas, UOM de expedicao, prazo de atendimento e
-     * caracteristicas pertencem ao Enterprise.</p>
+     * as caracteristicas cadastradas sao acrescentadas depois dessas colunas.</p>
      */
     public static final List<String> processedFileHeaders = List.of(
         "Location Id",
@@ -83,7 +86,10 @@ public class LocationIntegrationMapper implements IntegrationMapperInterface<Loc
                                 : location.getReferenceLocationForProductLocationParameters().getId())
                 .safetyStockConsiderIndirectDemand(location.getIncluiDemandaIndiretaNoSafetyStockCadastrado())
                 .orderFulfillmentTimeDays(null)
-                .valueByCharacteristic(new HashMap<>())
+                .valueByCharacteristic(location.getMapaLocationAtributo().entrySet().stream()
+                        .collect(Collectors.toMap(
+                                entry -> entry.getKey().getId(),
+                                entry -> entry.getValue().getAtributo())))
                 .build();
         
     }
@@ -215,15 +221,17 @@ public class LocationIntegrationMapper implements IntegrationMapperInterface<Loc
             throw new RequiresEnterpriseVersionException("Location order fulfillment time");
         }
         
-        /*
-         * Caracteristicas de location sao Enterprise porque alimentam filtros,
-         * agregacoes e apresentacoes configuraveis que nao existem no
-         * Community. O DTO compartilhado aceita o campo apenas para que a
-         * borda Community falhe de forma explicita quando receber payload
-         * Enterprise ou arquivo antigo ja convertido para JSON.
-         */
-        if (dto.valueByCharacteristic != null && !dto.valueByCharacteristic.isEmpty()) {
-            throw new RequiresEnterpriseVersionException("Location characteristics");
+        Map<String, String> valorPorCaracteristica = dto.valueByCharacteristic == null
+                ? Map.of()
+                : dto.valueByCharacteristic;
+        for (CaracteristicaLocation caracteristicaLocation : supportData.getCaracteristicaLocationList()) {
+            if (isUpdateableField(caracteristicaLocation.getId(), camposASobrecrever)
+                    && valorPorCaracteristica.containsKey(caracteristicaLocation.getId())) {
+                String valorCaracteristica = valorPorCaracteristica.get(caracteristicaLocation.getId());
+                location.setValorCaracteristica(
+                        caracteristicaLocation,
+                        valorCaracteristica == null ? "" : valorCaracteristica);
+            }
         }
                 
     }
@@ -248,15 +256,23 @@ public class LocationIntegrationMapper implements IntegrationMapperInterface<Loc
         linhaArquivo.addContent(entity.getConsideraRestricaoProducaoCadastrado());
         linhaArquivo.addContent((entity.getUnidadeMedidaSnpCadastrado() == null) ? null : entity.getUnidadeMedidaSnpCadastrado().getId());
         linhaArquivo.addContent(entity.getIncluiDemandaIndiretaNoSafetyStockCadastrado());
+
+        for (CaracteristicaLocation caracteristicaLocation : supportData.getCaracteristicaLocationList()) {
+            ValorCaracteristicaLocation valorCaracteristicaLocation =
+                    entity.getMapaLocationAtributo().get(caracteristicaLocation);
+            linhaArquivo.addContent(
+                    valorCaracteristicaLocation == null
+                            ? ""
+                            : valorCaracteristicaLocation.getAtributo());
+        }
         
         return linhaArquivo;
 
     }
 
     /**
-     * Implementacao customizada para manter apenas as colunas Community de
-     * location. Caracteristicas dinamicas sao Enterprise e, portanto, nao
-     * aparecem no template nem no arquivo processado do Community.
+     * Acrescenta as caracteristicas de location como colunas dinamicas a
+     * direita do layout fixo.
      *
      * @param supportData
      * @return
@@ -269,6 +285,10 @@ public class LocationIntegrationMapper implements IntegrationMapperInterface<Loc
         // adiciona colunas-base ao header
         for (String nomeHeader : getProcessedFileHeaders()) {
             processedFileRow.addContent(nomeHeader);
+        }
+
+        for (CaracteristicaLocation caracteristicaLocation : supportData.getCaracteristicaLocationList()) {
+            processedFileRow.addContent(caracteristicaLocation.getDescricao());
         }
         
         // retorna lista de 1 só elemento (apenas 1 linha cabeçalho)
@@ -293,6 +313,21 @@ public class LocationIntegrationMapper implements IntegrationMapperInterface<Loc
                 .defaultSNPUomId(processedFileRow.getColumnValueAsString(11))
                 .safetyStockConsiderIndirectDemand(processedFileRow.getColumnValueAsBoolean(12))
                 .build();
+
+        if (!supportData.getCaracteristicaLocationList().isEmpty()) {
+            dto.valueByCharacteristic = new HashMap<>();
+            int primeiraColunaCaracteristica = getProcessedFileHeaders().size();
+            for (int indiceCaracteristica = 0;
+                 indiceCaracteristica < supportData.getCaracteristicaLocationList().size();
+                 indiceCaracteristica++) {
+                CaracteristicaLocation caracteristicaLocation =
+                        supportData.getCaracteristicaLocationList().get(indiceCaracteristica);
+                dto.valueByCharacteristic.put(
+                        caracteristicaLocation.getId(),
+                        processedFileRow.getColumnValueAsString(
+                                primeiraColunaCaracteristica + indiceCaracteristica));
+            }
+        }
 
         return dto;
         

@@ -1,153 +1,105 @@
 package com.opsfactor.community.capability.masterdata.classification.characteristic.integration.mapper;
 
-import com.opsfactor.community.capability.masterdata.network.location.integration.dto.LocationIntegrationDataDto;
-import com.opsfactor.community.capability.masterdata.product.material.integration.dto.ProdutoIntegrationDataDto;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.Caracteristica;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaLocation;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProduto;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
-import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
+import com.opsfactor.community.capability.masterdata.network.location.integration.dto.LocationIntegrationDataDto;
 import com.opsfactor.community.capability.masterdata.network.location.integration.mapper.LocationIntegrationMapper;
 import com.opsfactor.community.capability.masterdata.network.location.integration.mapper.LocationIntegrationSupportData;
+import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
+import com.opsfactor.community.capability.masterdata.product.material.integration.dto.ProdutoIntegrationDataDto;
 import com.opsfactor.community.capability.masterdata.product.material.integration.mapper.ProdutoIntegrationMapper;
 import com.opsfactor.community.capability.masterdata.product.material.integration.mapper.ProdutoIntegrationSupportData;
-import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
- * Valida o contrato Community para caracteristicas de material/location nos
- * uploads de master data. Caracteristicas sao Enterprise: o template e a
- * leitura de arquivo nao carregam colunas dinamicas, e payload JSON preenchido
- * deve falhar explicitamente.
+ * Protege o round-trip dos valores de caracteristicas dentro dos arquivos
+ * mestres Community, mantendo o cadastro das definicoes em fluxo separado.
  */
 public class MasterdataIntegrationCharacteristicOverrideTest {
 
     @Test
-    public void produtoIntegrationShouldRejectCharacteristicPayloadCommunity() {
+    public void materialMasterFileShouldRoundTripDynamicCharacteristicValues() {
 
-        ProdutoIntegrationMapper produtoIntegrationMapper = new ProdutoIntegrationMapper();
-        Produto produto = new Produto("PRODUTO_TESTE");
-        ProdutoIntegrationDataDto produtoIntegrationDataDto = ProdutoIntegrationDataDto.builder().build();
-        produtoIntegrationDataDto.valueByCharacteristic = new HashMap<>();
-        produtoIntegrationDataDto.valueByCharacteristic.put("COR", "VERDE");
-
+        CaracteristicaProduto materialCharacteristic = getMaterialCharacteristic();
         ProdutoIntegrationSupportData supportData = ProdutoIntegrationSupportData.builder()
+                .caracteristicaProdutoList(List.of(materialCharacteristic))
                 .unidadeMedidaMap(new HashMap<>())
                 .build();
+        ProdutoIntegrationMapper mapper = new ProdutoIntegrationMapper();
+        Produto sourceMaterial = new Produto("MATERIAL_TEST");
+        sourceMaterial.setValorCaracteristica(materialCharacteristic, "GREEN");
 
-        Assertions.assertThrows(
-                RequiresEnterpriseVersionException.class,
-                () -> produtoIntegrationMapper.updateEntityNonPrimaryFieldsFromDTO(
-                        produto,
-                        produtoIntegrationDataDto,
-                        supportData,
-                        null));
-
-    }
-
-    @Test
-    public void locationIntegrationShouldRejectCharacteristicPayloadCommunity() {
-
-        LocationIntegrationMapper locationIntegrationMapper = new LocationIntegrationMapper();
-        Location location = new Location("LOC_TESTE");
-        LocationIntegrationDataDto locationIntegrationDataDto = LocationIntegrationDataDto.builder().build();
-        locationIntegrationDataDto.valueByCharacteristic = new HashMap<>();
-        locationIntegrationDataDto.valueByCharacteristic.put("CANAL", "DIRETO");
-
-        LocationIntegrationSupportData supportData = LocationIntegrationSupportData.builder()
-                .unidadeMedidaMap(new HashMap<>())
-                .build();
-
-        Assertions.assertThrows(
-                RequiresEnterpriseVersionException.class,
-                () -> locationIntegrationMapper.updateEntityNonPrimaryFieldsFromDTO(
-                        location,
-                        locationIntegrationDataDto,
-                        supportData,
-                        null));
-
-    }
-
-    @Test
-    public void produtoProcessedFileShouldIgnoreLegacyCharacteristicColumnsCommunity() {
-
-        ProdutoIntegrationMapper produtoIntegrationMapper = new ProdutoIntegrationMapper();
-        ProdutoIntegrationSupportData supportData = ProdutoIntegrationSupportData.builder()
-                .unidadeMedidaMap(new HashMap<>())
-                .build();
-        ProcessedFileRow processedFileRow = new ProcessedFileRow();
-
-        /*
-         * As 11 primeiras colunas sao o layout Community atual. Colunas extras
-         * simulam arquivo legado/Enterprise com caracteristicas dinamicas; o
-         * mapper Community deve ignora-las e nao reabrir a feature.
-         */
-        processedFileRow.addContent("PRODUTO_TESTE");
-        processedFileRow.addContent("Produto Teste");
-        processedFileRow.addContent(true);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent("VERDE");
-
-        ProdutoIntegrationDataDto produtoIntegrationDataDto = produtoIntegrationMapper.getDtoWithoutPrimaryKeyFromProcessedFileRow(
+        ProcessedFileRow processedFileRow = mapper.convertEntityToProcessedFileRow(
+                sourceMaterial,
+                supportData);
+        ProdutoIntegrationDataDto dto = mapper.getDtoWithoutPrimaryKeyFromProcessedFileRow(
                 processedFileRow,
                 supportData);
+        Produto targetMaterial = new Produto("MATERIAL_TEST");
+        mapper.updateEntityNonPrimaryFieldsFromDTO(targetMaterial, dto, supportData, null);
 
-        Assertions.assertTrue(isEmptyOrNull(produtoIntegrationDataDto.valueByCharacteristic));
+        Assertions.assertEquals("GREEN", processedFileRow.getColumnValueAsString(10));
+        Assertions.assertEquals("GREEN", dto.valueByCharacteristic.get("COLOR"));
+        Assertions.assertEquals(
+                "GREEN",
+                targetMaterial.getMapaProdutoAtributo().get(materialCharacteristic).getAtributo());
 
     }
 
     @Test
-    public void locationProcessedFileShouldIgnoreLegacyCharacteristicColumnsCommunity() {
+    public void locationMasterFileShouldRoundTripDynamicCharacteristicValues() {
 
-        LocationIntegrationMapper locationIntegrationMapper = new LocationIntegrationMapper();
+        CaracteristicaLocation locationCharacteristic = getLocationCharacteristic();
         LocationIntegrationSupportData supportData = LocationIntegrationSupportData.builder()
+                .caracteristicaLocationList(List.of(locationCharacteristic))
                 .unidadeMedidaMap(new HashMap<>())
+                .locationMap(new HashMap<>())
                 .build();
-        ProcessedFileRow processedFileRow = new ProcessedFileRow();
+        LocationIntegrationMapper mapper = new LocationIntegrationMapper();
+        Location sourceLocation = new Location("LOCATION_TEST");
+        sourceLocation.setValorCaracteristica(locationCharacteristic, "DIRECT");
 
-        /*
-         * As 16 primeiras colunas sao o layout Community atual. Colunas extras
-         * simulam arquivo legado/Enterprise com caracteristicas dinamicas; o
-         * mapper Community deve ignora-las e manter o DTO sem caracteristicas.
-         */
-        processedFileRow.addContent("LOC_TESTE");
-        processedFileRow.addContent("Location Teste");
-        processedFileRow.addContent(true);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent(null);
-        processedFileRow.addContent("DIRETO");
-
-        LocationIntegrationDataDto locationIntegrationDataDto = locationIntegrationMapper.getDtoWithoutPrimaryKeyFromProcessedFileRow(
+        ProcessedFileRow processedFileRow = mapper.convertEntityToProcessedFileRow(
+                sourceLocation,
+                supportData);
+        LocationIntegrationDataDto dto = mapper.getDtoWithoutPrimaryKeyFromProcessedFileRow(
                 processedFileRow,
                 supportData);
+        Location targetLocation = new Location("LOCATION_TEST");
+        mapper.updateEntityNonPrimaryFieldsFromDTO(targetLocation, dto, supportData, null);
 
-        Assertions.assertTrue(isEmptyOrNull(locationIntegrationDataDto.valueByCharacteristic));
+        Assertions.assertEquals("DIRECT", processedFileRow.getColumnValueAsString(13));
+        Assertions.assertEquals("DIRECT", dto.valueByCharacteristic.get("CHANNEL"));
+        Assertions.assertEquals(
+                "DIRECT",
+                targetLocation.getMapaLocationAtributo().get(locationCharacteristic).getAtributo());
 
     }
 
-    private boolean isEmptyOrNull(Map<String, String> mapaValorPorCaracteristica) {
+    private CaracteristicaProduto getMaterialCharacteristic() {
 
-        return mapaValorPorCaracteristica == null || mapaValorPorCaracteristica.isEmpty();
+        CaracteristicaProduto materialCharacteristic = new CaracteristicaProduto();
+        materialCharacteristic.setId("COLOR");
+        materialCharacteristic.setDescricao("Color");
+        materialCharacteristic.setTipoCaracteristica(Caracteristica.TipoCaracteristica.CATEGORICO);
+        return materialCharacteristic;
+
+    }
+
+    private CaracteristicaLocation getLocationCharacteristic() {
+
+        CaracteristicaLocation locationCharacteristic = new CaracteristicaLocation();
+        locationCharacteristic.setId("CHANNEL");
+        locationCharacteristic.setDescricao("Channel");
+        locationCharacteristic.setTipoCaracteristica(Caracteristica.TipoCaracteristica.CATEGORICO);
+        return locationCharacteristic;
 
     }
 

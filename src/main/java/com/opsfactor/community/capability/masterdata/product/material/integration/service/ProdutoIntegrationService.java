@@ -3,6 +3,8 @@ package com.opsfactor.community.capability.masterdata.product.material.integrati
 import com.opsfactor.community.capability.masterdata.product.material.integration.dto.ProdutoIntegrationDataDto;
 import com.opsfactor.community.capability.masterdata.product.material.integration.mapper.ProdutoIntegrationMapper;
 import com.opsfactor.community.capability.masterdata.product.material.integration.mapper.ProdutoIntegrationSupportData;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProduto;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.repository.CaracteristicaMaterialRepository;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.masterdata.product.material.repository.ProdutoRepository;
@@ -41,6 +43,10 @@ public class ProdutoIntegrationService implements IntegrationServiceInterface<Pr
      */
     @Autowired
     private ProdutoRepository produtoRepository;
+
+    /** Catalogo que define, por id, a ordem deterministica das colunas dinamicas. */
+    @Autowired
+    private CaracteristicaMaterialRepository caracteristicaMaterialRepository;
 
     /**
      * Mapper de integracao responsavel por converter linhas publicas de carga
@@ -89,6 +95,13 @@ public class ProdutoIntegrationService implements IntegrationServiceInterface<Pr
                         unidadeMedidaRepository.findAll(),
                         UnidadeMedida::getId,
                         "Unit of Measure snapshot"))
+                .caracteristicaProdutoList(getMapaPorIdObrigatorio(
+                        caracteristicaMaterialRepository.findAll(),
+                        CaracteristicaProduto::getId,
+                        "Material Characteristic snapshot")
+                        .values().stream()
+                        .sorted(Comparator.comparing(CaracteristicaProduto::getId))
+                        .toList())
                 .build();
     }
 
@@ -105,7 +118,7 @@ public class ProdutoIntegrationService implements IntegrationServiceInterface<Pr
                 .map(dto -> dto.id)
                 .collect(Collectors.toSet());
         
-        return produtoRepository.findAllById(idsInBatch);
+        return produtoRepository.findAllByIdWithCharacteristics(idsInBatch);
     }
 
     @Override

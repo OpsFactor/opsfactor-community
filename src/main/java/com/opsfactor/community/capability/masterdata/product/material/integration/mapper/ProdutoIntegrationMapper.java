@@ -1,6 +1,8 @@
 package com.opsfactor.community.capability.masterdata.product.material.integration.mapper;
 
 import com.opsfactor.community.capability.masterdata.product.material.integration.dto.ProdutoIntegrationDataDto;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProduto;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.ValorCaracteristicaProduto;
 import com.opsfactor.community.platform.integration.mapper.IntegrationMapperInterface;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
@@ -18,13 +20,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Mapper Community do cadastro operacional de materiais.
  *
  * <p>A classe mantem o nome fisico `Produto` porque a entidade legada ainda usa
  * esse conceito, mas o contrato publico novo deve ser lido como material.
- * Caracteristicas dinamicas, filtros e agregadores sao Enterprise.</p>
+ * Caracteristicas dinamicas pertencem ao cadastro mestre Community; filtros e
+ * agregadores avancados continuam sujeitos ao recorte de edicao.</p>
  */
 @Component
 public class ProdutoIntegrationMapper implements IntegrationMapperInterface<ProdutoIntegrationDataDto, ProdutoIntegrationDataDto.ProdutoPrimaryKeyIntegrationDTO,Produto, ProdutoIntegrationSupportData> {
@@ -32,9 +36,8 @@ public class ProdutoIntegrationMapper implements IntegrationMapperInterface<Prod
     /**
      * Headers publicados para upload/download de materiais Community.
      *
-     * <p>A lista e imutavel para impedir que uma carga operacional passe a
-     * expor caracteristicas dinamicas Enterprise sem service/projection
-     * correspondente no Community.</p>
+     * <p>A lista contem apenas as colunas fixas. O cabecalho final acrescenta,
+     * de forma deterministica, as caracteristicas cadastradas no support data.</p>
      */
     public static final List<String> processedFileHeaders = List.of(
         "Id",
@@ -70,7 +73,10 @@ public class ProdutoIntegrationMapper implements IntegrationMapperInterface<Prod
                 .defaultUomId((produto.getUnidadeMedidaPadraoCadastrado() == null) ? null : produto.getUnidadeMedidaPadraoCadastrado().getId())
                 .salesUomId((produto.getUnidadeMedidaVendasCadastrado() == null) ? null : produto.getUnidadeMedidaVendasCadastrado().getId())
                 .transferUomId((produto.getUnidadeMedidaTransferenciaCadastrado() == null) ? null : produto.getUnidadeMedidaTransferenciaCadastrado().getId())
-                .valueByCharacteristic(new HashMap<>())
+                .valueByCharacteristic(produto.getMapaProdutoAtributo().entrySet().stream()
+                        .collect(Collectors.toMap(
+                                entry -> entry.getKey().getId(),
+                                entry -> entry.getValue().getAtributo())))
                 .build();
         
     }
@@ -163,14 +169,21 @@ public class ProdutoIntegrationMapper implements IntegrationMapperInterface<Prod
         }
         
         /*
-         * Caracteristicas de material sao Enterprise porque alimentam filtros,
-         * agregacoes e apresentacoes configuraveis que nao existem no
-         * Community. O DTO compartilhado aceita o campo apenas para que a
-         * borda Community falhe de forma explicita quando receber payload
-         * Enterprise ou arquivo antigo ja convertido para JSON.
+         * Mantem a semantica do legado: chave ausente nao altera o valor;
+         * chave presente com null limpa o valor; chave presente com texto
+         * cria ou atualiza a linha do aggregate.
          */
-        if (dto.valueByCharacteristic != null && !dto.valueByCharacteristic.isEmpty()) {
-            throw new RequiresEnterpriseVersionException("Material characteristics");
+        Map<String, String> valorPorCaracteristica = dto.valueByCharacteristic == null
+                ? Map.of()
+                : dto.valueByCharacteristic;
+        for (CaracteristicaProduto caracteristicaProduto : supportData.getCaracteristicaProdutoList()) {
+            if (isUpdateableField(caracteristicaProduto.getId(), camposASobrecrever)
+                    && valorPorCaracteristica.containsKey(caracteristicaProduto.getId())) {
+                String valorCaracteristica = valorPorCaracteristica.get(caracteristicaProduto.getId());
+                produto.setValorCaracteristica(
+                        caracteristicaProduto,
+                        valorCaracteristica == null ? "" : valorCaracteristica);
+            }
         }
                 
     }
@@ -189,15 +202,23 @@ public class ProdutoIntegrationMapper implements IntegrationMapperInterface<Prod
         linhaArquivo.addContent((entity.getUnidadeMedidaVendasCadastrado() == null) ? null : entity.getUnidadeMedidaVendasCadastrado().getId());
         linhaArquivo.addContent((entity.getUnidadeMedidaTransferenciaCadastrado() == null) ? null : entity.getUnidadeMedidaTransferenciaCadastrado().getId());
         linhaArquivo.addContent(entity.getModeloOperacionalCadastrado());
+
+        for (CaracteristicaProduto caracteristicaProduto : supportData.getCaracteristicaProdutoList()) {
+            ValorCaracteristicaProduto valorCaracteristicaProduto =
+                    entity.getMapaProdutoAtributo().get(caracteristicaProduto);
+            linhaArquivo.addContent(
+                    valorCaracteristicaProduto == null
+                            ? ""
+                            : valorCaracteristicaProduto.getAtributo());
+        }
         
         return linhaArquivo;
 
     }
 
     /**
-     * Implementacao customizada para manter apenas as colunas Community de
-     * material. Caracteristicas dinamicas sao Enterprise e, portanto, nao
-     * aparecem no template nem no arquivo processado do Community.
+     * Implementacao customizada para acrescentar as caracteristicas de
+     * material como colunas dinamicas a direita do layout fixo.
      *
      * @param supportData
      * @return
@@ -210,6 +231,10 @@ public class ProdutoIntegrationMapper implements IntegrationMapperInterface<Prod
         // adiciona colunas-base ao header
         for (String nomeHeader : getProcessedFileHeaders()) {
             processedFileRow.addContent(nomeHeader);
+        }
+
+        for (CaracteristicaProduto caracteristicaProduto : supportData.getCaracteristicaProdutoList()) {
+            processedFileRow.addContent(caracteristicaProduto.getDescricao());
         }
         
         // retorna lista de 1 só elemento (apenas 1 linha cabeçalho)
@@ -247,6 +272,21 @@ public class ProdutoIntegrationMapper implements IntegrationMapperInterface<Prod
                 .salesUomId(salesUomId) 
                 .transferUomId(transferUomId)
                 .build();                
+
+        if (!supportData.getCaracteristicaProdutoList().isEmpty()) {
+            dto.valueByCharacteristic = new HashMap<>();
+            int primeiraColunaCaracteristica = getProcessedFileHeaders().size();
+            for (int indiceCaracteristica = 0;
+                 indiceCaracteristica < supportData.getCaracteristicaProdutoList().size();
+                 indiceCaracteristica++) {
+                CaracteristicaProduto caracteristicaProduto =
+                        supportData.getCaracteristicaProdutoList().get(indiceCaracteristica);
+                dto.valueByCharacteristic.put(
+                        caracteristicaProduto.getId(),
+                        processedFileRow.getColumnValueAsString(
+                                primeiraColunaCaracteristica + indiceCaracteristica));
+            }
+        }
 
         return dto;
         
