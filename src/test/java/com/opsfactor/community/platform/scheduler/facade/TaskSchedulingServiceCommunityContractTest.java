@@ -11,6 +11,7 @@ import com.opsfactor.community.platform.scheduler.exception.TaskSchedulingExcept
 import com.opsfactor.community.platform.scheduler.repository.ScheduledTaskAbstractRepository;
 import com.opsfactor.community.platform.scheduler.repository.ScheduledTaskExecutionRepository;
 import com.opsfactor.community.platform.scheduler.repository.ScheduledTaskImediatoRepository;
+import com.opsfactor.community.platform.scheduler.repository.dto.ScheduledTaskHistoryRowSnapshot;
 import jakarta.annotation.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -94,10 +96,10 @@ public class TaskSchedulingServiceCommunityContractTest {
     }
 
     @Test
-    public void scheduledTaskHistoryRepositoryShouldReturnListWithDistinctFetchJoin() throws Exception {
+    public void scheduledTaskHistoryRepositoryShouldProjectStatusRowsWithoutLob() throws Exception {
 
         Method method = ScheduledTaskAbstractRepository.class.getDeclaredMethod(
-                "customFindAllComDetalhes");
+                "findAllProcessStatusRows");
         Query query = method.getAnnotation(Query.class);
 
         Assertions.assertEquals(
@@ -106,13 +108,22 @@ public class TaskSchedulingServiceCommunityContractTest {
                 "Snapshot de historico do scheduler deve preservar cardinalidade em List.");
         Assertions.assertNotNull(
                 query,
-                "Snapshot de historico do scheduler deve declarar query explicita com fetch join.");
+                "Snapshot de historico do scheduler deve declarar constructor projection explicita.");
         Assertions.assertTrue(
-                query.value().contains("SELECT DISTINCT st FROM ScheduledTaskAbstract st"),
-                "Fetch join de execucoes deve usar DISTINCT para nao duplicar a entidade raiz.");
+                query.value().contains("ScheduledTaskHistoryRowSnapshot"),
+                "Historico deve projetar somente os campos usados pelo Process Status.");
         Assertions.assertTrue(
-                query.value().contains("LEFT JOIN FETCH st.scheduledTaskExecutionSet"),
-                "Snapshot deve carregar execucoes em lote para evitar N+1 no Process Status.");
+                query.value().contains("LEFT JOIN scheduledTask.scheduledTaskExecutionSet execution"),
+                "Projection deve manter tasks sem execucao e evitar N+1.");
+        Assertions.assertFalse(
+                query.value().contains("FETCH") || query.value().contains("mensagemErroStackTrace"),
+                "Process Status nao deve materializar a entidade de execucao nem o stack trace LOB.");
+
+        Transactional transactional = TaskSchedulingService.class
+                .getDeclaredMethod("getTaskSchedulingDTOList")
+                .getAnnotation(Transactional.class);
+        Assertions.assertNotNull(transactional);
+        Assertions.assertTrue(transactional.readOnly());
 
     }
 
@@ -726,7 +737,7 @@ public class TaskSchedulingServiceCommunityContractTest {
         ScheduledTaskAbstractRepository scheduledTaskAbstractRepository =
                 Mockito.mock(ScheduledTaskAbstractRepository.class);
 
-        Mockito.when(scheduledTaskAbstractRepository.customFindAllComDetalhes())
+        Mockito.when(scheduledTaskAbstractRepository.findAllProcessStatusRows())
                 .thenReturn(null);
         ReflectionTestUtils.setField(
                 taskSchedulingService,
@@ -750,8 +761,13 @@ public class TaskSchedulingServiceCommunityContractTest {
         ScheduledTaskAbstractRepository scheduledTaskAbstractRepository =
                 Mockito.mock(ScheduledTaskAbstractRepository.class);
 
-        Mockito.when(scheduledTaskAbstractRepository.customFindAllComDetalhes())
-                .thenReturn(List.of(new ScheduledTaskImediato()));
+        Mockito.when(scheduledTaskAbstractRepository.findAllProcessStatusRows())
+                .thenReturn(List.of(new ScheduledTaskHistoryRowSnapshot(
+                        new ScheduledTaskImediato(),
+                        null,
+                        null,
+                        null,
+                        null)));
         ReflectionTestUtils.setField(
                 taskSchedulingService,
                 "scheduledTaskAbstractRepository",
@@ -768,42 +784,57 @@ public class TaskSchedulingServiceCommunityContractTest {
     }
 
     @Test
-    public void getTaskSchedulingDTOListShouldRejectBrokenHistoryExecution() {
+    public void getTaskSchedulingDTOListShouldPreserveTaskWithoutExecution() {
 
         TaskSchedulingService taskSchedulingService = new TaskSchedulingService();
         ScheduledTaskAbstractRepository scheduledTaskAbstractRepository =
                 Mockito.mock(ScheduledTaskAbstractRepository.class);
         ScheduledTaskImediato scheduledTaskImediato = new ScheduledTaskImediato("Task-1");
-        scheduledTaskImediato.getScheduledTaskExecutionSet().add(new ScheduledTaskExecution());
+        scheduledTaskImediato.setHorarioCriacao(LocalDateTime.of(2026, 8, 19, 10, 0));
 
-        Mockito.when(scheduledTaskAbstractRepository.customFindAllComDetalhes())
-                .thenReturn(List.of(scheduledTaskImediato));
+        Mockito.when(scheduledTaskAbstractRepository.findAllProcessStatusRows())
+                .thenReturn(List.of(new ScheduledTaskHistoryRowSnapshot(
+                        scheduledTaskImediato,
+                        null,
+                        null,
+                        null,
+                        null)));
         ReflectionTestUtils.setField(
                 taskSchedulingService,
                 "scheduledTaskAbstractRepository",
                 scheduledTaskAbstractRepository);
 
-        IllegalStateException illegalStateException = Assertions.assertThrows(
-                IllegalStateException.class,
-                taskSchedulingService::getTaskSchedulingDTOList);
+        List<TaskSchedulingDTO> taskSchedulingDTOList =
+                taskSchedulingService.getTaskSchedulingDTOList();
 
-        Assertions.assertEquals(
-                "Saved scheduled task execution key is required.",
-                illegalStateException.getMessage());
+        Assertions.assertEquals(1, taskSchedulingDTOList.size());
+        Assertions.assertEquals("Task-1", taskSchedulingDTOList.getFirst().getTaskId());
+        Assertions.assertNull(taskSchedulingDTOList.getFirst().getTaskInstance());
 
     }
 
     @Test
-    public void getTaskSchedulingDTOListShouldRejectDuplicatedHistoryTaskIdBeforeDtoBuild() {
+    public void getTaskSchedulingDTOListShouldRejectDuplicatedHistoryExecutionKeyBeforeDtoBuild() {
 
         TaskSchedulingService taskSchedulingService = new TaskSchedulingService();
         ScheduledTaskAbstractRepository scheduledTaskAbstractRepository =
                 Mockito.mock(ScheduledTaskAbstractRepository.class);
 
-        Mockito.when(scheduledTaskAbstractRepository.customFindAllComDetalhes())
+        ScheduledTaskImediato scheduledTaskImediato = new ScheduledTaskImediato("Task-1");
+        Mockito.when(scheduledTaskAbstractRepository.findAllProcessStatusRows())
                 .thenReturn(List.of(
-                        new ScheduledTaskImediato("Task-1"),
-                        new ScheduledTaskImediato("Task-1")));
+                        new ScheduledTaskHistoryRowSnapshot(
+                                scheduledTaskImediato,
+                                1L,
+                                null,
+                                null,
+                                null),
+                        new ScheduledTaskHistoryRowSnapshot(
+                                scheduledTaskImediato,
+                                1L,
+                                null,
+                                null,
+                                null)));
         ReflectionTestUtils.setField(
                 taskSchedulingService,
                 "scheduledTaskAbstractRepository",
@@ -814,7 +845,7 @@ public class TaskSchedulingServiceCommunityContractTest {
                 taskSchedulingService::getTaskSchedulingDTOList);
 
         Assertions.assertEquals(
-                "Scheduled task history snapshot has duplicated task id Task-1.",
+                "Scheduled task history snapshot has duplicated task execution key Task-1#1.",
                 illegalStateException.getMessage());
 
     }

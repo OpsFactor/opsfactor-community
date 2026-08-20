@@ -1,6 +1,7 @@
 package com.opsfactor.community.platform.scheduler.repository;
 
 import com.opsfactor.community.platform.scheduler.domain.ScheduledTaskAbstract;
+import com.opsfactor.community.platform.scheduler.repository.dto.ScheduledTaskHistoryRowSnapshot;
 import com.opsfactor.community.platform.scheduler.repository.dto.ScheduledTaskPayloadPreflightSnapshot;
 import java.util.Collection;
 import java.util.List;
@@ -19,16 +20,22 @@ import org.springframework.stereotype.Repository;
 public interface ScheduledTaskAbstractRepository extends JpaRepository<ScheduledTaskAbstract,String> {
 
     /**
-     * Busca a fotografia de historico tecnico para Process Status.
+     * Busca a fotografia escalar do histórico técnico para Process Status.
      *
-     * <p>O {@code LEFT JOIN FETCH} carrega execucoes em lote e evita N+1 no
-     * service. O {@code DISTINCT} remove duplicidade artificial da entidade
-     * raiz causada pelo fetch join de colecao, sem esconder duplicidade
-     * funcional depois que o resultado chega como {@link List}.</p>
+     * <p>O {@code LEFT JOIN} mantém tasks sem execução e retorna uma linha por
+     * execução em um único round-trip. A constructor projection seleciona
+     * somente a mensagem resumida e exclui fisicamente o stack trace
+     * {@code @Lob}, que não pertence ao contrato da tela.</p>
      */
-    @Query("SELECT DISTINCT st FROM ScheduledTaskAbstract st "
-            + "LEFT JOIN FETCH st.scheduledTaskExecutionSet stes")
-    public List<ScheduledTaskAbstract> customFindAllComDetalhes();
+    @Query("SELECT new com.opsfactor.community.platform.scheduler.repository.dto.ScheduledTaskHistoryRowSnapshot("
+            + "scheduledTask, "
+            + "execution.scheduledTaskExecutionCompositeKey.idExecucao, "
+            + "execution.horarioInicio, "
+            + "execution.horarioFim, "
+            + "execution.mensagemErroResumida) "
+            + "FROM ScheduledTaskAbstract scheduledTask "
+            + "LEFT JOIN scheduledTask.scheduledTaskExecutionSet execution")
+    public List<ScheduledTaskHistoryRowSnapshot> findAllProcessStatusRows();
 
     /**
      * Recupera somente o conjunto ainda operacional para gates de cutover.

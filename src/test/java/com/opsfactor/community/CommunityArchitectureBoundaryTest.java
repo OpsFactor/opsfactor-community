@@ -2575,23 +2575,15 @@ class CommunityArchitectureBoundaryTest {
         List<String> violations = new ArrayList<>();
 
         /*
-         * Process Status monta DTOs a partir de tasks e execucoes carregadas em lote.
-         * O repository deve retornar List para nao deduplicar a fotografia antes da
-         * validation do service, mas manter DISTINCT porque o fetch join da colecao
-         * de execucoes multiplica a entidade raiz no resultado JPA.
+         * Process Status deve preservar uma linha por execucao sem materializar a
+         * entidade de execucao inteira. A constructor projection mantém um único
+         * round-trip, inclui tasks ainda sem execução e exclui o stack trace LOB.
          */
         List<String> sourceLines = Files.readAllLines(repositoryPath, StandardCharsets.UTF_8);
         for (int lineIndex = 0; lineIndex < sourceLines.size(); lineIndex++) {
             String sourceLine = sourceLines.get(lineIndex);
-            if (sourceLine.contains("Set<ScheduledTaskAbstract>")
-                    && sourceLine.contains("customFindAllComDetalhes")) {
-                violations.add(formatViolation(
-                        communityWorkspaceDirectory,
-                        repositoryPath,
-                        lineIndex,
-                        sourceLine));
-            }
-            if (sourceLine.contains("SELECT st FROM ScheduledTaskAbstract st")) {
+            if (sourceLine.contains("findAllProcessStatusRows")
+                    && !sourceLine.contains("List<ScheduledTaskHistoryRowSnapshot>")) {
                 violations.add(formatViolation(
                         communityWorkspaceDirectory,
                         repositoryPath,
@@ -2602,8 +2594,8 @@ class CommunityArchitectureBoundaryTest {
 
         assertTrue(
                 violations.isEmpty(),
-                "ScheduledTaskAbstractRepository.customFindAllComDetalhes() deve retornar List "
-                        + "e usar SELECT DISTINCT no fetch join de execucoes:\n"
+                "ScheduledTaskAbstractRepository.findAllProcessStatusRows() deve retornar List "
+                        + "e projetar escalares sem carregar o stack trace LOB:\n"
                         + String.join("\n", violations));
 
     }

@@ -17,11 +17,13 @@ import com.opsfactor.community.platform.scheduler.facade.dto.TaskSchedulingDTO;
 import com.opsfactor.community.platform.scheduler.exception.TaskSchedulingException;
 import com.opsfactor.community.platform.scheduler.repository.ScheduledTaskAbstractRepository;
 import com.opsfactor.community.platform.scheduler.repository.ScheduledTaskImediatoRepository;
+import com.opsfactor.community.platform.scheduler.repository.dto.ScheduledTaskHistoryRowSnapshot;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -533,62 +535,43 @@ public class TaskSchedulingService {
     }
 
     /**
-     * Lista o historico tecnico de tasks imediatas e suas execucoes.
+     * Lista o histórico técnico de tasks imediatas e suas execuções.
      *
-     * <p>A consulta usa repository com {@code join fetch} para trazer as
-     * execucoes associadas em lote e evitar N+1 ao montar a tela de Process
-     * Status.</p>
+     * <p>A consulta traz uma linha projetada por execução em um único
+     * round-trip, sem materializar o stack trace {@code @Lob}. A fronteira
+     * transacional read-only mantém explícito que o Process Status apenas lê a
+     * fotografia persistida.</p>
      */
+    @Transactional(readOnly = true)
     public List<TaskSchedulingDTO> getTaskSchedulingDTOList() {
 
         List<TaskSchedulingDTO> listaTaskSchedulingDTO = new ArrayList<>();
 
-        Collection<ScheduledTaskAbstract> scheduledTaskList =
-                scheduledTaskAbstractRepository.customFindAllComDetalhes();
-        validaScheduledTaskHistorySnapshotCommunity(scheduledTaskList);
+        List<ScheduledTaskHistoryRowSnapshot> scheduledTaskHistoryRowSnapshotList =
+                scheduledTaskAbstractRepository.findAllProcessStatusRows();
+        validaScheduledTaskHistorySnapshotCommunity(scheduledTaskHistoryRowSnapshotList);
 
-        for (ScheduledTaskAbstract scheduledTask : scheduledTaskList) {
+        for (ScheduledTaskHistoryRowSnapshot scheduledTaskHistoryRowSnapshot
+                : scheduledTaskHistoryRowSnapshotList) {
 
-            if (scheduledTask.getScheduledTaskExecutionSet().isEmpty()) {
+            ScheduledTaskAbstract scheduledTask = scheduledTaskHistoryRowSnapshot.scheduledTask();
+            TaskSchedulingDTO dto = new TaskSchedulingDTO();
 
-                TaskSchedulingDTO dto = new TaskSchedulingDTO();
+            preencheDadosTaskSchedulingPorTipo(dto, scheduledTask);
 
-                preencheDadosTaskSchedulingPorTipo(dto, scheduledTask);
+            dto.setActive(scheduledTask.getAtivo());
+            dto.setDescription(scheduledTask.getDescricao());
+            dto.setProcessType(scheduledTask.getTipoProcesso());
+            dto.setStartTime(scheduledTaskHistoryRowSnapshot.startTime());
+            dto.setEndTime(scheduledTaskHistoryRowSnapshot.endTime());
+            dto.setTaskCreationTime(scheduledTask.getHorarioCriacao());
+            dto.setTimeZone(scheduledTask.getTimeZone());
+            dto.setUserId(scheduledTask.getUserId());
+            dto.setErrorMessage(scheduledTaskHistoryRowSnapshot.errorMessage());
+            dto.setTaskId(scheduledTask.getId());
+            dto.setTaskInstance(scheduledTaskHistoryRowSnapshot.taskInstance());
 
-                dto.setActive(scheduledTask.getAtivo());
-                dto.setDescription(scheduledTask.getDescricao());
-                dto.setProcessType(scheduledTask.getTipoProcesso());
-                dto.setTaskCreationTime(scheduledTask.getHorarioCriacao());
-                dto.setTimeZone(scheduledTask.getTimeZone());
-                dto.setUserId(scheduledTask.getUserId());
-                dto.setTaskId(scheduledTask.getId());
-
-                listaTaskSchedulingDTO.add(dto);
-
-            } else {
-
-                for (ScheduledTaskExecution execution : scheduledTask.getScheduledTaskExecutionSet()) {
-
-                    TaskSchedulingDTO dto = new TaskSchedulingDTO();
-
-                    preencheDadosTaskSchedulingPorTipo(dto, scheduledTask);
-
-                    dto.setActive(scheduledTask.getAtivo());
-                    dto.setDescription(scheduledTask.getDescricao());
-                    dto.setProcessType(scheduledTask.getTipoProcesso());
-                    dto.setStartTime(execution.getHorarioInicio());
-                    dto.setEndTime(execution.getHorarioFim());
-                    dto.setTaskCreationTime(scheduledTask.getHorarioCriacao());
-                    dto.setTimeZone(scheduledTask.getTimeZone());
-                    dto.setUserId(scheduledTask.getUserId());
-                    dto.setErrorMessage(execution.getMensagemErroResumida());
-                    dto.setTaskId(scheduledTask.getId());
-                    dto.setTaskInstance(execution.getIdExecucao());
-
-                    listaTaskSchedulingDTO.add(dto);
-
-                }
-            }
+            listaTaskSchedulingDTO.add(dto);
 
         }
 
@@ -625,44 +608,43 @@ public class TaskSchedulingService {
     /**
      * Valida a fotografia lida para a tela de Process Status.
      *
-     * <p>Lista vazia e ausencia operacional valida. Retorno nulo, task nula ou
-     * execucao com chave incompleta indicam quebra da consulta com detalhes e
-     * devem falhar antes de montar DTOs parcialmente corretos.</p>
+     * <p>Lista vazia é ausência operacional válida. Retorno nulo, linha nula,
+     * task sem identidade ou chave repetida indicam quebra da fotografia e
+     * falham antes da montagem de DTOs parcialmente corretos.</p>
      */
     private void validaScheduledTaskHistorySnapshotCommunity(
-            Collection<ScheduledTaskAbstract> scheduledTaskList) {
+            List<ScheduledTaskHistoryRowSnapshot> scheduledTaskHistoryRowSnapshotList) {
 
-        if (scheduledTaskList == null) {
+        if (scheduledTaskHistoryRowSnapshotList == null) {
             throw new IllegalStateException("Scheduled task history snapshot is required.");
         }
 
-        Set<String> scheduledTaskIds = new HashSet<>();
-        int indiceScheduledTask = 0;
-        for (ScheduledTaskAbstract scheduledTaskAbstract : scheduledTaskList) {
-            if (scheduledTaskAbstract == null) {
+        Set<String> scheduledTaskHistoryKeys = new HashSet<>();
+        int scheduledTaskHistoryRowIndex = 0;
+        for (ScheduledTaskHistoryRowSnapshot scheduledTaskHistoryRowSnapshot
+                : scheduledTaskHistoryRowSnapshotList) {
+            if (scheduledTaskHistoryRowSnapshot == null) {
                 throw new IllegalStateException(
                         "Scheduled task history item at index "
-                                + indiceScheduledTask
+                                + scheduledTaskHistoryRowIndex
                                 + " is required.");
             }
+
+            ScheduledTaskAbstract scheduledTaskAbstract =
+                    scheduledTaskHistoryRowSnapshot.scheduledTask();
             validaScheduledTaskAbstractSalvaCommunity(scheduledTaskAbstract);
-            if (!scheduledTaskIds.add(scheduledTaskAbstract.getId())) {
+
+            String scheduledTaskHistoryKey = scheduledTaskAbstract.getId()
+                    + "#"
+                    + Objects.toString(scheduledTaskHistoryRowSnapshot.taskInstance(), "scheduled");
+            if (!scheduledTaskHistoryKeys.add(scheduledTaskHistoryKey)) {
                 throw new IllegalStateException(
-                        "Scheduled task history snapshot has duplicated task id "
-                                + scheduledTaskAbstract.getId()
+                        "Scheduled task history snapshot has duplicated task execution key "
+                                + scheduledTaskHistoryKey
                                 + ".");
             }
-            if (scheduledTaskAbstract.getScheduledTaskExecutionSet() == null) {
-                throw new IllegalStateException(
-                        "Scheduled task history execution set at index "
-                                + indiceScheduledTask
-                                + " is required.");
-            }
-            for (ScheduledTaskExecution scheduledTaskExecution
-                    : scheduledTaskAbstract.getScheduledTaskExecutionSet()) {
-                validaScheduledTaskExecutionSalvaCommunity(scheduledTaskExecution);
-            }
-            indiceScheduledTask++;
+
+            scheduledTaskHistoryRowIndex++;
         }
 
     }
@@ -706,20 +688,6 @@ public class TaskSchedulingService {
             ScheduledTaskAbstract scheduledTaskAbstract) {
 
         ScheduledTaskPersistenceService.validatePersistedTask(scheduledTaskAbstract);
-
-    }
-
-    /**
-     * Valida o snapshot salvo de uma execucao de task.
-     *
-     * <p>A chave composta precisa voltar completa porque a tela de Process
-     * Status ordena e detalha historico por task/idExecucao. Snapshot quebrado
-     * aqui indica falha de repository/mapping, nao ausencia operacional.</p>
-     */
-    private void validaScheduledTaskExecutionSalvaCommunity(
-            ScheduledTaskExecution scheduledTaskExecution) {
-
-        ScheduledTaskPersistenceService.validatePersistedExecution(scheduledTaskExecution);
 
     }
 
