@@ -958,8 +958,16 @@ public class PerfilExecucaoSupplyPlan implements Serializable, Cloneable {
 
     }
 
+    /**
+     * Indica se a demanda das locations cliente deve ser consolidada na sua
+     * origem de propagacao. Perfis sem valor persistido mantem a demanda nas
+     * locations cliente, para que a consolidacao seja sempre uma escolha
+     * explicita do usuario.
+     */
     public boolean getLocationsClienteApenasPropagamDemanda() {
-        return (locationsClienteApenasPropagamDemanda == null) ? true : locationsClienteApenasPropagamDemanda;
+
+        return Boolean.TRUE.equals(locationsClienteApenasPropagamDemanda);
+
     }
 
     public ModoPropagacaoDemanda getModoPropagacaoDemanda() {

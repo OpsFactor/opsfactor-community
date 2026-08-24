@@ -23,6 +23,15 @@ import org.junit.jupiter.api.Test;
 class PerfilExecucaoSupplyPlanCommunityContractTest {
 
     @Test
+    void clientDemandConsolidationShouldDefaultToFalseWhenUnset() {
+
+        PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan = new PerfilExecucaoSupplyPlan();
+
+        Assertions.assertFalse(perfilExecucaoSupplyPlan.getLocationsClienteApenasPropagamDemanda());
+
+    }
+
+    @Test
     void getModoExecucaoShouldDefaultToHeuristicWhenUnset() {
 
         PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan = new PerfilExecucaoSupplyPlan();
