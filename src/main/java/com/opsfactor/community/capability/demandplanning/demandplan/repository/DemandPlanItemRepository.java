@@ -88,6 +88,25 @@ public interface DemandPlanItemRepository extends JpaRepository<DemandPlanItem,D
             LocalDateTime dataReferenciaFinal);
 
     /**
+     * Carrega somente os fechamentos de período explicitamente escolhidos na
+     * tela de Sales/Demand Overview. O predicado por lista preserva seleções
+     * não contíguas sem ampliar a leitura para os meses intermediários.
+     */
+    @Query("SELECT dpl FROM DemandPlanItem dpl " +
+            "INNER JOIN FETCH dpl.key.demandPlan dp " +
+            "INNER JOIN FETCH dpl.key.location loc " +
+            "INNER JOIN FETCH dpl.key.produto p " +
+            "WHERE loc IN :locationCollection " +
+            "AND dp.id = :demandPlanId " +
+            "AND p IN :produtoCollection " +
+            "AND dpl.key.dataReferencia IN :dataReferenciaCollection")
+    List<DemandPlanItem> customFindByDemandPlanItemKeyDemandPlanIdAndDemandPlanItemKeyLocationInAndDemandPlanItemKeyProdutoInAndDemandPlanItemKeyDataReferenciaIn(
+            Long demandPlanId,
+            Collection<Location> locationCollection,
+            Collection<Produto> produtoCollection,
+            Collection<LocalDateTime> dataReferenciaCollection);
+
+    /**
      * Carrega a fotografia completa das linhas standard de um Demand Plan para
      * uma exportação detalhada. As dimensões e a UOM seguem fetchadas em um
      * único batch para que consumidores Enterprise não inicializem relações

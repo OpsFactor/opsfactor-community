@@ -499,6 +499,40 @@ public class DemandPlanProjectionFactory {
         return demandPlanningProjection;
     }
 
+    /**
+     * Monta a projection lendo somente os períodos explicitamente selecionados.
+     *
+     * <p>Diferente de uma faixa, esta variante preserva uma seleção esparsa de
+     * períodos e não materializa os períodos intermediários no banco.</p>
+     */
+    public DemandPlanningProjection getDemandPlanningProjectionCompletoComDadosNasDatas(
+            DemandPlan demandPlan,
+            FiltroDFUProjection dfuProjection,
+            Collection<LocalDateTime> dataReferenciaCollection,
+            boolean efetuaCatchUpVendas) {
+
+        if (dataReferenciaCollection == null || dataReferenciaCollection.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Demand Plan projection selected-period snapshot requires reference dates.");
+        }
+
+        DemandPlanningProjection demandPlanningProjection = getDemandPlanningProjectionVazio(
+                demandPlan,
+                dfuProjection,
+                unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache(),
+                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache(),
+                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjectionDeCache(
+                        demandPlan.getPerfilExecucaoDemandPlan()),
+                efetuaCatchUpVendas);
+
+        populaDemandPlanningProjectionComDemandPlanNasDatas(
+                demandPlanningProjection,
+                dataReferenciaCollection);
+
+        return demandPlanningProjection;
+
+    }
+
     public DemandPlanningProjection getDemandPlanningProjectionCompleto(
             DemandPlan demandPlan, Location location, Set<Produto> materiais,
             UnidadeMedidaProjection unidadeMedidaProjection,
@@ -693,6 +727,39 @@ public class DemandPlanProjectionFactory {
                 .collect(Collectors.toList());
 
         populaDemandPlanningProjectionComDemandPlanItems(demandPlanningProjection, demandPlanItems);
+    }
+
+    /** Popula a projection somente com os fechamentos de período selecionados. */
+    public void populaDemandPlanningProjectionComDemandPlanNasDatas(
+            DemandPlanningProjection demandPlanningProjection,
+            Collection<LocalDateTime> dataReferenciaCollection) {
+
+        validaDemandPlanningProjectionParaRepository(
+                demandPlanningProjection,
+                "Demand Plan projection selected-period line snapshot");
+        if (dataReferenciaCollection == null || dataReferenciaCollection.isEmpty()
+                || dataReferenciaCollection.stream().anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException(
+                    "Demand Plan projection selected-period line snapshot requires non-null reference dates.");
+        }
+
+        FiltroDFUProjection dfuProjection = demandPlanningProjection.getFiltroDfuProjection();
+        Collection<DemandPlanItem> demandPlanItems = validaDemandPlanItemRepositoryResult(
+                demandPlanItemRepository
+                        .customFindByDemandPlanItemKeyDemandPlanIdAndDemandPlanItemKeyLocationInAndDemandPlanItemKeyProdutoInAndDemandPlanItemKeyDataReferenciaIn(
+                                demandPlanningProjection.getDemandPlan().getId(),
+                                dfuProjection.getLocations(),
+                                dfuProjection.getMateriais(),
+                                dataReferenciaCollection),
+                "Demand Plan projection selected-period line snapshot")
+                .stream()
+                .filter(demandPlanItem -> dfuProjection.contemCombinacaoLocationMaterial(
+                        demandPlanItem.getLocation(),
+                        demandPlanItem.getProduto()))
+                .collect(Collectors.toList());
+
+        populaDemandPlanningProjectionComDemandPlanItems(demandPlanningProjection, demandPlanItems);
+
     }
 
     public void populaDemandPlanningProjectionComHistoricoDemandPlan(DemandPlanningProjection demandPlanningProjection) {

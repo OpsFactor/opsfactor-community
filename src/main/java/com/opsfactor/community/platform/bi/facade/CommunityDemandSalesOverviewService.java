@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -100,12 +101,24 @@ public class CommunityDemandSalesOverviewService {
         FiltroDFUProjection dfuProjection = getActiveDfuProjection(
                 selectionDTO,
                 clusterAndParametersProjection);
+        Set<LocalDateTime> selectedDemandPlanPeriodEndDates =
+                getSelectedDemandPlanPeriodEndDates(
+                        selectionDTO,
+                        demandPlan,
+                        clusterAndParametersProjection);
         DemandPlanningProjection demandPlanningProjection = demandPlan == null
                 ? null
-                : demandPlanProjectionFactory.getDemandPlanningProjectionCompleto(
-                        demandPlan,
-                        dfuProjection,
-                        false);
+                : selectedDemandPlanPeriodEndDates.isEmpty()
+                        ? demandPlanProjectionFactory.getDemandPlanningProjectionCompleto(
+                                demandPlan,
+                                dfuProjection,
+                                false)
+                        : demandPlanProjectionFactory
+                                .getDemandPlanningProjectionCompletoComDadosNasDatas(
+                                        demandPlan,
+                                        dfuProjection,
+                                        selectedDemandPlanPeriodEndDates,
+                                        false);
         Calendario demandPlanCalendar = demandPlanningProjection == null
                 ? null
                 : demandPlanningProjection.getCalendario();
@@ -350,9 +363,59 @@ public class CommunityDemandSalesOverviewService {
         return Calendario.criaCalendarioPeriodosFuturosDeDatas(
                 demandPlanCalendar.getTamanhoBucket(),
                 historicalStart,
-                Calendario.getMaxDataHorario(
-                        demandPlanCalendar.getDataHorarioFinal(),
-                        LocalDateTime.now()));
+                demandPlanCalendar.getDataHorarioFinal());
+
+    }
+
+    /**
+     * Converte as datas iniciais publicadas pelo seletor nos fechamentos que
+     * compõem a chave física de DemandPlanItem.
+     *
+     * <p>Sem seleção temporal, o conjunto vazio preserva a leitura integral.
+     * Com plano ausente, qualquer período recebido é inválido porque não há
+     * horizonte ao qual a seleção possa pertencer.</p>
+     */
+    private Set<LocalDateTime> getSelectedDemandPlanPeriodEndDates(
+            CommunityDemandSalesOverviewSelectionDTO selectionDTO,
+            DemandPlan demandPlan,
+            ClusterEParametrosProjection clusterAndParametersProjection) {
+
+        List<LocalDateTime> selectedReferenceDates =
+                selectionDTO.demandPlanPeriodReferenceDates();
+        if (selectedReferenceDates == null || selectedReferenceDates.isEmpty()) {
+            return Set.of();
+        }
+        if (demandPlan == null) {
+            throw new IllegalArgumentException(
+                    "Demand Plan periods can only be selected when a Demand Plan is selected.");
+        }
+        if (selectedReferenceDates.stream().anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException(
+                    "Demand Plan selected periods must not contain null reference dates.");
+        }
+
+        Calendario demandPlanHorizon = demandPlan.getCalendarioDoDemandPlanSemHistorico(
+                clusterAndParametersProjection);
+        Map<LocalDateTime, LocalDateTime> periodEndDateByStartDate = new HashMap<>();
+        for (int period = demandPlanHorizon.getPosicaoPeriodoPresente();
+             period <= demandPlanHorizon.getPosicaoPeriodoFinalFuturo();
+             period++) {
+            periodEndDateByStartDate.put(
+                    demandPlanHorizon.getPrimeiraDataHorarioPeriodo(period),
+                    demandPlanHorizon.getUltimoSegundoPeriodo(period));
+        }
+
+        Set<LocalDateTime> selectedPeriodEndDates = new HashSet<>();
+        for (LocalDateTime selectedReferenceDate : selectedReferenceDates) {
+            LocalDateTime periodEndDate = periodEndDateByStartDate.get(selectedReferenceDate);
+            if (periodEndDate == null) {
+                throw new IllegalArgumentException(
+                        "Demand Plan selected period does not belong to the selected Demand Plan: "
+                                + selectedReferenceDate + ".");
+            }
+            selectedPeriodEndDates.add(periodEndDate);
+        }
+        return Set.copyOf(selectedPeriodEndDates);
 
     }
 

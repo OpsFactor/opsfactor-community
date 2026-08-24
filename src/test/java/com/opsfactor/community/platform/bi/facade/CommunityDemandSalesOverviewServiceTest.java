@@ -31,6 +31,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -124,14 +125,28 @@ class CommunityDemandSalesOverviewServiceTest {
         Mockito.when(clusterFactory.getParametrosProjectionCompletoDeCache()).thenReturn(clusterProjection);
         Mockito.when(unitOfMeasureProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache())
                 .thenReturn(unitOfMeasureProjection);
-        Mockito.when(demandPlanProjectionFactory.getDemandPlanningProjectionCompleto(
-                eq(demandPlan), any(), eq(false))).thenReturn(demandPlanningProjection);
+        Mockito.when(demandPlan.getCalendarioDoDemandPlanSemHistorico(clusterProjection))
+                .thenReturn(Calendario.criaCalendarioDeDatas(
+                        Constantes.TamanhoBucket.MENSAL,
+                        LocalDateTime.of(2026, 1, 1, 0, 0),
+                        LocalDateTime.of(2026, 1, 1, 0, 0),
+                        LocalDateTime.of(2027, 1, 31, 23, 59, 59)));
+        Mockito.when(demandPlanProjectionFactory.getDemandPlanningProjectionCompletoComDadosNasDatas(
+                eq(demandPlan), any(), any(), eq(false))).thenReturn(demandPlanningProjection);
         Mockito.when(salesProjectionFactory.getSalesProjectionLocationMaterialData(
                 any(), any(), any(), any(), eq(unitOfMeasureProjection), eq(clusterProjection), any()))
                 .thenReturn(salesProjection);
         CommunityDemandSalesOverviewDTO result = service.getDemandSalesOverview(
                 new CommunityDemandSalesOverviewSelectionDTO(
-                        10L, null, "PC", 2, List.of(), List.of(), Map.of(), Map.of()));
+                        10L,
+                        null,
+                        "PC",
+                        2,
+                        List.of(LocalDateTime.of(2026, 2, 1, 0, 0)),
+                        List.of(),
+                        List.of(),
+                        Map.of(),
+                        Map.of()));
 
         Assertions.assertEquals(2, result.data().size());
         Assertions.assertEquals(12.0d, result.data().getFirst().historicalSales());
@@ -140,9 +155,17 @@ class CommunityDemandSalesOverviewServiceTest {
         Assertions.assertEquals("South", result.data().getFirst().valuesByLocationCharacteristicId().get("CUSTOMER_REGION"));
         ArgumentCaptor<FiltroDFUProjection> dfuCaptor =
                 ArgumentCaptor.forClass(FiltroDFUProjection.class);
-        Mockito.verify(demandPlanProjectionFactory).getDemandPlanningProjectionCompleto(
-                eq(demandPlan), dfuCaptor.capture(), eq(false));
+        ArgumentCaptor<Collection<LocalDateTime>> selectedPeriodCaptor =
+                ArgumentCaptor.forClass(Collection.class);
+        Mockito.verify(demandPlanProjectionFactory).getDemandPlanningProjectionCompletoComDadosNasDatas(
+                eq(demandPlan),
+                dfuCaptor.capture(),
+                selectedPeriodCaptor.capture(),
+                eq(false));
         Assertions.assertEquals(1, dfuCaptor.getValue().getDFUs().size());
+        Assertions.assertEquals(
+                Set.of(LocalDateTime.of(2026, 2, 28, 23, 59, 59)),
+                Set.copyOf(selectedPeriodCaptor.getValue()));
         Mockito.verify(demandPlanningProjection).getValorDemandPlanItem(
                 demandPlanItem,
                 Constantes.TipoDemanda.TOTAL,

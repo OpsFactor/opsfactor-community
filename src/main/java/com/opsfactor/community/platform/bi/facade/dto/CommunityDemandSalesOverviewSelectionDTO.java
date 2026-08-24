@@ -2,6 +2,7 @@ package com.opsfactor.community.platform.bi.facade.dto;
 
 import com.opsfactor.community.platform.utility.Constantes;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -20,8 +21,36 @@ public record CommunityDemandSalesOverviewSelectionDTO(
         Constantes.TipoDocumentoVenda historicalSalesDocumentType,
         String unitOfMeasureId,
         Integer historicalPeriods,
+        List<LocalDateTime> demandPlanPeriodReferenceDates,
         List<String> materialIds,
         List<String> locationIds,
         Map<String, List<String>> valuesByMaterialCharacteristicId,
         Map<String, List<String>> valuesByLocationCharacteristicId) {
+
+    /**
+     * Preserva o contrato anterior para consumidores que ainda não enviam o
+     * filtro temporal. Uma lista vazia significa todo o horizonte do plano.
+     */
+    public CommunityDemandSalesOverviewSelectionDTO(
+            Long demandPlanId,
+            Constantes.TipoDocumentoVenda historicalSalesDocumentType,
+            String unitOfMeasureId,
+            Integer historicalPeriods,
+            List<String> materialIds,
+            List<String> locationIds,
+            Map<String, List<String>> valuesByMaterialCharacteristicId,
+            Map<String, List<String>> valuesByLocationCharacteristicId) {
+
+        this(
+                demandPlanId,
+                historicalSalesDocumentType,
+                unitOfMeasureId,
+                historicalPeriods,
+                List.of(),
+                materialIds,
+                locationIds,
+                valuesByMaterialCharacteristicId,
+                valuesByLocationCharacteristicId);
+
+    }
 }
