@@ -1,6 +1,7 @@
 package com.opsfactor.community.platform.scheduler.facade;
 
 import com.opsfactor.community.web.dto.controller.ResponseDTO;
+import com.opsfactor.community.web.dto.controller.ProcessExecutionOutcome;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.configuration.service.ParametrosGlobaisService;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
@@ -237,11 +238,20 @@ public class WebControllerTaskSchedulingServiceTest {
                 "Demand Planning executed successfully",
                 syncResponseEntity.getBody().getMessage());
         Assertions.assertEquals(
+                ProcessExecutionOutcome.COMPLETED,
+                syncResponseEntity.getBody().getProcessExecutionOutcome());
+        Assertions.assertEquals(
                 "Demand Planning executing in background. The process status can be followed in Processes -> Process Status",
                 asyncResponseEntity.getBody().getMessage());
         Assertions.assertEquals(
                 asyncResponseEntity.getBody().getMessage(),
                 batchResponseEntity.getBody().getMessage());
+        Assertions.assertEquals(
+                ProcessExecutionOutcome.ACCEPTED_FOR_BACKGROUND_PROCESSING,
+                asyncResponseEntity.getBody().getProcessExecutionOutcome());
+        Assertions.assertEquals(
+                asyncResponseEntity.getBody().getProcessExecutionOutcome(),
+                batchResponseEntity.getBody().getProcessExecutionOutcome());
 
     }
 
@@ -276,6 +286,9 @@ public class WebControllerTaskSchedulingServiceTest {
                 "SaveStock");
 
         Assertions.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        Assertions.assertEquals(
+                ProcessExecutionOutcome.COMPLETED,
+                responseEntity.getBody().getProcessExecutionOutcome());
         Mockito.verify(authenticationService).getAuthenticatedUserId();
         Mockito.verify(taskSchedulingService).criaSalvaEExecutaScheduledTaskImediatoSincronoComSupplier(
                 Mockito.any(),

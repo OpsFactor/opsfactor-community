@@ -2,6 +2,7 @@ package com.opsfactor.community.platform.scheduler.facade;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.opsfactor.community.web.dto.controller.ResponseDTO;
+import com.opsfactor.community.web.dto.controller.ProcessExecutionOutcome;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.configuration.service.ParametrosGlobaisService;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
@@ -149,13 +150,17 @@ public class WebControllerTaskSchedulingService {
             ModoExecucaoProcesso modoExecucaoProcesso) {
 
         if (ModoExecucaoProcesso.SYNC.equals(modoExecucaoProcesso)) {
-            return ResponseDTO.getResponseEntity(tipoProcesso + " executed successfully", HttpStatus.OK);
+            return ResponseDTO.getProcessExecutionResponseEntity(
+                    tipoProcesso + " executed successfully",
+                    HttpStatus.OK,
+                    ProcessExecutionOutcome.COMPLETED);
         }
 
-        return ResponseDTO.getResponseEntity(
+        return ResponseDTO.getProcessExecutionResponseEntity(
                 tipoProcesso
                         + " executing in background. The process status can be followed in Processes -> Process Status",
-                HttpStatus.OK);
+                HttpStatus.OK,
+                ProcessExecutionOutcome.ACCEPTED_FOR_BACKGROUND_PROCESSING);
 
     }
 
@@ -204,7 +209,10 @@ public class WebControllerTaskSchedulingService {
             String timeZone = parametrosGlobaisService.getParametrosGlobais().getTimeZone();
             String mensagemOutput = taskSchedulingService.criaSalvaEExecutaScheduledTaskImediatoSincronoComSupplier(
                     supplierExecucaoIntegracao, nomeMetodoIntegracao, username, null, timeZone);
-            return ResponseDTO.getResponseEntity(mensagemOutput, HttpStatus.OK);
+            return ResponseDTO.getProcessExecutionResponseEntity(
+                    mensagemOutput,
+                    HttpStatus.OK,
+                    ProcessExecutionOutcome.COMPLETED);
         } catch (RuntimeException e) {
             // Supplier sync nao declara checked exception; qualquer falha aqui
             // ja foi convertida pelo scheduler em historico de Process Status.
