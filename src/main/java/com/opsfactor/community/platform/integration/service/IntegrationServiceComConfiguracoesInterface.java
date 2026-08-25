@@ -48,6 +48,23 @@ public interface IntegrationServiceComConfiguracoesInterface<
     public List<ENTITY> saveEntityList(Collection<ENTITY> entityList);
 
     /**
+     * Persiste um batch preservando quais entidades foram criadas pelo mapper
+     * neste upload, em vez de apenas atualizadas a partir do snapshot carregado.
+     *
+     * <p>A implementação padrão mantém a compatibilidade dos services existentes.
+     * Services com chave atribuída precisam sobrescrever este ponto para usar
+     * {@code persist} nas entidades novas, pois {@code CrudRepository.saveAll}
+     * normalmente as trata como destacadas e executa {@code merge}.</p>
+     */
+    public default List<ENTITY> saveEntityList(
+            Collection<ENTITY> entityList,
+            Collection<ENTITY> newEntityList) {
+
+        return saveEntityList(entityList);
+
+    }
+
+    /**
      * Valida o retorno de um repository depois de uma persistencia em lote.
      *
      * <p>A infraestrutura de upload atualiza o mapa de entidades persistidas
@@ -114,10 +131,32 @@ public interface IntegrationServiceComConfiguracoesInterface<
                 .map(dto -> convertDTOToEntityAndTreatError(dto, dtoBatchList, currentlyPersistedEntitiesByPrimaryKey, supportData, metodoAtualizacaoPorCampo, options, initialBatchPosition, integrationLoggingContext))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-        List<ENTITY> entitiesToSave = dtosToSave.parallelStream()
+        /*
+         * Mantém o DTO ao lado da entidade convertida para classificar, sem
+         * ambiguidade, se a chave já constava no snapshot JPA do upload.
+         */
+        List<Map.Entry<DTO, ENTITY>> dtoEntityEntryList = dtosToSave.parallelStream()
                 .filter(dto -> !dto.allFieldsAreEmpty())
-                .map(dto -> convertDTOToEntityAndTreatError(dto, dtoBatchList, currentlyPersistedEntitiesByPrimaryKey, supportData, metodoAtualizacaoPorCampo, options, initialBatchPosition, integrationLoggingContext))
-                .filter(Objects::nonNull)
+                .map(dto -> new AbstractMap.SimpleImmutableEntry<>(
+                        dto,
+                        convertDTOToEntityAndTreatError(
+                                dto,
+                                dtoBatchList,
+                                currentlyPersistedEntitiesByPrimaryKey,
+                                supportData,
+                                metodoAtualizacaoPorCampo,
+                                options,
+                                initialBatchPosition,
+                                integrationLoggingContext)))
+                .filter(dtoEntityEntry -> dtoEntityEntry.getValue() != null)
+                .collect(Collectors.toList());
+        List<ENTITY> entitiesToSave = dtoEntityEntryList.stream()
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+        List<ENTITY> newEntitiesToSave = dtoEntityEntryList.stream()
+                .filter(dtoEntityEntry -> !currentlyPersistedEntitiesByPrimaryKey.containsKey(
+                        dtoEntityEntry.getKey().primaryKeyDto))
+                .map(Map.Entry::getValue)
                 .collect(Collectors.toList());
 
         if (!entitiesToRemove.isEmpty()) {
@@ -131,7 +170,9 @@ public interface IntegrationServiceComConfiguracoesInterface<
         }
 
         if (!entitiesToSave.isEmpty()) {
-            List<ENTITY> persistedSavedEntities = saveEntityList(entitiesToSave);
+            List<ENTITY> persistedSavedEntities = saveEntityList(
+                    entitiesToSave,
+                    newEntitiesToSave);
             if (integrationLoggingContext != null) {
                 integrationLoggingContext.addSavedRecords(persistedSavedEntities.size());
             }

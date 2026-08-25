@@ -193,6 +193,24 @@ class IntegrationServiceComConfiguracoesInterfaceTest {
     }
 
     @Test
+    void persistDTOListShouldTellTheServiceWhichEntitiesWereCreatedInTheBatch() {
+
+        DummyIntegrationService dummyIntegrationService =
+                new DummyIntegrationService(List.of("A"));
+        DummyDto persistedDummyDto = new DummyDto(new DummyPrimaryKeyDto("A"));
+        DummyDto newDummyDto = new DummyDto(new DummyPrimaryKeyDto("B"));
+        IntegrationDto<DummyDto, DummyPrimaryKeyDto, Void, IntegrationOptionsDto> integrationDto =
+                new IntegrationDto<>();
+        integrationDto.data = new ArrayList<>(List.of(persistedDummyDto, newDummyDto));
+
+        dummyIntegrationService.persistDTOList(integrationDto, null);
+
+        Assertions.assertEquals(List.of("A", "B"), dummyIntegrationService.savedEntityList);
+        Assertions.assertEquals(List.of("B"), dummyIntegrationService.newEntityList);
+
+    }
+
+    @Test
     void convertDTOToEntityAndTreatErrorShouldPreserveOriginalMapperException() {
 
         IllegalStateException originalException = new IllegalStateException("Invalid dummy value");
@@ -614,6 +632,8 @@ class IntegrationServiceComConfiguracoesInterfaceTest {
 
         private final Collection<String> persistedEntityCollection;
         private final DummyMapper dummyMapper;
+        private List<String> savedEntityList = List.of();
+        private List<String> newEntityList = List.of();
 
         private DummyIntegrationService(Collection<String> persistedEntityCollection) {
 
@@ -643,6 +663,17 @@ class IntegrationServiceComConfiguracoesInterfaceTest {
         public List<String> saveEntityList(Collection<String> entityList) {
 
             return List.copyOf(entityList);
+
+        }
+
+        @Override
+        public List<String> saveEntityList(
+                Collection<String> entityList,
+                Collection<String> newEntityList) {
+
+            savedEntityList = List.copyOf(entityList);
+            this.newEntityList = List.copyOf(newEntityList);
+            return savedEntityList;
 
         }
 
