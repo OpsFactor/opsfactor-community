@@ -45,6 +45,8 @@ public enum KeyFigureStandardEnum {
      */
     @JsonProperty("Gross Sales") VENDAS_GROSS,
     @JsonProperty("Net Sales") VENDAS_NET,
+    @JsonProperty("Gross Average Price") PRECO_MEDIO_GROSS,
+    @JsonProperty("Net Average Price") PRECO_MEDIO_NET,
     // KFs Supply Plan
     @JsonProperty("Total Demand") DEMANDA_TOTAL,
     @JsonProperty("Indirect Demand") DEMANDA_INDIRETA_TOTAL,
@@ -70,6 +72,8 @@ public enum KeyFigureStandardEnum {
         return switch (this) {
             case DEMANDA_DIRETA_TOTAL_DP_POR_DIA_UTIL ->
                     KeyFigureInterface.ModeloAgregacaoKeyFigure.RELACAO_ENTRE_VALORES;
+            case PRECO_MEDIO_GROSS, PRECO_MEDIO_NET ->
+                    KeyFigureInterface.ModeloAgregacaoKeyFigure.RAZAO_ENTRE_SOMAS;
             case ESTOQUE_DIAS -> KeyFigureInterface.ModeloAgregacaoKeyFigure.COBERTURA_ESTOQUE;
             default -> KeyFigureInterface.ModeloAgregacaoKeyFigure.PADRAO;
         };
@@ -92,6 +96,8 @@ public enum KeyFigureStandardEnum {
             case HISTORICO_VENDAS : return TipoPlanoKeyFigure.DEMAND_PLAN;
             case VENDAS_GROSS : return TipoPlanoKeyFigure.DEMAND_PLAN;
             case VENDAS_NET : return TipoPlanoKeyFigure.DEMAND_PLAN;
+            case PRECO_MEDIO_GROSS : return TipoPlanoKeyFigure.DEMAND_PLAN;
+            case PRECO_MEDIO_NET : return TipoPlanoKeyFigure.DEMAND_PLAN;
             case DEMANDA_TOTAL : return TipoPlanoKeyFigure.SUPPLY_PLAN;
             case DEMANDA_INDIRETA_TOTAL : return TipoPlanoKeyFigure.SUPPLY_PLAN;
             case ESTOQUE : return TipoPlanoKeyFigure.SUPPLY_PLAN;
@@ -138,6 +144,8 @@ public enum KeyFigureStandardEnum {
             case HISTORICO_VENDAS : return EditMode.NOEDIT; // DP
             case VENDAS_GROSS : return EditMode.CELLEDIT; // DP Enterprise; bloqueado antes da UI/API Community
             case VENDAS_NET : return EditMode.CELLEDIT; // DP Enterprise; bloqueado antes da UI/API Community
+            case PRECO_MEDIO_GROSS : return EditMode.NOEDIT; // DP Enterprise; derivado de Gross Sales / Direct Demand
+            case PRECO_MEDIO_NET : return EditMode.NOEDIT; // DP Enterprise; derivado de Net Sales / Direct Demand
             case ESTOQUE : return EditMode.CELLEDIT; // SNP
             case ESTOQUE_DIAS : return EditMode.NOEDIT; // SNP
             case ESTOQUE_SEGURANCA : return EditMode.NOEDIT; // SNP

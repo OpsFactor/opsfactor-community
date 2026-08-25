@@ -315,7 +315,10 @@ public class ConfiguredViewFacade {
             /* A ordem recebida é o contrato público; posição enviada é legado. */
             configuredViewKeyFigure.setPosition(position++);
             configuredViewKeyFigure.setAllowChanges(
-                    configuredViewKeyFigureDTO.allowChanges == null || configuredViewKeyFigureDTO.allowChanges);
+                    resolveAllowChangesConfiguredViewKeyFigure(
+                            configuredView.getTipoView(),
+                            configuredViewKeyFigureDTO.keyFigure,
+                            configuredViewKeyFigureDTO.allowChanges));
             keyFiguresToSave.add(configuredViewKeyFigure);
         }
 
@@ -327,6 +330,30 @@ public class ConfiguredViewFacade {
         if (!keyFiguresToSave.isEmpty()) {
             configuredViewKeyFigureRepository.saveAll(keyFiguresToSave);
         }
+
+    }
+
+    /**
+     * Resolve a permissao efetiva antes da fotografia de Key Figures ser
+     * persistida.
+     *
+     * <p>O payload continua podendo omitir {@code allowChanges} por
+     * compatibilidade, mas uma KF derivada ou de leitura obrigatoria nunca
+     * pode voltar a ser editavel por um request manual. Overlays de edicao
+     * podem acrescentar outras travas sem duplicar a sincronizacao inteira.</p>
+     */
+    protected boolean resolveAllowChangesConfiguredViewKeyFigure(
+            ConfiguredView.TipoView tipoView,
+            String keyFigureId,
+            Boolean requestedAllowChanges) {
+
+        if (ConfiguredView.TipoView.DEMANDPLANNINGBOOK.equals(tipoView)
+                && ("Baseline".equals(keyFigureId)
+                || KeyFigureStandardEnum.BASELINE.name().equals(keyFigureId))) {
+            return false;
+        }
+
+        return requestedAllowChanges == null || requestedAllowChanges;
 
     }
 

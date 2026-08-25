@@ -507,6 +507,26 @@ public class ConfiguredViewFacadeTest {
     }
 
     @Test
+    public void demandPlanningBaselineShouldAlwaysResolveAsReadOnly() {
+
+        ExposedConfiguredViewFacade configuredViewFacade = new ExposedConfiguredViewFacade();
+
+        Assertions.assertFalse(configuredViewFacade.exposeResolveAllowChanges(
+                ConfiguredView.TipoView.DEMANDPLANNINGBOOK,
+                "Baseline",
+                true));
+        Assertions.assertFalse(configuredViewFacade.exposeResolveAllowChanges(
+                ConfiguredView.TipoView.DEMANDPLANNINGBOOK,
+                "Baseline",
+                null));
+        Assertions.assertTrue(configuredViewFacade.exposeResolveAllowChanges(
+                ConfiguredView.TipoView.DEMANDPLANNINGBOOK,
+                "Demand Adjustment",
+                true));
+
+    }
+
+    @Test
     public void saveConfiguredViewDTOShouldAcceptDefaultDemandPlanningBookKeyFigures() throws Exception {
 
         ConfiguredViewFacade configuredViewFrontService = new ConfiguredViewFacade();
@@ -876,6 +896,22 @@ public class ConfiguredViewFacadeTest {
                 "View name must be between 1 and 100 characters long.",
                 illegalArgumentException.getMessage());
 
+    }
+
+    /** Expõe a política protegida sem abrir uma API produtiva. */
+    private static class ExposedConfiguredViewFacade extends ConfiguredViewFacade {
+
+        boolean exposeResolveAllowChanges(
+                ConfiguredView.TipoView tipoView,
+                String keyFigureId,
+                Boolean requestedAllowChanges) {
+
+            return resolveAllowChangesConfiguredViewKeyFigure(
+                    tipoView,
+                    keyFigureId,
+                    requestedAllowChanges);
+
+        }
     }
 
     private static void assertInvalidConfiguredViewPayload(ConfiguredViewOperation configuredViewOperation) {

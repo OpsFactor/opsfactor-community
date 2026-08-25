@@ -61,6 +61,15 @@ class KeyFigureStandardEnumCommunityContractTest {
         Assertions.assertEquals(
                 "Net Sales",
                 MetodosUtilidade.getValorJsonPropertyDeEnum(KeyFigureStandardEnum.VENDAS_NET));
+        Assertions.assertEquals(
+                KeyFigureStandardEnum.TipoPlanoKeyFigure.DEMAND_PLAN,
+                KeyFigureStandardEnum.PRECO_MEDIO_GROSS.getTipoPlanoKeyFigure());
+        Assertions.assertEquals(
+                KeyFigureInterface.ModeloAgregacaoKeyFigure.RAZAO_ENTRE_SOMAS,
+                KeyFigureStandardEnum.PRECO_MEDIO_GROSS.getModeloAgregacaoKeyFigure());
+        Assertions.assertEquals(
+                "Net Average Price",
+                MetodosUtilidade.getValorJsonPropertyDeEnum(KeyFigureStandardEnum.PRECO_MEDIO_NET));
 
     }
 

@@ -5,6 +5,7 @@ import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigur
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigureStandardSupplyPlanning;
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigureStandard;
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigureStandardMonetariaDemandPlanning;
+import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigureStandardPrecoMedioDemandPlanning;
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigureStandardEnum;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.MetodosUtilidade;
@@ -33,6 +34,8 @@ public class KeyFigureService {
         return switch (keyFigureStandardEnum) {
             case VENDAS_GROSS, VENDAS_NET ->
                     new KeyFigureStandardMonetariaDemandPlanning(keyFigureStandardEnum);
+            case PRECO_MEDIO_GROSS, PRECO_MEDIO_NET ->
+                    new KeyFigureStandardPrecoMedioDemandPlanning(keyFigureStandardEnum);
             default -> new KeyFigureStandard(keyFigureStandardEnum);
         };
 

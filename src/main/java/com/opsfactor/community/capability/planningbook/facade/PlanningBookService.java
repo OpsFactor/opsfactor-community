@@ -2,6 +2,7 @@ package com.opsfactor.community.capability.planningbook.facade;
 
 import com.opsfactor.community.capability.planningbook.facade.dto.specializedkeyfigure.KeyFigureDTOPadrao;
 import com.opsfactor.community.capability.planningbook.facade.dto.specializedkeyfigure.KeyFigureDTORelacaoEntreValores;
+import com.opsfactor.community.capability.planningbook.facade.dto.specializedkeyfigure.KeyFigureDTORazaoEntreSomas;
 import com.opsfactor.community.capability.planningbook.facade.dto.specializedkeyfigure.KeyFigureDTOCoberturaEstoque;
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguredView;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
@@ -514,6 +515,8 @@ public class PlanningBookService {
         return switch (keyFigure.getModeloAgregacaoKeyFigure()) {
             case RELACAO_ENTRE_VALORES ->
                     new KeyFigureDTORelacaoEntreValores(keyFigureId, editMode);
+            case RAZAO_ENTRE_SOMAS ->
+                    new KeyFigureDTORazaoEntreSomas(keyFigureId, editMode);
             case COBERTURA_ESTOQUE ->
                     new KeyFigureDTOCoberturaEstoque(keyFigureId, editMode);
             default -> new KeyFigureDTOPadrao(keyFigureId, editMode);

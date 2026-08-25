@@ -18,6 +18,7 @@ public interface KeyFigureInterface <KF extends KeyFigureInterface> extends Comp
     public enum ModeloAgregacaoKeyFigure {
         PADRAO,
         RELACAO_ENTRE_VALORES,
+        RAZAO_ENTRE_SOMAS,
         COBERTURA_ESTOQUE
     }
 
