@@ -52,7 +52,7 @@ public class VersaoProducaoSimplesIntegrationMapper implements IntegrationMapper
         
         return VersaoProducaoSimplesIntegrationDataDto.builder()
                 .locationId(entity.getLocation().getId())
-                .priority(entity.getPrioridade())
+                .priority(entity.getPrioridadeCadastrada())
                 .outputMaterialId(entity.getMaterialOutput().getId())
                 .routingId(entity.getRoteiro().getId())
                 .billOfMaterialsId(entity.getListaTecnica().getId())
@@ -126,7 +126,7 @@ public class VersaoProducaoSimplesIntegrationMapper implements IntegrationMapper
         ProcessedFileRow linhaArquivo = new ProcessedFileRow();
         linhaArquivo.addContent(entity.getId());
         linhaArquivo.addContent(entity.getLocation().getId());
-        linhaArquivo.addContent(entity.getPrioridade());
+        linhaArquivo.addContent(entity.getPrioridadeCadastrada());
         linhaArquivo.addContent(entity.getMaterialOutput().getId());
         linhaArquivo.addContent(entity.getRoteiro().getId());
         linhaArquivo.addContent(entity.getListaTecnica().getId());
