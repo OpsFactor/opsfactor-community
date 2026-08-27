@@ -647,6 +647,7 @@ public class IntegrationOpenApiConfigurationCommunityTest {
                                         .addProperty("daysMovingAverageModel", new StringSchema())
                                         .addProperty("alpha", new StringSchema())
                                         .addProperty("splitModel", new StringSchema())
+                                        .addProperty("daysTopDownSplit", new StringSchema())
                                         .addProperty("considerStockoutData", new StringSchema())
                                         .addProperty("daysSmoothingModel", new StringSchema())
                                         .addProperty("enableUpperPercentileSmoothing", new StringSchema())
@@ -742,16 +743,10 @@ public class IntegrationOpenApiConfigurationCommunityTest {
                 openApi.getComponents().getSchemas().get("DemandPlanningForecastParametersDTO").getProperties().containsKey("daysMovingAverageModel"));
         Assertions.assertTrue(
                 openApi.getComponents().getSchemas().get("DemandPlanningForecastParametersDTO").getProperties().containsKey("alpha"));
-        Assertions.assertTrue(
+        Assertions.assertFalse(
                 openApi.getComponents().getSchemas().get("DemandPlanningForecastParametersDTO").getProperties().containsKey("splitModel"));
-        Assertions.assertEquals(
-                List.of("Historical Sales"),
-                ((StringSchema) openApi.getComponents()
-                        .getSchemas()
-                        .get("DemandPlanningForecastParametersDTO")
-                        .getProperties()
-                        .get("splitModel"))
-                        .getEnum());
+        Assertions.assertTrue(
+                openApi.getComponents().getSchemas().get("DemandPlanningForecastParametersDTO").getProperties().containsKey("daysTopDownSplit"));
         Assertions.assertFalse(
                 openApi.getComponents().getSchemas().get("DemandPlanningForecastParametersDTO").getProperties().containsKey("considerStockoutData"));
         Assertions.assertFalse(

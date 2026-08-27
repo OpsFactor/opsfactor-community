@@ -38,7 +38,18 @@ public class DemandPlanningForecastParametersDTO {
     public Constantes.DPModeloNormalizacao smoothingModel;
     public Constantes.DPModeloUplift upliftModel;
 
+    /**
+     * Campo transicional aceito apenas para compatibilidade e rejeicao
+     * defensiva de modelos Enterprise. O contrato publico Community o omite e
+     * sempre assume Historical Sales.
+     */
     public Constantes.DPModeloSplit splitModel;
+
+    /**
+     * Unica configuracao Community da etapa fixa de split Historical Sales:
+     * quantidade de dias/periodos historicos usada para calcular a proporcao
+     * final material/location.
+     */
     public Integer daysTopDownSplit;
 
     // Parametros dos modelos Exponential Smoothing e Holt-Winters. null = selecao automatica.

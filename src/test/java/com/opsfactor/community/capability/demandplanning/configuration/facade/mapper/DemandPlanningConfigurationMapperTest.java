@@ -391,13 +391,9 @@ public class DemandPlanningConfigurationMapperTest {
         DemandPlanningClusterLevelConfigurationDTO missingSplitModelDTO =
                 getCommunityDemandPlanningClusterLevelConfigurationDTO();
         missingSplitModelDTO.demandPlanningForecastParameters.splitModel = null;
-        IllegalArgumentException missingSplitModelException = Assertions.assertThrows(
-                IllegalArgumentException.class,
+        Assertions.assertDoesNotThrow(
                 () -> demandPlanningConfigurationMapper.validaDemandPlanningClusterLevelConfigurationDTOCommunity(
                         missingSplitModelDTO));
-        Assertions.assertEquals(
-                "Demand Planning forecast split model is required",
-                missingSplitModelException.getMessage());
 
     }
 
@@ -579,6 +575,22 @@ public class DemandPlanningConfigurationMapperTest {
                     demandPlanningConfigurationMapper,
                     demandPlanningForecastParametersDTO);
         }
+
+    }
+
+    @Test
+    public void validaForecastParametersEnterpriseCommunityShouldDefaultMissingSplitToHistoricalSales() {
+
+        DemandPlanningConfigurationMapper demandPlanningConfigurationMapper =
+                new DemandPlanningConfigurationMapper();
+        DemandPlanningForecastParametersDTO demandPlanningForecastParametersDTO =
+                getCommunityDemandPlanningForecastParametersDTO();
+        demandPlanningForecastParametersDTO.splitModel = null;
+
+        Assertions.assertDoesNotThrow(
+                () -> invokeValidaForecastParametersEnterpriseCommunity(
+                        demandPlanningConfigurationMapper,
+                        demandPlanningForecastParametersDTO));
 
     }
 
@@ -793,6 +805,7 @@ public class DemandPlanningConfigurationMapperTest {
         demandPlanningClusterLevelConfigurationDTO.demandPlanningGeneralParameters.locationAggregationType = null;
         demandPlanningClusterLevelConfigurationDTO.demandPlanningGeneralParameters.materialAggregationType = null;
         demandPlanningClusterLevelConfigurationDTO.demandPlanningForecastParameters.daysMovingAverageModel = null;
+        demandPlanningClusterLevelConfigurationDTO.demandPlanningForecastParameters.splitModel = null;
         demandPlanningClusterLevelConfigurationDTO.demandPlanningForecastParameters.daysTopDownSplit = null;
 
         ParametrosDemandPlanNivelCluster parametrosDemandPlanNivelCluster =
@@ -804,8 +817,8 @@ public class DemandPlanningConfigurationMapperTest {
 
         /*
          * O Community aceita apenas campos verdadeiramente opcionais nulos como
-         * pedido de default. Modelo estatistico e split sao obrigatorios e ja
-         * chegam explicitamente no DTO validado.
+         * pedido de default. O modelo estatistico permanece obrigatorio; o
+         * modelo de split pode ser omitido porque Historical Sales e fixo.
          */
         Assertions.assertEquals(
                 Constantes.DPNivelAgregacao.TOP_DOWN,

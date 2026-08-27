@@ -204,6 +204,7 @@ public class IntegrationOpenApiConfiguration {
             "smoothingLowerPercentile",
             "smoothingModel",
             "upliftModel",
+            "splitModel",
             "prophetAutoSeasonalityPriorScale",
             "prophetSeasonalityPriorScale",
             "prophetAutoChangepointPriorScale",
@@ -433,12 +434,6 @@ public class IntegrationOpenApiConfiguration {
                 "DemandPlanningForecastParametersDTO",
                 "statisticalModel",
                 DemandPlanningModelCatalog.getDpModelosEstatisticosOpenApiCommunity());
-
-        restrictSchemaPropertyEnum(
-                openApi,
-                "DemandPlanningForecastParametersDTO",
-                "splitModel",
-                DemandPlanningModelCatalog.getDpModelosSplitOpenApiCommunity());
 
         restrictSchemaPropertyEnum(
                 openApi,

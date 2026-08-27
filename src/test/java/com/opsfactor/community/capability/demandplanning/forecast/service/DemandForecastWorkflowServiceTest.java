@@ -7,6 +7,7 @@ import com.opsfactor.community.capability.configuration.projection.parametros.Cl
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosAgregacaoForecast;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosMediaMovel;
+import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjection;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionAgregado;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionMaterialLocation;
 import com.opsfactor.community.capability.demandplanning.forecast.preprocessing.engine.DemandForecastHistoryCleaningProcessor;
@@ -21,6 +22,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Valida a borda Spring transicional do workflow de forecast Community.
@@ -140,6 +142,50 @@ class DemandForecastWorkflowServiceTest {
         Assertions.assertEquals(
                 "Demand Planning forecast split model is required",
                 illegalArgumentException.getMessage());
+
+    }
+
+    @Test
+    void executaForecastEDesagregacaoShouldRejectNonHistoricalSalesSplitInCommunity() {
+
+        DemandForecastWorkflowService demandForecastWorkflowService =
+                criaDemandForecastWorkflowService();
+        ParametrosForecastProjection parametrosForecastProjection =
+                getParametrosForecastProjectionMediaMovel();
+        parametrosForecastProjection.setDpModeloSplit(
+                Constantes.DPModeloSplit.FORECAST_PROPORTION);
+
+        IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> demandForecastWorkflowService.executaForecastEDesagregacao(
+                        getCalendarioForecastTeste(),
+                        parametrosForecastProjection,
+                        getParametrosAgregacaoForecastTopDown(),
+                        getDemandPlanForecastProjectionMaterialLocationVazia(),
+                        new ClusterEParametrosProjectionComDfusAtivas()));
+
+        Assertions.assertTrue(
+                illegalArgumentException.getMessage().contains("accepts only Historical Sales split"));
+
+    }
+
+    @Test
+    void validaSaidaFinalMaterialLocationShouldRejectLeafWithoutCompleteIdentity() {
+
+        DemandForecastWorkflowServiceExposto demandForecastWorkflowService =
+                new DemandForecastWorkflowServiceExposto();
+        DemandPlanForecastProjection demandPlanForecastProjection =
+                new DemandPlanForecastProjectionComFolhaInvalida(
+                        getCalendarioForecastTeste(),
+                        new UnidadeMedida("UN"));
+
+        IllegalStateException illegalStateException = Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> demandForecastWorkflowService.validaSaidaFinalMaterialLocationExposta(
+                        demandPlanForecastProjection));
+
+        Assertions.assertTrue(
+                illegalStateException.getMessage().contains("invalid material/location output"));
 
     }
 
@@ -466,6 +512,43 @@ class DemandForecastWorkflowServiceTest {
         public boolean isDfuAtiva(Produto material, Location location) {
 
             return true;
+
+        }
+
+    }
+
+    private static class DemandForecastWorkflowServiceExposto extends DemandForecastWorkflowService {
+
+        private void validaSaidaFinalMaterialLocationExposta(
+                DemandPlanForecastProjection demandPlanForecastProjection) {
+
+            validaSaidaFinalMaterialLocation(demandPlanForecastProjection);
+
+        }
+
+    }
+
+    private static class DemandPlanForecastProjectionComFolhaInvalida extends DemandPlanForecastProjection {
+
+        private DemandPlanForecastProjectionComFolhaInvalida(
+                Calendario calendario,
+                UnidadeMedida unidadeMedida) {
+
+            super(calendario, unidadeMedida, false);
+
+        }
+
+        @Override
+        public List<DemandPlanForecastProjectionMaterialLocation> getDemandPlanForecastProjectionMaterialLocationList() {
+
+            return List.of(new DemandPlanForecastProjectionMaterialLocation());
+
+        }
+
+        @Override
+        public void agregaForecastEDemandaHistoricaDemandPlanForecastProjectionAPartirNivelDesagregado() {
+
+            // Projection de teste sem agregacao: valida apenas o contrato final.
 
         }
 

@@ -5,13 +5,17 @@ import com.opsfactor.community.capability.demandplanning.configuration.projectio
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosAgregacaoForecast;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjection;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionAgregado;
+import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionMaterialLocation;
 import com.opsfactor.community.capability.demandplanning.engine.DemandPlanning;
 import com.opsfactor.community.capability.demandplanning.forecast.preprocessing.engine.DemandForecastHistoryCleaningProcessor;
 import com.opsfactor.community.capability.demandplanning.forecast.preprocessing.engine.DemandForecastStockoutContext;
 import com.opsfactor.community.capability.demandplanning.forecast.preprocessing.engine.DemandForecastStockoutTreatmentProcessor;
 import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.utility.Constantes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * Borda Spring do workflow de forecast de Demand Planning Community.
@@ -95,6 +99,7 @@ public class DemandForecastWorkflowService {
                 parametrosForecastProjection,
                 parametrosAgregacaoForecast,
                 demandPlanForecastProjection);
+        validaSplitFixoCommunity(parametrosForecastProjection);
 
         processaHistoricoForecast(
                 calendario,
@@ -113,6 +118,63 @@ public class DemandForecastWorkflowService {
                 parametrosAgregacaoForecast,
                 demandPlanForecastProjection,
                 clusterEParametrosProjection);
+        validaSaidaFinalMaterialLocation(demandPlanForecastProjection);
+
+    }
+
+    /**
+     * Garante que a unica etapa de split do workflow Community use Historical
+     * Sales.
+     *
+     * <p>A validacao fica no corpo da execucao Community, e nao no hook basico
+     * compartilhado, para que o overlay Enterprise possa executar seus splits
+     * privados sem enfraquecer o contrato desta edicao.</p>
+     */
+    protected void validaSplitFixoCommunity(
+            ParametrosForecastProjection parametrosForecastProjection) {
+
+        if (!Constantes.DPModeloSplit.HISTORICAL_SALES.equals(
+                parametrosForecastProjection.getDpModeloSplit())) {
+            throw new IllegalArgumentException(
+                    "Demand Planning Community forecast workflow accepts only Historical Sales split. Current model: "
+                            + parametrosForecastProjection.getDpModeloSplit()
+                            + ".");
+        }
+
+    }
+
+    /**
+     * Valida o contrato de saida do workflow Community antes que o plano seja
+     * persistido.
+     *
+     * <p>Lista vazia e valida para cluster sem DFUs. Quando existirem folhas,
+     * todas precisam representar uma combinacao material/location completa; um
+     * agregado sem abertura ou uma identidade parcial nao pode seguir para a
+     * persistencia como se fosse forecast final.</p>
+     */
+    protected void validaSaidaFinalMaterialLocation(
+            DemandPlanForecastProjection demandPlanForecastProjection) {
+
+        List<DemandPlanForecastProjectionMaterialLocation> demandPlanForecastProjectionMaterialLocationList =
+                demandPlanForecastProjection.getDemandPlanForecastProjectionMaterialLocationList();
+        if (demandPlanForecastProjectionMaterialLocationList == null) {
+            throw new IllegalStateException(
+                    "Demand Planning Community forecast workflow must produce a material/location output list.");
+        }
+
+        int indiceMaterialLocation = 0;
+        for (DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocation :
+                demandPlanForecastProjectionMaterialLocationList) {
+            if (demandPlanForecastProjectionMaterialLocation == null
+                    || demandPlanForecastProjectionMaterialLocation.getMaterial() == null
+                    || demandPlanForecastProjectionMaterialLocation.getLocation() == null) {
+                throw new IllegalStateException(
+                        "Demand Planning Community forecast workflow produced an invalid material/location output at index "
+                                + indiceMaterialLocation
+                                + ".");
+            }
+            indiceMaterialLocation++;
+        }
 
     }
 

@@ -411,10 +411,8 @@ public class DemandPlanningConfigurationMapper {
             DemandPlanningForecastParametersDTO demandPlanningForecastParametersDTO) {
 
         /*
-         * Modelo e split nulos significam payload quebrado, nao escolha de
-         * default. O front Community deve enviar explicitamente a alternativa
-         * selecionada para que a entidade persistida e o workflow de execucao
-         * compartilhem o mesmo contrato.
+         * O modelo estatistico continua sendo uma escolha funcional do
+         * Community e, portanto, precisa vir explicitamente no payload.
          */
         if (demandPlanningForecastParametersDTO.statisticalModel == null) {
             throw new IllegalArgumentException(
@@ -426,12 +424,16 @@ public class DemandPlanningConfigurationMapper {
             throw new RequiresEnterpriseVersionException("Demand Planning Forecast Model " + dpModeloEstatistico);
         }
 
-        if (demandPlanningForecastParametersDTO.splitModel == null) {
-            throw new IllegalArgumentException(
-                    "Demand Planning forecast split model is required");
-        }
+        /*
+         * O modelo de split nao e uma configuracao Community. Payloads novos
+         * podem omiti-lo e recebem Historical Sales como default fixo; o campo
+         * continua desserializavel somente para rejeitar explicitamente valores
+         * Enterprise enviados por clientes antigos ou chamadas manuais.
+         */
         Constantes.DPModeloSplit dpModeloSplit =
-                demandPlanningForecastParametersDTO.splitModel;
+                demandPlanningForecastParametersDTO.splitModel == null
+                        ? Constantes.DPModeloSplit.HISTORICAL_SALES
+                        : demandPlanningForecastParametersDTO.splitModel;
         if (!getDpModelosSplitDisponiveis().contains(dpModeloSplit)) {
             throw new RequiresEnterpriseVersionException("Demand Planning Split Model " + dpModeloSplit);
         }
@@ -661,12 +663,13 @@ public class DemandPlanningConfigurationMapper {
             DemandPlanningForecastParametersDTO demandPlanningForecastParametersDTO) {
 
         /*
-         * Modelo estatistico e split ja foram validados como obrigatorios em
-         * validaForecastParametersEnterpriseCommunity(...). Mantemos a copia
-         * direta aqui para que qualquer chamada publica que tente persistir
-         * payload incompleto falhe antes de chegar neste ponto.
+         * O modelo estatistico ja foi validado como obrigatorio. O split nao e
+         * copiado do payload porque Historical Sales e uma decisao fixa da
+         * edicao Community, inclusive quando clientes transicionais ainda
+         * enviam explicitamente esse mesmo valor.
          */
-        parametrosModeloEstatisticoAbstract.setDpModeloSplit(demandPlanningForecastParametersDTO.splitModel);
+        parametrosModeloEstatisticoAbstract.setDpModeloSplit(
+                Constantes.DPModeloSplit.HISTORICAL_SALES);
         parametrosModeloEstatisticoAbstract.setNumeroDiasSplitTopDown(
                 demandPlanningForecastParametersDTO.daysTopDownSplit == null ?
                         120 :
