@@ -7,7 +7,6 @@ import com.opsfactor.community.capability.masterdata.production.billofmaterials.
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnicaComponente;
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoParalela;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.LinhaTransporte;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
@@ -481,14 +480,14 @@ public class SupplyNetworkDependencyExplorerService {
             Produto focusedMaterial) {
 
         List<Pair<Roteiro, ListaTecnica>> combinations = productionVersion.getCombinacoesRoteiroListaTecnica();
-        if (!(productionVersion instanceof VersaoProducaoParalela)) {
+        if (combinations.size() <= 1) {
             return combinations;
         }
         List<Pair<Roteiro, ListaTecnica>> focusedCombinations = combinations.stream()
                 .filter(combination -> getCombinationOutputMaterial(combination).equals(focusedMaterial))
                 .toList();
         if (focusedCombinations.isEmpty()) {
-            throw new IllegalStateException("Parallel production version " + productionVersion.getId()
+            throw new IllegalStateException("Production version " + productionVersion.getId()
                     + " does not contain focused output material " + focusedMaterial.getId());
         }
         int omittedCount = combinations.size() - focusedCombinations.size();

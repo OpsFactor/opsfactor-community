@@ -1,12 +1,8 @@
 package com.opsfactor.community.capability.masterdata.production.operation.domain;
 
-import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
-import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -14,8 +10,9 @@ import lombok.Setter;
 /**
  * A interface de uma operação pode ser implementada tanto pela operação em um roteiro
  * quanto pela operação em uma ordem de produção
- * A operação representa quanto de cada recurso é consumido para cada unidade output
- * do roteiro produzida
+ * A operação representa exclusivamente o consumo temporal de um recurso.
+ * Quantidade-base, unidade de medida e outputs pertencem ao cabeçalho produtivo
+ * que contém a operação e não podem ser alterados por esta entidade filha.
  */
 @MappedSuperclass
 @Getter
@@ -31,60 +28,14 @@ public abstract class OperacaoAbstract {
      */
     public abstract Integer getPosicao();
     
-    /**
-     * Operação de Roteiro : extrai material output roteiro
-     * Operação de ordem produção : extrai material de ordem produção
-     * Operação de ordem planejada : extrai material de ordem planejada
-     * @return 
-     */
-    public abstract Produto getMaterialOutput();
-    
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @NonNull // torna campo obrigatório e parâmetro do construtor gerado pelo @Data (lombok)
     private RecursoProdutivo recursoProdutivo;
     
-    @Getter(AccessLevel.NONE)
-    @ManyToOne(optional = true)
-    private UnidadeMedida unidadeMedida;
-    
-    /**
-     * Quantidade do material output do roteiro associada ao tempo de produção
-     */
-    private Float quantidadeBase;
+    /** Retorna a duração da operação normalizada em horas. */
+    public abstract double getHorasPorQuantidadeBase();
 
-    /**
-     * Quantas horas se consome do recurso produtivo 
-     * para se produzir a quantidade base
-     */
-    private Float horasPorQuantidadeBase;
-    
-    public float getHorasPorQuantidadeBase() {
-        if (horasPorQuantidadeBase == null) {
-            return 1f;
-        } else if (horasPorQuantidadeBase > 0.0000001) {
-            return horasPorQuantidadeBase;
-        } else {
-            return 1f;
-        }
-    }
-    
-    public float getQuantidadeBase() {
-        if (quantidadeBase == null) {
-            return 1f;
-        } else if (quantidadeBase > 0) {
-            return quantidadeBase;
-        } else {
-            return 1f;
-        }
-    }
-    
-    public UnidadeMedida getUnidadeMedida(ParametrosGlobais parametrosGlobais) {
-        if (unidadeMedida != null) return unidadeMedida;
-        return parametrosGlobais.getUnidadeMedidaPadraoSNP();
-    }
-    
-    public UnidadeMedida getUnidadeMedidaCadastrado() {
-        return unidadeMedida;
-    }
+    /** Compatibilidade com integrações que enviam duração já em horas. */
+    public abstract void setHorasPorQuantidadeBase(Double horasPorQuantidadeBase);
 
 }

@@ -56,7 +56,7 @@ public class ListaTecnicaComponente {
     @ManyToOne
     private UnidadeMedida unidadeMedidaMaterialComponente;
     
-    private Float quantidade;
+    private Double quantidade;
     
     public ListaTecnica getListaTecnica() {
         return listaTecnicaComponenteCompositeKey.getListaTecnica();
@@ -74,8 +74,8 @@ public class ListaTecnicaComponente {
         return (unidadeMedidaMaterialComponente == null) ? parametrosGlobais.getUnidadeMedidaPadraoSNP() : unidadeMedidaMaterialComponente;
     }
     
-    public Float getQuantidade() {
-        return (quantidade == null) ? 1 : quantidade;
+    public Double getQuantidade() {
+        return (quantidade == null) ? 1d : quantidade;
     }
     
     public Produto getMaterial() {

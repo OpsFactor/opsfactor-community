@@ -122,7 +122,7 @@ public class ListaTecnicaComponenteIntegrationMapper implements IntegrationMappe
     public ListaTecnicaComponenteIntegrationDataDto getDtoWithoutPrimaryKeyFromProcessedFileRow(ProcessedFileRow processedFileRow, ListaTecnicaComponenteIntegrationSupportData supportData) {
         return ListaTecnicaComponenteIntegrationDataDto.builder()
                 .componentMaterialQuantityUomId(processedFileRow.getColumnValueAsString(2))
-                .componentMaterialQuantity(processedFileRow.getColumnValueAsFloat(3))
+                .componentMaterialQuantity(processedFileRow.getColumnValueAsDouble(3))
                 .build();
     }
 

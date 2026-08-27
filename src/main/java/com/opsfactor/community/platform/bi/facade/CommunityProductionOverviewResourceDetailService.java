@@ -306,7 +306,7 @@ public class CommunityProductionOverviewResourceDetailService {
 
     }
 
-    /** A UOM é obtida da operação do recurso, sem aceitar uma UOM agregadora externa. */
+    /** A UOM pertence ao cabeçalho do roteiro e vale para todas as suas operações. */
     private UnidadeMedida getOutputUnitOfMeasure(
             ProductionPlanLinha productionPlanLine,
             RecursoProdutivo productionResource,
@@ -314,22 +314,16 @@ public class CommunityProductionOverviewResourceDetailService {
 
         Roteiro routing = supplyNetworkProjection.getRoteiroFromId(
                 productionPlanLine.getRoteiro().getId()).get();
-        List<UnidadeMedida> operationUnits = routing.getOperacaoRoteiroSet().stream()
+        boolean resourceBelongsToRouting = routing.getOperacaoRoteiroSet().stream()
                 .filter(operation -> operation.getRecursoProdutivo().equals(productionResource))
-                .map(operation -> operation.getUnidadeMedida(
-                        supplyNetworkProjection.getClusterEParametrosProjection()
-                                .getParametrosGlobais()))
-                .collect(Collectors.toList());
-        if (operationUnits.isEmpty()) {
+                .findAny()
+                .isPresent();
+        if (!resourceBelongsToRouting) {
             throw new IllegalStateException("Production resource " + productionResource.getId()
                     + " not found in routing " + routing.getId());
         }
-        if (operationUnits.stream().map(UnidadeMedida::getId).distinct().count() > 1) {
-            throw new IllegalStateException("Routing " + routing.getId()
-                    + " has multiple output unit of measure ids for production resource "
-                    + productionResource.getId());
-        }
-        return operationUnits.get(0);
+        return routing.getUnidadeMedidaQuantidadeBase(
+                supplyNetworkProjection.getClusterEParametrosProjection().getParametrosGlobais());
 
     }
 

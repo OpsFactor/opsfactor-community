@@ -1532,7 +1532,16 @@ public class SupplyPlanService {
             throw new RequiresEnterpriseVersionException("Supply Planning fully make-to-order");
         }
 
-        if (!perfilExecucaoSupplyPlan.getConsideraForecastParaMto()) {
+        /*
+         * MTO sem forecast continua indisponivel no runtime Community. No
+         * overlay Enterprise, porem, o mesmo SPI de optimizer que executa o
+         * modelo MTO materializa a carteira e seus valores no snapshot de
+         * demanda direta; bloquear a flag aqui impediria uma capability que ja
+         * possui consumidor concreto.
+         */
+        if (!perfilExecucaoSupplyPlan.getConsideraForecastParaMto()
+                && !devePermitirForceMakeToOrderNoOptimizerEnterprise(
+                perfilExecucaoSupplyPlan)) {
             throw new RequiresEnterpriseVersionException("Supply Planning fully make-to-order");
         }
 

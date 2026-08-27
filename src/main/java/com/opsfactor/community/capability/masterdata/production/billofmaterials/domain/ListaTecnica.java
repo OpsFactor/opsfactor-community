@@ -35,17 +35,17 @@ public class ListaTecnica implements Comparable<ListaTecnica> {
     private String id;
         
     @NonNull
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Location location;
 
     @NonNull
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Produto materialOutput;
         
     private Double quantidade;
     
     @Getter(AccessLevel.NONE)
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private UnidadeMedida unidadeMedidaMaterialOutput;
     
     private String descricao;

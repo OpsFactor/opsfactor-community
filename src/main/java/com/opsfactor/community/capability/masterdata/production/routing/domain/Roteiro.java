@@ -1,7 +1,6 @@
 package com.opsfactor.community.capability.masterdata.production.routing.domain;
 
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoParalelaComponente;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
@@ -26,6 +25,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.ToString;
+import lombok.AccessLevel;
+import lombok.Getter;
 
 /**
  * Roteiro produtivo simples para fabricar um material em uma location.
@@ -36,6 +37,10 @@ import lombok.ToString;
  * entre alternativas pertencem ao Enterprise.</p>
  */
 @Entity
+@Table(name = "roteiro")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "tipo_roteiro")
+@DiscriminatorValue("simples")
 @Data
 @Builder
 @ToString(of="id")
@@ -51,11 +56,11 @@ public class Roteiro implements Comparable<Roteiro> {
     private String descricao;
 
     @NonNull
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Location location;
 
     @NonNull
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Produto materialOutput;
 
     /**
@@ -80,15 +85,19 @@ public class Roteiro implements Comparable<Roteiro> {
     private Boolean habilitadoParaUsoSemVersaoProducao;
     
     private Boolean ativo;
+
+    /** Quantidade-base produzida por uma execução das operações do roteiro. */
+    private Double quantidadeBase;
+
+    @Getter(AccessLevel.NONE)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private UnidadeMedida unidadeMedidaQuantidadeBase;
         
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "operacaoRoteiroCompositeKey.roteiro", fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<OperacaoRoteiro> operacaoRoteiroSet = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "roteiro", fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<VersaoProducaoSimples> versaoProducaoSimplesSet = new HashSet<>();
-    
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "versaoProducaoParalelaComponenteCompositeKey.roteiro", fetch = FetchType.LAZY, orphanRemoval = true)
-    private Set<VersaoProducaoParalelaComponente> versaoProducaoParalelaComponenteSet = new HashSet<>();
     
     public int getPrioridade() {
         return (prioridade == null) ? Integer.MAX_VALUE : prioridade;
@@ -167,16 +176,48 @@ public class Roteiro implements Comparable<Roteiro> {
      * @param unidadeMedidaProjection
      * @return 
      */
-    public float getQuantidadeMaximaProduzidaPorHora(UnidadeMedida unidadeMedidaTarget, UnidadeMedidaProjection unidadeMedidaProjection) {
+    public double getQuantidadeMaximaProduzidaPorHora(UnidadeMedida unidadeMedidaTarget, UnidadeMedidaProjection unidadeMedidaProjection) {
         
         ParametrosGlobais parametrosGlobais = unidadeMedidaProjection.getParametrosGlobais();
         
-        return (float) operacaoRoteiroSet.stream()
-                .mapToDouble(operacaoRoteiro -> operacaoRoteiro.getQuantidadeBase() * unidadeMedidaProjection.getConversaoParaUnidadeDestino(
-                        materialOutput, operacaoRoteiro.getUnidadeMedida(parametrosGlobais), unidadeMedidaTarget)
+        return operacaoRoteiroSet.stream()
+                .mapToDouble(operacaoRoteiro -> getQuantidadeBase() * unidadeMedidaProjection.getConversaoParaUnidadeDestino(
+                        materialOutput, getUnidadeMedidaQuantidadeBase(parametrosGlobais), unidadeMedidaTarget)
                         / operacaoRoteiro.getHorasPorQuantidadeBase())
                 .min().orElse(0);
         
+    }
+
+    public double getQuantidadeBase() {
+
+        if (quantidadeBase == null) {
+            return 1d;
+        }
+        if (!Double.isFinite(quantidadeBase) || quantidadeBase <= 0d) {
+            throw new IllegalStateException("Routing base quantity must be finite and positive");
+        }
+        return quantidadeBase;
+
+    }
+
+    public Double getQuantidadeBaseCadastrada() {
+
+        return quantidadeBase;
+
+    }
+
+    public UnidadeMedida getUnidadeMedidaQuantidadeBase(ParametrosGlobais parametrosGlobais) {
+
+        return unidadeMedidaQuantidadeBase == null
+                ? parametrosGlobais.getUnidadeMedidaPadraoSNP()
+                : unidadeMedidaQuantidadeBase;
+
+    }
+
+    public UnidadeMedida getUnidadeMedidaQuantidadeBaseCadastrada() {
+
+        return unidadeMedidaQuantidadeBase;
+
     }
 
     /**

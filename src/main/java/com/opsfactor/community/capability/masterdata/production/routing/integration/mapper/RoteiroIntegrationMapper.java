@@ -35,6 +35,8 @@ public class RoteiroIntegrationMapper implements IntegrationMapperInterface<Rote
         "Description",
         "Location Id",
         "Output Material Id",
+        "Base Quantity",
+        "Base Quantity UOM",
         "Routing can be used without production version",
         "Priority",
         "Active (true/false or 1/0)");
@@ -55,6 +57,10 @@ public class RoteiroIntegrationMapper implements IntegrationMapperInterface<Rote
                 .description(entity.getDescricao())
                 .locationId(entity.getLocation().getId())
                 .outputMaterialId(entity.getMaterialOutput().getId())
+                .baseQuantity(entity.getQuantidadeBaseCadastrada())
+                .baseQuantityUomId(entity.getUnidadeMedidaQuantidadeBaseCadastrada() == null
+                        ? null
+                        : entity.getUnidadeMedidaQuantidadeBaseCadastrada().getId())
                 .canBeUsedWithoutProductionVersion(entity.getHabilitadoParaUsoSemVersaoProducaoCadastrado())
                 .priority(entity.getPrioridadeCadastrada())
                 .active(entity.getAtivoCadastrado())
@@ -92,6 +98,7 @@ public class RoteiroIntegrationMapper implements IntegrationMapperInterface<Rote
         entity.setAtivo(dto.active);
         entity.setHabilitadoParaUsoSemVersaoProducao(dto.canBeUsedWithoutProductionVersion);
         entity.setPrioridade(dto.priority);
+        entity.setQuantidadeBase(dto.baseQuantity);
 
         /*
          * O identificador e compartilhado apenas para o overlay Enterprise
@@ -117,6 +124,14 @@ public class RoteiroIntegrationMapper implements IntegrationMapperInterface<Rote
                         dto.outputMaterialId, 
                         true, // material output é obrigatório
                         new MissingDependencyDataUploadException("Material " + dto.outputMaterialId + " not found", dto)));
+        entity.setUnidadeMedidaQuantidadeBase(
+                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
+                        supportData.mapaUnidadeMedidaPorId,
+                        dto.baseQuantityUomId,
+                        false,
+                        new MissingDependencyDataUploadException(
+                                "Unit of Measure " + dto.baseQuantityUomId + " not found",
+                                dto)));
                 
     }
 
@@ -128,6 +143,10 @@ public class RoteiroIntegrationMapper implements IntegrationMapperInterface<Rote
         linhaArquivo.addContent(entity.getDescricao());
         linhaArquivo.addContent(entity.getLocation().getId());
         linhaArquivo.addContent(entity.getMaterialOutput().getId());
+        linhaArquivo.addContent(entity.getQuantidadeBaseCadastrada());
+        linhaArquivo.addContent(entity.getUnidadeMedidaQuantidadeBaseCadastrada() == null
+                ? null
+                : entity.getUnidadeMedidaQuantidadeBaseCadastrada().getId());
         linhaArquivo.addContent(entity.getHabilitadoParaUsoSemVersaoProducaoCadastrado());
         linhaArquivo.addContent(entity.getPrioridadeCadastrada());
         linhaArquivo.addContent(entity.getAtivoCadastrado());
@@ -142,9 +161,11 @@ public class RoteiroIntegrationMapper implements IntegrationMapperInterface<Rote
                 .description(processedFileRow.getColumnValueAsString(1))
                 .locationId(processedFileRow.getColumnValueAsString(2))
                 .outputMaterialId(processedFileRow.getColumnValueAsString(3))
-                .canBeUsedWithoutProductionVersion(processedFileRow.getColumnValueAsBoolean(4))
-                .priority(processedFileRow.getColumnValueAsInteger(5))
-                .active(processedFileRow.getColumnValueAsBoolean(6))
+                .baseQuantity(processedFileRow.getColumnValueAsDouble(4))
+                .baseQuantityUomId(processedFileRow.getColumnValueAsString(5))
+                .canBeUsedWithoutProductionVersion(processedFileRow.getColumnValueAsBoolean(6))
+                .priority(processedFileRow.getColumnValueAsInteger(7))
+                .active(processedFileRow.getColumnValueAsBoolean(8))
                 .build();
     }
 

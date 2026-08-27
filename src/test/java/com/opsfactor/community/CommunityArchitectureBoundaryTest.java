@@ -744,12 +744,11 @@ class CommunityArchitectureBoundaryTest {
             "masterdata/production/ListaTecnicaComponente.java",
             "masterdata/production/OperacaoAbstract.java",
             "masterdata/production/OperacaoRoteiro.java",
+            "masterdata/production/UnidadeTempoOperacao.java",
             "masterdata/production/RecursoProdutivo.java",
             "masterdata/production/Roteiro.java",
             "masterdata/production/VersaoProducao.java",
             "masterdata/production/VersaoProducaoInexistente.java",
-            "masterdata/production/VersaoProducaoParalela.java",
-            "masterdata/production/VersaoProducaoParalelaComponente.java",
             "masterdata/production/VersaoProducaoSimples.java",
             "masterdata/produto/Produto.java",
             "masterdata/unidadeconversao/ConversaoUnidade.java",
@@ -2399,9 +2398,10 @@ class CommunityArchitectureBoundaryTest {
         }
         if (!repositorySource.contains("customFindAllForIntegrationExport()")
                 || !repositorySource.contains("LEFT JOIN FETCH vp.location")
-                || !repositorySource.contains("LEFT JOIN FETCH vp.materialOutput")
-                || !repositorySource.contains("LEFT JOIN FETCH vp.roteiro")
-                || !repositorySource.contains("LEFT JOIN FETCH vp.listaTecnica")) {
+                || !repositorySource.contains("LEFT JOIN FETCH vp.roteiro rt")
+                || !repositorySource.contains("LEFT JOIN FETCH rt.materialOutput")
+                || !repositorySource.contains("LEFT JOIN FETCH vp.listaTecnica lt")
+                || !repositorySource.contains("LEFT JOIN FETCH lt.materialOutput")) {
             violations.add(formatViolation(
                     communityWorkspaceDirectory,
                     versaoProducaoSimplesRepositoryPath,
@@ -3669,9 +3669,8 @@ class CommunityArchitectureBoundaryTest {
 
         /*
          * Entidades sao a fronteira mais sensivel do repo aberto: elas revelam
-         * schema e modelagem. Algumas classes permanecem por transicao de
-         * schema, como VersaoProducaoParalela e colunas antigas de planning
-         * data, mas a lista precisa ser deliberada e documentada.
+         * schema e modelagem. A lista precisa ser deliberada e documentada;
+         * especializacoes de producao multipla pertencem apenas ao Enterprise.
          */
         for (Path javaSourcePath : findWorkspaceFiles(modelDomainDirectory, ".java")) {
             String domainRelativePath = modelDomainDirectory
@@ -4757,15 +4756,23 @@ class CommunityArchitectureBoundaryTest {
         List<String> violations = new ArrayList<>();
 
         /*
-         * VersaoProducaoParalela ainda existe como entidade transicional de
-         * schema, mas o Community nao deve expor um booleano runtime para
-         * espalhar ajustes por multiplos outputs. O fluxo Community ajusta
-         * sempre o output material/location selecionado; parallel routing/output
-         * volta no Enterprise por overlay proprio.
+         * O Community nao deve expor entidades nem switches de producao
+         * paralela/multipla. O fluxo aberto trabalha sempre com um unico output;
+         * a especializacao volta no Enterprise por overlay proprio.
          */
         for (Path javaSourcePath : findWorkspaceFiles(communityWorkspaceDirectory, ".java")) {
             if (isTestSource(javaSourcePath)) {
                 continue;
+            }
+
+            String fileName = javaSourcePath.getFileName().toString();
+            boolean isMultipleProductionType = fileName.startsWith("RoteiroMultiplo")
+                    || fileName.startsWith("ListaTecnicaMultip")
+                    || fileName.startsWith("VersaoProducaoParal")
+                    || fileName.startsWith("VersaoProducaoMultip")
+                    || fileName.startsWith("ProductionPlanLinhaMultip");
+            if (isMultipleProductionType) {
+                violations.add(communityWorkspaceDirectory.relativize(javaSourcePath).toString());
             }
 
             List<String> sourceLines = Files.readAllLines(javaSourcePath, StandardCharsets.UTF_8);
@@ -4779,7 +4786,7 @@ class CommunityArchitectureBoundaryTest {
 
         assertTrue(
                 violations.isEmpty(),
-                "Community nao deve expor switch runtime para outputs de versao de producao paralela:\n"
+                "Community nao deve expor entidades ou switches de producao paralela/multipla:\n"
                         + String.join("\n", violations));
 
     }

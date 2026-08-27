@@ -15,7 +15,7 @@ public class ListaTecnicaDTO {
     
     private String outputUnitOfMeasureId;
     
-    private Float outputQuantity;
+    private Double outputQuantity;
         
     private Boolean active;
     

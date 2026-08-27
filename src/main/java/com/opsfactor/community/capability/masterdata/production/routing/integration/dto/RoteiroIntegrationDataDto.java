@@ -44,6 +44,8 @@ public class RoteiroIntegrationDataDto extends IntegrationDataDtoAbstract<Roteir
     public String routingClusterId;
     public Boolean canBeUsedWithoutProductionVersion;
     public Integer priority;
+    public Double baseQuantity;
+    public String baseQuantityUomId;
 
     @EqualsAndHashCode
     public static class RoteiroPrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<RoteiroPrimaryKeyIntegrationDTO, Roteiro> {

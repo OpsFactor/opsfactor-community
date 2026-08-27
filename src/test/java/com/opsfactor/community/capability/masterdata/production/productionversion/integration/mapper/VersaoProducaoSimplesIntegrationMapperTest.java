@@ -21,11 +21,13 @@ class VersaoProducaoSimplesIntegrationMapperTest {
         VersaoProducaoSimples simpleProductionVersion = new VersaoProducaoSimples();
         simpleProductionVersion.setId("PV-SIMPLE");
         simpleProductionVersion.setLocation(new Location("LOC", "Location"));
-        simpleProductionVersion.setMaterialOutput(new Produto("MAT"));
+        Produto outputMaterial = new Produto("MAT");
         simpleProductionVersion.setRoteiro(new Roteiro());
         simpleProductionVersion.getRoteiro().setId("ROUTING");
+        simpleProductionVersion.getRoteiro().setMaterialOutput(outputMaterial);
         simpleProductionVersion.setListaTecnica(new ListaTecnica());
         simpleProductionVersion.getListaTecnica().setId("BOM");
+        simpleProductionVersion.getListaTecnica().setMaterialOutput(outputMaterial);
 
         /*
          * O fallback máximo continua disponível para heurísticas, porém o

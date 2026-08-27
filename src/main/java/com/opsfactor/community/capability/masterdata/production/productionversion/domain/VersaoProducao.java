@@ -48,8 +48,22 @@ public abstract class VersaoProducao implements Serializable, Comparable<VersaoP
     /**
      * Location operacional da versao produtiva.
      */
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Location location;
+
+    /**
+     * Roteiro polimórfico da versão.
+     *
+     * <p>O Community persiste somente {@code Roteiro} simples. O Enterprise
+     * pode associar um subtipo múltiplo sem criar outra coluna ou exigir que
+     * services escolham entre getters concorrentes.</p>
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Roteiro roteiro;
+
+    /** Lista técnica polimórfica vinculada ao mesmo pacote produtivo. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    private ListaTecnica listaTecnica;
         
     private Integer prioridade;
         
@@ -85,6 +99,21 @@ public abstract class VersaoProducao implements Serializable, Comparable<VersaoP
     
     public abstract boolean contemRoteiro(Roteiro roteiro);
     public abstract boolean contemListaTecnica(ListaTecnica listaTecnica);
+
+    /**
+     * Atalho estritamente singular para consumidores que exigem uma versão
+     * simples. Cálculos genéricos devem usar {@link #getMateriaisOutput()}.
+     */
+    public Produto getMaterialOutput() {
+
+        Set<Produto> materiaisOutput = getMateriaisOutput();
+        if (materiaisOutput.size() != 1) {
+            throw new IllegalStateException("Production version " + getId()
+                    + " does not have exactly one output material");
+        }
+        return materiaisOutput.iterator().next();
+
+    }
         
     @Override
     public int hashCode() {
@@ -244,7 +273,6 @@ public abstract class VersaoProducao implements Serializable, Comparable<VersaoP
                 versaoProducaoTemporaria.setId(null);
                 versaoProducaoTemporaria.setLocation(roteiro.getLocation());
                 versaoProducaoTemporaria.setAtivo(true);
-                versaoProducaoTemporaria.setMaterialOutput(roteiro.getMaterialOutput());
                 versaoProducaoTemporaria.setRoteiro(roteiro);
                 versaoProducaoTemporaria.setListaTecnica(listaTecnica);
                 return versaoProducaoTemporaria;

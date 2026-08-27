@@ -7,6 +7,7 @@ import com.opsfactor.community.capability.masterdata.production.routing.domain.R
 import com.opsfactor.community.capability.masterdata.production.routing.repository.RoteiroRepository;
 import com.opsfactor.community.capability.masterdata.network.location.service.LocationService;
 import com.opsfactor.community.capability.masterdata.product.material.service.MaterialService;
+import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.service.UnidadeMedidaService;
 import com.opsfactor.community.platform.integration.service.EmptyIntegrationDataFilter;
 import com.opsfactor.community.platform.integration.service.IntegrationServiceInterface;
 import com.opsfactor.community.platform.exception.DataUploadException;
@@ -44,6 +45,10 @@ public class RoteiroIntegrationService implements IntegrationServiceInterface<Ro
      */
     @Autowired
     private MaterialService materialService;
+
+    /** Unidades usadas pela quantidade-base do cabeçalho do roteiro. */
+    @Autowired
+    private UnidadeMedidaService unidadeMedidaService;
 
     /**
      * Repository do cadastro operacional de roteiros.
@@ -129,6 +134,10 @@ public class RoteiroIntegrationService implements IntegrationServiceInterface<Ro
                 materialService.getMateriais(false),
                 material -> material.getId(),
                 "Material snapshot");
+        supportData.mapaUnidadeMedidaPorId = getMapaPorIdObrigatorio(
+                unidadeMedidaService.getUnidadeMedidaList(),
+                unidadeMedida -> unidadeMedida.getId(),
+                "Unit of Measure snapshot");
 
         return supportData;
 

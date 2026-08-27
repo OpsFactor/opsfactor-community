@@ -19,12 +19,13 @@ import org.springframework.data.repository.query.Param;
 public interface VersaoProducaoSimplesRepository extends JpaRepository<VersaoProducaoSimples,String> {
 
     @Query("SELECT DISTINCT vp FROM VersaoProducaoSimples vp "
+            + "LEFT JOIN FETCH vp.location "
             + "LEFT JOIN FETCH vp.roteiro rt "
-            + "LEFT JOIN FETCH rt.operacaoRoteiroSet ors "
+            + "LEFT JOIN FETCH rt.materialOutput "
             + "LEFT JOIN FETCH vp.listaTecnica lt "
-            + "LEFT JOIN FETCH lt.listaTecnicaComponenteSet ltcs "
+            + "LEFT JOIN FETCH lt.materialOutput "
             + "WHERE vp.location IN :locations "
-            + "AND vp.materialOutput IN :produtos")
+            + "AND rt.materialOutput IN :produtos")
     public List<VersaoProducaoSimples> findByVersaoProducaoCompositeKeyRoteiroLocationInAndVersaoProducaoCompositeKeyRoteiroMaterialOutputIn(
             @Param("locations") Collection<Location> locations, @Param("produtos") Collection<Produto> produtos);
 
@@ -32,15 +33,16 @@ public interface VersaoProducaoSimplesRepository extends JpaRepository<VersaoPro
      * Carrega todas as versoes simples com as referencias usadas pelo mapper
      * de exportacao de integracao.
      *
-     * <p>O export percorre location, material output, roteiro e BOM de cada
-     * versao. Os fetch joins mantem essa leitura em uma unica consulta e
-     * evitam carregamentos lazy por linha exportada.</p>
+     * <p>O material output nao e duplicado na versao: ele e derivado dos
+     * mestres produtivos. Os fetch joins carregam location, roteiro/BOM e os
+     * respectivos outputs numa unica consulta, sem lazy por linha.</p>
      */
     @Query("SELECT DISTINCT vp FROM VersaoProducaoSimples vp "
             + "LEFT JOIN FETCH vp.location "
-            + "LEFT JOIN FETCH vp.materialOutput "
-            + "LEFT JOIN FETCH vp.roteiro "
-            + "LEFT JOIN FETCH vp.listaTecnica")
+            + "LEFT JOIN FETCH vp.roteiro rt "
+            + "LEFT JOIN FETCH rt.materialOutput "
+            + "LEFT JOIN FETCH vp.listaTecnica lt "
+            + "LEFT JOIN FETCH lt.materialOutput")
     List<VersaoProducaoSimples> customFindAllForIntegrationExport();
 
     // OVERRIDES SAVE E DELETE PARA @CACHEEVICT -------------------------------------------------------------------------------------------

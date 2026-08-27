@@ -238,16 +238,17 @@ public class UnidadeMedidaFacade {
                     for (OperacaoRoteiro operacaoRoteiro : roteiro.getOperacaoRoteiroListOrdenadaPorPosicaoAsc()) {
                         // será necessária conversão da unidade DP para unidade medida SNP
                         if (!unidadeMedidaProjection.contemConversaoParaUnidadeDestino(
-                                material, operacaoRoteiro.getUnidadeMedida(clusterEParametrosProjection.getParametrosGlobais()), 
+                                material, roteiro.getUnidadeMedidaQuantidadeBase(clusterEParametrosProjection.getParametrosGlobais()),
                                 unidadeMedidaPadrao)) {
                             unidadeConversaoFaltanteDTOSet.add(UnidadeConversaoFaltanteDTO.builder()
                                     // só salva location se a unidade de medida padrão deriva do parametro material-location. se foi usada unidade padrao nivel material, se omite a location
                                     .locationId((clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null) ? location.getId() : null)
-                                    .materialId(operacaoRoteiro.getMaterialOutput().getId())
+                                    .materialId(roteiro.getMaterialOutput().getId())
                                     .originTask(Constantes.TaskTipo.SNP)
                                     .originConversionRequirementType(NecessidadeConversao.ROTEIRO_OPERACAO)
                                     .originConversionRequirementId("Routing " + roteiro.getId() + " / Operation " + operacaoRoteiro.getPosicao())
-                                    .originUnitOfMeasure(operacaoRoteiro.getUnidadeMedida(clusterEParametrosProjection.getParametrosGlobais()).getId())
+                                    .originUnitOfMeasure(roteiro.getUnidadeMedidaQuantidadeBase(
+                                            clusterEParametrosProjection.getParametrosGlobais()).getId())
                                     .targetTask(Constantes.TaskTipo.SNP)
                                     .targetConversionRequirementType(parametroUnidadeMedidaPadrao)
                                     .targetConversionRequirementId(identificadorUnidadeMedidaPadrao)

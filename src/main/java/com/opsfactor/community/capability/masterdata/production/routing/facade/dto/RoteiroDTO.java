@@ -17,6 +17,10 @@ public class RoteiroDTO {
     
     private String outputMaterialId;
 
+    private Double baseQuantity;
+
+    private String baseQuantityUomId;
+
     /**
      * Valor explicitamente configurado para permitir o uso do roteiro sem
      * versão de produção. {@code null} preserva o default efetivo da entidade.

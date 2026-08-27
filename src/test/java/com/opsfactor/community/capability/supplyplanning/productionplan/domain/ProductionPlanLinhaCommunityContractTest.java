@@ -24,49 +24,45 @@ import java.time.LocalDateTime;
 class ProductionPlanLinhaCommunityContractTest {
 
     @Test
-    void shouldReportOutputMaterialIdsWhenRoutingOutputMaterialIsDifferent() {
+    void shouldRejectProductionVersionWhenRoutingAndBillOfMaterialsOutputsDiffer() {
 
         Location location = new Location("PLANT");
         Produto materialLinha = new Produto("FG_LINE");
         Produto materialRoteiro = new Produto("FG_ROUTING");
         ListaTecnica listaTecnica = criaListaTecnica("BOM", location, materialLinha);
         Roteiro roteiro = criaRoteiro("ROUTING", location, materialRoteiro);
-        ProductionPlanLinha productionPlanLinha = criaProductionPlanLinha(
-                location,
-                materialLinha,
-                roteiro,
-                listaTecnica);
-
         IllegalStateException illegalStateException = Assertions.assertThrows(
                 IllegalStateException.class,
-                productionPlanLinha::verificaConsistencia);
+                () -> criaProductionPlanLinha(
+                        location,
+                        materialLinha,
+                        roteiro,
+                        listaTecnica));
 
         Assertions.assertEquals(
-                "Output Material FG_LINE different than routing Output Material FG_ROUTING",
+                "Bill of Materials output material FG_LINE different than version material FG_ROUTING",
                 illegalStateException.getMessage());
 
     }
 
     @Test
-    void shouldReportOutputMaterialIdsWhenBillOfMaterialsOutputMaterialIsDifferent() {
+    void shouldRejectProductionVersionWhenBillOfMaterialsAndRoutingOutputsDiffer() {
 
         Location location = new Location("PLANT");
         Produto materialLinha = new Produto("FG_LINE");
         Produto materialListaTecnica = new Produto("FG_BOM");
         Roteiro roteiro = criaRoteiro("ROUTING", location, materialLinha);
         ListaTecnica listaTecnica = criaListaTecnica("BOM", location, materialListaTecnica);
-        ProductionPlanLinha productionPlanLinha = criaProductionPlanLinha(
-                location,
-                materialLinha,
-                roteiro,
-                listaTecnica);
-
         IllegalStateException illegalStateException = Assertions.assertThrows(
                 IllegalStateException.class,
-                productionPlanLinha::verificaConsistencia);
+                () -> criaProductionPlanLinha(
+                        location,
+                        materialLinha,
+                        roteiro,
+                        listaTecnica));
 
         Assertions.assertEquals(
-                "Output Material FG_LINE different than bill of materials Output Material FG_BOM",
+                "Bill of Materials output material FG_BOM different than version material FG_LINE",
                 illegalStateException.getMessage());
 
     }
@@ -129,7 +125,7 @@ class ProductionPlanLinhaCommunityContractTest {
 
         SupplyPlan supplyPlan = new SupplyPlan();
         VersaoProducaoSimples versaoProducaoSimples =
-                new VersaoProducaoSimples("PV", location, 1, materialLinha, roteiro, listaTecnica);
+                new VersaoProducaoSimples("PV", location, 1, roteiro, listaTecnica);
         ProductionPlanLinha.ProductionPlanLinhaCompositeKey productionPlanLinhaCompositeKey =
                 new ProductionPlanLinha.ProductionPlanLinhaCompositeKey(
                         supplyPlan,

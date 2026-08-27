@@ -2,6 +2,7 @@ package com.opsfactor.community.capability.masterdata.production.routing.integra
 
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
+import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import java.util.Map;
 
 /**
@@ -12,5 +13,6 @@ public class RoteiroIntegrationSupportData {
     
     public Map<String,Produto> mapaMaterialPorId;
     public Map<String,Location> mapaLocationPorId;
+    public Map<String,UnidadeMedida> mapaUnidadeMedidaPorId;
     
 }

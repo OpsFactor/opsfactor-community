@@ -16,7 +16,6 @@ import org.javatuples.Triplet;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +25,8 @@ import java.util.Set;
  * Versao de producao simples do Supply Planning Community.
  *
  * <p>Uma versao simples materializa exatamente uma combinacao location,
- * material output, roteiro e lista tecnica. Parallel routing/output e
+ * roteiro e lista tecnica. O material output e derivado desses mestres e nao
+ * e persistido novamente na versao. Parallel routing/output e
  * encadeamentos produtivos privados devem ser modelados no Enterprise por
  * subclasses/overlays proprios, sem alterar o contrato operacional desta
  * entidade.</p>
@@ -39,11 +39,13 @@ import java.util.Set;
 @NoArgsConstructor
 public class VersaoProducaoSimples extends VersaoProducao {
 
-    public VersaoProducaoSimples(String id, Location location, Integer prioridade, Produto materialOutput, Roteiro roteiro, ListaTecnica listaTecnica) {
+    public VersaoProducaoSimples(
+            String id,
+            Location location,
+            Integer prioridade,
+            Roteiro roteiro,
+            ListaTecnica listaTecnica) {
         
-        if (materialOutput == null) {
-            throw new IllegalArgumentException("Simple production version output material is required");
-        }
         if (roteiro == null) {
             throw new IllegalArgumentException("Simple production version routing is required");
         }
@@ -51,48 +53,36 @@ public class VersaoProducaoSimples extends VersaoProducao {
             throw new IllegalArgumentException("Simple production version bill of materials is required");
         }
         
-        this.id = id;
+        setId(id);
         setLocation(location);
         setPrioridade(prioridade);
-        this.materialOutput = materialOutput;
-        this.roteiro = roteiro;
-        this.listaTecnica = listaTecnica;
+        setRoteiro(roteiro);
+        setListaTecnica(listaTecnica);
+
+        geraErroSeDadosInconsistentes();
+
     }
-
-    /**
-     * Roteiro produtivo unico da versao simples.
-     *
-     * <p>O campo fica sem `@NonNull` porque o mapeamento JPA e compartilhado
-     * pela hierarquia de versoes de producao. A obrigatoriedade funcional da
-     * versao simples e verificada no construtor e em
-     * `geraErroSeDadosInconsistentes()`.</p>
-     */
-    @ManyToOne
-    private Roteiro roteiro;
-
-    /**
-     * Lista tecnica unica da versao simples.
-     */
-    @ManyToOne
-    private ListaTecnica listaTecnica;
-
-    /**
-     * Material output produzido pela combinacao roteiro/lista tecnica.
-     */
-    @ManyToOne
-    private Produto materialOutput;
     
     @Override
     public void geraErroSeDadosInconsistentes() {
+
+        if (getLocation() == null) {
+            throw new IllegalStateException("Simple production version location is required");
+        }
+        if (getRoteiro() == null) {
+            throw new IllegalStateException("Simple production version routing is required");
+        }
+        if (getListaTecnica() == null) {
+            throw new IllegalStateException("Simple production version Bill of Materials is required");
+        }
         if (!getRoteiro().getLocation().equals(getLocation())) {
             throw new IllegalStateException("Routing location " + getRoteiro().getLocation().getId() + " different than version location " + getLocation().getId());
-        } else if (!getRoteiro().getMaterialOutput().equals(getMaterialOutput())) {
-            throw new IllegalStateException("Routing material " + getRoteiro().getMaterialOutput().getId() + " different than version material " + getMaterialOutput().getId());
         } else if (!getListaTecnica().getLocation().equals(getLocation())) {
             throw new IllegalStateException("Bill of Materials location " + getListaTecnica().getLocation().getId() + " different than version location " + getLocation().getId());
-        } else if (!getListaTecnica().getMaterialOutput().equals(getMaterialOutput())) {
-            throw new IllegalStateException("Bill of Materials output material " + getListaTecnica().getMaterialOutput().getId() + " different than version material " + getMaterialOutput().getId());
+        } else if (!getListaTecnica().getMaterialOutput().equals(getRoteiro().getMaterialOutput())) {
+            throw new IllegalStateException("Bill of Materials output material " + getListaTecnica().getMaterialOutput().getId() + " different than version material " + getRoteiro().getMaterialOutput().getId());
         }
+
     }
     
     @Override
@@ -107,7 +97,7 @@ public class VersaoProducaoSimples extends VersaoProducao {
     
     @Override
     public Set<Produto> getMateriaisOutput() {
-        return Sets.newHashSet(getMaterialOutput());
+        return Sets.newHashSet(getRoteiro().getMaterialOutput());
     }
     
     @Override

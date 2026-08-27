@@ -17,17 +17,15 @@ public interface OperacaoRoteiroAutoMapper {
     @Mapping(source = "operacaoRoteiroCompositeKey.roteiro.id", target = "routingId")
     @Mapping(source = "operacaoRoteiroCompositeKey.posicao", target = "operationPosition")
     @Mapping(source = "recursoProdutivo.id", target = "productionResourceId")
-    @Mapping(expression = "java((operacaoRoteiro.getUnidadeMedidaCadastrado() == null) ? null : operacaoRoteiro.getUnidadeMedidaCadastrado().getId())", target = "unitOfMeasureId") // getter padrão do campo requer ParametrosGlobais
-    @Mapping(source = "quantidadeBase", target = "baseQuantity")
-    @Mapping(source = "horasPorQuantidadeBase", target = "hoursByBaseQuantity")
+    @Mapping(source = "tempoPorQuantidadeBase", target = "operationDuration")
+    @Mapping(expression = "java(operacaoRoteiro.getUnidadeTempoOperacao().getCodigo())", target = "timeUnit")
     public OperacaoRoteiroDTO converte(OperacaoRoteiro operacaoRoteiro);
     
     @Mapping(source = "routingId", target = "operacaoRoteiroCompositeKey.roteiro.id")
     @Mapping(source = "operationPosition", target = "operacaoRoteiroCompositeKey.posicao")
     @Mapping(source = "productionResourceId", target = "recursoProdutivo.id")
-    @Mapping(source = "unitOfMeasureId", target = "unidadeMedida.id")
-    @Mapping(source = "baseQuantity", target = "quantidadeBase")
-    @Mapping(source = "hoursByBaseQuantity", target = "horasPorQuantidadeBase")
+    @Mapping(source = "operationDuration", target = "tempoPorQuantidadeBase")
+    @Mapping(target = "unidadeTempoOperacao", expression = "java(com.opsfactor.community.capability.masterdata.production.operation.domain.UnidadeTempoOperacao.deCodigoOuPadrao(operacaoRoteiroDTO.getTimeUnit()))")
     public OperacaoRoteiro converte(OperacaoRoteiroDTO operacaoRoteiroDTO);
         
     public List<OperacaoRoteiro> converteListaDTOParaListaEntidade(List<OperacaoRoteiroDTO> operacaoRoteiroDTOList);

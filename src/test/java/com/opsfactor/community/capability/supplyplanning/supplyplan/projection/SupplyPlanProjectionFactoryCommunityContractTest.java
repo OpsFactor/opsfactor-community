@@ -312,7 +312,6 @@ class SupplyPlanProjectionFactoryCommunityContractTest {
                 "PV",
                 location,
                 1,
-                materialOutput,
                 roteiro,
                 listaTecnica);
 

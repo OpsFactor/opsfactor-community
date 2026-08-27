@@ -55,7 +55,7 @@ class SupplyNetworkProjectionCommunityContractTest {
         Roteiro roteiro = getRoteiro("ROUTING", location, material);
         ListaTecnica listaTecnica = getListaTecnica("BOM", location, material);
         VersaoProducaoSimples versaoProducaoSimples =
-                new VersaoProducaoSimples("PV", location, 1, material, roteiro, listaTecnica);
+                new VersaoProducaoSimples("PV", location, 1, roteiro, listaTecnica);
         SupplyNetworkProjection supplyNetworkProjection =
                 getSupplyNetworkProjection(location, material, versaoProducaoSimples);
 
@@ -81,7 +81,6 @@ class SupplyNetworkProjectionCommunityContractTest {
                         "PV-1000",
                         location,
                         1,
-                        material,
                         getRoteiro("ROUTING", location, material),
                         getListaTecnica("BOM", location, material));
         SupplyNetworkProjection supplyNetworkProjection =
@@ -520,14 +519,12 @@ class SupplyNetworkProjectionCommunityContractTest {
                         "PV",
                         location,
                         1,
-                        material,
                         getRoteiro("ROUTING-1", location, material),
                         getListaTecnica("BOM-1", location, material)),
                 new VersaoProducaoSimples(
                         "PV",
                         location,
                         2,
-                        material,
                         getRoteiro("ROUTING-2", location, material),
                         getListaTecnica("BOM-2", location, material)));
         SupplyNetworkProjectionFactory supplyNetworkProjectionFactory =

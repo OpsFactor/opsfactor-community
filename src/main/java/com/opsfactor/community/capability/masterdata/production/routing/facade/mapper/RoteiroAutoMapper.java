@@ -18,6 +18,8 @@ public interface RoteiroAutoMapper {
     @Mapping(source = "prioridade", target = "priority")
     @Mapping(source = "location.id", target = "locationId")
     @Mapping(source = "materialOutput.id", target = "outputMaterialId")
+    @Mapping(source = "quantidadeBaseCadastrada", target = "baseQuantity")
+    @Mapping(source = "unidadeMedidaQuantidadeBaseCadastrada.id", target = "baseQuantityUomId")
     @Mapping(
             source = "habilitadoParaUsoSemVersaoProducaoCadastrado",
             target = "canBeUsedWithoutProductionVersion")
@@ -28,6 +30,8 @@ public interface RoteiroAutoMapper {
     @Mapping(source = "priority", target = "prioridade")
     @Mapping(source = "locationId", target = "location.id")
     @Mapping(source = "outputMaterialId", target = "materialOutput.id")
+    @Mapping(source = "baseQuantity", target = "quantidadeBase")
+    @Mapping(source = "baseQuantityUomId", target = "unidadeMedidaQuantidadeBase.id")
     @Mapping(
             source = "canBeUsedWithoutProductionVersion",
             target = "habilitadoParaUsoSemVersaoProducao")

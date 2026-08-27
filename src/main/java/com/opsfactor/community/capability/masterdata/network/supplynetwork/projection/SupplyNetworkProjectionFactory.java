@@ -8,7 +8,6 @@ import com.opsfactor.community.capability.masterdata.production.operation.domain
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.production.productionresource.repository.RecursoProdutivoRepository;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoParalela;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
 import com.opsfactor.community.capability.masterdata.production.productionversion.repository.VersaoProducaoSimplesRepository;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
@@ -321,7 +320,7 @@ public class SupplyNetworkProjectionFactory {
         supplyNetworkProjection.mapaRoteiroSetPorRecursoProdutivoMaterial = roteiroList.stream()
                 .flatMap(x -> x.getOperacaoRoteiroSet().stream())
                 .collect(Collectors.groupingBy(OperacaoRoteiro::getRecursoProdutivo,
-                        Collectors.groupingBy(OperacaoRoteiro::getMaterialOutput,
+                        Collectors.groupingBy(operacaoRoteiro -> operacaoRoteiro.getRoteiro().getMaterialOutput(),
                                 Collectors.mapping(OperacaoRoteiro::getRoteiro, Collectors.toSet()))));
         // Map<Location,Map<Produto,Set<Roteiro>>>
         supplyNetworkProjection.mapaRoteiroSetPorLocationMaterial = roteiroList.stream()
@@ -346,18 +345,42 @@ public class SupplyNetworkProjectionFactory {
                 "Simple production version repository",
                 "simple production version");
 
+        /*
+         * Roteiros e listas tecnicas foram carregados acima, cada agregado em
+         * sua consulta batch com uma unica colecao filha. Reassociamos aqui as
+         * referencias canonicas da projection para evitar tanto N+1 quanto o
+         * produto cartesiano que surgiria ao buscar operacoes e componentes
+         * na mesma consulta da versao.
+         */
+        for (VersaoProducaoSimples versaoProducaoSimples : versaoProducaoList) {
+            Roteiro roteiroCanonico = supplyNetworkProjection.mapaRoteiros.get(
+                    versaoProducaoSimples.getRoteiro().getId());
+            if (roteiroCanonico == null) {
+                throw new IllegalStateException(
+                        "Simple production version "
+                                + versaoProducaoSimples.getId()
+                                + " references routing outside the production master-data snapshot: "
+                                + versaoProducaoSimples.getRoteiro().getId());
+            }
+
+            ListaTecnica listaTecnicaCanonica = supplyNetworkProjection.mapaListasTecnicas.get(
+                    versaoProducaoSimples.getListaTecnica().getId());
+            if (listaTecnicaCanonica == null) {
+                throw new IllegalStateException(
+                        "Simple production version "
+                                + versaoProducaoSimples.getId()
+                                + " references Bill of Materials outside the production master-data snapshot: "
+                                + versaoProducaoSimples.getListaTecnica().getId());
+            }
+
+            versaoProducaoSimples.setRoteiro(roteiroCanonico);
+            versaoProducaoSimples.setListaTecnica(listaTecnicaCanonica);
+            versaoProducaoSimples.geraErroSeDadosInconsistentes();
+        }
+
         versaoProducaoAbstractSet.addAll(versaoProducaoList);
 
-        /*
-         * Community não carrega versões de produção paralelas.
-         *
-         * As classes VersaoProducaoParalela e VersaoProducaoParalelaComponente
-         * ainda existem temporariamente no model por compatibilidade de schema
-         * e para permitir que o Enterprise reative esse subtipo por extensão.
-         * A porta de entrada funcional, porém, fica fechada no Community: a
-         * integração aceita apenas SingleOutput e esta factory não busca dados
-         * paralelos no banco.
-         */
+        // Community carrega exclusivamente o repositório de versões simples.
 
         // INICIALIZA MAPAS DE VERSOES PRODUCAO (VIAVEIS + PRIORITARIAS)
         supplyNetworkProjection.mapaVersaoProducaoViavelSetPorLocationMaterial = new HashMap<>();
@@ -384,7 +407,7 @@ public class SupplyNetworkProjectionFactory {
                             VersaoProducaoSimples versaoProducaoTemporaria = new VersaoProducaoSimples(
                                     null, location,
                                     Math.max(roteiro.getPrioridade(), listaTecnica.getPrioridade()), // prioridade
-                                    material, roteiro, listaTecnica);
+                                    roteiro, listaTecnica);
 
                             versaoProducaoTemporariaSet.add(versaoProducaoTemporaria);
                         }
@@ -412,12 +435,6 @@ public class SupplyNetworkProjectionFactory {
 
             // insere as versões de produção viáveis nos respectivos mapas
             if (!versaoProducaoAbstract.getAtivo()) continue;
-
-            /*
-             * Community não deve materializar parallel routing mesmo que um
-             * registro legado chegue ao set por compatibilidade JPA.
-             */
-            if (versaoProducaoAbstract instanceof VersaoProducaoParalela) continue;
 
             // checa se roteiro e lista técnica são viáveis
             if (versaoProducaoAbstract instanceof VersaoProducaoSimples) {

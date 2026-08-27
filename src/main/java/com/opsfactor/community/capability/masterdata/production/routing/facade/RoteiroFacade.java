@@ -118,11 +118,6 @@ public class RoteiroFacade {
                         .build();
                 listaInconsistencias.add(inconsistencia);
             } else {
-                /*
-                 * Como a lista ja vem ordenada por posicao, pegamos a ultima
-                 * operacao para comparar o material final do roteiro contra o
-                 * output efetivo da sequencia produtiva.
-                 */
                 OperacaoRoteiro ultimaOperacao = roteiro.getOperacaoRoteiroListOrdenadaPorPosicaoAsc().get(
                         roteiro.getOperacaoRoteiroListOrdenadaPorPosicaoAsc().size() - 1);
                 
@@ -131,14 +126,6 @@ public class RoteiroFacade {
                             .productionRoutingId(roteiro.getId())
                             .lastOperationPosition(ultimaOperacao.getPosicao())
                             .inconsistency("No output material registered for routing or bill of materials registered for its last operation")
-                            .build();
-                    listaInconsistencias.add(inconsistencia);
-                } else if (!roteiro.getMaterialOutput().equals(ultimaOperacao.getMaterialOutput())) {
-                    InconsistenciaReceitaProducaoDTO inconsistencia = InconsistenciaReceitaProducaoDTO.builder()
-                            .productionRoutingId(roteiro.getId())
-                            .lastOperationPosition(ultimaOperacao.getPosicao())
-                            .productionRoutingOutputMaterial(roteiro.getMaterialOutput().getId())
-                            .inconsistency("Routing output material does not match output material of its last operation's bill of materials")
                             .build();
                     listaInconsistencias.add(inconsistencia);
                 }

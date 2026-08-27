@@ -3,6 +3,7 @@ package com.opsfactor.community.capability.masterdata.production.productionversi
 import com.opsfactor.community.capability.masterdata.production.productionversion.integration.dto.VersaoProducaoSimplesIntegrationDataDto;
 import com.opsfactor.community.platform.integration.mapper.IntegrationMapperInterface;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
+import com.opsfactor.community.platform.exception.DataUploadException;
 import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
 import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
@@ -97,12 +98,6 @@ public class VersaoProducaoSimplesIntegrationMapper implements IntegrationMapper
                         dto.locationId,
                         true, // campo obrigatório. não pode ser nulo
                         new MissingDependencyDataUploadException("Location " + dto.locationId + " not found", dto)));
-        entity.setMaterialOutput(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaMaterialOutputPorId, 
-                        dto.outputMaterialId,
-                        true, // campo obrigatório. não pode ser nulo
-                        new MissingDependencyDataUploadException("Output Material " + dto.outputMaterialId + " not found", dto)));
         entity.setRoteiro(
                 FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
                         supportData.mapaRoteiroPorId, 
@@ -115,6 +110,22 @@ public class VersaoProducaoSimplesIntegrationMapper implements IntegrationMapper
                         dto.billOfMaterialsId,
                         true, // campo obrigatório. não pode ser nulo
                         new MissingDependencyDataUploadException("Bills of Materials " + dto.billOfMaterialsId + " not found", dto)));
+
+        /*
+         * A coluna de material continua no arquivo por compatibilidade, mas
+         * nao e uma dependencia persistida da versao. Ela valida o output
+         * derivado do roteiro e da lista tecnica, evitando duas fontes de
+         * verdade e um setter artificial na entidade.
+         */
+        entity.geraErroSeDadosInconsistentes();
+        if (dto.outputMaterialId == null
+                || !dto.outputMaterialId.equals(entity.getMaterialOutput().getId())) {
+            throw new DataUploadException(
+                    "Output Material "
+                            + dto.outputMaterialId
+                            + " does not match routing and Bill of Materials output "
+                            + entity.getMaterialOutput().getId());
+        }
         
     }
 

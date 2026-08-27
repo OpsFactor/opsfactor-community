@@ -45,8 +45,11 @@ public interface RoteiroRepository extends JpaRepository<Roteiro,String> {
     List<Roteiro> customFindAllForConsistencyDiagnostic();
 
     @Query("SELECT DISTINCT r FROM Roteiro r "
+            + "LEFT JOIN FETCH r.location "
+            + "LEFT JOIN FETCH r.materialOutput "
+            + "LEFT JOIN FETCH r.unidadeMedidaQuantidadeBase "
             + "LEFT JOIN FETCH r.operacaoRoteiroSet opr "
-            + "LEFT JOIN FETCH opr.recursoProdutivo rp "
+            + "LEFT JOIN FETCH opr.recursoProdutivo "
             + "WHERE r.location IN :locations "
             + "AND r.materialOutput IN :materiais")
     public List<Roteiro> customFindAllByLocationInAndMaterialOutputInFetchOperacaoRoteiroSet(

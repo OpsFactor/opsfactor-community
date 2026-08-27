@@ -13,10 +13,9 @@ public class OperacaoRoteiroDTO {
         
     private String productionResourceId;
     
-    private String unitOfMeasureId;
-    
-    private Float baseQuantity;
-    
-    private Float hoursByBaseQuantity;
+    private Double operationDuration;
+
+    /** S, M, H ou D; ausência significa H. */
+    private String timeUnit;
     
 }

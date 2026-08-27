@@ -25,12 +25,19 @@ public class CommunityProductionOverviewResourceDetailController {
             "api/secured/bi/planning/supply/productionoverview/"
                     + "{supplyPlanId}/{productionResourceId}/{periodIndex}/details";
 
+    private static final String VOLUMES_AND_CAPACITIES_DETAILS_PATH =
+            "api/secured/bi/planning/supply/volumesandcapacities/"
+                    + "{supplyPlanId}/{productionResourceId}/{periodIndex}/details";
+
     /** Abre o detalhe da célula selecionada usando projections Community. */
     @Autowired
     private CommunityProductionOverviewResourceDetailService communityProductionOverviewResourceDetailService;
 
     /** Abre a célula sem o filtro opcional de materiais. */
-    @GetMapping(PRODUCTION_OVERVIEW_DETAILS_PATH)
+    @GetMapping({
+            PRODUCTION_OVERVIEW_DETAILS_PATH,
+            VOLUMES_AND_CAPACITIES_DETAILS_PATH
+    })
     public ResponseEntity<CommunityProductionOverviewResourceDetailResponseDTO> getResourceDetail(
             @PathVariable Long supplyPlanId,
             @PathVariable String productionResourceId,
@@ -44,7 +51,10 @@ public class CommunityProductionOverviewResourceDetailController {
     }
 
     /** Abre a célula aplicando apenas o filtro de características de material do POST. */
-    @PostMapping(PRODUCTION_OVERVIEW_DETAILS_PATH)
+    @PostMapping({
+            PRODUCTION_OVERVIEW_DETAILS_PATH,
+            VOLUMES_AND_CAPACITIES_DETAILS_PATH
+    })
     public ResponseEntity<CommunityProductionOverviewResourceDetailResponseDTO> getResourceDetail(
             @PathVariable Long supplyPlanId,
             @PathVariable String productionResourceId,

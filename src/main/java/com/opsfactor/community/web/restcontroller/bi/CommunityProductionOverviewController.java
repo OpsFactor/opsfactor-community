@@ -27,7 +27,10 @@ public class CommunityProductionOverviewController {
     private CommunityProductionOverviewService communityProductionOverviewService;
 
     /** Retorna o JSON achatado do Production Overview. */
-    @PostMapping(PRODUCTION_OVERVIEW_PATH)
+    @PostMapping({
+            PRODUCTION_OVERVIEW_PATH,
+            "api/secured/bi/planning/supply/volumesandcapacities"
+    })
     public ResponseEntity<CommunityProductionOverviewDTO> getProductionOverview(
             @RequestBody CommunityProductionOverviewSelectionDTO selectionDTO) {
 

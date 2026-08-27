@@ -3,11 +3,10 @@ package com.opsfactor.community.capability.masterdata.network.supplynetwork.proj
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnicaComponente;
-import com.opsfactor.community.capability.masterdata.production.operation.domain.OperacaoAbstract;
+import com.opsfactor.community.capability.masterdata.production.operation.domain.OperacaoRoteiro;
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoInexistente;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoParalela;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
@@ -150,15 +149,15 @@ public class SupplyNetworkProjection {
     /**
      * Define se uma versão de produção participa da consulta solicitada.
      *
-     * <p>O Community só publica versões simples. A extensão Enterprise
-     * sobrescreve este ponto para incluir versões paralelas quando o chamador
-     * as solicitar, sem duplicar os índices e as consultas comuns da malha.</p>
+     * <p>O Community só carrega versões simples. A extensão Enterprise pode
+     * sobrescrever este ponto para aplicar filtros próprios sem introduzir
+     * tipos privados no contrato aberto.</p>
      */
     protected boolean isVersaoProducaoDisponivel(
             VersaoProducao versaoProducao,
             boolean consideraVersoesProducaoParalelas) {
 
-        return !(versaoProducao instanceof VersaoProducaoParalela);
+        return true;
 
     }
     
@@ -721,19 +720,20 @@ public class SupplyNetworkProjection {
     }
     
     public double getHorasTotaisConsumidasDeOperacao(
-            OperacaoAbstract operacao,
+            OperacaoRoteiro operacao,
             double quantidade, UnidadeMedida unidadeMedidaQuantidade) {
         
         ParametrosGlobais parametrosGlobais = getClusterEParametrosProjection().getParametrosGlobais();
         
+        Roteiro roteiro = operacao.getRoteiro();
         double conversaoParaUnidadeRoteiroOperacao = conversaoUnidadeMedidaProjection.getConversaoParaUnidadeDestino(
-                operacao.getMaterialOutput(), 
+                roteiro.getMaterialOutput(),
                 unidadeMedidaQuantidade, 
-                operacao.getUnidadeMedida(parametrosGlobais));
+                roteiro.getUnidadeMedidaQuantidadeBase(parametrosGlobais));
 
         double consumoHoras = quantidade
                 * conversaoParaUnidadeRoteiroOperacao
-                / operacao.getQuantidadeBase()
+                / roteiro.getQuantidadeBase()
                 * operacao.getHorasPorQuantidadeBase()
                 / operacao.getRecursoProdutivo().getEficiencia();
 
@@ -756,7 +756,7 @@ public class SupplyNetworkProjection {
         ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
 
         double consumoCapacidade =  0.0;
-        for (OperacaoAbstract operacao : roteiroPopulado.getOperacaoRoteiroSet()) {
+        for (OperacaoRoteiro operacao : roteiroPopulado.getOperacaoRoteiroSet()) {
 
             RecursoProdutivo recursoProdutivoOperacao = operacao.getRecursoProdutivo();
 
@@ -807,7 +807,7 @@ public class SupplyNetworkProjection {
         // populados antes do calculo de capacidade. Manter esta leitura centralizada evita lazy loading
         // acidental durante a rotina heuristica.
         
-        for (OperacaoAbstract operacao : roteiroPopulado.getOperacaoRoteiroSet()) {
+        for (OperacaoRoteiro operacao : roteiroPopulado.getOperacaoRoteiroSet()) {
         
             RecursoProdutivo recursoProdutivo = operacao.getRecursoProdutivo();
             
@@ -855,7 +855,7 @@ public class SupplyNetworkProjection {
         // populados antes do calculo de capacidade. Manter esta leitura centralizada evita lazy loading
         // acidental durante a rotina heuristica.
         
-        for (OperacaoAbstract operacao : roteiroPopulado.getOperacaoRoteiroSet()) {
+        for (OperacaoRoteiro operacao : roteiroPopulado.getOperacaoRoteiroSet()) {
         
             RecursoProdutivo recursoProdutivo = operacao.getRecursoProdutivo();
 
@@ -1584,10 +1584,10 @@ public class SupplyNetworkProjection {
                 roteiro.getMaterialOutput(), roteiro.getLocation());
         
         double quantidadePorHoraMinimo = roteiro.getOperacaoRoteiroSet().stream()
-                .mapToDouble(operacao -> operacao.getQuantidadeBase()
+                .mapToDouble(operacao -> roteiro.getQuantidadeBase()
                         * getConversaoUnidadeMedidaProjection().getConversaoParaUnidadeDestino(
                                 roteiro.getMaterialOutput(), 
-                                operacao.getUnidadeMedida(parametrosGlobais), 
+                                roteiro.getUnidadeMedidaQuantidadeBase(parametrosGlobais),
                                 unidadeMedidaPadrao)
                         / operacao.getHorasPorQuantidadeBase())
                 .min()

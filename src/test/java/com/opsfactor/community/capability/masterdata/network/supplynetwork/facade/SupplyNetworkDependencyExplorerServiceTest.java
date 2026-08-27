@@ -6,7 +6,6 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.facad
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnicaComponente;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoParalela;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.LinhaTransporte;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
@@ -132,7 +131,7 @@ class SupplyNetworkDependencyExplorerServiceTest {
     void shouldOmitNonFocusedParallelRoutingsAndExposeTheirCount() {
 
         ExplorerFixture fixture = new ExplorerFixture(LocationAbstract.TipoLocation.INTERNA);
-        VersaoProducaoParalela parallelVersion = Mockito.mock(VersaoProducaoParalela.class);
+        VersaoProducao parallelVersion = Mockito.mock(VersaoProducao.class);
         Roteiro focusedRouting = Mockito.mock(Roteiro.class);
         ListaTecnica focusedBom = Mockito.mock(ListaTecnica.class);
         Roteiro otherRouting = Mockito.mock(Roteiro.class);

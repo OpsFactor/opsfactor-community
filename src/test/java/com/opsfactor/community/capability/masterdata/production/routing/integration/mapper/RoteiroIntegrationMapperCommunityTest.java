@@ -68,7 +68,9 @@ class RoteiroIntegrationMapperCommunityTest {
                 new RoteiroIntegrationSupportData());
 
         Assertions.assertNull(exportedDto.routingClusterId);
-        Assertions.assertEquals(7, processedFileRow.getRowSize());
+        Assertions.assertEquals(9, processedFileRow.getRowSize());
+        Assertions.assertTrue(mapper.getProcessedFileHeaders().contains("Base Quantity"));
+        Assertions.assertTrue(mapper.getProcessedFileHeaders().contains("Base Quantity UOM"));
         Assertions.assertFalse(mapper.getProcessedFileHeaders().stream()
                 .anyMatch(header -> header.contains("Routing Cluster")));
 

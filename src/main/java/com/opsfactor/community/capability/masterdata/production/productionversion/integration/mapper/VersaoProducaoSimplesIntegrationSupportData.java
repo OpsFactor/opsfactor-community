@@ -4,7 +4,6 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import java.util.Map;
 
 /**
@@ -15,7 +14,6 @@ public class VersaoProducaoSimplesIntegrationSupportData {
     
     public Map<String,VersaoProducao> mapaVersaoProducaoPorId;
     public Map<String,Location> mapaLocationPorId;
-    public Map<String,Produto> mapaMaterialOutputPorId;
     public Map<String,Roteiro> mapaRoteiroPorId;
     public Map<String,ListaTecnica> mapaListaTecnicaPorId;
     

@@ -26,7 +26,7 @@ public interface OperacaoRoteiroRepository extends JpaRepository<OperacaoRoteiro
      * listagem administrativa do Community.
      *
      * <p>O mapper do front acessa o roteiro embutido na chave composta, o
-     * recurso produtivo e a unidade de medida cadastrada. Todos precisam vir
+     * recurso produtivo e o cabeçalho do roteiro. Todos precisam vir
      * na mesma consulta para que a lista nao execute uma consulta lazy por
      * operacao.</p>
      *
@@ -35,8 +35,7 @@ public interface OperacaoRoteiroRepository extends JpaRepository<OperacaoRoteiro
      */
     @Query("SELECT opr FROM OperacaoRoteiro opr "
             + "JOIN FETCH opr.operacaoRoteiroCompositeKey.roteiro r "
-            + "JOIN FETCH opr.recursoProdutivo rp "
-            + "LEFT JOIN FETCH opr.unidadeMedida um")
+            + "JOIN FETCH opr.recursoProdutivo rp")
     List<OperacaoRoteiro> customFindAllForFront();
 
     List<OperacaoRoteiro> findAllByOperacaoRoteiroCompositeKeyRoteiroLocationInAndOperacaoRoteiroCompositeKeyRoteiroMaterialOutputIn(

@@ -1383,7 +1383,7 @@ class MasterdataFrontServicesCommunityContractTest {
 
         ListaTecnicaDTO listaTecnicaDTOComQuantidadeInvalida =
                 criaListaTecnicaDTOValidaParaTeste();
-        listaTecnicaDTOComQuantidadeInvalida.setOutputQuantity(Float.NaN);
+        listaTecnicaDTOComQuantidadeInvalida.setOutputQuantity(Double.NaN);
         ListaTecnicaFacade listaTecnicaFrontServiceComQuantidadeInvalida =
                 criaListaTecnicaFrontServiceParaListagemListaTecnica(
                         List.of(criaListaTecnicaValidaParaTeste()),
@@ -2069,7 +2069,7 @@ class MasterdataFrontServicesCommunityContractTest {
         listaTecnicaDTO.setId("BOM-01");
         listaTecnicaDTO.setOutputMaterialId("MAT-01");
         listaTecnicaDTO.setOutputUnitOfMeasureId("UN");
-        listaTecnicaDTO.setOutputQuantity(1.0F);
+        listaTecnicaDTO.setOutputQuantity(1.0D);
 
         return listaTecnicaDTO;
 
@@ -2094,7 +2094,7 @@ class MasterdataFrontServicesCommunityContractTest {
         listaTecnicaComponenteDTO.setBillOfMaterialsId("BOM-01");
         listaTecnicaComponenteDTO.setComponentMaterialId("MAT-COMP-01");
         listaTecnicaComponenteDTO.setComponentMaterialUnitOfMeasureId("UN");
-        listaTecnicaComponenteDTO.setQuantity(1.0F);
+        listaTecnicaComponenteDTO.setQuantity(1.0D);
 
         return listaTecnicaComponenteDTO;
 

@@ -29,7 +29,7 @@ import lombok.experimental.SuperBuilder;
 public class ListaTecnicaComponenteIntegrationDataDto extends IntegrationDataDtoAbstract<ListaTecnicaComponenteIntegrationDataDto, ListaTecnicaComponenteIntegrationDataDto.ListaTecnicaComponentePrimaryKeyIntegrationDTO, ListaTecnicaComponente> {
 
     public String componentMaterialQuantityUomId;
-    public Float componentMaterialQuantity;
+    public Double componentMaterialQuantity;
 
     @EqualsAndHashCode
     public static class ListaTecnicaComponentePrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<ListaTecnicaComponentePrimaryKeyIntegrationDTO, ListaTecnicaComponente> {

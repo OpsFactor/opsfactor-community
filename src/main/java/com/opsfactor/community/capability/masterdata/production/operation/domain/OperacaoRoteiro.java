@@ -1,11 +1,12 @@
 package com.opsfactor.community.capability.masterdata.production.operation.domain;
 
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
-import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import java.io.Serializable;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
@@ -31,6 +32,14 @@ public class OperacaoRoteiro extends OperacaoAbstract {
     @EmbeddedId
     @NonNull // torna campo obrigatório e parâmetro do construtor gerado pelo @Data (lombok)
     private OperacaoRoteiroCompositeKey operacaoRoteiroCompositeKey;
+
+    /** Valor da duração na unidade temporal cadastrada. */
+    private Double tempoPorQuantidadeBase;
+
+    @Getter(AccessLevel.NONE)
+    @Convert(converter = UnidadeTempoOperacao.JpaConverter.class)
+    @Column(length = 1)
+    private UnidadeTempoOperacao unidadeTempoOperacao;
 
     @Data // lombok: @ToString, @EqualsAndHashCode, @Getter on all fields @Setter on all non-final fields, and @RequiredArgsConstructor
     @NoArgsConstructor
@@ -58,9 +67,43 @@ public class OperacaoRoteiro extends OperacaoAbstract {
         return getOperacaoRoteiroCompositeKey().getRoteiro();
     }
     
+    public double getTempoPorQuantidadeBase() {
+
+        if (tempoPorQuantidadeBase == null) {
+            return 1d;
+        }
+        if (!Double.isFinite(tempoPorQuantidadeBase) || tempoPorQuantidadeBase < 0d) {
+            throw new IllegalStateException("Operation duration must be finite and non-negative");
+        }
+        return tempoPorQuantidadeBase;
+
+    }
+
+    public UnidadeTempoOperacao getUnidadeTempoOperacao() {
+
+        return unidadeTempoOperacao == null ? UnidadeTempoOperacao.PADRAO : unidadeTempoOperacao;
+
+    }
+
+    public UnidadeTempoOperacao getUnidadeTempoOperacaoCadastrada() {
+
+        return unidadeTempoOperacao;
+
+    }
+
     @Override
-    public Produto getMaterialOutput() {
-        return getRoteiro().getMaterialOutput();
+    public double getHorasPorQuantidadeBase() {
+
+        return getUnidadeTempoOperacao().converteParaHoras(getTempoPorQuantidadeBase());
+
+    }
+
+    @Override
+    public void setHorasPorQuantidadeBase(Double horasPorQuantidadeBase) {
+
+        setTempoPorQuantidadeBase(horasPorQuantidadeBase);
+        setUnidadeTempoOperacao(UnidadeTempoOperacao.HORAS);
+
     }
     
     public void valida() {
@@ -69,6 +112,7 @@ public class OperacaoRoteiro extends OperacaoAbstract {
                     getRoteiro().getLocation().getId() + " does not match production resource location " +
                     getRecursoProdutivo().getLocation().getId() + " at operation " + getPosicao());
         }
+        getTempoPorQuantidadeBase();
     }
     
 }

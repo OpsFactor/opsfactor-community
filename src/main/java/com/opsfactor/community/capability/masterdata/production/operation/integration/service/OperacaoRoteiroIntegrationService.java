@@ -1,15 +1,12 @@
 package com.opsfactor.community.capability.masterdata.production.operation.integration.service;
 
-import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.masterdata.production.operation.domain.OperacaoRoteiro;
+import com.opsfactor.community.capability.masterdata.production.operation.domain.UnidadeTempoOperacao;
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
-import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.masterdata.production.operation.repository.OperacaoRoteiroRepository;
 import com.opsfactor.community.capability.masterdata.production.productionresource.repository.RecursoProdutivoRepository;
 import com.opsfactor.community.capability.masterdata.production.routing.repository.RoteiroRepository;
-import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.repository.UnidadeMedidaRepository;
-import com.opsfactor.community.capability.configuration.service.ParametrosGlobaisService;
 import com.opsfactor.community.platform.integration.service.IntegrationPersistenceValidation;
 import com.opsfactor.community.platform.exception.DataUploadException;
 import com.opsfactor.community.platform.utility.FuncoesMap;
@@ -31,19 +28,14 @@ import static com.opsfactor.community.platform.integration.service.IntegrationSu
  * Carga e exportacao das operacoes basicas de roteiro usadas pelo Supply Planning Community.
  *
  * <p>Este contrato descreve somente consumo tecnico de capacidade produtiva:
- * recurso, quantidade base, unidade de medida e horas por quantidade base. Setup
+ * recurso, duração e unidade temporal. Quantidade-base e UOM pertencem ao
+ * cabeçalho do roteiro. Setup
  * detalhado, manutencao, custos de recurso, turnos e line scheduling pertencem
  * ao OpsFactor Enterprise e nao aparecem neste arquivo de carga.</p>
  */
 @Component
 @Slf4j
 public class OperacaoRoteiroIntegrationService {
-
-    /**
-     * Repository de UOMs usadas na quantidade base da operacao.
-     */
-    @Autowired
-    private UnidadeMedidaRepository unidadeMedidaRepository;
 
     /**
      * Repository de recursos produtivos usados pelas operacoes do roteiro.
@@ -64,22 +56,13 @@ public class OperacaoRoteiroIntegrationService {
     private OperacaoRoteiroRepository operacaoRoteiroRepository;
 
     /**
-     * Parametros globais usados para resolver a UOM default quando a operacao
-     * nao possui unidade propria.
-     */
-    @Autowired
-    private ParametrosGlobaisService parametrosGlobaisService;
-
-    /**
      * Exporta as operacoes de roteiro no layout Community.
      *
-     * <p>O arquivo contem apenas recurso, sequencia, quantidade base, UOM e
-     * horas por quantidade base. Setup detalhado, turnos, custos e line
+     * <p>O arquivo contém apenas recurso, sequência, duração e unidade temporal.
+     * Quantidade-base e UOM são exportadas pelo cabeçalho do roteiro. Setup detalhado, turnos, custos e line
      * scheduling nao fazem parte deste contrato.</p>
      */
     public List<List<Object>> getFile() {
-
-        ParametrosGlobais parametrosGlobais = parametrosGlobaisService.getParametrosGlobais();
 
         List<List<Object>> linhasArquivo = new ArrayList<>();
 
@@ -87,9 +70,8 @@ public class OperacaoRoteiroIntegrationService {
         linhaHeader.add("Routing Id");
         linhaHeader.add("Operation Sequence (Integer number)");
         linhaHeader.add("Production Resource Id");
-        linhaHeader.add("Base Quantity");
-        linhaHeader.add("Base Quantity UOM");
-        linhaHeader.add("Hours by Base Quantity");
+        linhaHeader.add("Operation Duration");
+        linhaHeader.add("Time Unit (S, M, H or D; default H)");
 
         linhasArquivo.add(linhaHeader);
 
@@ -99,9 +81,8 @@ public class OperacaoRoteiroIntegrationService {
                 linhaDados.add(roteiro.getId());
                 linhaDados.add(operacaoRoteiro.getPosicao());
                 linhaDados.add(operacaoRoteiro.getRecursoProdutivo().getId());
-                linhaDados.add(operacaoRoteiro.getQuantidadeBase());
-                linhaDados.add(operacaoRoteiro.getUnidadeMedida(parametrosGlobais).getId());
-                linhaDados.add(operacaoRoteiro.getHorasPorQuantidadeBase());
+                linhaDados.add(operacaoRoteiro.getTempoPorQuantidadeBase());
+                linhaDados.add(operacaoRoteiro.getUnidadeTempoOperacao().getCodigo());
                 linhasArquivo.add(linhaDados);
             }
         }
@@ -123,7 +104,6 @@ public class OperacaoRoteiroIntegrationService {
         List<RecursoProdutivo> recursoProdutivo = recursoProdutivoRepository.findAll();
         List<Roteiro> roteiros = roteiroRepository.findAll();
         List<OperacaoRoteiro> operacoesRoteiro = operacaoRoteiroRepository.customFindAll();
-        List<UnidadeMedida> unidadesMedida = unidadeMedidaRepository.findAll();
 
         /*
          * Essas listas sao snapshots de support data usados em memoria durante
@@ -141,11 +121,6 @@ public class OperacaoRoteiroIntegrationService {
                 "Routing snapshot");
         Map<String, Map<String, OperacaoRoteiro>> mapaOperacoesRoteiro =
                 getMapaOperacoesRoteiroExistentes(operacoesRoteiro);
-        Map<String, UnidadeMedida> mapaUnidadesMedida = getMapaPorIdObrigatorio(
-                unidadesMedida,
-                UnidadeMedida::getId,
-                "Unit of Measure snapshot");
-
         List<OperacaoRoteiro> listaObjetosASalvar = new ArrayList<>();
         List<OperacaoRoteiro> listaObjetosADeletar = new ArrayList<>();
 
@@ -155,17 +130,16 @@ public class OperacaoRoteiroIntegrationService {
             // 1a linha é o header e deve ser ignorada
             if (i > 0) {
                 // check de # colunas
-                if (linhaAtual.size() > 7) {
+                if (linhaAtual.size() > 6) {
                     throw new DataUploadException("Number of columns does not match template file at line " + (i + 1));
                 }
 
                 String routingId = (linhaAtual.size() >= 1) ? linhaAtual.get(0) : "";
                 String sequence = (linhaAtual.size() >= 2) ? linhaAtual.get(1) : "";
                 String productionResourceId = (linhaAtual.size() >= 3) ? linhaAtual.get(2) : "";
-                String baseQty = (linhaAtual.size() >= 4) ? linhaAtual.get(3) : "";
-                String uom = (linhaAtual.size() >= 5) ? linhaAtual.get(4) : "";
-                String hoursByBaseQty = (linhaAtual.size() >= 6) ? linhaAtual.get(5) : "";
-                String delete = (linhaAtual.size() >= 7) ? linhaAtual.get(6) : "";
+                String operationDuration = (linhaAtual.size() >= 4) ? linhaAtual.get(3) : "";
+                String timeUnit = (linhaAtual.size() >= 5) ? linhaAtual.get(4) : "";
+                String delete = (linhaAtual.size() >= 6) ? linhaAtual.get(5) : "";
 
                 // posição da operação deve ter sido preenchida e ser um inteiro
                 if (sequence.equals("")) {
@@ -198,30 +172,23 @@ public class OperacaoRoteiroIntegrationService {
 
                 operacaoRoteiro.setRecursoProdutivo(optionalRecursoProdutivo);
 
-                if (!uom.equals("")) {
-                    operacaoRoteiro.setUnidadeMedida(
-                    Optional.ofNullable(mapaUnidadesMedida.get(uom))
-                        .orElseThrow(() -> new DataUploadException("Unit of Measure " + uom + " not found at line " + posicaoLinha)));
-                }
-
-                if (!baseQty.equals("")) {
+                if (!operationDuration.equals("")) {
                     try {
-                        operacaoRoteiro.setQuantidadeBase(Float.valueOf(baseQty));
+                        operacaoRoteiro.setTempoPorQuantidadeBase(Double.valueOf(operationDuration));
                     } catch (NumberFormatException numberFormatException) {
                         throw new DataUploadException(
-                                "Invalid base quantity at line " + (i + 1) + " : should be a float number with '.' as decimal and no thousands separator.",
+                                "Invalid operation duration at line " + (i + 1) + " : should be a decimal number with '.' as decimal and no thousands separator.",
                                 numberFormatException);
                     }
                 }
 
-                if (!hoursByBaseQty.equals("")) {
-                    try {
-                        operacaoRoteiro.setHorasPorQuantidadeBase(Float.valueOf(hoursByBaseQty));
-                    } catch (NumberFormatException numberFormatException) {
-                        throw new DataUploadException(
-                                "Invalid number of hours at line " + (i + 1) + " : should be a float number with '.' as decimal and no thousands separator.",
-                                numberFormatException);
-                    }
+                try {
+                    operacaoRoteiro.setUnidadeTempoOperacao(
+                            UnidadeTempoOperacao.deCodigoOuPadrao(timeUnit));
+                } catch (IllegalArgumentException illegalArgumentException) {
+                    throw new DataUploadException(
+                            illegalArgumentException.getMessage() + " at line " + (i + 1),
+                            illegalArgumentException);
                 }
 
                 try {

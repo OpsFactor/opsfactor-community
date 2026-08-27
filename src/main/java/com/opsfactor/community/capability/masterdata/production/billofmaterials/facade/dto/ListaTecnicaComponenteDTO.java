@@ -13,6 +13,6 @@ public class ListaTecnicaComponenteDTO {
         
     private String componentMaterialUnitOfMeasureId;
     
-    private Float quantity;
+    private Double quantity;
     
 }

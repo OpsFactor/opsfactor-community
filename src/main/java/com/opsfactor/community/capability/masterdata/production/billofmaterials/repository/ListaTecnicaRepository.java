@@ -32,7 +32,12 @@ public interface ListaTecnicaRepository extends JpaRepository<ListaTecnica,Strin
     List<ListaTecnica> customFindAllWithLocationMaterialOutputAndUnidadeMedidaMaterialOutput();
 
     @Query("SELECT DISTINCT lt FROM ListaTecnica lt "
+            + "LEFT JOIN FETCH lt.location "
+            + "LEFT JOIN FETCH lt.materialOutput "
+            + "LEFT JOIN FETCH lt.unidadeMedidaMaterialOutput "
             + "LEFT JOIN FETCH lt.listaTecnicaComponenteSet ltc "
+            + "LEFT JOIN FETCH ltc.materialComponente "
+            + "LEFT JOIN FETCH ltc.unidadeMedidaMaterialComponente "
             + "WHERE lt.location IN :locations "
             + "AND lt.materialOutput IN :materiais")
     public List<ListaTecnica> customFindAllByLocationInAndMaterialOutputInFetchListaTecnicaComponente(

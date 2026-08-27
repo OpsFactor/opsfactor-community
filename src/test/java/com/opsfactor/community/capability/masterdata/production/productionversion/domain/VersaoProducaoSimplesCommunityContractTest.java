@@ -13,21 +13,28 @@ import org.junit.jupiter.api.Test;
 class VersaoProducaoSimplesCommunityContractTest {
 
     @Test
-    void constructorShouldRejectMissingOutputMaterialWithExplicitMessage() {
+    void constructorShouldRejectRoutingAndBillOfMaterialsWithDifferentOutputs() {
 
-        IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
-                IllegalArgumentException.class,
+        Location location = new Location("LOC");
+        Roteiro roteiro = new Roteiro();
+        roteiro.setLocation(location);
+        roteiro.setMaterialOutput(new Produto("MAT-ROUTING"));
+        ListaTecnica listaTecnica = new ListaTecnica();
+        listaTecnica.setLocation(location);
+        listaTecnica.setMaterialOutput(new Produto("MAT-BOM"));
+
+        IllegalStateException illegalStateException = Assertions.assertThrows(
+                IllegalStateException.class,
                 () -> new VersaoProducaoSimples(
                         "PV",
-                        new Location("LOC"),
+                        location,
                         1,
-                        null,
-                        new Roteiro(),
-                        new ListaTecnica()));
+                        roteiro,
+                        listaTecnica));
 
         Assertions.assertEquals(
-                "Simple production version output material is required",
-                illegalArgumentException.getMessage());
+                "Bill of Materials output material MAT-BOM different than version material MAT-ROUTING",
+                illegalStateException.getMessage());
 
     }
 
@@ -40,7 +47,6 @@ class VersaoProducaoSimplesCommunityContractTest {
                         "PV",
                         new Location("LOC"),
                         1,
-                        new Produto("MAT"),
                         null,
                         new ListaTecnica()));
 
@@ -59,7 +65,6 @@ class VersaoProducaoSimplesCommunityContractTest {
                         "PV",
                         new Location("LOC"),
                         1,
-                        new Produto("MAT"),
                         new Roteiro(),
                         null));
 

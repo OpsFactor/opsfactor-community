@@ -245,7 +245,7 @@ public class ListaTecnicaFacade {
                         "Bill of Materials DTO at index " + index + " has no output unit of measure in list snapshot.");
             }
             if (listaTecnicaDTO.getOutputQuantity() == null
-                    || !Float.isFinite(listaTecnicaDTO.getOutputQuantity())) {
+                    || !Double.isFinite(listaTecnicaDTO.getOutputQuantity())) {
                 throw new IllegalStateException(
                         "Bill of Materials DTO at index " + index + " has no finite output quantity in list snapshot.");
             }
@@ -284,7 +284,7 @@ public class ListaTecnicaFacade {
                         "Bill of Materials Component DTO at index " + index + " has no component unit of measure in list snapshot.");
             }
             if (listaTecnicaComponenteDTO.getQuantity() == null
-                    || !Float.isFinite(listaTecnicaComponenteDTO.getQuantity())) {
+                    || !Double.isFinite(listaTecnicaComponenteDTO.getQuantity())) {
                 throw new IllegalStateException(
                         "Bill of Materials Component DTO at index " + index + " has no finite quantity in list snapshot.");
             }

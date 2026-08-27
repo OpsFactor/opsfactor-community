@@ -4,7 +4,6 @@ import com.opsfactor.community.capability.masterdata.production.productionversio
 import com.opsfactor.community.capability.masterdata.production.productionversion.integration.mapper.VersaoProducaoSimplesIntegrationMapper;
 import com.opsfactor.community.capability.masterdata.production.productionversion.integration.mapper.VersaoProducaoSimplesIntegrationSupportData;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
-import com.opsfactor.community.capability.masterdata.product.material.repository.ProdutoRepository;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.repository.ListaTecnicaRepository;
 import com.opsfactor.community.capability.masterdata.production.routing.repository.RoteiroRepository;
 import com.opsfactor.community.capability.masterdata.production.productionversion.repository.VersaoProducaoSimplesRepository;
@@ -39,13 +38,6 @@ public class VersaoProducaoSimplesIntegrationService implements IntegrationServi
      */
     @Autowired
     private LocationService locationService;
-
-    /**
-     * Repository da entidade fisica `Produto`, usada aqui como material output
-     * por compatibilidade de schema.
-     */
-    @Autowired
-    private ProdutoRepository produtoRepository;
 
     /**
      * Repository dos roteiros operacionais referenciados pela versao simples.
@@ -142,10 +134,6 @@ public class VersaoProducaoSimplesIntegrationService implements IntegrationServi
                 locationService.findAllWithoutDefault(),
                 location -> location.getId(),
                 "Location snapshot");
-        supportData.mapaMaterialOutputPorId = getMapaPorIdObrigatorio(
-                produtoRepository.findAll(),
-                material -> material.getId(),
-                "Material snapshot");
         supportData.mapaRoteiroPorId = getMapaPorIdObrigatorio(
                 roteiroRepository.findAll(),
                 roteiro -> roteiro.getId(),

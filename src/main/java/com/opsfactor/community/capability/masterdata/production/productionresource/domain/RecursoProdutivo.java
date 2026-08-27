@@ -5,6 +5,7 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.masterdata.production.operation.domain.OperacaoRoteiro;
+import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.utility.Constantes;
 import lombok.*;
@@ -73,14 +74,16 @@ public class RecursoProdutivo implements Serializable, Comparable<RecursoProduti
     public Set<Produto> getMateriaisOutputRoteirosAtivos() {
         return getOperacaoRoteiroSet().stream()
                 .filter(x -> x.getRoteiro().getAtivo())
-                .map(OperacaoRoteiro::getMaterialOutput)
+                .map(OperacaoRoteiro::getRoteiro)
+                .map(Roteiro::getMaterialOutput)
                 .distinct()
                 .collect(Collectors.toSet());
     }
     
     public Set<Produto> getMateriaisOutputTodosRoteiros() {
         return getOperacaoRoteiroSet().stream()
-                .map(OperacaoRoteiro::getMaterialOutput)
+                .map(OperacaoRoteiro::getRoteiro)
+                .map(Roteiro::getMaterialOutput)
                 .distinct()
                 .collect(Collectors.toSet());
     }
