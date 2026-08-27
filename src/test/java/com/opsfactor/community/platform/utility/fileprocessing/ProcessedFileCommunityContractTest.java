@@ -4,6 +4,8 @@ import com.opsfactor.community.platform.exception.DataUploadException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 /**
  * Contratos do arquivo processado usado por data upload.
  *
@@ -36,6 +38,35 @@ class ProcessedFileCommunityContractTest {
         Assertions.assertEquals("Invalid material at line 1", dataUploadException.getMessage());
         Assertions.assertSame(originalException, dataUploadException.getCause());
 
+    }
+
+    @Test
+    void removeColumnShouldRemoveHeaderAndValuesFromEveryRow() {
+
+        ProcessedFile processedFile = new ProcessedFile(List.of(
+                new SensitivityExportRow("LOC-1", false),
+                new SensitivityExportRow("LOC-2", true)));
+
+        processedFile.removeColumn("closestToCurrentSafetyStockDays");
+
+        Assertions.assertEquals(
+                List.of("locationId"),
+                processedFile.getFileRowAsObjectList(0));
+        Assertions.assertEquals(List.of("LOC-1"), processedFile.getFileRowAsObjectList(1));
+        Assertions.assertEquals(List.of("LOC-2"), processedFile.getFileRowAsObjectList(2));
+
+    }
+
+    private static class SensitivityExportRow {
+
+        private final String locationId;
+        private final Boolean closestToCurrentSafetyStockDays;
+
+        private SensitivityExportRow(String locationId, Boolean closestToCurrentSafetyStockDays) {
+
+            this.locationId = locationId;
+            this.closestToCurrentSafetyStockDays = closestToCurrentSafetyStockDays;
+        }
     }
 
 }

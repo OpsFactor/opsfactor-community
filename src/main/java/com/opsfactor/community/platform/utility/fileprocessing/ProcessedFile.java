@@ -89,6 +89,25 @@ public class ProcessedFile {
     }
 
     /**
+     * Removes one named column, including its header and every data value.
+     *
+     * @param columnHeader exact header generated for the column to remove
+     */
+    public void removeColumn(String columnHeader) {
+
+        if (fileRows.isEmpty()) {
+            return;
+        }
+
+        int columnPosition = fileRows.get(0).getRowAsObjectList().indexOf(columnHeader);
+        if (columnPosition < 0) {
+            throw new IllegalArgumentException("Column '" + columnHeader + "' does not exist in the processed file");
+        }
+
+        fileRows.forEach(processedFileRow -> processedFileRow.getRowAsObjectList().remove(columnPosition));
+    }
+
+    /**
      * Remove linhas do arquivo partindo do início
      * @param numberRows
      */
