@@ -9,7 +9,6 @@ import com.opsfactor.community.capability.masterdata.production.billofmaterials.
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoInexistente;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
@@ -747,7 +746,7 @@ public class ProductionPlanOccupationIntegrationService implements IntegrationSe
     private String getProductionVersionId(
             VersaoProducao versaoProducao) {
 
-        return versaoProducao instanceof VersaoProducaoInexistente
+        return versaoProducao.isVersaoProducaoInexistente()
                 ? null
                 : versaoProducao.getId();
 

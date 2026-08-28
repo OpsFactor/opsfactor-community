@@ -9,7 +9,6 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.domai
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.LinhaTransporteProduto;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.DemandaDiretaConsideradaLinha;
@@ -786,13 +785,13 @@ public class SupplyPlanning {
         // MODIFICANDO SEMPRE A LINHA AJUSTE_SUPPLY
         if (modificacaoValorTotal > 0) {
             
-            Optional<VersaoProducaoSimples> optionalVersaoProducaoSimplesPrioritaria = supplyNetworkProjection.getVersaoProducaoSimplesViavelPrioritaria(
+            Optional<VersaoProducao> optionalVersaoProducaoPrioritaria = supplyNetworkProjection.getVersaoProducaoViavelPrioritaria(
                     location, 
                     material, 
                     materialProjection.getMateriaisAtivosOuNuloSeMaterialProjectionCompleto());
             
-            VersaoProducaoSimples versaoProducao = optionalVersaoProducaoSimplesPrioritaria
-                    .orElseThrow(() -> getMissingSimpleProductionVersionForPositiveProductionAdjustmentException(
+            VersaoProducao versaoProducao = optionalVersaoProducaoPrioritaria
+                    .orElseThrow(() -> getMissingProductionVersionForPositiveProductionAdjustmentException(
                             material,
                             location));
 
@@ -847,7 +846,7 @@ public class SupplyPlanning {
         return 0;
     }
 
-    private static IllegalStateException getMissingSimpleProductionVersionForPositiveProductionAdjustmentException(
+    private static IllegalStateException getMissingProductionVersionForPositiveProductionAdjustmentException(
             Produto material,
             Location location) {
 

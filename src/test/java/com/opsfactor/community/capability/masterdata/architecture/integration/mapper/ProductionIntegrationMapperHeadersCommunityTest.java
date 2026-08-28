@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.masterdata.architecture.integration.m
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.integration.mapper.ListaTecnicaComponenteIntegrationMapper;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.integration.mapper.ListaTecnicaIntegrationMapper;
 import com.opsfactor.community.capability.masterdata.production.productionresource.integration.mapper.DisponibilidadeRecursoProdutivoIntegrationMapper;
-import com.opsfactor.community.capability.masterdata.production.productionversion.integration.mapper.VersaoProducaoSimplesIntegrationMapper;
+import com.opsfactor.community.capability.masterdata.production.productionversion.integration.mapper.VersaoProducaoIntegrationMapper;
 import com.opsfactor.community.capability.masterdata.production.routing.integration.mapper.RoteiroIntegrationMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -82,6 +82,8 @@ public class ProductionIntegrationMapperHeadersCommunityTest {
                 "Description",
                 "Location Id",
                 "Output Material Id",
+                "Base Quantity",
+                "Base Quantity UOM",
                 "Routing can be used without production version",
                 "Priority",
                 "Active (true/false or 1/0)"
@@ -92,14 +94,14 @@ public class ProductionIntegrationMapperHeadersCommunityTest {
     }
 
     @Test
-    public void singleOutputProductionVersionHeadersShouldExposeOnlyCommunityColumns() {
+    public void productionVersionHeadersShouldExposeTheGenericColumns() {
 
-        VersaoProducaoSimplesIntegrationMapper versaoProducaoSimplesIntegrationMapper =
-                new VersaoProducaoSimplesIntegrationMapper();
+        VersaoProducaoIntegrationMapper versaoProducaoIntegrationMapper =
+                new VersaoProducaoIntegrationMapper();
 
-        List<String> processedFileHeaders = versaoProducaoSimplesIntegrationMapper.getProcessedFileHeaders();
+        List<String> processedFileHeaders = versaoProducaoIntegrationMapper.getProcessedFileHeaders();
 
-        assertMapperIsSpringComponent(VersaoProducaoSimplesIntegrationMapper.class);
+        assertMapperIsSpringComponent(VersaoProducaoIntegrationMapper.class);
         Assertions.assertEquals(List.of(
                 "Id",
                 "Location Id",

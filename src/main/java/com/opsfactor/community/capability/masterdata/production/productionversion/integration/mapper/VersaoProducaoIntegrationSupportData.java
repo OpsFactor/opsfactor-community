@@ -7,10 +7,10 @@ import com.opsfactor.community.capability.masterdata.production.productionversio
 import java.util.Map;
 
 /**
- * Dados de apoio para resolver as dependencias de versao de producao simples
- * durante data upload Community.
+ * Dados de apoio para resolver as dependências da versão de produção durante
+ * data upload.
  */
-public class VersaoProducaoSimplesIntegrationSupportData {
+public class VersaoProducaoIntegrationSupportData {
     
     public Map<String,VersaoProducao> mapaVersaoProducaoPorId;
     public Map<String,Location> mapaLocationPorId;

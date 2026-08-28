@@ -13,7 +13,6 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.domai
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoInexistente;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
@@ -993,7 +992,7 @@ public class SupplyPlanFacade {
                 detalhes.put("Material Id", material.getId());
                 detalhes.put("Destination Location Id", null);
                 detalhes.put("Delivery Date", null);
-                detalhes.put("Production Version Id", (productionPlanLinha.getVersaoProducaoCadastrada() instanceof VersaoProducaoInexistente) ? null : productionPlanLinha.getVersaoProducaoCadastrada().getId());
+                detalhes.put("Production Version Id", productionPlanLinha.getVersaoProducaoCadastrada().isVersaoProducaoInexistente() ? null : productionPlanLinha.getVersaoProducaoCadastrada().getId());
                 detalhes.put("Routing Id", productionPlanLinha.getRoteiro().getId());
                 detalhes.put("Bill of Materials Id", productionPlanLinha.getListaTecnica().getId());
                 detalhes.put("UOM", unidadeMedidaView.getId());

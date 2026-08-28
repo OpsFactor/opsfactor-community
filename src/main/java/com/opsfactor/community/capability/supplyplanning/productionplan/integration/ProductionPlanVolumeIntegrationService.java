@@ -4,7 +4,6 @@ import com.opsfactor.community.platform.integration.dto.IntegrationDto;
 import com.opsfactor.community.platform.integration.dto.IntegrationOptionsDto;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoInexistente;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
@@ -290,7 +289,7 @@ public class ProductionPlanVolumeIntegrationService implements IntegrationServic
                                 productionPlanLinha.getLocation().getId(),
                                 materialOutput.getId(),
                                 productionPlanLinha.getDataReferencia(),
-                                (versaoProducao instanceof VersaoProducaoInexistente)
+                                versaoProducao.isVersaoProducaoInexistente()
                                         ? null
                                         : versaoProducao.getId(),
                                 productionPlanLinha.getRoteiro().getId(),

@@ -2,12 +2,9 @@ package com.opsfactor.community.capability.masterdata.network.supplynetwork.proj
 
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
-import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnicaComponente;
 import com.opsfactor.community.capability.masterdata.production.operation.domain.OperacaoRoteiro;
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoInexistente;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
@@ -29,6 +26,7 @@ import jakarta.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -123,10 +121,12 @@ public class SupplyNetworkProjection {
     
     // versão de produção inexistente equivale a um campo de versao de producao nulo por exemplo no production plan linha
     @Getter
-    protected VersaoProducaoInexistente versaoProducaoInexistente;
+    protected VersaoProducao versaoProducaoInexistente;
     protected Map<RecursoProdutivo,Set<VersaoProducao>> mapaVersaoProducaoViavelSetPorRecursoProdutivo;
     protected Map<Location,Map<Produto,Set<VersaoProducao>>> mapaVersaoProducaoSetPorLocationMaterial;
     protected Map<Location,Map<Produto,Set<VersaoProducao>>> mapaVersaoProducaoViavelSetPorLocationMaterial;
+    /** Índice canônico de todas as versões persistidas, inclusive inativas. */
+    protected Map<String, VersaoProducao> mapaVersaoProducaoPorId;
     // versão de produção prioritária por location/produto. se não há versão de produção
     // associada a uma lista técnica/roteiro, os métodos desta classe buscam ambos
     // de forma independente, através de suas próprias prioridades
@@ -144,20 +144,22 @@ public class SupplyNetworkProjection {
     // inclui apenas listas técnicas prioritárias (para respectivos materiais output)
     // usado na definição de low level codes e na restrição do plano de supply
     // populado via método getListaTecnicaViavelPrioritariaSetOndeMaterialEInput
-    protected Map<Location,Map<Produto,Set<ListaTecnica>>> mapaListaTecnicaViavelPrioritariaSetOndeMaterialEInput;
+    protected Map<Boolean, Map<Location, Map<Produto, Set<ListaTecnica>>>>
+            mapaListaTecnicaViavelPrioritariaSetOndeMaterialEInputPorConsideracaoProducaoMultipla =
+            new ConcurrentHashMap<>();
 
     /**
      * Define se uma versão de produção participa da consulta solicitada.
      *
-     * <p>O Community só carrega versões simples. A extensão Enterprise pode
-     * sobrescrever este ponto para aplicar filtros próprios sem introduzir
-     * tipos privados no contrato aberto.</p>
+     * <p>O Community só carrega versões simples. A extensão Enterprise herda
+     * o mesmo contrato e identifica produção múltipla pelos mestres associados,
+     * sem criar outro tipo de versão de produção.</p>
      */
     protected boolean isVersaoProducaoDisponivel(
             VersaoProducao versaoProducao,
-            boolean consideraVersoesProducaoParalelas) {
+            boolean consideraVersoesProducaoMultiplas) {
 
-        return true;
+        return consideraVersoesProducaoMultiplas || !versaoProducao.isProducaoMultipla();
 
     }
     
@@ -953,14 +955,15 @@ public class SupplyNetworkProjection {
     
     public Set<ListaTecnica> getListaTecnicaViavelPrioritariaSet(
             Location location, 
-            boolean consideraVersoesProducaoParalelas,
+            boolean consideraVersoesProducaoMultiplas,
             @Nullable Collection<Produto> possiveisMateriaisInput) {
         
-        return mapaVersaoProducaoViavelPrioritariaPorLocationProduto
-                .getOrDefault(location, new HashMap<>()).values().stream()
-                .filter(versaoProducao -> isVersaoProducaoDisponivel(versaoProducao, consideraVersoesProducaoParalelas))
+        return getVersoesProducaoViaveisPrioritarias(
+                location,
+                consideraVersoesProducaoMultiplas,
+                null,
+                possiveisMateriaisInput).stream()
                 .flatMap(x -> x.getListasTecnicas().stream())
-                .filter(listaTecnica -> possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(listaTecnica.getMateriaisInput()))
                 .collect(Collectors.toSet());
         
     }
@@ -968,13 +971,15 @@ public class SupplyNetworkProjection {
     public Set<ListaTecnica> getListaTecnicaViavelPrioritariaSetOndeMaterialEInput(
             Location location, 
             Produto materialInput, 
-            boolean consideraVersoesProducaoParalelas,
+            boolean consideraVersoesProducaoMultiplas,
             @Nullable Collection<Produto> possiveisMateriaisOutput) {
         
-        inicializaMapaListaTecnicaViavelPrioritariaSetOndeMaterialEInput(consideraVersoesProducaoParalelas);
+        Map<Location, Map<Produto, Set<ListaTecnica>>> mapaListaTecnicaViavelPrioritaria =
+                getMapaListaTecnicaViavelPrioritariaSetOndeMaterialEInput(
+                        consideraVersoesProducaoMultiplas);
         
         // retorna o valor do mapa já pronto
-        return mapaListaTecnicaViavelPrioritariaSetOndeMaterialEInput
+        return mapaListaTecnicaViavelPrioritaria
                 .getOrDefault(location, new HashMap<>())
                 .getOrDefault(materialInput, new HashSet<>()).stream()
                 .filter(listaTecnica -> possiveisMateriaisOutput == null || possiveisMateriaisOutput.contains(listaTecnica.getMaterialOutput()))
@@ -1000,13 +1005,15 @@ public class SupplyNetworkProjection {
 
     public Map<Location,Set<ListaTecnica>> getListaTecnicaViavelPrioritariaSetOndeMaterialEInputPorLocation(
             Produto materialInput, 
-            boolean consideraVersoesProducaoParalelas,
+            boolean consideraVersoesProducaoMultiplas,
             @Nullable Collection<Produto> possiveisMateriaisOutput) {
         
-        inicializaMapaListaTecnicaViavelPrioritariaSetOndeMaterialEInput(consideraVersoesProducaoParalelas);
+        Map<Location, Map<Produto, Set<ListaTecnica>>> mapaListaTecnicaViavelPrioritaria =
+                getMapaListaTecnicaViavelPrioritariaSetOndeMaterialEInput(
+                        consideraVersoesProducaoMultiplas);
         
         // retorna o valor do mapa já pronto
-        return mapaListaTecnicaViavelPrioritariaSetOndeMaterialEInput
+        return mapaListaTecnicaViavelPrioritaria
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(
@@ -1018,31 +1025,49 @@ public class SupplyNetworkProjection {
         
     }
     
-    // Community chama esta cache apenas com versoes paralelas desabilitadas. No Enterprise, onde
-    // parallel routing/output volta a existir, a implementacao deve separar caches por modo.
-    private void inicializaMapaListaTecnicaViavelPrioritariaSetOndeMaterialEInput(boolean consideraVersoesProducaoParalelas) {
-        // inicializa mapa, se for nulo
-        if (mapaListaTecnicaViavelPrioritariaSetOndeMaterialEInput == null) {
-            mapaListaTecnicaViavelPrioritariaSetOndeMaterialEInput = new HashMap<>();
-            
-            for (Location locationIterada : mapaVersaoProducaoViavelPrioritariaPorLocationProduto.keySet()) {
-                mapaListaTecnicaViavelPrioritariaSetOndeMaterialEInput.put(locationIterada, new HashMap<>());
-                // nao lança possiveisMateriaisOutput pois o mapa em memória deverá ser completo. o filtro ocorrerá na linha Return, quando ele é lido
-                for (VersaoProducao versaoProducao : getVersoesProducaoViaveisPrioritarias(
-                        locationIterada, consideraVersoesProducaoParalelas, null, null)) {
-                    for (ListaTecnica listaTecnica : versaoProducao.getListasTecnicas()) {
-                        ListaTecnica listaTecnicaPersistidaCompleta = getListaTecnicaFromId(listaTecnica.getId())
-                .orElseThrow(() -> new IllegalStateException(
-                        "Lista técnica " + listaTecnica.getId() + " não encontrada na SupplyNetworkProjection"));
-                        for (ListaTecnicaComponente listaTecnicaComponente : listaTecnicaPersistidaCompleta.getListaTecnicaComponenteSet()) {
-                            mapaListaTecnicaViavelPrioritariaSetOndeMaterialEInput.get(locationIterada).computeIfAbsent(
-                                    listaTecnicaComponente.getMaterialComponente(), x -> new HashSet<>())
-                                    .add(listaTecnicaPersistidaCompleta);
-                        }
+    /**
+     * Materializa separadamente o índice que inclui pacotes múltiplos e o que
+     * contém apenas produção simples. Compartilhar um único cache faria o
+     * resultado depender da ordem da primeira chamada à projection Enterprise.
+     */
+    private Map<Location, Map<Produto, Set<ListaTecnica>>>
+            getMapaListaTecnicaViavelPrioritariaSetOndeMaterialEInput(
+                    boolean consideraVersoesProducaoMultiplas) {
+
+        return mapaListaTecnicaViavelPrioritariaSetOndeMaterialEInputPorConsideracaoProducaoMultipla
+                .computeIfAbsent(
+                        consideraVersoesProducaoMultiplas,
+                        this::criaMapaListaTecnicaViavelPrioritariaSetOndeMaterialEInput);
+
+    }
+
+    private Map<Location, Map<Produto, Set<ListaTecnica>>>
+            criaMapaListaTecnicaViavelPrioritariaSetOndeMaterialEInput(
+                    boolean consideraVersoesProducaoMultiplas) {
+
+        Map<Location, Map<Produto, Set<ListaTecnica>>> mapaResultado = new HashMap<>();
+        for (Location locationIterada : mapaVersaoProducaoViavelSetPorLocationMaterial.keySet()) {
+            Map<Produto, Set<ListaTecnica>> listasTecnicasPorMaterialInput = new HashMap<>();
+            mapaResultado.put(locationIterada, listasTecnicasPorMaterialInput);
+
+            // O filtro por output ocorre na leitura do índice já materializado.
+            for (VersaoProducao versaoProducao : getVersoesProducaoViaveisPrioritarias(
+                    locationIterada, consideraVersoesProducaoMultiplas, null, null)) {
+                for (ListaTecnica listaTecnica : versaoProducao.getListasTecnicas()) {
+                    ListaTecnica listaTecnicaPersistidaCompleta = getListaTecnicaFromId(listaTecnica.getId())
+                            .orElseThrow(() -> new IllegalStateException(
+                                    "Bill of Materials not projected while creating prioritized input index: "
+                                            + listaTecnica.getId()));
+                    for (Produto materialInput : listaTecnicaPersistidaCompleta.getMateriaisInput()) {
+                        listasTecnicasPorMaterialInput
+                                .computeIfAbsent(materialInput, material -> new HashSet<>())
+                                .add(listaTecnicaPersistidaCompleta);
                     }
                 }
             }
         }
+        return mapaResultado;
+
     }
     
     public Optional<LinhaTransporte> getLinhaTransporteViavelPrioritariaInbound(
@@ -1231,7 +1256,7 @@ public class SupplyNetworkProjection {
         
     }
     
-    public Optional<VersaoProducaoSimples> getVersaoProducaoSimplesViavelPrioritaria(
+    public Optional<VersaoProducao> getVersaoProducaoViavelPrioritaria(
             Location location,
             Produto material,
             @Nullable Collection<Produto> possiveisMateriaisInput) {
@@ -1239,33 +1264,36 @@ public class SupplyNetworkProjection {
         return mapaVersaoProducaoViavelSetPorLocationMaterial
                 .getOrDefault(location, new HashMap<>())
                 .getOrDefault(material, new HashSet<>()).stream()
-                .filter(x -> x instanceof VersaoProducaoSimples)
-                .filter(x -> possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(((VersaoProducaoSimples) x).getListaTecnica().getMateriaisInput()))
+                .filter(x -> possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(x.getListaTecnica().getMateriaisInput()))
                 .sorted(Comparator.comparing(x -> x.getPrioridade()))
-                .map(x -> (VersaoProducaoSimples) x)
                 .findFirst();
         
     }
         
     public Set<VersaoProducao> getVersoesProducaoViaveisPrioritarias(
             Location location, 
-            boolean consideraVersoesProducaoParalelas,
+            boolean consideraVersoesProducaoMultiplas,
             @Nullable Collection<Produto> possiveisMateriaisOutput,
             @Nullable Collection<Produto> possiveisMateriaisInput) {
         
         return mapaVersaoProducaoViavelSetPorLocationMaterial
-                .getOrDefault(location, new HashMap<>()).values().stream()
-                .flatMap(x -> x.stream())
-                .filter(versaoProducao -> isVersaoProducaoDisponivel(versaoProducao, consideraVersoesProducaoParalelas))
-                .filter(versaoProducao -> possiveisMateriaisOutput == null || possiveisMateriaisOutput.containsAll(versaoProducao.getMateriaisOutput()))
-                .filter(versaoProducao -> possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(versaoProducao.getMateriaisInput()))
-                .sorted(Comparator.comparing(x -> x.getPrioridade()))
-                .map(x -> x)
+                .getOrDefault(location, new HashMap<>()).entrySet().stream()
+                .filter(entry -> possiveisMateriaisOutput == null
+                        || possiveisMateriaisOutput.contains(entry.getKey()))
+                .map(entry -> entry.getValue().stream()
+                        .filter(versaoProducao -> isVersaoProducaoDisponivel(
+                                versaoProducao, consideraVersoesProducaoMultiplas))
+                        .filter(versaoProducao -> possiveisMateriaisOutput == null
+                                || possiveisMateriaisOutput.containsAll(versaoProducao.getMateriaisOutput()))
+                        .filter(versaoProducao -> possiveisMateriaisInput == null
+                                || possiveisMateriaisInput.containsAll(versaoProducao.getMateriaisInput()))
+                        .min(Comparator.comparing(VersaoProducao::getPrioridade)))
+                .flatMap(Optional::stream)
                 .collect(Collectors.toSet());
         
     }
     
-    public Optional<VersaoProducaoSimples> getVersaoProducaoSimplesViavelPrioritaria(
+    public Optional<VersaoProducao> getVersaoProducaoViavelPrioritaria(
             Roteiro roteiro, 
             ListaTecnica listaTecnica) {
         
@@ -1282,15 +1310,13 @@ public class SupplyNetworkProjection {
         return mapaVersaoProducaoViavelSetPorLocationMaterial
                 .getOrDefault(location, new HashMap<>())
                 .getOrDefault(material, new HashSet<>()).stream()
-                .filter(x -> x instanceof VersaoProducaoSimples)
-                .filter(x -> ((VersaoProducaoSimples) x).getRoteiro().equals(roteiro) && ((VersaoProducaoSimples) x).getListaTecnica().equals(listaTecnica)) 
+                .filter(x -> x.getRoteiro().equals(roteiro) && x.getListaTecnica().equals(listaTecnica))
                 .sorted(Comparator.comparing(x -> x.getPrioridade()))
-                .map(x -> (VersaoProducaoSimples) x)
                 .findFirst();
                         
     }    
     
-    public Optional<VersaoProducaoSimples> getVersaoProducaoSimplesPrioritaria(
+    public Optional<VersaoProducao> getVersaoProducaoPrioritaria(
             Roteiro roteiro, 
             ListaTecnica listaTecnica) {
         
@@ -1307,10 +1333,8 @@ public class SupplyNetworkProjection {
         return mapaVersaoProducaoSetPorLocationMaterial
                 .getOrDefault(location, new HashMap<>())
                 .getOrDefault(material, new HashSet<>()).stream()
-                .filter(x -> x instanceof VersaoProducaoSimples)
-                .filter(x -> ((VersaoProducaoSimples) x).getRoteiro().equals(roteiro) && ((VersaoProducaoSimples) x).getListaTecnica().equals(listaTecnica)) 
+                .filter(x -> x.getRoteiro().equals(roteiro) && x.getListaTecnica().equals(listaTecnica))
                 .sorted(Comparator.comparing(x -> x.getPrioridade()))
-                .map(x -> (VersaoProducaoSimples) x)
                 .findFirst();
                         
     }
@@ -1373,13 +1397,23 @@ public class SupplyNetworkProjection {
                 .collect(Collectors.toSet());
     }
     
-    public Optional<VersaoProducao> getVersaoProducaoFromId(String versaoProducaoId, boolean consideraVersoesProducaoParalelas) {
-        
-        return getVersoesProducaoViaveis(consideraVersoesProducaoParalelas).stream()
-                .filter(versaoProducao -> Objects.equals(
-                        versaoProducao.getId(),
-                        versaoProducaoId))
-                .findAny();
+    public Optional<VersaoProducao> getVersaoProducaoFromId(
+            String versaoProducaoId,
+            boolean consideraVersoesProducaoMultiplas) {
+
+        if (versaoProducaoId == null) {
+            return getVersoesProducaoViaveis(consideraVersoesProducaoMultiplas).stream()
+                    .filter(versaoProducao -> versaoProducao.getId() == null)
+                    .findAny();
+        }
+
+        VersaoProducao versaoProducao = mapaVersaoProducaoPorId.get(versaoProducaoId);
+        if (versaoProducao == null
+                || !isVersaoProducaoDisponivel(
+                versaoProducao, consideraVersoesProducaoMultiplas)) {
+            return Optional.empty();
+        }
+        return Optional.of(versaoProducao);
         
     }
         
@@ -1598,7 +1632,7 @@ public class SupplyNetworkProjection {
         return quantidadePorHoraMinimo * numeroHorasPorPeriodo;
         
     }
-    public List<VersaoProducaoSimples> getVersoesProducaoSimplesViaveis(
+    public List<VersaoProducao> getVersoesProducaoSimplesViaveis(
             Location location, 
             Produto material,
             @Nullable Collection<Produto> possiveisMateriaisInput) {
@@ -1606,8 +1640,7 @@ public class SupplyNetworkProjection {
                 .getOrDefault(location, new HashMap<>())
                 .getOrDefault(material, new HashSet<>())
                 .stream()
-                .filter(x -> x instanceof VersaoProducaoSimples)
-                .map(x -> (VersaoProducaoSimples) x)
+                .filter(versaoProducao -> !versaoProducao.isProducaoMultipla())
                 .filter(x -> possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(x.getMateriaisInput()))
                 .collect(Collectors.toList());
                 

@@ -1,8 +1,8 @@
 package com.opsfactor.community.capability.masterdata.production.productionversion.integration.mapper;
 
-import com.opsfactor.community.capability.masterdata.production.productionversion.integration.dto.VersaoProducaoSimplesIntegrationDataDto;
+import com.opsfactor.community.capability.masterdata.production.productionversion.integration.dto.VersaoProducaoIntegrationDataDto;
 import com.opsfactor.community.platform.integration.mapper.IntegrationMapperInterface;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
+import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.platform.exception.DataUploadException;
 import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
 import com.opsfactor.community.platform.utility.FuncoesMap;
@@ -14,21 +14,20 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Mapper da versao de producao simples Community.
+ * Mapper da entidade única de versão de produção.
  *
- * <p>A versao simples liga um roteiro e uma BOM a um material/location. Qualquer
- * modelo de parallel routing/output deve passar por mapper/service Enterprise e
- * nao por este contrato.</p>
+ * <p>Roteiro e lista técnica são referenciados por seus tipos gerais. A
+ * especialização dos mestres é resolvida pelo JPA, sem contratos concorrentes
+ * na camada de integração.</p>
  */
 @Component
-public class VersaoProducaoSimplesIntegrationMapper implements IntegrationMapperInterface<VersaoProducaoSimplesIntegrationDataDto, VersaoProducaoSimplesIntegrationDataDto.VersaoProducaoSimplesPrimaryKeyIntegrationDTO, VersaoProducaoSimples, VersaoProducaoSimplesIntegrationSupportData>{
+public class VersaoProducaoIntegrationMapper implements IntegrationMapperInterface<VersaoProducaoIntegrationDataDto, VersaoProducaoIntegrationDataDto.VersaoProducaoPrimaryKeyIntegrationDTO, VersaoProducao, VersaoProducaoIntegrationSupportData>{
 
     /**
-     * Headers publicados para versao de producao simples Community.
+     * Headers publicados para versão de produção.
      *
-     * <p>O contrato liga um unico roteiro e uma unica BOM a um material/location.
-     * Parallel routing e versoes com multiplos outputs devem ficar em mappers
-     * Enterprise separados.</p>
+     * <p>A coluna de material valida o output derivado dos mestres e não cria
+     * uma segunda associação de material na versão.</p>
      */
     public static final List<String> processedFileHeaders = List.of(
             "Id",
@@ -49,9 +48,9 @@ public class VersaoProducaoSimplesIntegrationMapper implements IntegrationMapper
     }
 
     @Override
-    public VersaoProducaoSimplesIntegrationDataDto getDtoWithoutPrimaryKeyFromEntity(VersaoProducaoSimples entity) {
+    public VersaoProducaoIntegrationDataDto getDtoWithoutPrimaryKeyFromEntity(VersaoProducao entity) {
         
-        return VersaoProducaoSimplesIntegrationDataDto.builder()
+        return VersaoProducaoIntegrationDataDto.builder()
                 .locationId(entity.getLocation().getId())
                 .priority(entity.getPrioridadeCadastrada())
                 .outputMaterialId(entity.getMaterialOutput().getId())
@@ -63,28 +62,28 @@ public class VersaoProducaoSimplesIntegrationMapper implements IntegrationMapper
     }
 
     @Override
-    public VersaoProducaoSimplesIntegrationDataDto.VersaoProducaoSimplesPrimaryKeyIntegrationDTO getPrimaryKeyDtoFromEntity(VersaoProducaoSimples versaoProducaoSimples) {
-        return new VersaoProducaoSimplesIntegrationDataDto.VersaoProducaoSimplesPrimaryKeyIntegrationDTO(
-                versaoProducaoSimples.getId());
+    public VersaoProducaoIntegrationDataDto.VersaoProducaoPrimaryKeyIntegrationDTO getPrimaryKeyDtoFromEntity(VersaoProducao versaoProducao) {
+        return new VersaoProducaoIntegrationDataDto.VersaoProducaoPrimaryKeyIntegrationDTO(
+                versaoProducao.getId());
     }
 
     @Override
-    public VersaoProducaoSimples createNewEntityWithPrimaryKeyFromPrimaryKeyDTO(
-            VersaoProducaoSimplesIntegrationDataDto.VersaoProducaoSimplesPrimaryKeyIntegrationDTO dto,
-            VersaoProducaoSimplesIntegrationSupportData supportData) {
+    public VersaoProducao createNewEntityWithPrimaryKeyFromPrimaryKeyDTO(
+            VersaoProducaoIntegrationDataDto.VersaoProducaoPrimaryKeyIntegrationDTO dto,
+            VersaoProducaoIntegrationSupportData supportData) {
         
-        VersaoProducaoSimples versaoProducaoSimples = new VersaoProducaoSimples();
-        versaoProducaoSimples.setId(dto.id);
+        VersaoProducao versaoProducao = new VersaoProducao();
+        versaoProducao.setId(dto.id);
         
-        return versaoProducaoSimples;
+        return versaoProducao;
         
     }
 
     @Override
     public void updateEntityNonPrimaryFieldsFromDTO(
-            VersaoProducaoSimples entity, 
-            VersaoProducaoSimplesIntegrationDataDto dto,
-            VersaoProducaoSimplesIntegrationSupportData supportData,
+            VersaoProducao entity,
+            VersaoProducaoIntegrationDataDto dto,
+            VersaoProducaoIntegrationSupportData supportData,
             @Nullable Map<String,MetodoAtualizacaoCampo> camposASobrecrever) {
         
         // seta campos simples
@@ -131,8 +130,8 @@ public class VersaoProducaoSimplesIntegrationMapper implements IntegrationMapper
 
     @Override
     public ProcessedFileRow convertEntityToProcessedFileRow(
-            VersaoProducaoSimples entity, 
-            VersaoProducaoSimplesIntegrationSupportData supportData) {
+            VersaoProducao entity,
+            VersaoProducaoIntegrationSupportData supportData) {
         
         ProcessedFileRow linhaArquivo = new ProcessedFileRow();
         linhaArquivo.addContent(entity.getId());
@@ -148,8 +147,8 @@ public class VersaoProducaoSimplesIntegrationMapper implements IntegrationMapper
     }
 
     @Override
-    public VersaoProducaoSimplesIntegrationDataDto getDtoWithoutPrimaryKeyFromProcessedFileRow(ProcessedFileRow processedFileRow, VersaoProducaoSimplesIntegrationSupportData supportData) {
-        return VersaoProducaoSimplesIntegrationDataDto.builder()
+    public VersaoProducaoIntegrationDataDto getDtoWithoutPrimaryKeyFromProcessedFileRow(ProcessedFileRow processedFileRow, VersaoProducaoIntegrationSupportData supportData) {
+        return VersaoProducaoIntegrationDataDto.builder()
                 .locationId(processedFileRow.getColumnValueAsString(1))
                 .priority(processedFileRow.getColumnValueAsInteger(2))
                 .outputMaterialId(processedFileRow.getColumnValueAsString(3))
@@ -160,8 +159,8 @@ public class VersaoProducaoSimplesIntegrationMapper implements IntegrationMapper
     }
 
     @Override
-    public VersaoProducaoSimplesIntegrationDataDto.VersaoProducaoSimplesPrimaryKeyIntegrationDTO getPrimaryKeyDtoFromProcessedFileRow(ProcessedFileRow processedFileRow, VersaoProducaoSimplesIntegrationSupportData supportData) {
-        return new VersaoProducaoSimplesIntegrationDataDto.VersaoProducaoSimplesPrimaryKeyIntegrationDTO(
+    public VersaoProducaoIntegrationDataDto.VersaoProducaoPrimaryKeyIntegrationDTO getPrimaryKeyDtoFromProcessedFileRow(ProcessedFileRow processedFileRow, VersaoProducaoIntegrationSupportData supportData) {
+        return new VersaoProducaoIntegrationDataDto.VersaoProducaoPrimaryKeyIntegrationDTO(
                 processedFileRow.getColumnValueAsString(0));
     }
 

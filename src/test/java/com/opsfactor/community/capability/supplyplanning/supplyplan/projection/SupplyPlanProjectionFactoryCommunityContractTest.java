@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.supplyplanning.supplyplan.projection;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
+import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.capability.supplyplanning.distributionplan.domain.DistributionPlanItem;
@@ -308,7 +308,7 @@ class SupplyPlanProjectionFactoryCommunityContractTest {
         listaTecnica.setLocation(location);
         listaTecnica.setMaterialOutput(materialOutput);
 
-        VersaoProducaoSimples versaoProducao = new VersaoProducaoSimples(
+        VersaoProducao versaoProducao = new VersaoProducao(
                 "PV",
                 location,
                 1,

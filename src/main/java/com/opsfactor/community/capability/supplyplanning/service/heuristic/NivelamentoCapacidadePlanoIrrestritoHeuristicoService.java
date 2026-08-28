@@ -5,7 +5,7 @@ import com.opsfactor.community.capability.lowlevelcode.engine.LowLevelCode;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.LinhaTransporte;
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
+import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
@@ -552,9 +552,7 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
             if (!perfilExecucaoSupplyPlan.getConsideraRestricaoProducao(productionPlanLinha.getLocation())) {
                 continue;
             }
-            if (!(productionPlanLinha.getVersaoProducao() instanceof VersaoProducaoSimples versaoProducaoOriginal)) {
-                continue;
-            }
+            VersaoProducao versaoProducaoOriginal = productionPlanLinha.getVersaoProducao();
             UnidadeMedida unidadeMedidaPadrao = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(
                     productionPlanLinha.getMaterialOutput(), productionPlanLinha.getLocation());
             double quantidadePlanejadaTotal = productionPlanLinha.getQuantidade(
@@ -573,7 +571,7 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
                     || posicaoPeriodoNecessidade > calendario.getPosicaoPeriodoFinalFuturo()) {
                 continue;
             }
-            List<VersaoProducaoSimples> alternativasOrdenadas = getAlternativasMesmoBomOrdenadas(
+            List<VersaoProducao> alternativasOrdenadas = getAlternativasMesmoBomOrdenadas(
                     versaoProducaoOriginal, supplyNetworkProjection);
             necessidades.add(new NecessidadeProducao(productionPlanLinha, unidadeMedidaPadrao,
                     posicaoPeriodoNecessidade, quantidadePlanejada, alternativasOrdenadas));
@@ -626,14 +624,14 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
 
     }
 
-    private List<VersaoProducaoSimples> getAlternativasMesmoBomOrdenadas(
-            VersaoProducaoSimples versaoProducaoOriginal,
+    private List<VersaoProducao> getAlternativasMesmoBomOrdenadas(
+            VersaoProducao versaoProducaoOriginal,
             SupplyNetworkProjection supplyNetworkProjection) {
 
-        List<VersaoProducaoSimples> alternativas = supplyNetworkProjection
+        List<VersaoProducao> alternativas = supplyNetworkProjection
                 .getVersoesProducaoViaveisOrdenadasPorPrioridade(
                         versaoProducaoOriginal.getLocation(), versaoProducaoOriginal.getMaterialOutput(), false, null)
-                .stream().filter(VersaoProducaoSimples.class::isInstance).map(VersaoProducaoSimples.class::cast)
+                .stream()
                 .filter(versaoProducao -> versaoProducao.getListaTecnica().equals(versaoProducaoOriginal.getListaTecnica()))
                 .collect(Collectors.toCollection(ArrayList::new));
         alternativas.remove(versaoProducaoOriginal);
@@ -734,7 +732,7 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
                             || indiceAlternativa >= necessidade.alternativasOrdenadas().size()) {
                         continue;
                     }
-                    VersaoProducaoSimples alternativa = necessidade.alternativasOrdenadas().get(indiceAlternativa);
+                    VersaoProducao alternativa = necessidade.alternativasOrdenadas().get(indiceAlternativa);
                     Map<RecursoProdutivo, Double> consumoPorUnidade = supplyNetworkProjection
                             .getConsumoCapacidadePorRecursoProdutivoEmHorasOuQuantidade(
                                     alternativa.getRoteiro(), 1, necessidade.unidadeMedidaPadrao(),
@@ -807,7 +805,7 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
                                         || indiceVersao >= alternativaOrigem.versoesProducaoOrdenadas().size()) continue;
                                 int posicaoPeriodoProducao = alternativaOrigem.posicaoPeriodoExpedicao() - antecipacao;
                                 if (posicaoPeriodoProducao < calendario.getPosicaoPeriodoPresente()) continue;
-                                VersaoProducaoSimples versaoProducao = alternativaOrigem.versoesProducaoOrdenadas().get(indiceVersao);
+                                VersaoProducao versaoProducao = alternativaOrigem.versoesProducaoOrdenadas().get(indiceVersao);
                                 Map<RecursoProdutivo, Double> consumoPorUnidade = perfilExecucaoSupplyPlan
                                         .getConsideraRestricaoProducao(alternativaOrigem.locationOrigem())
                                         ? supplyNetworkProjection.getConsumoCapacidadePorRecursoProdutivoEmHorasOuQuantidade(
@@ -852,9 +850,8 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
                     material)) {
                 continue;
             }
-            List<VersaoProducaoSimples> versoesProducao = supplyNetworkProjection
+            List<VersaoProducao> versoesProducao = supplyNetworkProjection
                     .getVersoesProducaoViaveisOrdenadasPorPrioridade(locationOrigem, material, false, null).stream()
-                    .filter(VersaoProducaoSimples.class::isInstance).map(VersaoProducaoSimples.class::cast)
                     .collect(Collectors.toCollection(ArrayList::new));
             if (versoesProducao.isEmpty()) continue;
             Pair<Integer, Integer> periodos = DistributionPlanItem.getPosicaoPeriodosExpedicaoERecebimentoDeReferencia(
@@ -1017,7 +1014,7 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
         for (NecessidadeProducao necessidade : necessidades) {
             if (mantemResidualNaOrigemPrimaria && necessidade.quantidadeResidual() > EPSILON) adicionaQuantidadePlanejada(linhasPorChave,
                     necessidade.linhaOriginal().getSupplyPlan(), necessidade.linhaOriginal().getLocation(),
-                    necessidade.linhaOriginal().getMaterialOutput(), (VersaoProducaoSimples) necessidade.linhaOriginal().getVersaoProducao(),
+                    necessidade.linhaOriginal().getMaterialOutput(), necessidade.linhaOriginal().getVersaoProducao(),
                     necessidade.posicaoPeriodoNecessidade(), necessidade.quantidadeResidual(), necessidade.unidadeMedidaPadrao(),
                     calendario, parametros, uomProjection, snapshot, tipoPlano);
         }
@@ -1025,7 +1022,7 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
     }
 
     private void adicionaQuantidadePlanejada(Map<ProductionPlanLinhaCompositeKey, ProductionPlanLinha> linhasPorChave,
-            SupplyPlan supplyPlan, Location location, Produto materialOutput, VersaoProducaoSimples versaoProducao,
+            SupplyPlan supplyPlan, Location location, Produto materialOutput, VersaoProducao versaoProducao,
             int posicaoPeriodo, double quantidade, UnidadeMedida unidadeMedidaQuantidade, Calendario calendario,
             ClusterEParametrosProjection parametros, UnidadeMedidaProjection uomProjection,
             SupplyPlanningBiProjection snapshot, Constantes.TipoPlano tipoPlano) {
@@ -1146,9 +1143,9 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
         private final int posicaoPeriodoNecessidade;
         private final double quantidadeOriginal;
         private double quantidadeResidual;
-        private final List<VersaoProducaoSimples> alternativasOrdenadas;
+        private final List<VersaoProducao> alternativasOrdenadas;
         private NecessidadeProducao(ProductionPlanLinha linhaOriginal, UnidadeMedida unidadeMedidaPadrao,
-                int posicaoPeriodoNecessidade, double quantidadeResidual, List<VersaoProducaoSimples> alternativasOrdenadas) {
+                int posicaoPeriodoNecessidade, double quantidadeResidual, List<VersaoProducao> alternativasOrdenadas) {
             this.linhaOriginal = linhaOriginal;
             this.unidadeMedidaPadrao = unidadeMedidaPadrao;
             this.posicaoPeriodoNecessidade = posicaoPeriodoNecessidade;
@@ -1161,15 +1158,15 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
         private int posicaoPeriodoNecessidade() { return posicaoPeriodoNecessidade; }
         private double quantidadeOriginal() { return quantidadeOriginal; }
         private double quantidadeResidual() { return quantidadeResidual; }
-        private List<VersaoProducaoSimples> alternativasOrdenadas() { return alternativasOrdenadas; }
+        private List<VersaoProducao> alternativasOrdenadas() { return alternativasOrdenadas; }
         private void reduzQuantidadeResidual(double quantidadeAlocada) { quantidadeResidual = Math.max(0, quantidadeResidual - quantidadeAlocada); }
     }
-    private record AlocacaoProducao(NecessidadeProducao necessidade, VersaoProducaoSimples versaoProducao,
+    private record AlocacaoProducao(NecessidadeProducao necessidade, VersaoProducao versaoProducao,
             int posicaoPeriodoProducao, AlternativaOrigem alternativaOrigem, double quantidade) { }
     private record AlternativaOrigem(Location locationOrigem, Location locationDestino, int prioridade,
             int posicaoPeriodoExpedicao, int posicaoPeriodoRecebimento,
-            List<VersaoProducaoSimples> versoesProducaoOrdenadas) { }
-    private record CandidatoAlocacao(NecessidadeProducao necessidade, VersaoProducaoSimples versaoProducao,
+            List<VersaoProducao> versoesProducaoOrdenadas) { }
+    private record CandidatoAlocacao(NecessidadeProducao necessidade, VersaoProducao versaoProducao,
             int posicaoPeriodoProducao, AlternativaOrigem alternativaOrigem,
             Map<RecursoProdutivo, Double> consumoPorUnidade) { }
 

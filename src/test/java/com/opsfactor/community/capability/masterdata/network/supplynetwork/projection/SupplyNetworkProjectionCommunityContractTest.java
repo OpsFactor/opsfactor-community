@@ -9,8 +9,6 @@ import com.opsfactor.community.capability.masterdata.production.billofmaterials.
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoInexistente;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
@@ -22,7 +20,7 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.repos
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.repository.ListaTecnicaRepository;
 import com.opsfactor.community.capability.masterdata.production.productionresource.repository.RecursoProdutivoRepository;
 import com.opsfactor.community.capability.masterdata.production.routing.repository.RoteiroRepository;
-import com.opsfactor.community.capability.masterdata.production.productionversion.repository.VersaoProducaoSimplesRepository;
+import com.opsfactor.community.capability.masterdata.production.productionversion.repository.VersaoProducaoRepository;
 import com.opsfactor.community.capability.masterdata.production.productionversion.service.VersaoProducaoService;
 import jakarta.annotation.Nullable;
 import org.junit.jupiter.api.Assertions;
@@ -34,6 +32,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -54,10 +53,10 @@ class SupplyNetworkProjectionCommunityContractTest {
         Produto material = new Produto("FG");
         Roteiro roteiro = getRoteiro("ROUTING", location, material);
         ListaTecnica listaTecnica = getListaTecnica("BOM", location, material);
-        VersaoProducaoSimples versaoProducaoSimples =
-                new VersaoProducaoSimples("PV", location, 1, roteiro, listaTecnica);
+        VersaoProducao versaoProducao =
+                new VersaoProducao("PV", location, 1, roteiro, listaTecnica);
         SupplyNetworkProjection supplyNetworkProjection =
-                getSupplyNetworkProjection(location, material, versaoProducaoSimples);
+                getSupplyNetworkProjection(location, material, versaoProducao);
 
         Optional<VersaoProducao> optionalVersaoProducao =
                 supplyNetworkProjection.getVersaoProducaoViavelPrioritaria(
@@ -67,7 +66,7 @@ class SupplyNetworkProjectionCommunityContractTest {
                         null);
 
         Assertions.assertTrue(optionalVersaoProducao.isPresent());
-        Assertions.assertSame(versaoProducaoSimples, optionalVersaoProducao.get());
+        Assertions.assertSame(versaoProducao, optionalVersaoProducao.get());
 
     }
 
@@ -76,18 +75,18 @@ class SupplyNetworkProjectionCommunityContractTest {
 
         Location location = new Location("PLANT");
         Produto material = new Produto("FG");
-        VersaoProducaoSimples versaoProducaoSimples =
-                new VersaoProducaoSimples(
+        VersaoProducao versaoProducao =
+                new VersaoProducao(
                         "PV-1000",
                         location,
                         1,
                         getRoteiro("ROUTING", location, material),
                         getListaTecnica("BOM", location, material));
         SupplyNetworkProjection supplyNetworkProjection =
-                getSupplyNetworkProjection(location, material, versaoProducaoSimples);
+                getSupplyNetworkProjection(location, material, versaoProducao);
         String versaoProducaoIdPayload = new String("PV-1000");
         Assertions.assertNotSame(
-                versaoProducaoSimples.getId(),
+                versaoProducao.getId(),
                 versaoProducaoIdPayload);
 
         Optional<VersaoProducao> optionalVersaoProducao =
@@ -96,7 +95,7 @@ class SupplyNetworkProjectionCommunityContractTest {
                         false);
 
         Assertions.assertTrue(optionalVersaoProducao.isPresent());
-        Assertions.assertSame(versaoProducaoSimples, optionalVersaoProducao.get());
+        Assertions.assertSame(versaoProducao, optionalVersaoProducao.get());
 
     }
 
@@ -156,7 +155,7 @@ class SupplyNetworkProjectionCommunityContractTest {
 
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> supplyNetworkProjection.getVersaoProducaoSimplesViavelPrioritaria(
+                () -> supplyNetworkProjection.getVersaoProducaoViavelPrioritaria(
                         roteiro,
                         listaTecnica));
 
@@ -177,7 +176,7 @@ class SupplyNetworkProjectionCommunityContractTest {
 
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> supplyNetworkProjection.getVersaoProducaoSimplesPrioritaria(
+                () -> supplyNetworkProjection.getVersaoProducaoPrioritaria(
                         roteiro,
                         listaTecnica));
 
@@ -492,8 +491,8 @@ class SupplyNetworkProjectionCommunityContractTest {
     void populateProductionMasterDataShouldRejectSimpleProductionVersionWithoutIdBeforeIndexing() throws Exception {
 
         SupplyNetworkProjectionFactory supplyNetworkProjectionFactory =
-                getSupplyNetworkProjectionFactoryComVersoesProducaoSimples(
-                        List.of(new VersaoProducaoSimples()));
+                getSupplyNetworkProjectionFactoryComVersoesProducao(
+                        List.of(new VersaoProducao()));
         SupplyNetworkProjection supplyNetworkProjection =
                 getSupplyNetworkProjectionComCluster(new Location("PLANT"), new Produto("FG"));
 
@@ -503,7 +502,7 @@ class SupplyNetworkProjectionCommunityContractTest {
                         supplyNetworkProjection));
 
         Assertions.assertEquals(
-                "Simple production version repository returned simple production version without id at index 0 for Supply Network Projection.",
+                "Production version repository returned production version without id at index 0 for Supply Network Projection.",
                 illegalStateException.getMessage());
 
     }
@@ -514,22 +513,22 @@ class SupplyNetworkProjectionCommunityContractTest {
 
         Location location = new Location("PLANT");
         Produto material = new Produto("FG");
-        List<VersaoProducaoSimples> versaoProducaoSimplesList = List.of(
-                new VersaoProducaoSimples(
+        List<VersaoProducao> versaoProducaoList = List.of(
+                new VersaoProducao(
                         "PV",
                         location,
                         1,
                         getRoteiro("ROUTING-1", location, material),
                         getListaTecnica("BOM-1", location, material)),
-                new VersaoProducaoSimples(
+                new VersaoProducao(
                         "PV",
                         location,
                         2,
                         getRoteiro("ROUTING-2", location, material),
                         getListaTecnica("BOM-2", location, material)));
         SupplyNetworkProjectionFactory supplyNetworkProjectionFactory =
-                getSupplyNetworkProjectionFactoryComVersoesProducaoSimples(
-                        versaoProducaoSimplesList);
+                getSupplyNetworkProjectionFactoryComVersoesProducao(
+                        versaoProducaoList);
         SupplyNetworkProjection supplyNetworkProjection =
                 getSupplyNetworkProjectionComCluster(location, material);
 
@@ -539,7 +538,7 @@ class SupplyNetworkProjectionCommunityContractTest {
                         supplyNetworkProjection));
 
         Assertions.assertEquals(
-                "Simple production version repository returned duplicate simple production version id PV for Supply Network Projection.",
+                "Production version repository returned duplicate production version id PV for Supply Network Projection.",
                 illegalStateException.getMessage());
 
     }
@@ -583,6 +582,9 @@ class SupplyNetworkProjectionCommunityContractTest {
             VersaoProducao versaoProducao) {
 
         SupplyNetworkProjection supplyNetworkProjection = new SupplyNetworkProjection();
+        supplyNetworkProjection.mapaVersaoProducaoPorId = Map.of(
+                versaoProducao.getId(),
+                versaoProducao);
         supplyNetworkProjection.mapaVersaoProducaoViavelSetPorLocationMaterial = new HashMap<>();
         supplyNetworkProjection.mapaVersaoProducaoViavelSetPorLocationMaterial
                 .computeIfAbsent(location, ignored -> new HashMap<>())
@@ -634,8 +636,8 @@ class SupplyNetworkProjectionCommunityContractTest {
 
     }
 
-    private static SupplyNetworkProjectionFactory getSupplyNetworkProjectionFactoryComVersoesProducaoSimples(
-            List<VersaoProducaoSimples> versaoProducaoSimplesList) throws Exception {
+    private static SupplyNetworkProjectionFactory getSupplyNetworkProjectionFactoryComVersoesProducao(
+            List<VersaoProducao> versaoProducaoList) throws Exception {
 
         SupplyNetworkProjectionFactory supplyNetworkProjectionFactory =
                 getSupplyNetworkProjectionFactoryComDadosMestresProducao(
@@ -646,14 +648,14 @@ class SupplyNetworkProjectionCommunityContractTest {
         VersaoProducaoService versaoProducaoService =
                 Mockito.mock(VersaoProducaoService.class);
         Mockito.when(versaoProducaoService.getOuPersisteVersaoProducaoInexistente())
-                .thenReturn(new VersaoProducaoInexistente());
-        VersaoProducaoSimplesRepository versaoProducaoSimplesRepository =
-                Mockito.mock(VersaoProducaoSimplesRepository.class);
-        Mockito.when(versaoProducaoSimplesRepository
-                        .findByVersaoProducaoCompositeKeyRoteiroLocationInAndVersaoProducaoCompositeKeyRoteiroMaterialOutputIn(
+                .thenReturn(criaVersaoProducaoSentinela());
+        VersaoProducaoRepository versaoProducaoRepository =
+                Mockito.mock(VersaoProducaoRepository.class);
+        Mockito.when(versaoProducaoRepository
+                        .customFindAllByLocationInAndMaterialOutputIn(
                                 Mockito.anyCollection(),
                                 Mockito.anyCollection()))
-                .thenReturn(versaoProducaoSimplesList);
+                .thenReturn(versaoProducaoList);
 
         setPrivateField(
                 supplyNetworkProjectionFactory,
@@ -661,10 +663,18 @@ class SupplyNetworkProjectionCommunityContractTest {
                 versaoProducaoService);
         setPrivateField(
                 supplyNetworkProjectionFactory,
-                "versaoProducaoSimplesRepository",
-                versaoProducaoSimplesRepository);
+                "versaoProducaoRepository",
+                versaoProducaoRepository);
 
         return supplyNetworkProjectionFactory;
+
+    }
+
+    private static VersaoProducao criaVersaoProducaoSentinela() {
+
+        VersaoProducao versaoProducao = new VersaoProducao();
+        versaoProducao.setId(VersaoProducao.ID_VERSAO_PRODUCAO_VAZIA);
+        return versaoProducao;
 
     }
 

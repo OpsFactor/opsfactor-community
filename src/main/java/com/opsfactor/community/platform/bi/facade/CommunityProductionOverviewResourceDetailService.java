@@ -6,7 +6,6 @@ import com.opsfactor.community.capability.masterdata.production.billofmaterials.
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoInexistente;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
@@ -252,7 +251,7 @@ public class CommunityProductionOverviewResourceDetailService {
         detail.plannedDate = productionPlanLine.getDataReferencia();
         detail.outputMaterialId = outputMaterial.getId();
         detail.outputMaterialDescription = outputMaterial.getDescricao();
-        detail.productionVersionId = productionVersion instanceof VersaoProducaoInexistente
+        detail.productionVersionId = productionVersion.isVersaoProducaoInexistente()
                 ? null
                 : productionVersion.getId();
         detail.routingId = routing.getId();

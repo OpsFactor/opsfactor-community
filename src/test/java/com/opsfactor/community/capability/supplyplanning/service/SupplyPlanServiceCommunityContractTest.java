@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoInexistente;
+import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
@@ -48,6 +48,7 @@ import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -3342,7 +3343,7 @@ public class SupplyPlanServiceCommunityContractTest {
         SupplyPlan supplyPlan = new SupplyPlan();
         Location location = new Location("LOCATION-" + materialId);
         Produto material = new Produto(materialId);
-        VersaoProducaoInexistente versaoProducaoInexistente = new VersaoProducaoInexistente();
+        VersaoProducao versaoProducaoSentinela = criaVersaoProducaoSentinela();
         Roteiro roteiro = new Roteiro();
         ListaTecnica listaTecnica = new ListaTecnica();
         ProductionPlanLinha productionPlanLinha = new ProductionPlanLinha();
@@ -3358,7 +3359,7 @@ public class SupplyPlanServiceCommunityContractTest {
 
         productionPlanLinhaCompositeKey.setSupplyPlan(supplyPlan);
         productionPlanLinhaCompositeKey.setLocation(location);
-        productionPlanLinhaCompositeKey.setVersaoProducao(versaoProducaoInexistente);
+        productionPlanLinhaCompositeKey.setVersaoProducao(versaoProducaoSentinela);
         productionPlanLinhaCompositeKey.setRoteiro(roteiro);
         productionPlanLinhaCompositeKey.setListaTecnica(listaTecnica);
         productionPlanLinhaCompositeKey.setDataReferencia(LocalDateTime.of(2026, 1, 1, 0, 0));
@@ -3445,14 +3446,19 @@ public class SupplyPlanServiceCommunityContractTest {
 
     private static VersaoProducaoService getVersaoProducaoServiceTeste() {
 
-        return new VersaoProducaoService() {
+        VersaoProducaoService versaoProducaoService = Mockito.mock(VersaoProducaoService.class);
+        Mockito.when(versaoProducaoService.getOuPersisteVersaoProducaoInexistente())
+                .thenReturn(criaVersaoProducaoSentinela());
+        return versaoProducaoService;
 
-            @Override
-            public VersaoProducaoInexistente getOuPersisteVersaoProducaoInexistente() {
-                return new VersaoProducaoInexistente();
-            }
+    }
 
-        };
+    private static VersaoProducao criaVersaoProducaoSentinela() {
+
+        VersaoProducao versaoProducao = new VersaoProducao();
+        versaoProducao.setId(VersaoProducao.ID_VERSAO_PRODUCAO_VAZIA);
+        versaoProducao.setAtivo(false);
+        return versaoProducao;
 
     }
 

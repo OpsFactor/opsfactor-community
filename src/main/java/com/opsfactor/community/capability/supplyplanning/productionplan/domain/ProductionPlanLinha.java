@@ -4,7 +4,6 @@ import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoInexistente;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
@@ -185,25 +184,25 @@ public class ProductionPlanLinha {
     
     /**
      * Se versao producao for do tipo inexistente, retorna nulo
-     * caso contrário (simples/paralela/temporária), retorna a própria versão produção
+     * caso contrário (cadastrada ou temporária), retorna a própria versão produção
      * @return
      */
     public VersaoProducao getVersaoProducaoAlocadaOuNulaSeInexistente() {
-        return (getVersaoProducaoCadastrada() instanceof VersaoProducaoInexistente) ? null : getVersaoProducaoCadastrada();
+        return getVersaoProducaoCadastrada().isVersaoProducaoInexistente() ? null : getVersaoProducaoCadastrada();
     }
     
     /**
      * Se versao producao for do tipo inexistente ou temporária, retorna nulo
-     * caso contrário (simples/paralela), retorna a própria versão produção
+     * caso contrário (cadastrada), retorna a própria versão produção
      * @return 
      */
     public VersaoProducao getVersaoProducaoAlocadaOuNulaSeInexistenteOuTemporaria() {
-        return (getVersaoProducaoCadastrada() instanceof VersaoProducaoInexistente || getVersaoProducaoCadastrada().isVersaoProducaoTemporaria()) ? null : getVersaoProducaoCadastrada();
+        return (getVersaoProducaoCadastrada().isVersaoProducaoInexistente() || getVersaoProducaoCadastrada().isVersaoProducaoTemporaria()) ? null : getVersaoProducaoCadastrada();
     }
     
     /**
      * Se versao producao for do tipo inexistente, retorna a versao producao temporaria para o roteiro/lista tecnica
-     * caso contrário (simples/paralela/temporária), retorna a própria versão produção
+     * caso contrário (cadastrada ou temporária), retorna a própria versão produção
      * @param supplyNetworkProjection
      * @return 
      */

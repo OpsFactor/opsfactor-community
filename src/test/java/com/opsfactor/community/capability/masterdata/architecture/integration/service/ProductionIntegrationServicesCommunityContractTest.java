@@ -8,9 +8,9 @@ import com.opsfactor.community.capability.masterdata.production.billofmaterials.
 import com.opsfactor.community.capability.masterdata.production.productionresource.integration.dto.RecursoProdutivoIntegrationDataDto;
 import com.opsfactor.community.capability.masterdata.production.productionresource.integration.service.DisponibilidadeRecursoProdutivoIntegrationService;
 import com.opsfactor.community.capability.masterdata.production.productionresource.integration.service.RecursoProdutivoIntegrationService;
-import com.opsfactor.community.capability.masterdata.production.productionversion.integration.service.VersaoProducaoSimplesIntegrationService;
+import com.opsfactor.community.capability.masterdata.production.productionversion.integration.service.VersaoProducaoIntegrationService;
 import com.opsfactor.community.capability.masterdata.production.routing.integration.dto.RoteiroIntegrationDataDto;
-import com.opsfactor.community.capability.masterdata.production.productionversion.integration.dto.VersaoProducaoSimplesIntegrationDataDto;
+import com.opsfactor.community.capability.masterdata.production.productionversion.integration.dto.VersaoProducaoIntegrationDataDto;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
 import com.opsfactor.community.capability.masterdata.production.operation.domain.OperacaoRoteiro;
@@ -18,12 +18,11 @@ import com.opsfactor.community.capability.masterdata.production.productionresour
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.production.routing.integration.service.RoteiroIntegrationService;
-import com.opsfactor.community.capability.masterdata.product.material.repository.ProdutoRepository;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.repository.ListaTecnicaRepository;
 import com.opsfactor.community.capability.masterdata.production.operation.repository.OperacaoRoteiroRepository;
 import com.opsfactor.community.capability.masterdata.production.productionresource.repository.RecursoProdutivoRepository;
 import com.opsfactor.community.capability.masterdata.production.routing.repository.RoteiroRepository;
-import com.opsfactor.community.capability.masterdata.production.productionversion.repository.VersaoProducaoSimplesRepository;
+import com.opsfactor.community.capability.masterdata.production.productionversion.repository.VersaoProducaoRepository;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.repository.UnidadeMedidaRepository;
 import com.opsfactor.community.capability.masterdata.network.location.service.LocationService;
 import com.opsfactor.community.capability.masterdata.product.material.service.MaterialService;
@@ -84,11 +83,9 @@ class ProductionIntegrationServicesCommunityContractTest {
         assertRequiredAutowiredFields(
                 OperacaoRoteiroIntegrationService.class,
                 List.of(
-                        "unidadeMedidaRepository",
                         "recursoProdutivoRepository",
                         "roteiroRepository",
-                        "operacaoRoteiroRepository",
-                        "parametrosGlobaisService"));
+                        "operacaoRoteiroRepository"));
         assertRequiredAutowiredFields(
                 ListaTecnicaIntegrationService.class,
                 List.of(
@@ -106,14 +103,13 @@ class ProductionIntegrationServicesCommunityContractTest {
                         "listaTecnicaComponenteRepository",
                         "listaTecnicaComponenteIntegrationMapper"));
         assertRequiredAutowiredFields(
-                VersaoProducaoSimplesIntegrationService.class,
+                VersaoProducaoIntegrationService.class,
                 List.of(
                         "locationService",
-                        "produtoRepository",
                         "roteiroRepository",
                         "listaTecnicaRepository",
-                        "versaoProducaoSimplesRepository",
-                        "versaoProducaoSimplesIntegrationMapper"));
+                        "versaoProducaoRepository",
+                        "versaoProducaoIntegrationMapper"));
 
     }
 
@@ -145,10 +141,10 @@ class ProductionIntegrationServicesCommunityContractTest {
                 "Bill of Materials Components Data Saved",
                 new ListaTecnicaComponenteIntegrationService().getSaveSuccessMessage());
 
-        Assertions.assertEquals(1000, new VersaoProducaoSimplesIntegrationService().getBatchSize());
+        Assertions.assertEquals(1000, new VersaoProducaoIntegrationService().getBatchSize());
         Assertions.assertEquals(
-                "Simple Production Version data uploaded",
-                new VersaoProducaoSimplesIntegrationService().getSaveSuccessMessage());
+                "Production Version data uploaded",
+                new VersaoProducaoIntegrationService().getSaveSuccessMessage());
 
     }
 
@@ -167,7 +163,7 @@ class ProductionIntegrationServicesCommunityContractTest {
          * sendo bean Spring, mas o teste explicita a diferenca para que uma
          * futura mudanca seja consciente.
          */
-        Assertions.assertTrue(VersaoProducaoSimplesIntegrationService.class.isAnnotationPresent(Service.class));
+        Assertions.assertTrue(VersaoProducaoIntegrationService.class.isAnnotationPresent(Service.class));
 
     }
 
@@ -293,19 +289,19 @@ class ProductionIntegrationServicesCommunityContractTest {
     }
 
     @Test
-    void simpleProductionVersionPrimaryKeyShouldRejectMissingIdBeforeRepositoryLookup() {
+    void productionVersionPrimaryKeyShouldRejectMissingIdBeforeRepositoryLookup() {
 
-        VersaoProducaoSimplesIntegrationService versaoProducaoSimplesIntegrationService =
-                new VersaoProducaoSimplesIntegrationService();
+        VersaoProducaoIntegrationService versaoProducaoIntegrationService =
+                new VersaoProducaoIntegrationService();
 
         DataUploadException dataUploadException = Assertions.assertThrows(
                 DataUploadException.class,
-                () -> versaoProducaoSimplesIntegrationService.getPersistedEntityCollectionFromPrimaryKeyDtoCollection(
-                        List.of(new VersaoProducaoSimplesIntegrationDataDto
-                                .VersaoProducaoSimplesPrimaryKeyIntegrationDTO(null))));
+                () -> versaoProducaoIntegrationService.getPersistedEntityCollectionFromPrimaryKeyDtoCollection(
+                        List.of(new VersaoProducaoIntegrationDataDto
+                                .VersaoProducaoPrimaryKeyIntegrationDTO(null))));
 
         Assertions.assertEquals(
-                "Simple production version upload primary key must include simple production version id",
+                "Production version upload primary key must include production version id",
                 dataUploadException.getMessage());
 
     }
@@ -328,7 +324,7 @@ class ProductionIntegrationServicesCommunityContractTest {
         Assertions.assertTrue(new DisponibilidadeRecursoProdutivoIntegrationService()
                 .getPersistedEntityCollectionFromPrimaryKeyDtoCollection(List.of())
                 .isEmpty());
-        Assertions.assertTrue(new VersaoProducaoSimplesIntegrationService()
+        Assertions.assertTrue(new VersaoProducaoIntegrationService()
                 .getPersistedEntityCollectionFromPrimaryKeyDtoCollection(List.of())
                 .isEmpty());
 
@@ -352,17 +348,11 @@ class ProductionIntegrationServicesCommunityContractTest {
                         OperacaoRoteiroRepository.class,
                         "customFindAll",
                         List.of());
-        UnidadeMedidaRepository unidadeMedidaRepository =
-                criaRepositoryProxy(
-                        UnidadeMedidaRepository.class,
-                        "findAll",
-                        List.of());
         OperacaoRoteiroIntegrationService operacaoRoteiroIntegrationService =
                 criaOperacaoRoteiroIntegrationService(
                         recursoProdutivoRepository,
                         roteiroRepository,
-                        operacaoRoteiroRepository,
-                        unidadeMedidaRepository);
+                        operacaoRoteiroRepository);
         ProcessedFile processedFile = new ProcessedFile();
 
         DataUploadException dataUploadException = Assertions.assertThrows(
@@ -393,17 +383,11 @@ class ProductionIntegrationServicesCommunityContractTest {
                         OperacaoRoteiroRepository.class,
                         "customFindAll",
                         List.of(new OperacaoRoteiro()));
-        UnidadeMedidaRepository unidadeMedidaRepository =
-                criaRepositoryProxy(
-                        UnidadeMedidaRepository.class,
-                        "findAll",
-                        List.of());
         OperacaoRoteiroIntegrationService operacaoRoteiroIntegrationService =
                 criaOperacaoRoteiroIntegrationService(
                         recursoProdutivoRepository,
                         roteiroRepository,
-                        operacaoRoteiroRepository,
-                        unidadeMedidaRepository);
+                        operacaoRoteiroRepository);
         ProcessedFile processedFile = new ProcessedFile();
 
         DataUploadException dataUploadException = Assertions.assertThrows(
@@ -443,17 +427,11 @@ class ProductionIntegrationServicesCommunityContractTest {
                         OperacaoRoteiroRepository.class,
                         "customFindAll",
                         List.of());
-        UnidadeMedidaRepository unidadeMedidaRepository =
-                criaRepositoryProxy(
-                        UnidadeMedidaRepository.class,
-                        "findAll",
-                        List.of());
         OperacaoRoteiroIntegrationService operacaoRoteiroIntegrationService =
                 criaOperacaoRoteiroIntegrationService(
                         recursoProdutivoRepository,
                         roteiroRepository,
-                        operacaoRoteiroRepository,
-                        unidadeMedidaRepository);
+                        operacaoRoteiroRepository);
         ProcessedFile processedFile = new ProcessedFile();
         processedFile.addRow(new ProcessedFileRow(List.of(
                 (Object) "Routing Id",
@@ -567,33 +545,23 @@ class ProductionIntegrationServicesCommunityContractTest {
                 DataUploadException.class,
                 () -> operacaoRoteiroIntegrationService.saveFile(
                         criaProcessedFileOperacaoRoteiro("10.5", "", "", "")));
-        DataUploadException baseQuantityDataUploadException = Assertions.assertThrows(
+        DataUploadException operationDurationDataUploadException = Assertions.assertThrows(
                 DataUploadException.class,
                 () -> operacaoRoteiroIntegrationService.saveFile(
-                        criaProcessedFileOperacaoRoteiro("10", "1,5", "", "")));
-        DataUploadException hoursDataUploadException = Assertions.assertThrows(
-                DataUploadException.class,
-                () -> operacaoRoteiroIntegrationService.saveFile(
-                        criaProcessedFileOperacaoRoteiro("10", "", "2,5", "")));
+                        criaProcessedFileOperacaoRoteiro("10", "2,5", "", "")));
 
         Assertions.assertEquals(
                 "Sequence is not a valid Integer number at line 2 : no decimals should be used.",
                 sequenceDataUploadException.getMessage());
         Assertions.assertEquals(
-                "Invalid base quantity at line 2 : should be a float number with '.' as decimal and no thousands separator.",
-                baseQuantityDataUploadException.getMessage());
-        Assertions.assertEquals(
-                "Invalid number of hours at line 2 : should be a float number with '.' as decimal and no thousands separator.",
-                hoursDataUploadException.getMessage());
+                "Invalid operation duration at line 2 : should be a decimal number with '.' as decimal and no thousands separator.",
+                operationDurationDataUploadException.getMessage());
         Assertions.assertInstanceOf(
                 NumberFormatException.class,
                 sequenceDataUploadException.getCause());
         Assertions.assertInstanceOf(
                 NumberFormatException.class,
-                baseQuantityDataUploadException.getCause());
-        Assertions.assertInstanceOf(
-                NumberFormatException.class,
-                hoursDataUploadException.getCause());
+                operationDurationDataUploadException.getCause());
 
     }
 
@@ -660,14 +628,9 @@ class ProductionIntegrationServicesCommunityContractTest {
     }
 
     @Test
-    void simpleProductionVersionSupportDataShouldRejectBrokenRoutingSnapshotBeforeIndexing() {
+    void productionVersionSupportDataShouldRejectBrokenRoutingSnapshotBeforeIndexing() {
 
         LocationService locationService = new TestLocationService(List.of());
-        ProdutoRepository produtoRepository =
-                criaRepositoryProxy(
-                        ProdutoRepository.class,
-                        "findAll",
-                        List.of());
         RoteiroRepository roteiroRepository =
                 criaRepositoryProxy(
                         RoteiroRepository.class,
@@ -678,22 +641,21 @@ class ProductionIntegrationServicesCommunityContractTest {
                         ListaTecnicaRepository.class,
                         "findAll",
                         List.of());
-        VersaoProducaoSimplesRepository versaoProducaoSimplesRepository =
+        VersaoProducaoRepository versaoProducaoRepository =
                 criaRepositoryProxy(
-                        VersaoProducaoSimplesRepository.class,
+                        VersaoProducaoRepository.class,
                         "findAll",
                         List.of());
-        VersaoProducaoSimplesIntegrationService versaoProducaoSimplesIntegrationService =
-                criaVersaoProducaoSimplesIntegrationService(
+        VersaoProducaoIntegrationService versaoProducaoIntegrationService =
+                criaVersaoProducaoIntegrationService(
                         locationService,
-                        produtoRepository,
                         roteiroRepository,
                         listaTecnicaRepository,
-                        versaoProducaoSimplesRepository);
+                        versaoProducaoRepository);
 
         DataUploadException dataUploadException = Assertions.assertThrows(
                 DataUploadException.class,
-                versaoProducaoSimplesIntegrationService::getSupportData);
+                versaoProducaoIntegrationService::getSupportData);
 
         Assertions.assertEquals(
                 "Routing snapshot returned item without id at index 0.",
@@ -702,13 +664,9 @@ class ProductionIntegrationServicesCommunityContractTest {
     }
 
     @Test
-    void simpleProductionVersionExportShouldUseRepositoryFetchSnapshot() {
+    void productionVersionExportShouldUseRepositoryFetchSnapshot() {
 
         LocationService locationService = new TestLocationService(List.of());
-        ProdutoRepository produtoRepository = criaRepositoryProxy(
-                ProdutoRepository.class,
-                "findAll",
-                List.of());
         RoteiroRepository roteiroRepository = criaRepositoryProxy(
                 RoteiroRepository.class,
                 "findAll",
@@ -717,21 +675,20 @@ class ProductionIntegrationServicesCommunityContractTest {
                 ListaTecnicaRepository.class,
                 "findAll",
                 List.of());
-        VersaoProducaoSimplesRepository versaoProducaoSimplesRepository = criaRepositoryProxy(
-                VersaoProducaoSimplesRepository.class,
+        VersaoProducaoRepository versaoProducaoRepository = criaRepositoryProxy(
+                VersaoProducaoRepository.class,
                 "customFindAllForIntegrationExport",
                 List.of());
-        VersaoProducaoSimplesIntegrationService versaoProducaoSimplesIntegrationService =
-                criaVersaoProducaoSimplesIntegrationService(
+        VersaoProducaoIntegrationService versaoProducaoIntegrationService =
+                criaVersaoProducaoIntegrationService(
                         locationService,
-                        produtoRepository,
                         roteiroRepository,
                         listaTecnicaRepository,
-                        versaoProducaoSimplesRepository);
+                        versaoProducaoRepository);
 
         Assertions.assertEquals(
                 List.of(),
-                versaoProducaoSimplesIntegrationService.getAllPersistedEntities());
+                versaoProducaoIntegrationService.getAllPersistedEntities());
 
     }
 
@@ -821,8 +778,7 @@ class ProductionIntegrationServicesCommunityContractTest {
     private static OperacaoRoteiroIntegrationService criaOperacaoRoteiroIntegrationService(
             RecursoProdutivoRepository recursoProdutivoRepository,
             RoteiroRepository roteiroRepository,
-            OperacaoRoteiroRepository operacaoRoteiroRepository,
-            UnidadeMedidaRepository unidadeMedidaRepository) {
+            OperacaoRoteiroRepository operacaoRoteiroRepository) {
 
         OperacaoRoteiroIntegrationService operacaoRoteiroIntegrationService =
                 new OperacaoRoteiroIntegrationService();
@@ -838,10 +794,6 @@ class ProductionIntegrationServicesCommunityContractTest {
                 operacaoRoteiroIntegrationService,
                 "operacaoRoteiroRepository",
                 operacaoRoteiroRepository);
-        ReflectionTestUtils.setField(
-                operacaoRoteiroIntegrationService,
-                "unidadeMedidaRepository",
-                unidadeMedidaRepository);
         return operacaoRoteiroIntegrationService;
 
     }
@@ -867,16 +819,10 @@ class ProductionIntegrationServicesCommunityContractTest {
                         RoteiroRepository.class,
                         "findAll",
                         List.of(roteiro));
-        UnidadeMedidaRepository unidadeMedidaRepository =
-                criaRepositoryProxy(
-                        UnidadeMedidaRepository.class,
-                        "findAll",
-                        List.of());
         return criaOperacaoRoteiroIntegrationService(
                 recursoProdutivoRepository,
                 roteiroRepository,
-                operacaoRoteiroRepository,
-                unidadeMedidaRepository);
+                operacaoRoteiroRepository);
 
     }
 
@@ -892,26 +838,24 @@ class ProductionIntegrationServicesCommunityContractTest {
 
     private static ProcessedFile criaProcessedFileOperacaoRoteiro(
             String sequence,
-            String baseQuantity,
-            String hoursByBaseQuantity,
+            String operationDuration,
+            String timeUnit,
             String deleteFlag) {
 
         ProcessedFile processedFile = new ProcessedFile();
         processedFile.addRow(new ProcessedFileRow(List.of(
                 (Object) "Routing Id",
-                "Sequence",
+                "Operation Sequence (Integer number)",
                 "Production Resource Id",
-                "Base Quantity",
-                "UOM",
-                "Hours By Base Quantity",
+                "Operation Duration",
+                "Time Unit (S, M, H or D; default H)",
                 "Delete")));
         processedFile.addRow(new ProcessedFileRow(List.of(
                 (Object) "ROUTING-1",
                 sequence,
                 "RESOURCE-1",
-                baseQuantity,
-                "",
-                hoursByBaseQuantity,
+                operationDuration,
+                timeUnit,
                 deleteFlag)));
         return processedFile;
 
@@ -1017,36 +961,31 @@ class ProductionIntegrationServicesCommunityContractTest {
 
     }
 
-    private static VersaoProducaoSimplesIntegrationService criaVersaoProducaoSimplesIntegrationService(
+    private static VersaoProducaoIntegrationService criaVersaoProducaoIntegrationService(
             LocationService locationService,
-            ProdutoRepository produtoRepository,
             RoteiroRepository roteiroRepository,
             ListaTecnicaRepository listaTecnicaRepository,
-            VersaoProducaoSimplesRepository versaoProducaoSimplesRepository) {
+            VersaoProducaoRepository versaoProducaoRepository) {
 
-        VersaoProducaoSimplesIntegrationService versaoProducaoSimplesIntegrationService =
-                new VersaoProducaoSimplesIntegrationService();
+        VersaoProducaoIntegrationService versaoProducaoIntegrationService =
+                new VersaoProducaoIntegrationService();
         ReflectionTestUtils.setField(
-                versaoProducaoSimplesIntegrationService,
+                versaoProducaoIntegrationService,
                 "locationService",
                 locationService);
         ReflectionTestUtils.setField(
-                versaoProducaoSimplesIntegrationService,
-                "produtoRepository",
-                produtoRepository);
-        ReflectionTestUtils.setField(
-                versaoProducaoSimplesIntegrationService,
+                versaoProducaoIntegrationService,
                 "roteiroRepository",
                 roteiroRepository);
         ReflectionTestUtils.setField(
-                versaoProducaoSimplesIntegrationService,
+                versaoProducaoIntegrationService,
                 "listaTecnicaRepository",
                 listaTecnicaRepository);
         ReflectionTestUtils.setField(
-                versaoProducaoSimplesIntegrationService,
-                "versaoProducaoSimplesRepository",
-                versaoProducaoSimplesRepository);
-        return versaoProducaoSimplesIntegrationService;
+                versaoProducaoIntegrationService,
+                "versaoProducaoRepository",
+                versaoProducaoRepository);
+        return versaoProducaoIntegrationService;
 
     }
 

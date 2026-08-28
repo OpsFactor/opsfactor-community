@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.supplyplanning.productionplan.domain;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
+import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import org.junit.jupiter.api.Assertions;
@@ -124,13 +124,13 @@ class ProductionPlanLinhaCommunityContractTest {
             ListaTecnica listaTecnica) {
 
         SupplyPlan supplyPlan = new SupplyPlan();
-        VersaoProducaoSimples versaoProducaoSimples =
-                new VersaoProducaoSimples("PV", location, 1, roteiro, listaTecnica);
+        VersaoProducao versaoProducao =
+                new VersaoProducao("PV", location, 1, roteiro, listaTecnica);
         ProductionPlanLinha.ProductionPlanLinhaCompositeKey productionPlanLinhaCompositeKey =
                 new ProductionPlanLinha.ProductionPlanLinhaCompositeKey(
                         supplyPlan,
                         location,
-                        versaoProducaoSimples,
+                        versaoProducao,
                         roteiro,
                         listaTecnica,
                         LocalDateTime.of(2026, 1, 1, 0, 0));

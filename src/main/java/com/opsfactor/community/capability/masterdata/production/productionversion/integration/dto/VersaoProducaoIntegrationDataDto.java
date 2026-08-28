@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.opsfactor.community.platform.integration.dto.IntegrationDataDtoAbstract;
 import com.opsfactor.community.platform.integration.dto.IntegrationPrimaryKeyDTOAbstract;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
+import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -14,11 +14,11 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 /**
- * DTO da versao de producao simples Community.
+ * DTO da versao de producao Community.
  *
- * <p>Uma versao simples aponta uma combinacao unica de location, material de
- * saida, roteiro e BOM. Parallel routing/output, multiplos outputs e selecao
- * avancada de versoes sao capacidades Enterprise.</p>
+ * <p>A versão aponta para as abstrações gerais de roteiro e lista técnica. O
+ * Community disponibiliza apenas os subtipos simples desses mestres, enquanto
+ * o Enterprise também disponibiliza as especializações de múltiplos outputs.</p>
  */
 @SuperBuilder
 @AllArgsConstructor // necessário para que NoArgsConstrutor funcione com @Builder
@@ -26,7 +26,7 @@ import lombok.experimental.SuperBuilder;
 @ToString 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class VersaoProducaoSimplesIntegrationDataDto extends IntegrationDataDtoAbstract<VersaoProducaoSimplesIntegrationDataDto, VersaoProducaoSimplesIntegrationDataDto.VersaoProducaoSimplesPrimaryKeyIntegrationDTO, VersaoProducaoSimples> {
+public class VersaoProducaoIntegrationDataDto extends IntegrationDataDtoAbstract<VersaoProducaoIntegrationDataDto, VersaoProducaoIntegrationDataDto.VersaoProducaoPrimaryKeyIntegrationDTO, VersaoProducao> {
 
     public String locationId;
     public Integer priority;
@@ -36,17 +36,17 @@ public class VersaoProducaoSimplesIntegrationDataDto extends IntegrationDataDtoA
     public Boolean active;
 
     @EqualsAndHashCode
-    public static class VersaoProducaoSimplesPrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<VersaoProducaoSimplesPrimaryKeyIntegrationDTO, VersaoProducaoSimples> {
+    public static class VersaoProducaoPrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<VersaoProducaoPrimaryKeyIntegrationDTO, VersaoProducao> {
 
         public String id;
 
         @JsonCreator
-        public VersaoProducaoSimplesPrimaryKeyIntegrationDTO(@JsonProperty("id") String id) {
+        public VersaoProducaoPrimaryKeyIntegrationDTO(@JsonProperty("id") String id) {
             this.id = id;
         }
 
         @Override
-        public boolean hasSameKeyAsEntity(VersaoProducaoSimples entity) {
+        public boolean hasSameKeyAsEntity(VersaoProducao entity) {
             return entity.getId().equals(this.id);
         }
 

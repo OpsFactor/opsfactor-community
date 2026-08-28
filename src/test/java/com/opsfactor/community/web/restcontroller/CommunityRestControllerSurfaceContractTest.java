@@ -24,7 +24,7 @@ import com.opsfactor.community.web.restcontroller.dataupload.masterdata.producti
 import com.opsfactor.community.web.restcontroller.dataupload.masterdata.production.OperacaoRoteiroIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.masterdata.production.RecursoProdutivoIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.masterdata.production.RoteiroIntegrationController;
-import com.opsfactor.community.web.restcontroller.dataupload.masterdata.production.VersaoProducaoSimplesIntegrationController;
+import com.opsfactor.community.web.restcontroller.dataupload.masterdata.production.VersaoProducaoIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.planning.supply.FulfilledDemandIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.planning.supply.InventoryPlanIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.transactionaldata.EstoqueIntegrationController;
@@ -107,7 +107,7 @@ public class CommunityRestControllerSurfaceContractTest {
                         OperacaoRoteiroIntegrationController.class,
                         RecursoProdutivoIntegrationController.class,
                         RoteiroIntegrationController.class,
-                        VersaoProducaoSimplesIntegrationController.class,
+                        VersaoProducaoIntegrationController.class,
                         FulfilledDemandIntegrationController.class,
                         InventoryPlanIntegrationController.class,
                         EstoqueIntegrationController.class,

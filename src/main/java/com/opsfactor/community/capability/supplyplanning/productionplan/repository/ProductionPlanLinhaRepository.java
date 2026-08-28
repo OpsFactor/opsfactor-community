@@ -102,11 +102,15 @@ public interface ProductionPlanLinhaRepository extends JpaRepository<ProductionP
      * @param location
      * @return
      */
-    @Query("SELECT DISTINCT ppl FROM ProductionPlanLinha ppl " +
-            "INNER JOIN FETCH ppl.productionPlanLinhaCompositeKey.listaTecnica lt " +
-            "INNER JOIN FETCH lt.listaTecnicaComponenteSet ltc " +
-            "WHERE ppl.productionPlanLinhaCompositeKey.supplyPlan = :supplyPlan " +
-            "AND ppl.productionPlanLinhaCompositeKey.location = :location")
+    @Query("SELECT DISTINCT ppl FROM ProductionPlanLinha ppl "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.location location "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.versaoProducao versao "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.roteiro roteiro "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.listaTecnica listaTecnica "
+            + "LEFT JOIN FETCH ppl.materialOutput materialOutput "
+            + "LEFT JOIN FETCH ppl.unidadeMedida unidadeMedida "
+            + "WHERE ppl.productionPlanLinhaCompositeKey.supplyPlan = :supplyPlan "
+            + "AND ppl.productionPlanLinhaCompositeKey.location = :location")
     List<ProductionPlanLinha> customFindByProductionPlanLinhaCompositeKeySupplyPlanAndProductionPlanLinhaCompositeKeyLocationIncluindoListaTecnicaEMateriaisInput(
             SupplyPlan supplyPlan, Location location);
 
@@ -115,18 +119,26 @@ public interface ProductionPlanLinhaRepository extends JpaRepository<ProductionP
      * incluindo BOM e componentes usados pelo índice de inputs do heurístico.
      */
     @Query("SELECT DISTINCT ppl FROM ProductionPlanLinha ppl "
-            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.listaTecnica lt "
-            + "LEFT JOIN FETCH lt.listaTecnicaComponenteSet ltc "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.location location "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.versaoProducao versao "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.roteiro roteiro "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.listaTecnica listaTecnica "
+            + "LEFT JOIN FETCH ppl.materialOutput materialOutput "
+            + "LEFT JOIN FETCH ppl.unidadeMedida unidadeMedida "
             + "WHERE ppl.productionPlanLinhaCompositeKey.supplyPlan = :supplyPlan "
             + "AND ppl.productionPlanLinhaCompositeKey.location IN :locations")
     List<ProductionPlanLinha> customFindByProductionPlanLinhaCompositeKeySupplyPlanAndProductionPlanLinhaCompositeKeyLocationInIncluindoListaTecnicaEMateriaisInput(
             SupplyPlan supplyPlan,
             Collection<Location> locations);
 
-    @Query("SELECT DISTINCT ppl FROM ProductionPlanLinha ppl " +
-            "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.listaTecnica lt " +
-            "LEFT JOIN FETCH lt.listaTecnicaComponenteSet ltc " +
-            "WHERE ppl.productionPlanLinhaCompositeKey.supplyPlan = :supplyPlan")
+    @Query("SELECT DISTINCT ppl FROM ProductionPlanLinha ppl "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.location location "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.versaoProducao versao "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.roteiro roteiro "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.listaTecnica listaTecnica "
+            + "LEFT JOIN FETCH ppl.materialOutput materialOutput "
+            + "LEFT JOIN FETCH ppl.unidadeMedida unidadeMedida "
+            + "WHERE ppl.productionPlanLinhaCompositeKey.supplyPlan = :supplyPlan")
     List<ProductionPlanLinha> customFindByProductionPlanLinhaCompositeKeySupplyPlan(
             SupplyPlan supplyPlan);
 
@@ -252,9 +264,29 @@ public interface ProductionPlanLinhaRepository extends JpaRepository<ProductionP
      * @param produtos
      * @return
      */
+    @Query("SELECT DISTINCT ppl FROM ProductionPlanLinha ppl "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.location location "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.versaoProducao versao "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.roteiro roteiro "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.listaTecnica listaTecnica "
+            + "LEFT JOIN FETCH ppl.materialOutput materialOutput "
+            + "LEFT JOIN FETCH ppl.unidadeMedida unidadeMedida "
+            + "WHERE ppl.productionPlanLinhaCompositeKey.supplyPlan.id = :supplyPlanId "
+            + "AND ppl.productionPlanLinhaCompositeKey.location = :location "
+            + "AND ppl.materialOutput IN :produtos")
     List<ProductionPlanLinha> findByProductionPlanLinhaCompositeKeySupplyPlanIdAndProductionPlanLinhaCompositeKeyLocationAndMaterialOutputIn(
             Long supplyPlanId , Location location, Collection<Produto> produtos);
 
+    @Query("SELECT DISTINCT ppl FROM ProductionPlanLinha ppl "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.location location "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.versaoProducao versao "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.roteiro roteiro "
+            + "LEFT JOIN FETCH ppl.productionPlanLinhaCompositeKey.listaTecnica listaTecnica "
+            + "LEFT JOIN FETCH ppl.materialOutput materialOutput "
+            + "LEFT JOIN FETCH ppl.unidadeMedida unidadeMedida "
+            + "WHERE ppl.productionPlanLinhaCompositeKey.supplyPlan = :supplyPlan "
+            + "AND ppl.productionPlanLinhaCompositeKey.location IN :locations "
+            + "AND ppl.materialOutput IN :produtos")
     List<ProductionPlanLinha> findByProductionPlanLinhaCompositeKeySupplyPlanAndProductionPlanLinhaCompositeKeyLocationInAndMaterialOutputIn(
             SupplyPlan supplyPlan, Collection<Location> locations, Collection<Produto> produtos);
 

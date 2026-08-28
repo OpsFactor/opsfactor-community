@@ -1,10 +1,10 @@
 package com.opsfactor.community.web.restcontroller.dataupload.masterdata.production;
 
 import com.opsfactor.community.platform.integration.dto.IntegrationOptionsDto;
-import com.opsfactor.community.capability.masterdata.production.productionversion.integration.dto.VersaoProducaoSimplesIntegrationDataDto;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
+import com.opsfactor.community.capability.masterdata.production.productionversion.integration.dto.VersaoProducaoIntegrationDataDto;
+import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.platform.integration.service.EmptyIntegrationDataFilter;
-import com.opsfactor.community.capability.masterdata.production.productionversion.integration.service.VersaoProducaoSimplesIntegrationService;
+import com.opsfactor.community.capability.masterdata.production.productionversion.integration.service.VersaoProducaoIntegrationService;
 import com.opsfactor.community.web.restcontroller.dataupload.IntegrationControllerAbstract;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
@@ -24,12 +24,12 @@ import org.springframework.web.bind.annotation.RestController;
         @Tag(name = "Production")
 })
 @RestController
-public class VersaoProducaoSimplesIntegrationController extends IntegrationControllerAbstract<VersaoProducaoSimples, VersaoProducaoSimplesIntegrationDataDto, VersaoProducaoSimplesIntegrationDataDto.VersaoProducaoSimplesPrimaryKeyIntegrationDTO, EmptyIntegrationDataFilter, VersaoProducaoSimplesIntegrationService, IntegrationOptionsDto> {
+public class VersaoProducaoIntegrationController extends IntegrationControllerAbstract<VersaoProducao, VersaoProducaoIntegrationDataDto, VersaoProducaoIntegrationDataDto.VersaoProducaoPrimaryKeyIntegrationDTO, EmptyIntegrationDataFilter, VersaoProducaoIntegrationService, IntegrationOptionsDto> {
 
     @Override
     protected String getSubPath() {
 
-        return "simpleproductionversion";
+        return "productionversion";
 
     }
 

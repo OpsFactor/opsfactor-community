@@ -3,40 +3,40 @@ package com.opsfactor.community.capability.masterdata.production.productionversi
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
+import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * Contrato de extração da prioridade da versão de produção simples Community.
+ * Contrato de extração da prioridade da entidade única de versão de produção.
  */
-class VersaoProducaoSimplesIntegrationMapperTest {
+class VersaoProducaoIntegrationMapperTest {
 
     @Test
     void mapperShouldExportBlankPriorityWhenNoneIsRegistered() {
 
-        VersaoProducaoSimplesIntegrationMapper mapper =
-                new VersaoProducaoSimplesIntegrationMapper();
-        VersaoProducaoSimples simpleProductionVersion = new VersaoProducaoSimples();
-        simpleProductionVersion.setId("PV-SIMPLE");
-        simpleProductionVersion.setLocation(new Location("LOC", "Location"));
+        VersaoProducaoIntegrationMapper mapper =
+                new VersaoProducaoIntegrationMapper();
+        VersaoProducao versaoProducao = new VersaoProducao();
+        versaoProducao.setId("PV");
+        versaoProducao.setLocation(new Location("LOC", "Location"));
         Produto outputMaterial = new Produto("MAT");
-        simpleProductionVersion.setRoteiro(new Roteiro());
-        simpleProductionVersion.getRoteiro().setId("ROUTING");
-        simpleProductionVersion.getRoteiro().setMaterialOutput(outputMaterial);
-        simpleProductionVersion.setListaTecnica(new ListaTecnica());
-        simpleProductionVersion.getListaTecnica().setId("BOM");
-        simpleProductionVersion.getListaTecnica().setMaterialOutput(outputMaterial);
+        versaoProducao.setRoteiro(new Roteiro());
+        versaoProducao.getRoteiro().setId("ROUTING");
+        versaoProducao.getRoteiro().setMaterialOutput(outputMaterial);
+        versaoProducao.setListaTecnica(new ListaTecnica());
+        versaoProducao.getListaTecnica().setId("BOM");
+        versaoProducao.getListaTecnica().setMaterialOutput(outputMaterial);
 
         /*
          * O fallback máximo continua disponível para heurísticas, porém o
          * contrato de data upload representa ausência de cadastro como nulo.
          */
-        Assertions.assertEquals(Integer.MAX_VALUE, simpleProductionVersion.getPrioridade());
-        Assertions.assertNull(mapper.getDtoWithoutPrimaryKeyFromEntity(simpleProductionVersion).priority);
+        Assertions.assertEquals(Integer.MAX_VALUE, versaoProducao.getPrioridade());
+        Assertions.assertNull(mapper.getDtoWithoutPrimaryKeyFromEntity(versaoProducao).priority);
         Assertions.assertNull(
-                mapper.convertEntityToProcessedFileRow(simpleProductionVersion, null)
+                mapper.convertEntityToProcessedFileRow(versaoProducao, null)
                         .getColumnValueAsInteger(2));
 
     }

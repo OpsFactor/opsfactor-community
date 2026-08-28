@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.supplyplanning.engine;
 
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
+import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
@@ -190,7 +190,7 @@ class SupplyPlanningCommunityContractTest {
         }
 
         @Override
-        public Optional<VersaoProducaoSimples> getVersaoProducaoSimplesViavelPrioritaria(
+        public Optional<VersaoProducao> getVersaoProducaoViavelPrioritaria(
                 Location location,
                 Produto material,
                 Collection<Produto> possiveisMateriaisInput) {

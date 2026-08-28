@@ -25,7 +25,7 @@ import com.opsfactor.community.capability.supplyplanning.configuration.domain.op
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.network.location.domain.LocationAbstract;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoInexistente;
+import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
@@ -1902,7 +1902,7 @@ public class SupplyPlanService {
                 .toList();
         if (productionPlanLinhas.isEmpty()) return;
 
-        VersaoProducaoInexistente versaoProducaoInexistente = versaoProducaoService.getOuPersisteVersaoProducaoInexistente();
+        VersaoProducao versaoProducaoInexistente = versaoProducaoService.getOuPersisteVersaoProducaoInexistente();
 
         // versões de produção criadas artificialmente para acomodar roteiros/LTs sem versão devem ser apagadas antes de salvar,
         // pois não possuem correspondência na tabela de versões de produção (id nulo)

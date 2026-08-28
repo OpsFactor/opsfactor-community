@@ -578,7 +578,7 @@ public class SupplyPlanProjectionFactory {
         validaProductionPlanLinhaRepositoryResult(
                 productionPlanLinhas,
                 "Production Plan output projection population")
-                .parallelStream().forEach(productionPlanLinha -> {
+                .stream().forEach(productionPlanLinha -> {
             planningProjection.addProductionPlanLinhaOutput(productionPlanLinha);
         });
     }
@@ -595,7 +595,7 @@ public class SupplyPlanProjectionFactory {
         validaProductionPlanLinhaRepositoryResult(
                 productionPlanLinhas,
                 "multi-location Production Plan output projection population")
-                .parallelStream()
+                .stream()
                 .filter(productionPlanLinha -> clusterEParametrosProjection.isDfuAtiva(productionPlanLinha.getMaterialOutput(), productionPlanLinha.getLocation()))
                 .forEach(productionPlanLinha -> {
                     SupplyPlanningProjection supplyPlanningProjection = supplyPlanningMultiplasLocationsProjection.getSupplyPlanningProjectionDeLocation(productionPlanLinha.getLocation());
@@ -669,7 +669,7 @@ public class SupplyPlanProjectionFactory {
                 .filter(x -> roteirosRecursoProdutivoMaterial.contains(x.getRoteiro()))
                 .toList();
 
-        productionPlanLinhasFiltradas.parallelStream().forEach(productionPlanLinha -> {
+        productionPlanLinhasFiltradas.stream().forEach(productionPlanLinha -> {
             supplyPlanningProjection.addProductionPlanLinhaOutput(productionPlanLinha);
         });
 
@@ -708,7 +708,7 @@ public class SupplyPlanProjectionFactory {
         materiaisConsideradosComoChaveProductionPlanInputs.addAll(materiaisInputParaOutputsNaListaProjection);
         materiaisConsideradosComoChaveProductionPlanInputs.addAll(materiaisFiltradosAtivos);
 
-        productionPlanLinhas.parallelStream().forEach(productionPlanLinha -> {
+        productionPlanLinhas.stream().forEach(productionPlanLinha -> {
             boolean consideraProductionPlanLinhaComoInput = false;
             for (Produto material : materiaisConsideradosComoChaveProductionPlanInputs) {
                 if (productionPlanLinha.getMateriaisInput(supplyNetworkProjection).contains(material)) {

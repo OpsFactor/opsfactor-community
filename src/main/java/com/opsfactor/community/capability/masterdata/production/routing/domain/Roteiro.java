@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.masterdata.production.routing.domain;
 
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
+import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
@@ -81,7 +81,7 @@ public class Roteiro implements Comparable<Roteiro> {
      */
     private Integer prioridade;
         
-    // se false, somente poderá ser usado se estiver em uma versaoproducao ou versaoproducaoparalela
+    // se false, somente poderá ser usado quando referenciado por uma versão de produção
     private Boolean habilitadoParaUsoSemVersaoProducao;
     
     private Boolean ativo;
@@ -97,7 +97,7 @@ public class Roteiro implements Comparable<Roteiro> {
     private Set<OperacaoRoteiro> operacaoRoteiroSet = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "roteiro", fetch = FetchType.LAZY, orphanRemoval = true)
-    private Set<VersaoProducaoSimples> versaoProducaoSimplesSet = new HashSet<>();
+    private Set<VersaoProducao> versaoProducaoSet = new HashSet<>();
     
     public int getPrioridade() {
         return (prioridade == null) ? Integer.MAX_VALUE : prioridade;

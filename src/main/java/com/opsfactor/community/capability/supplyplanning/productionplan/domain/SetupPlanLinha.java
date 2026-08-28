@@ -5,7 +5,6 @@ import com.opsfactor.community.capability.masterdata.production.billofmaterials.
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoInexistente;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
@@ -137,7 +136,7 @@ public class SetupPlanLinha implements Serializable {
 
     public VersaoProducao getVersaoProducaoAlocadaOuNulaSeInexistente() {
 
-        return getVersaoProducaoCadastrada() instanceof VersaoProducaoInexistente
+        return getVersaoProducaoCadastrada().isVersaoProducaoInexistente()
                 ? null
                 : getVersaoProducaoCadastrada();
 

@@ -8,8 +8,7 @@ import com.opsfactor.community.capability.masterdata.production.operation.domain
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.production.productionresource.repository.RecursoProdutivoRepository;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
-import com.opsfactor.community.capability.masterdata.production.productionversion.repository.VersaoProducaoSimplesRepository;
+import com.opsfactor.community.capability.masterdata.production.productionversion.repository.VersaoProducaoRepository;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.masterdata.production.routing.repository.RoteiroRepository;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.LinhaTransporte;
@@ -91,7 +90,7 @@ public class SupplyNetworkProjectionFactory {
      * Repository das versoes simples de producao permitidas no Community.
      */
     @Autowired
-    private VersaoProducaoSimplesRepository versaoProducaoSimplesRepository;
+    private VersaoProducaoRepository versaoProducaoRepository;
 
     /**
      * Repository de recursos produtivos.
@@ -335,15 +334,15 @@ public class SupplyNetworkProjectionFactory {
         // VERSOES PRODUCAO ----------------------------------------------------
         Set<VersaoProducao> versaoProducaoAbstractSet = new HashSet<>();
 
-        // VERSOES PRODUCAO NAO-PARALELAS (1 ROTEIRO + 1 LT) -------------------
-        List<VersaoProducaoSimples> versaoProducaoList = versaoProducaoSimplesRepository.findByVersaoProducaoCompositeKeyRoteiroLocationInAndVersaoProducaoCompositeKeyRoteiroMaterialOutputIn(
-                        locationsAtivasSet,
+        // VERSOES PRODUCAO PERSISTIDAS ---------------------------------------
+        List<VersaoProducao> versaoProducaoList = versaoProducaoRepository.customFindAllByLocationInAndMaterialOutputIn(
+                        locationsFiltradasCopia,
                         materiaisAtivosSet);
         validaEntidadesComId(
                 versaoProducaoList,
-                VersaoProducaoSimples::getId,
-                "Simple production version repository",
-                "simple production version");
+                VersaoProducao::getId,
+                "Production version repository",
+                "production version");
 
         /*
          * Roteiros e listas tecnicas foram carregados acima, cada agregado em
@@ -352,35 +351,46 @@ public class SupplyNetworkProjectionFactory {
          * produto cartesiano que surgiria ao buscar operacoes e componentes
          * na mesma consulta da versao.
          */
-        for (VersaoProducaoSimples versaoProducaoSimples : versaoProducaoList) {
+        for (VersaoProducao versaoProducao : versaoProducaoList) {
             Roteiro roteiroCanonico = supplyNetworkProjection.mapaRoteiros.get(
-                    versaoProducaoSimples.getRoteiro().getId());
+                    versaoProducao.getRoteiro().getId());
             if (roteiroCanonico == null) {
                 throw new IllegalStateException(
-                        "Simple production version "
-                                + versaoProducaoSimples.getId()
+                        "Production version "
+                                + versaoProducao.getId()
                                 + " references routing outside the production master-data snapshot: "
-                                + versaoProducaoSimples.getRoteiro().getId());
+                                + versaoProducao.getRoteiro().getId());
             }
 
             ListaTecnica listaTecnicaCanonica = supplyNetworkProjection.mapaListasTecnicas.get(
-                    versaoProducaoSimples.getListaTecnica().getId());
+                    versaoProducao.getListaTecnica().getId());
             if (listaTecnicaCanonica == null) {
                 throw new IllegalStateException(
-                        "Simple production version "
-                                + versaoProducaoSimples.getId()
+                        "Production version "
+                                + versaoProducao.getId()
                                 + " references Bill of Materials outside the production master-data snapshot: "
-                                + versaoProducaoSimples.getListaTecnica().getId());
+                                + versaoProducao.getListaTecnica().getId());
             }
 
-            versaoProducaoSimples.setRoteiro(roteiroCanonico);
-            versaoProducaoSimples.setListaTecnica(listaTecnicaCanonica);
-            versaoProducaoSimples.geraErroSeDadosInconsistentes();
+            versaoProducao.setRoteiro(roteiroCanonico);
+            versaoProducao.setListaTecnica(listaTecnicaCanonica);
+            versaoProducao.geraErroSeDadosInconsistentes();
         }
 
         versaoProducaoAbstractSet.addAll(versaoProducaoList);
 
-        // Community carrega exclusivamente o repositório de versões simples.
+        // No Community, os mestres referenciados por estas versões são simples.
+
+        /*
+         * O índice por id contém todas as versões persistidas do snapshot,
+         * inclusive inativas. Relatórios e linhas históricas do plano não
+         * podem depender de uma varredura restrita às versões hoje viáveis.
+         */
+        supplyNetworkProjection.mapaVersaoProducaoPorId = versaoProducaoList.stream()
+                .collect(Collectors.toMap(VersaoProducao::getId, versaoProducao -> versaoProducao));
+        supplyNetworkProjection.mapaVersaoProducaoPorId.put(
+                supplyNetworkProjection.versaoProducaoInexistente.getId(),
+                supplyNetworkProjection.versaoProducaoInexistente);
 
         // INICIALIZA MAPAS DE VERSOES PRODUCAO (VIAVEIS + PRIORITARIAS)
         supplyNetworkProjection.mapaVersaoProducaoViavelSetPorLocationMaterial = new HashMap<>();
@@ -389,10 +399,10 @@ public class SupplyNetworkProjectionFactory {
         supplyNetworkProjection.mapaVersaoProducaoViavelSetPorRecursoProdutivo = new HashMap<>();
 
         // VERSOES PRODUCAO TEMPORARIAS (COMBINACOES ROTEIRO/LT VALIDAS MAS SEM VERSAO DEFINIDA. 1 ROTEIRO + 1 LT) -------------------
-        Set<VersaoProducaoSimples> versaoProducaoTemporariaSet = new HashSet<>();
+        Set<VersaoProducao> versaoProducaoTemporariaSet = new HashSet<>();
         for (Location location : locationsFiltradasCopia) {
             for (Produto material : materiaisAtivosSet) {
-                List<VersaoProducaoSimples> versoesProducaoSimples = supplyNetworkProjection.getVersoesProducaoSimplesViaveis(location, material, null);
+                List<VersaoProducao> versoesProducao = supplyNetworkProjection.getVersoesProducaoSimplesViaveis(location, material, null);
 
                 // se consideram todos os roteiros/listas técnicas para que também se criem versões de produção inviáveis (usado por relatórios de inspeção de viabilidade de abastecimento)
                 Set<Roteiro> roteiros = FuncoesMap.getElementoDeNestedMap(supplyNetworkProjection.mapaRoteiroSetPorLocationMaterial, Set.class, location, material).orElse(new HashSet<>());
@@ -403,8 +413,8 @@ public class SupplyNetworkProjectionFactory {
                     for (ListaTecnica listaTecnica : listasTecnicas) {
                         if (!listaTecnica.getHabilitadoParaUsoSemVersaoProducao()) continue;
                         // somente se adiciona um roteiro temporário se não houver uma versão de produção com a combinação roteiro / LT
-                        if (!versoesProducaoSimples.stream().anyMatch(x -> x.getRoteiro().equals(roteiro) && x.getListaTecnica().equals(listaTecnica))) {
-                            VersaoProducaoSimples versaoProducaoTemporaria = new VersaoProducaoSimples(
+                        if (!versoesProducao.stream().anyMatch(x -> x.getRoteiro().equals(roteiro) && x.getListaTecnica().equals(listaTecnica))) {
+                            VersaoProducao versaoProducaoTemporaria = new VersaoProducao(
                                     null, location,
                                     Math.max(roteiro.getPrioridade(), listaTecnica.getPrioridade()), // prioridade
                                     roteiro, listaTecnica);
@@ -436,24 +446,19 @@ public class SupplyNetworkProjectionFactory {
             // insere as versões de produção viáveis nos respectivos mapas
             if (!versaoProducaoAbstract.getAtivo()) continue;
 
-            // checa se roteiro e lista técnica são viáveis
-            if (versaoProducaoAbstract instanceof VersaoProducaoSimples) {
+            /*
+             * A factory valida exclusivamente pelo contrato genérico já
+             * materializado. Assim a extensão Enterprise pode fornecer
+             * mestres múltiplos sem introduzir branches de subtipo na camada
+             * consumidora nem disparar relações LAZY durante o cálculo.
+             */
+            boolean possuiRoteiroInviavel = versaoProducaoAbstract.getRoteiros().stream()
+                    .anyMatch(roteiro -> !supplyNetworkProjection.verificaSeRoteiroEViavel(roteiro));
+            boolean possuiListaTecnicaInviavel = versaoProducaoAbstract.getListasTecnicas().stream()
+                    .anyMatch(listaTecnica -> !supplyNetworkProjection.verificaSeListaTecnicaEViavel(
+                            listaTecnica));
 
-                Produto material = ((VersaoProducaoSimples) versaoProducaoAbstract).getMaterialOutput();
-                Roteiro roteiro = ((VersaoProducaoSimples) versaoProducaoAbstract).getRoteiro();
-                ListaTecnica listaTecnica = ((VersaoProducaoSimples) versaoProducaoAbstract).getListaTecnica();
-
-                boolean roteiroEInviavel = !supplyNetworkProjection.mapaRoteiroViavelSetPorLocationMaterial
-                                .getOrDefault(location, new HashMap<>())
-                                .getOrDefault(material, new HashSet<>())
-                                .contains(roteiro);
-                boolean listaTecnicaEInviavel = !supplyNetworkProjection.mapaListaTecnicaViavelSetPorLocationMaterial
-                                .getOrDefault(location, new HashMap<>())
-                                .getOrDefault(material, new HashSet<>())
-                                .contains(listaTecnica);
-
-                if (roteiroEInviavel || listaTecnicaEInviavel) continue;
-            }
+            if (possuiRoteiroInviavel || possuiListaTecnicaInviavel) continue;
 
             for (Produto material : versaoProducaoAbstract.getMateriaisOutput()) {
                 FuncoesMap.getOrAddElementoDeNestedMap(

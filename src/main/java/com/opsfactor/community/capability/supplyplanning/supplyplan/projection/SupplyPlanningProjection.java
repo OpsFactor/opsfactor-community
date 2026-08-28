@@ -4,8 +4,6 @@ import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoInexistente;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
@@ -128,7 +126,7 @@ public class SupplyPlanningProjection {
      * material e consumido. Production plan input pode se repetir varias vezes,
      * por isso parte dos mapas usa Queue.
      *
-     * As versoes de producao indexadas sao simples/paralelas ou temporarias,
+     * As versoes de producao indexadas sao persistidas ou temporarias,
      * definidas dinamicamente quando nao ha versao de producao para a linha.
      */
     private Map<Integer, Map<Produto, Map<VersaoProducao, Map<Roteiro, Map<ListaTecnica, ProductionPlanLinha>>>>> mapaProductionPlanLinhasOutput = new ConcurrentHashMap<>();
@@ -282,8 +280,13 @@ public class SupplyPlanningProjection {
                 productionPlanLinha,
                 "Production Plan output indexing");
         
-        // versões de produção inexistentes são traduzidas para versões de produção temporárias (id = nulo, roteiro/lista técnica)
-        VersaoProducao versaoProducaoTratada = productionPlanLinha.getVersaoProducaoAlocadaOuTemporariaSeInexistente(supplyNetworkProjection);
+        Roteiro roteiroProjetado = getRoteiroProjetado(productionPlanLinha);
+        ListaTecnica listaTecnicaProjetada = getListaTecnicaProjetada(productionPlanLinha);
+        // A chave usa somente os mestres canônicos já materializados pela SupplyNetworkProjection.
+        VersaoProducao versaoProducaoTratada = getVersaoProducaoProjetada(
+                productionPlanLinha,
+                roteiroProjetado,
+                listaTecnicaProjetada);
                 
         FuncoesMap.adicionaElementoAoNestedMap(
                 productionPlanLinha, 
@@ -292,8 +295,8 @@ public class SupplyPlanningProjection {
                 calendario.getPosicaoPeriodo(productionPlanLinha.getDataReferencia()),
                 productionPlanLinha.getMaterialOutput(), 
                 versaoProducaoTratada,
-                productionPlanLinha.getRoteiro(), 
-                productionPlanLinha.getListaTecnica());
+                roteiroProjetado,
+                listaTecnicaProjetada);
         
         mapaProductionPlanLinhasOutputPorVersaoProducao
                 .computeIfAbsent(calendario.getPosicaoPeriodo(productionPlanLinha.getDataReferencia()), x -> new ConcurrentHashMap<>())
@@ -309,8 +312,13 @@ public class SupplyPlanningProjection {
                 "Production Plan input indexing");
         
         int posicaoPeriodo = calendario.getPosicaoPeriodo(productionPlanLinha.getDataReferencia());
-        // versões de produção inexistentes são traduzidas para versões de produção temporárias (id = nulo, roteiro/lista técnica)
-        VersaoProducao versaoProducaoTratada = productionPlanLinha.getVersaoProducaoAlocadaOuTemporariaSeInexistente(supplyNetworkProjection);
+        Roteiro roteiroProjetado = getRoteiroProjetado(productionPlanLinha);
+        ListaTecnica listaTecnicaProjetada = getListaTecnicaProjetada(productionPlanLinha);
+        // A versão persistida é resolvida por id; nenhum grafo JPA da linha é percorrido.
+        VersaoProducao versaoProducaoTratada = getVersaoProducaoProjetada(
+                productionPlanLinha,
+                roteiroProjetado,
+                listaTecnicaProjetada);
         
         for (Produto materialInput : productionPlanLinha.getMateriaisInput(supplyNetworkProjection)) {
             
@@ -321,8 +329,8 @@ public class SupplyPlanningProjection {
                     posicaoPeriodo,
                     materialInput, 
                     versaoProducaoTratada,
-                    productionPlanLinha.getRoteiro(), 
-                    productionPlanLinha.getListaTecnica());
+                    roteiroProjetado,
+                    listaTecnicaProjetada);
             
         }
         
@@ -395,7 +403,7 @@ public class SupplyPlanningProjection {
      * <p>A versao de producao cadastrada pode ser a sentinela de versao
      * inexistente; nesse caso a propria projection traduz para uma versao
      * temporaria por roteiro/lista tecnica. Por isso a validacao exige a
-     * existencia do campo, mas nao bloqueia `VersaoProducaoInexistente`.</p>
+     * existencia do campo, mas nao bloqueia a versao reservada que representa ausencia.</p>
      */
     private void validaProductionPlanLinhaParaIndexacao(
             ProductionPlanLinha productionPlanLinha,
@@ -426,6 +434,58 @@ public class SupplyPlanningProjection {
 
         validaCalendarioParaIndexacao(contextoIndexacao);
         validaSupplyNetworkProjectionParaIndexacao(contextoIndexacao);
+
+    }
+
+    /**
+     * Resolve o roteiro completo no snapshot de dados mestres. A linha do
+     * plano fornece apenas a identidade persistida, nunca as operações LAZY.
+     */
+    public Roteiro getRoteiroProjetado(ProductionPlanLinha productionPlanLinha) {
+
+        return supplyNetworkProjection
+                .getRoteiroFromId(productionPlanLinha.getRoteiro().getId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Routing not projected for Production Plan line: "
+                                + productionPlanLinha.getRoteiro().getId()));
+
+    }
+
+    /** Resolve a lista técnica completa no snapshot materializado. */
+    public ListaTecnica getListaTecnicaProjetada(ProductionPlanLinha productionPlanLinha) {
+
+        return supplyNetworkProjection
+                .getListaTecnicaFromId(productionPlanLinha.getListaTecnica().getId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Bill of Materials not projected for Production Plan line: "
+                                + productionPlanLinha.getListaTecnica().getId()));
+
+    }
+
+    /**
+     * Resolve a versão canônica por id. A sentinela histórica é convertida em
+     * versão temporária sobre o roteiro e a lista técnica já projetados.
+     */
+    public VersaoProducao getVersaoProducaoProjetada(
+            ProductionPlanLinha productionPlanLinha,
+            Roteiro roteiroProjetado,
+            ListaTecnica listaTecnicaProjetada) {
+
+        VersaoProducao versaoProducaoCadastrada = productionPlanLinha.getVersaoProducao();
+        if (versaoProducaoCadastrada.getId() == null
+                || versaoProducaoCadastrada.isVersaoProducaoInexistente()) {
+            return VersaoProducao.getVersaoProducaoAlocadaOuTemporariaSeInexistente(
+                    versaoProducaoCadastrada,
+                    roteiroProjetado,
+                    listaTecnicaProjetada,
+                    supplyNetworkProjection);
+        }
+
+        return supplyNetworkProjection
+                .getVersaoProducaoFromId(versaoProducaoCadastrada.getId(), true)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Production version not projected for Production Plan line: "
+                                + versaoProducaoCadastrada.getId()));
 
     }
 
@@ -828,9 +888,9 @@ public class SupplyPlanningProjection {
     /**
      * Protege os indices por versao de producao usados pelo plano heuristico.
      *
-     * <p>`VersaoProducaoInexistente` e uma sentinela valida em algumas bordas
+     * <p>A versao reservada que representa ausencia e valida em algumas bordas
      * de cadastro, mas nao e chave dos indices de production plan. Chamadas que
-     * chegam aqui precisam carregar uma versao simples/paralela/temporaria real
+     * chegam aqui precisam carregar uma versao persistida ou temporaria real
      * ou falhar antes de consultar os mapas.</p>
      */
     private void validaVersaoProducaoIndexavel(VersaoProducao versaoProducao) {
@@ -838,7 +898,7 @@ public class SupplyPlanningProjection {
         if (versaoProducao == null) {
             throw getUnsupportedVersaoProducaoIndexavelException(null);
         }
-        if (versaoProducao instanceof VersaoProducaoInexistente) {
+        if (versaoProducao.isVersaoProducaoInexistente()) {
             throw getUnsupportedVersaoProducaoIndexavelException(versaoProducao);
         }
 
@@ -1680,11 +1740,10 @@ public class SupplyPlanningProjection {
     /**
      * Seta valor de producao na unidade padrao do projection.
      *
-     * <p>No Community, o ajuste manual atua somente sobre o output
-     * material/location selecionado. Mesmo que uma entidade transicional de
-     * versao paralela exista no schema, esta projection nao propaga a edicao
-     * para multiplos outputs; parallel routing/output e line scheduling voltam
-     * no Enterprise por overlay proprio.</p>
+     * <p>No Community, o ajuste manual atua sobre o único output do roteiro e
+     * da lista técnica simples. A especialização Enterprise pode sobrescrever
+     * esta operação para propagar a escala de um pacote múltiplo sem exigir que
+     * o service chamador escolha o subtipo.</p>
      *
      * @param valor na unidade de medida padrao do projection.
      */
@@ -1708,9 +1767,8 @@ public class SupplyPlanningProjection {
             Produto materialComponenteRoteiroListaTecnica = roteiro.getMaterialOutput();
             double quantidadeComponenteRoteiroListaTecnica = detalheVersaoProducao.getValue2();
         
-            // Community altera somente o output solicitado. Outros outputs de
-            // uma versao transicional paralela, caso aparecam por schema
-            // legado, sao ignorados nesta edicao.
+            // O contrato Community possui exatamente um output por combinação
+            // de roteiro e lista técnica.
             if (!materialComponenteRoteiroListaTecnica.equals(material)) continue;
         
             // obtém o production plan linha ou o cria
@@ -1741,9 +1799,8 @@ public class SupplyPlanningProjection {
                     unidadeMedidaValor,
                     getConversaoUnidadeMedidaProjection());
 
-            // Mesmo que haja outros materiais iguais em uma versao transicional
-            // paralela, o Community considera apenas uma combinacao
-            // roteiro/lista tecnica para o output material/location editado.
+            // Há uma única combinação simples para o output editado no
+            // Community.
             break;
             
         }
@@ -1762,24 +1819,9 @@ public class SupplyPlanningProjection {
             TipoPlano tipoPlano,
             UnidadeMedida unidadeMedidaValor) {
         
-        Optional<VersaoProducaoSimples> versaoProducaoSimples = getSupplyNetworkProjection()
-                .getVersaoProducaoSimplesViavelPrioritaria(roteiro, listaTecnica);
-        
-        // Community nunca deve escolher versao paralela por efeito colateral de
-        // um perfil antigo. O Enterprise reintroduzira essa escolha no overlay.
-        boolean consideraVersoesProducaoParalelas = false;
-        Optional<VersaoProducao> versaoProducaoParalela = getSupplyNetworkProjection()
-                .getVersaoProducaoViavelPrioritaria(
-                        roteiro.getLocation(), 
-                        roteiro.getMaterialOutput(), 
-                        consideraVersoesProducaoParalelas, 
-                        (materialProjection instanceof MaterialProjectionCompleto) ? null : materialProjection.getMaterialSet());
-        
-        // usar versão de produção simples, se houver
-        VersaoProducao versaoProducao = versaoProducaoSimples
-                .map(versaoProducaoSimplesPrioritaria -> (VersaoProducao) versaoProducaoSimplesPrioritaria)
-                .orElseGet(() -> versaoProducaoParalela.orElseThrow(
-                        () -> getMissingViableProductionVersionException(roteiro, listaTecnica)));
+        VersaoProducao versaoProducao = getSupplyNetworkProjection()
+                .getVersaoProducaoViavelPrioritaria(roteiro, listaTecnica)
+                .orElseThrow(() -> getMissingViableProductionVersionException(roteiro, listaTecnica));
         
         setQuantidadeProductionPlan(
                 posicaoPeriodo, 

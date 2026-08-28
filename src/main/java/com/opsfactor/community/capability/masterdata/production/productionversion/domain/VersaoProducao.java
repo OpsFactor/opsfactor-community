@@ -9,6 +9,7 @@ import com.opsfactor.community.capability.masterdata.production.billofmaterials.
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javatuples.Pair;
 import org.javatuples.Triplet;
@@ -21,18 +22,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Versao de producao base para roteiros/listas tecnicas Community.
+ * Entidade única de versão de produção.
  *
- * <p>O Community usa apenas versoes simples ou sentinelas para viabilidade
- * produtiva heuristica. Cluster de roteiros, parallel routing/output funcional
- * e escolha otimizada de alternativas ficam no Enterprise.</p>
+ * <p>A diferenciação simples/múltipla pertence aos mestres referenciados. A
+ * versão permanece neutra e aponta para {@link Roteiro} e {@link ListaTecnica}
+ * pelas abstrações comuns.</p>
  */
 @Entity
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "tipo_versao_producao")
 @Getter
 @Setter
-public abstract class VersaoProducao implements Serializable, Comparable<VersaoProducao> {
+@NoArgsConstructor
+public class VersaoProducao implements Serializable, Comparable<VersaoProducao> {
+
+    public static final String ID_VERSAO_PRODUCAO_VAZIA = "DEFAULT_PRODUCTION_VERSION";
     
     /**
      * Identificador persistido da versao de producao.
@@ -84,12 +86,81 @@ public abstract class VersaoProducao implements Serializable, Comparable<VersaoP
     }
     
     
-    public abstract void geraErroSeDadosInconsistentes();
-    
-    public abstract Set<Produto> getMateriaisOutput();
-    public abstract Set<Produto> getMateriaisInput();
-    public abstract Set<ListaTecnica> getListasTecnicas();
-    public abstract Set<Roteiro> getRoteiros();
+    public VersaoProducao(
+            String id,
+            Location location,
+            Integer prioridade,
+            Roteiro roteiro,
+            ListaTecnica listaTecnica) {
+
+        this.id = id;
+        this.location = location;
+        this.prioridade = prioridade;
+        this.roteiro = roteiro;
+        this.listaTecnica = listaTecnica;
+        geraErroSeDadosInconsistentes();
+
+    }
+
+    public void geraErroSeDadosInconsistentes() {
+
+        if (isVersaoProducaoInexistente()) {
+            return;
+        }
+        if (location == null || roteiro == null || listaTecnica == null) {
+            throw new IllegalStateException("Production version requires location, routing and BOM");
+        }
+        if (!roteiro.getLocation().equals(location)) {
+            throw new IllegalStateException("Routing location differs from production version location");
+        }
+        if (!listaTecnica.getLocation().equals(location)) {
+            throw new IllegalStateException("BOM location differs from production version location");
+        }
+        if (!listaTecnica.getMaterialOutput().equals(roteiro.getMaterialOutput())) {
+            throw new IllegalStateException("Routing and BOM output materials differ");
+        }
+
+    }
+
+    public Set<Produto> getMateriaisOutput() {
+
+        geraErroSeUsoProdutivoDaSentinela();
+        return Set.of(roteiro.getMaterialOutput());
+
+    }
+
+    /**
+     * Informa se os mestres associados representam um pacote de múltiplos
+     * outputs. No Community o resultado permanece sempre falso, pois apenas
+     * roteiro e lista técnica simples são persistidos. O contrato é genérico
+     * para que a especialização Enterprise não exija outro tipo de versão.
+     */
+    public boolean isProducaoMultipla() {
+
+        return !isVersaoProducaoInexistente() && getMateriaisOutput().size() > 1;
+
+    }
+
+    public Set<Produto> getMateriaisInput() {
+
+        geraErroSeUsoProdutivoDaSentinela();
+        return listaTecnica.getMateriaisInput();
+
+    }
+
+    public Set<ListaTecnica> getListasTecnicas() {
+
+        geraErroSeUsoProdutivoDaSentinela();
+        return Set.of(listaTecnica);
+
+    }
+
+    public Set<Roteiro> getRoteiros() {
+
+        geraErroSeUsoProdutivoDaSentinela();
+        return Set.of(roteiro);
+
+    }
     
     public Set<RecursoProdutivo> getRecursosProdutivos() {
         return getRoteiros().stream()
@@ -97,8 +168,21 @@ public abstract class VersaoProducao implements Serializable, Comparable<VersaoP
                 .collect(Collectors.toSet());
     }
     
-    public abstract boolean contemRoteiro(Roteiro roteiro);
-    public abstract boolean contemListaTecnica(ListaTecnica listaTecnica);
+    public boolean contemRoteiro(Roteiro roteiro) {
+
+        return isVersaoProducaoInexistente()
+                ? roteiro.getHabilitadoParaUsoSemVersaoProducao()
+                : this.roteiro.equals(roteiro);
+
+    }
+
+    public boolean contemListaTecnica(ListaTecnica listaTecnica) {
+
+        return isVersaoProducaoInexistente()
+                ? listaTecnica.getHabilitadoParaUsoSemVersaoProducao()
+                : this.listaTecnica.equals(listaTecnica);
+
+    }
 
     /**
      * Atalho estritamente singular para consumidores que exigem uma versão
@@ -141,13 +225,23 @@ public abstract class VersaoProducao implements Serializable, Comparable<VersaoP
      * @param quantidadeMaterialReferencia
      * @return 
      */
-    public abstract List<Triplet<Roteiro,ListaTecnica,Double>> getDetalhePorVersaoProducao(
+    public List<Triplet<Roteiro,ListaTecnica,Double>> getDetalhePorVersaoProducao(
             UnidadeMedidaProjection unidadeMedidaProjection,
             Produto materialReferencia,
             UnidadeMedida unidadeMedidaMaterialReferencia,
-            double quantidadeMaterialReferencia);
+            double quantidadeMaterialReferencia) {
+
+        geraErroSeUsoProdutivoDaSentinela();
+        return List.of(Triplet.with(roteiro, listaTecnica, 1.0d));
+
+    }
         
-    public abstract List<Pair<Roteiro,ListaTecnica>> getCombinacoesRoteiroListaTecnica();
+    public List<Pair<Roteiro,ListaTecnica>> getCombinacoesRoteiroListaTecnica() {
+
+        geraErroSeUsoProdutivoDaSentinela();
+        return List.of(Pair.with(roteiro, listaTecnica));
+
+    }
     
     public double getQuantidadeDeMaterialInputConsumidoPorProducaoDeOutput(
             UnidadeMedidaProjection unidadeMedidaProjection,
@@ -248,6 +342,27 @@ public abstract class VersaoProducao implements Serializable, Comparable<VersaoP
     public boolean isVersaoProducaoTemporaria() {
         return getId() == null;
     }
+
+    public boolean isVersaoProducaoInexistente() {
+
+        return ID_VERSAO_PRODUCAO_VAZIA.equals(id);
+
+    }
+
+    /**
+     * Cria a sentinela do contrato único sem introduzir um subtipo JPA.
+     *
+     * <p>A instância retornada ainda não está persistida. O service responsável
+     * pela sentinela decide se deve reutilizar a linha existente ou salvá-la.</p>
+     */
+    public static VersaoProducao criaVersaoProducaoInexistente() {
+
+        VersaoProducao versaoProducao = new VersaoProducao();
+        versaoProducao.setId(ID_VERSAO_PRODUCAO_VAZIA);
+        versaoProducao.setAtivo(false);
+        return versaoProducao;
+
+    }
     
     public static VersaoProducao getVersaoProducaoAlocadaOuTemporariaSeInexistente(
             VersaoProducao versaoProducao,
@@ -255,11 +370,11 @@ public abstract class VersaoProducao implements Serializable, Comparable<VersaoP
             ListaTecnica listaTecnica,
             SupplyNetworkProjection supplyNetworkProjection) {
         
-        if (versaoProducao == null || versaoProducao instanceof VersaoProducaoInexistente) {
-            Optional<VersaoProducaoSimples> optionalVersaoProducao = supplyNetworkProjection
-                    .getVersaoProducaoSimplesViavelPrioritaria(roteiro, listaTecnica);
+        if (versaoProducao == null || versaoProducao.isVersaoProducaoInexistente()) {
+            Optional<VersaoProducao> optionalVersaoProducao = supplyNetworkProjection
+                    .getVersaoProducaoViavelPrioritaria(roteiro, listaTecnica);
             if (optionalVersaoProducao.isEmpty()) {
-                optionalVersaoProducao = supplyNetworkProjection.getVersaoProducaoSimplesPrioritaria(roteiro, listaTecnica);
+                optionalVersaoProducao = supplyNetworkProjection.getVersaoProducaoPrioritaria(roteiro, listaTecnica);
             }
 
             return optionalVersaoProducao.orElseGet(() -> {
@@ -269,7 +384,7 @@ public abstract class VersaoProducao implements Serializable, Comparable<VersaoP
                  * producao temporaria com id = null para envelopar a combinacao
                  * roteiro/lista tecnica recebida pelo fluxo heuristico.
                  */
-                VersaoProducaoSimples versaoProducaoTemporaria = new VersaoProducaoSimples();
+                VersaoProducao versaoProducaoTemporaria = new VersaoProducao();
                 versaoProducaoTemporaria.setId(null);
                 versaoProducaoTemporaria.setLocation(roteiro.getLocation());
                 versaoProducaoTemporaria.setAtivo(true);
@@ -283,6 +398,15 @@ public abstract class VersaoProducao implements Serializable, Comparable<VersaoP
             return versaoProducao;
         }
         
+    }
+
+    private void geraErroSeUsoProdutivoDaSentinela() {
+
+        if (isVersaoProducaoInexistente()) {
+            throw new IllegalStateException(
+                    "Production version sentinel does not expose productive master data");
+        }
+
     }
     
 }

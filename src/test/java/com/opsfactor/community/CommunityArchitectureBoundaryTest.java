@@ -416,7 +416,7 @@ class CommunityArchitectureBoundaryTest {
             "SelloutIntegrationController.java",
             "UnidadeMedidaIntegrationController.java",
             "VersaoMalhaIntegrationController.java",
-            "VersaoProducaoSimplesIntegrationController.java"
+            "VersaoProducaoIntegrationController.java"
     );
 
     private static final List<String> COMMUNITY_ALLOWED_MASTERDATA_CONTROLLER_FILES = List.of(
@@ -486,7 +486,7 @@ class CommunityArchitectureBoundaryTest {
             "SelloutIntegrationService.java",
             "UnidadeMedidaIntegrationService.java",
             "VersaoMalhaIntegrationService.java",
-            "VersaoProducaoSimplesIntegrationService.java"
+            "VersaoProducaoIntegrationService.java"
     );
 
     private static final List<String> COMMUNITY_ALLOWED_INTEGRATION_MAPPER_FILES = List.of(
@@ -508,7 +508,7 @@ class CommunityArchitectureBoundaryTest {
             "RoteiroIntegrationMapper.java",
             "SelloutIntegrationMapper.java",
             "VersaoMalhaIntegrationMapper.java",
-            "VersaoProducaoSimplesIntegrationMapper.java"
+            "VersaoProducaoIntegrationMapper.java"
     );
 
     private static final List<String> COMMUNITY_ALLOWED_INTEGRATION_DTO_FILES = List.of(
@@ -541,7 +541,7 @@ class CommunityArchitectureBoundaryTest {
             "SelloutIntegrationFiltroDto.java",
             "UnidadeMedidaDataUploadDTO.java",
             "VersaoMalhaIntegrationDataDto.java",
-            "VersaoProducaoSimplesIntegrationDataDto.java"
+            "VersaoProducaoIntegrationDataDto.java"
     );
 
     private static final List<String> COMMUNITY_ALLOWED_MODEL_PROJECTION_FILES = List.of(
@@ -682,8 +682,7 @@ class CommunityArchitectureBoundaryTest {
             "masterdata/producao/OperacaoRoteiroRepository.java",
             "masterdata/producao/RecursoProdutivoRepository.java",
             "masterdata/producao/RoteiroRepository.java",
-            "masterdata/producao/VersaoProducaoInexistenteRepository.java",
-            "masterdata/producao/VersaoProducaoSimplesRepository.java",
+            "masterdata/producao/VersaoProducaoRepository.java",
             "masterdata/ProdutoRepository.java",
             "masterdata/unidadeconversao/ConversaoUnidadeProdutoRepository.java",
             "masterdata/unidadeconversao/ConversaoUnidadeRepository.java",
@@ -748,8 +747,6 @@ class CommunityArchitectureBoundaryTest {
             "masterdata/production/RecursoProdutivo.java",
             "masterdata/production/Roteiro.java",
             "masterdata/production/VersaoProducao.java",
-            "masterdata/production/VersaoProducaoInexistente.java",
-            "masterdata/production/VersaoProducaoSimples.java",
             "masterdata/produto/Produto.java",
             "masterdata/unidadeconversao/ConversaoUnidade.java",
             "masterdata/unidadeconversao/ConversaoUnidadeProduto.java",
@@ -816,7 +813,7 @@ class CommunityArchitectureBoundaryTest {
             "integration/masterdata/producao/OperacaoRoteiroIntegrationService.java",
             "integration/masterdata/producao/RecursoProdutivoIntegrationService.java",
             "integration/masterdata/producao/RoteiroIntegrationService.java",
-            "integration/masterdata/producao/VersaoProducaoSimplesIntegrationService.java",
+            "integration/masterdata/producao/VersaoProducaoIntegrationService.java",
             "integration/masterdata/ProdutoIntegrationService.java",
             "integration/masterdata/unidademedida/ConversaoUnidadeIntegrationService.java",
             "integration/masterdata/unidademedida/ConversaoUnidadeProdutoIntegrationService.java",
@@ -1119,7 +1116,7 @@ class CommunityArchitectureBoundaryTest {
             "com/opsfactor/community/planning/web/restcontroller/dataupload/masterdata/production/OperacaoRoteiroIntegrationController.java",
             "com/opsfactor/community/planning/web/restcontroller/dataupload/masterdata/production/RecursoProdutivoIntegrationController.java",
             "com/opsfactor/community/planning/web/restcontroller/dataupload/masterdata/production/RoteiroIntegrationController.java",
-            "com/opsfactor/community/planning/web/restcontroller/dataupload/masterdata/production/VersaoProducaoSimplesIntegrationController.java",
+            "com/opsfactor/community/planning/web/restcontroller/dataupload/masterdata/production/VersaoProducaoIntegrationController.java",
             "com/opsfactor/community/planning/web/restcontroller/dataupload/planning/supply/InventoryPlanIntegrationController.java",
             "com/opsfactor/community/planning/web/restcontroller/dataupload/transactionaldata/EstoqueIntegrationController.java",
             "com/opsfactor/community/planning/web/restcontroller/dataupload/transactionaldata/SelloutIntegrationController.java",
@@ -1204,7 +1201,7 @@ class CommunityArchitectureBoundaryTest {
             "com/opsfactor/community/planning/dto/dto/integration/masterdata/production/ListaTecnicaIntegrationDataDto.java",
             "com/opsfactor/community/planning/dto/dto/integration/masterdata/production/RecursoProdutivoIntegrationDataDto.java",
             "com/opsfactor/community/planning/dto/dto/integration/masterdata/production/RoteiroIntegrationDataDto.java",
-            "com/opsfactor/community/planning/dto/dto/integration/masterdata/production/VersaoProducaoSimplesIntegrationDataDto.java",
+            "com/opsfactor/community/planning/dto/dto/integration/masterdata/production/VersaoProducaoIntegrationDataDto.java",
             "com/opsfactor/community/planning/dto/dto/integration/masterdata/unidademedida/ConversaoUnidadeIntegrationDataDto.java",
             "com/opsfactor/community/planning/dto/dto/integration/masterdata/unidademedida/ConversaoUnidadeProdutoIntegrationDataDto.java",
             "com/opsfactor/community/planning/dto/dto/integration/masterdata/unidademedida/UnidadeMedidaDataUploadDTO.java",
@@ -1267,8 +1264,8 @@ class CommunityArchitectureBoundaryTest {
             "com/opsfactor/community/planning/dto/mapper/integration/masterdata/production/RecursoProdutivoIntegrationSupportData.java",
             "com/opsfactor/community/planning/dto/mapper/integration/masterdata/production/RoteiroIntegrationMapper.java",
             "com/opsfactor/community/planning/dto/mapper/integration/masterdata/production/RoteiroIntegrationSupportData.java",
-            "com/opsfactor/community/planning/dto/mapper/integration/masterdata/production/VersaoProducaoSimplesIntegrationMapper.java",
-            "com/opsfactor/community/planning/dto/mapper/integration/masterdata/production/VersaoProducaoSimplesIntegrationSupportData.java",
+            "com/opsfactor/community/planning/dto/mapper/integration/masterdata/production/VersaoProducaoIntegrationMapper.java",
+            "com/opsfactor/community/planning/dto/mapper/integration/masterdata/production/VersaoProducaoIntegrationSupportData.java",
             "com/opsfactor/community/planning/dto/mapper/integration/masterdata/unidademedida/ConversaoUnidadeIntegrationMapper.java",
             "com/opsfactor/community/planning/dto/mapper/integration/masterdata/unidademedida/ConversaoUnidadeIntegrationSupportData.java",
             "com/opsfactor/community/planning/dto/mapper/integration/masterdata/unidademedida/ConversaoUnidadeProdutoIntegrationMapper.java",
@@ -2352,12 +2349,12 @@ class CommunityArchitectureBoundaryTest {
     }
 
     @Test
-    void communitySimpleProductionVersionRepositoryShouldPreserveSnapshotCardinalityUntilValidation()
+    void communityProductionVersionRepositoryShouldPreserveSnapshotCardinalityUntilValidation()
             throws IOException {
 
         Path communityWorkspaceDirectory = resolveCommunityWorkspaceDirectory();
-        Path versaoProducaoSimplesRepositoryPath = communityWorkspaceDirectory.resolve(
-                "src/main/java/com/opsfactor/community/capability/masterdata/production/productionversion/repository/VersaoProducaoSimplesRepository.java");
+        Path versaoProducaoRepositoryPath = communityWorkspaceDirectory.resolve(
+                "src/main/java/com/opsfactor/community/capability/masterdata/production/productionversion/repository/VersaoProducaoRepository.java");
         List<String> violations = new ArrayList<>();
 
         /*
@@ -2366,35 +2363,35 @@ class CommunityArchitectureBoundaryTest {
          * deve preservar cardinalidade em List, manter DISTINCT nos fetch joins
          * e nao reintroduzir lookup residual sem consumidor produtivo.
          */
-        List<String> sourceLines = Files.readAllLines(versaoProducaoSimplesRepositoryPath, StandardCharsets.UTF_8);
+        List<String> sourceLines = Files.readAllLines(versaoProducaoRepositoryPath, StandardCharsets.UTF_8);
         for (int lineIndex = 0; lineIndex < sourceLines.size(); lineIndex++) {
             String sourceLine = sourceLines.get(lineIndex);
-            if (sourceLine.contains("Set<VersaoProducaoSimples>")
+            if (sourceLine.contains("Set<VersaoProducao>")
                     && sourceLine.contains(
                             "findByVersaoProducaoCompositeKeyRoteiroLocationInAndVersaoProducaoCompositeKeyRoteiroMaterialOutputIn")) {
                 violations.add(formatViolation(
                         communityWorkspaceDirectory,
-                        versaoProducaoSimplesRepositoryPath,
+                        versaoProducaoRepositoryPath,
                         lineIndex,
                         sourceLine));
             }
             if (sourceLine.contains("findByRoteiroLocationIdInAndRoteiroMaterialOutputIdIn")) {
                 violations.add(formatViolation(
                         communityWorkspaceDirectory,
-                        versaoProducaoSimplesRepositoryPath,
+                        versaoProducaoRepositoryPath,
                         lineIndex,
                         sourceLine));
             }
         }
 
         String repositorySource =
-                Files.readString(versaoProducaoSimplesRepositoryPath, StandardCharsets.UTF_8);
-        if (!repositorySource.contains("SELECT DISTINCT vp FROM VersaoProducaoSimples vp")) {
+                Files.readString(versaoProducaoRepositoryPath, StandardCharsets.UTF_8);
+        if (!repositorySource.contains("SELECT DISTINCT vp FROM VersaoProducao vp")) {
             violations.add(formatViolation(
                     communityWorkspaceDirectory,
-                    versaoProducaoSimplesRepositoryPath,
+                    versaoProducaoRepositoryPath,
                     0,
-                    "VersaoProducaoSimplesRepository deve usar SELECT DISTINCT nos fetch joins."));
+                    "VersaoProducaoRepository deve usar SELECT DISTINCT nos fetch joins."));
         }
         if (!repositorySource.contains("customFindAllForIntegrationExport()")
                 || !repositorySource.contains("LEFT JOIN FETCH vp.location")
@@ -2404,14 +2401,14 @@ class CommunityArchitectureBoundaryTest {
                 || !repositorySource.contains("LEFT JOIN FETCH lt.materialOutput")) {
             violations.add(formatViolation(
                     communityWorkspaceDirectory,
-                    versaoProducaoSimplesRepositoryPath,
+                    versaoProducaoRepositoryPath,
                     0,
-                    "Export de VersaoProducaoSimples deve buscar suas referencias em uma unica consulta."));
+                    "Export de VersaoProducao deve buscar suas referencias em uma unica consulta."));
         }
 
         assertTrue(
                 violations.isEmpty(),
-                "VersaoProducaoSimplesRepository deve preservar cardinalidade em List, "
+                "VersaoProducaoRepository deve preservar cardinalidade em List, "
                         + "evitar duplicidade artificial dos fetch joins e nao reintroduzir lookup residual:\n"
                         + String.join("\n", violations));
 

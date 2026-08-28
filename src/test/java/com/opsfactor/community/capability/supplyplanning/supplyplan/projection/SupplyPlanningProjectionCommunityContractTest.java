@@ -5,8 +5,6 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoInexistente;
-import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducaoSimples;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.supplyplanning.distributionplan.domain.DistributionPlanItem;
 import com.opsfactor.community.capability.supplyplanning.inventoryplan.domain.InventoryPlanLinha;
@@ -15,6 +13,7 @@ import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.Suppl
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjectionCompleto;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
+import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -24,11 +23,14 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Optional;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 /**
  * Contratos Community da projection em memoria do Supply Planning.
  *
  * <p>A projection indexa linhas por versoes reais de producao. A sentinela
- * `VersaoProducaoInexistente` pode existir em cadastros operacionais, mas nao
+ * a versão sentinela pode existir em cadastros operacionais, mas não
  * deve ser usada como chave dos mapas de production plan.</p>
  */
 class SupplyPlanningProjectionCommunityContractTest {
@@ -87,12 +89,12 @@ class SupplyPlanningProjectionCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> supplyPlanningProjection.getProductionPlanLinhaInput(
                         0,
-                        new VersaoProducaoInexistente()));
+                        criaVersaoProducaoSentinela()));
 
         Assertions.assertTrue(illegalArgumentException.getMessage().contains(
                 "SupplyPlanningProjection indexes production plan lines only by real production versions"));
         Assertions.assertTrue(illegalArgumentException.getMessage().contains(
-                "VersaoProducaoInexistente(DEFAULT_PRODUCTION_VERSION)"));
+                "DEFAULT_PRODUCTION_VERSION"));
 
     }
 
@@ -198,7 +200,7 @@ class SupplyPlanningProjectionCommunityContractTest {
                         new ProductionPlanLinha.ProductionPlanLinhaCompositeKey(
                                 supplyPlan,
                                 locationDestino,
-                                new VersaoProducaoInexistente(),
+                                criaVersaoProducaoSentinela(),
                                 roteiro,
                                 listaTecnica,
                                 dataReferencia),
@@ -212,6 +214,67 @@ class SupplyPlanningProjectionCommunityContractTest {
                                 material,
                                 dataReferencia))),
                 "SupplyPlanningProjection requires calendar before Inventory Plan indexing.");
+
+    }
+
+    @Test
+    void productionPlanIndexingShouldUseCanonicalProductionMasterData() {
+
+        SupplyNetworkProjection supplyNetworkProjection = mock(SupplyNetworkProjection.class);
+        Calendario calendario = mock(Calendario.class);
+        Location location = new Location("LOC-CANONICAL");
+        Produto material = new Produto("MAT-CANONICAL");
+        Roteiro roteiroPersistido = getRoteiro("ROUTING-CANONICAL", location, material);
+        ListaTecnica listaTecnicaPersistida = getListaTecnica("BOM-CANONICAL", location, material);
+        Roteiro roteiroProjetado = getRoteiro("ROUTING-CANONICAL", location, material);
+        ListaTecnica listaTecnicaProjetada = getListaTecnica("BOM-CANONICAL", location, material);
+        VersaoProducao versaoPersistida = new VersaoProducao();
+        versaoPersistida.setId("PV-CANONICAL");
+        VersaoProducao versaoProjetada = new VersaoProducao(
+                "PV-CANONICAL",
+                location,
+                1,
+                roteiroProjetado,
+                listaTecnicaProjetada);
+        LocalDateTime dataReferencia = LocalDateTime.of(2026, 8, 1, 0, 0);
+        SupplyPlan supplyPlan = new SupplyPlan();
+
+        when(supplyNetworkProjection.getConversaoUnidadeMedidaProjection()).thenReturn(null);
+        when(supplyNetworkProjection.getRoteiroFromId("ROUTING-CANONICAL"))
+                .thenReturn(Optional.of(roteiroProjetado));
+        when(supplyNetworkProjection.getListaTecnicaFromId("BOM-CANONICAL"))
+                .thenReturn(Optional.of(listaTecnicaProjetada));
+        when(supplyNetworkProjection.getVersaoProducaoFromId("PV-CANONICAL", true))
+                .thenReturn(Optional.of(versaoProjetada));
+        when(calendario.getPosicaoPeriodo(dataReferencia)).thenReturn(0);
+
+        SupplyPlanningProjection supplyPlanningProjection = new SupplyPlanningProjection(
+                supplyPlan,
+                null,
+                supplyNetworkProjection,
+                null,
+                calendario,
+                location,
+                null,
+                null);
+        ProductionPlanLinha productionPlanLinha = new ProductionPlanLinha(
+                new ProductionPlanLinha.ProductionPlanLinhaCompositeKey(
+                        supplyPlan,
+                        location,
+                        versaoPersistida,
+                        roteiroPersistido,
+                        listaTecnicaPersistida,
+                        dataReferencia),
+                material);
+
+        supplyPlanningProjection.addProductionPlanLinhaOutput(productionPlanLinha);
+
+        Assertions.assertEquals(
+                1,
+                supplyPlanningProjection.getProductionPlanLinhaOutput(0, versaoProjetada).size());
+        Assertions.assertSame(
+                productionPlanLinha,
+                supplyPlanningProjection.getProductionPlanLinhaOutput(0, versaoProjetada).element());
 
     }
 
@@ -386,7 +449,7 @@ class SupplyPlanningProjectionCommunityContractTest {
         }
 
         @Override
-        public Optional<VersaoProducaoSimples> getVersaoProducaoSimplesViavelPrioritaria(
+        public Optional<VersaoProducao> getVersaoProducaoViavelPrioritaria(
                 Roteiro roteiro,
                 ListaTecnica listaTecnica) {
 
@@ -404,6 +467,14 @@ class SupplyPlanningProjectionCommunityContractTest {
             return Optional.empty();
 
         }
+
+    }
+
+    private static VersaoProducao criaVersaoProducaoSentinela() {
+
+        VersaoProducao versaoProducao = new VersaoProducao();
+        versaoProducao.setId(VersaoProducao.ID_VERSAO_PRODUCAO_VAZIA);
+        return versaoProducao;
 
     }
 

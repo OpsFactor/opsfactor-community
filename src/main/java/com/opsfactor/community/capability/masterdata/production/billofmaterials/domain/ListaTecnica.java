@@ -55,7 +55,7 @@ public class ListaTecnica implements Comparable<ListaTecnica> {
      */
     private Integer prioridade;
     
-    // se false, somente poderá ser usado se estiver em uma versaoproducao ou versaoproducaoparalela
+    // se false, somente poderá ser usado quando referenciado por uma versão de produção
     private Boolean habilitadoParaUsoSemVersaoProducao;
     
     private Boolean ativo;

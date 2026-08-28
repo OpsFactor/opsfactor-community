@@ -15,7 +15,7 @@ import com.opsfactor.community.capability.masterdata.production.billofmaterials.
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.integration.mapper.ListaTecnicaIntegrationMapper;
 import com.opsfactor.community.capability.masterdata.production.productionresource.integration.mapper.RecursoProdutivoIntegrationMapper;
 import com.opsfactor.community.capability.masterdata.production.routing.integration.mapper.RoteiroIntegrationMapper;
-import com.opsfactor.community.capability.masterdata.production.productionversion.integration.mapper.VersaoProducaoSimplesIntegrationMapper;
+import com.opsfactor.community.capability.masterdata.production.productionversion.integration.mapper.VersaoProducaoIntegrationMapper;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.integration.mapper.ConversaoUnidadeIntegrationMapper;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.integration.mapper.ConversaoUnidadeProdutoIntegrationMapper;
 import com.opsfactor.community.capability.supplyplanning.inventoryplan.integration.mapper.InventoryPlanIntegrationMapper;
@@ -149,7 +149,7 @@ class IntegrationMapperHeadersCommunityBoundaryTest {
                 new HeaderMapper("ListaTecnicaIntegrationMapper", new ListaTecnicaIntegrationMapper()),
                 new HeaderMapper("RecursoProdutivoIntegrationMapper", new RecursoProdutivoIntegrationMapper()),
                 new HeaderMapper("RoteiroIntegrationMapper", new RoteiroIntegrationMapper()),
-                new HeaderMapper("VersaoProducaoSimplesIntegrationMapper", new VersaoProducaoSimplesIntegrationMapper()),
+                new HeaderMapper("VersaoProducaoIntegrationMapper", new VersaoProducaoIntegrationMapper()),
                 new HeaderMapper("ConversaoUnidadeIntegrationMapper", new ConversaoUnidadeIntegrationMapper()),
                 new HeaderMapper("ConversaoUnidadeProdutoIntegrationMapper", new ConversaoUnidadeProdutoIntegrationMapper()),
                 new HeaderMapper("InventoryPlanIntegrationMapper", new InventoryPlanIntegrationMapper()));

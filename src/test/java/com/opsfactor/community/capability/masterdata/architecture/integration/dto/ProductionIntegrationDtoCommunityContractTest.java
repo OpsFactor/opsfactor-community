@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.masterdata.architecture.integration.d
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.integration.dto.ListaTecnicaComponenteIntegrationDataDto;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.integration.dto.ListaTecnicaIntegrationDataDto;
 import com.opsfactor.community.capability.masterdata.production.routing.integration.dto.RoteiroIntegrationDataDto;
-import com.opsfactor.community.capability.masterdata.production.productionversion.integration.dto.VersaoProducaoSimplesIntegrationDataDto;
+import com.opsfactor.community.capability.masterdata.production.productionversion.integration.dto.VersaoProducaoIntegrationDataDto;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -69,6 +69,8 @@ public class ProductionIntegrationDtoCommunityContractTest {
                         "active",
                         "outputMaterialId",
                         "routingClusterId",
+                        "baseQuantity",
+                        "baseQuantityUomId",
                         "canBeUsedWithoutProductionVersion",
                         "priority"),
                 getDeclaredFieldNames(RoteiroIntegrationDataDto.class));
@@ -79,7 +81,7 @@ public class ProductionIntegrationDtoCommunityContractTest {
     }
 
     @Test
-    public void simpleProductionVersionDtoShouldExposeOnlySingleOutputCommunityFields() {
+    public void productionVersionDtoShouldExposeTheGenericCommunityFields() {
 
         Assertions.assertEquals(
                 Set.of(
@@ -89,11 +91,11 @@ public class ProductionIntegrationDtoCommunityContractTest {
                         "routingId",
                         "billOfMaterialsId",
                         "active"),
-                getDeclaredFieldNames(VersaoProducaoSimplesIntegrationDataDto.class));
+                getDeclaredFieldNames(VersaoProducaoIntegrationDataDto.class));
         Assertions.assertEquals(
                 Set.of("id"),
                 getDeclaredFieldNames(
-                        VersaoProducaoSimplesIntegrationDataDto.VersaoProducaoSimplesPrimaryKeyIntegrationDTO.class));
+                        VersaoProducaoIntegrationDataDto.VersaoProducaoPrimaryKeyIntegrationDTO.class));
 
     }
 
