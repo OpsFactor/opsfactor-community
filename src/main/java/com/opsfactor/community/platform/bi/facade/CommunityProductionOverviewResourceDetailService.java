@@ -313,7 +313,8 @@ public class CommunityProductionOverviewResourceDetailService {
 
         Roteiro routing = supplyNetworkProjection.getRoteiroFromId(
                 productionPlanLine.getRoteiro().getId()).get();
-        boolean resourceBelongsToRouting = routing.getOperacaoRoteiroSet().stream()
+        boolean resourceBelongsToRouting = supplyNetworkProjection
+                .getOperacoesRoteiro(routing).stream()
                 .filter(operation -> operation.getRecursoProdutivo().equals(productionResource))
                 .findAny()
                 .isPresent();

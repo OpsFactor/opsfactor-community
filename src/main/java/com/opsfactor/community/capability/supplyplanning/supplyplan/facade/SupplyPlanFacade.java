@@ -1127,21 +1127,27 @@ public class SupplyPlanFacade {
 
             for (VersaoProducao versaoProducao : versoesProducao) {
 
-                for (Triplet<Roteiro,ListaTecnica,Double> detalheComponenteVersaoProducao : versaoProducao.getDetalhePorVersaoProducao(
-                        conversaoUnidadeMedidaProjection, material, unidadeMedidaView, posicaoPeriodoModificada)) {
+                for (Triplet<Roteiro,ListaTecnica,Double> detalheComponenteVersaoProducao :
+                        supplyNetworkProjection.getDetalhePorVersaoProducao(
+                                versaoProducao,
+                                material,
+                                unidadeMedidaView,
+                                posicaoPeriodoModificada)) {
 
                     Map<String,Object> detalhes = new HashMap<>();
 
-                    String routingIds = versaoProducao.getRoteiros().stream()
-                            .map(x -> (x.getId() == null) ? "No Prod Version" : x.getId())
-                            .reduce("", (subtotal, novo) -> (subtotal.equals("")) ? novo : subtotal + "," + novo);
-                    String productionResourcesIds = versaoProducao.getRoteiros().stream()
-                            .flatMap(x -> x.getOperacaoRoteiroListOrdenadaPorPosicaoAsc().stream())
-                            .map(x -> x.getRecursoProdutivo().getId())
-                            .reduce("", (subtotal, novo) -> (subtotal.equals("")) ? novo : subtotal + "," + novo);
-                    String bomIds = versaoProducao.getListasTecnicas().stream()
-                            .map(x -> x.getId())
-                            .reduce("", (subtotal, novo) -> (subtotal.equals("")) ? novo : subtotal + "," + novo);
+                    Roteiro roteiroProjetado = supplyNetworkProjection.getRoteiroProjetado(
+                            versaoProducao);
+                    ListaTecnica listaTecnicaProjetada = supplyNetworkProjection
+                            .getListaTecnicaProjetada(versaoProducao);
+                    String routingIds = roteiroProjetado.getId();
+                    String productionResourcesIds = supplyNetworkProjection
+                            .getRecursosProdutivos(roteiroProjetado).stream()
+                            .map(recursoProdutivo -> recursoProdutivo.getId())
+                            .reduce("", (subtotal, novo) -> subtotal.isEmpty()
+                                    ? novo
+                                    : subtotal + "," + novo);
+                    String bomIds = listaTecnicaProjetada.getId();
 
                     detalhes.put("Production Version Id", versaoProducao.getId());
                     detalhes.put("Priority", versaoProducao.getPrioridadeCadastrada());
@@ -1387,8 +1393,10 @@ public class SupplyPlanFacade {
                         null)
                 .stream()
                             .filter(versaoProducaoCandidata -> versaoProducaoCandidata.getId() == null
-                                    && versaoProducaoCandidata.getRoteiros().contains(roteiro)
-                                    && versaoProducaoCandidata.getListasTecnicas().contains(listaTecnica))
+                                    && supplyNetworkProjection.getRoteiroProjetado(
+                                            versaoProducaoCandidata).equals(roteiro)
+                                    && supplyNetworkProjection.getListaTecnicaProjetada(
+                                            versaoProducaoCandidata).equals(listaTecnica))
                             .findAny()
                             .get();
 

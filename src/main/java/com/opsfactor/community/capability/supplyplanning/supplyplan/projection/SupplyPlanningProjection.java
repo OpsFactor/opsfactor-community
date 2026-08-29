@@ -1757,8 +1757,12 @@ public class SupplyPlanningProjection {
             UnidadeMedida unidadeMedidaValor) {
         
         // qtde de cada roteiro/lista tecnica para se atingir a producao desejada do material
-        List<Triplet<Roteiro,ListaTecnica,Double>> detalhesVersaoProducao = versaoProducao.getDetalhePorVersaoProducao(
-                conversaoUnidadeMedidaProjection, material, unidadeMedidaValor, valor);
+        List<Triplet<Roteiro,ListaTecnica,Double>> detalhesVersaoProducao =
+                supplyNetworkProjection.getDetalhePorVersaoProducao(
+                        versaoProducao,
+                        material,
+                        unidadeMedidaValor,
+                        valor);
         
         for (Triplet<Roteiro,ListaTecnica,Double> detalheVersaoProducao : detalhesVersaoProducao) {
             

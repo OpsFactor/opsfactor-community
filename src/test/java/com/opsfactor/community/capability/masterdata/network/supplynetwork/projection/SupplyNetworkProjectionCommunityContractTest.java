@@ -582,6 +582,12 @@ class SupplyNetworkProjectionCommunityContractTest {
             VersaoProducao versaoProducao) {
 
         SupplyNetworkProjection supplyNetworkProjection = new SupplyNetworkProjection();
+        supplyNetworkProjection.mapaRoteiros = Map.of(
+                versaoProducao.getRoteiro().getId(),
+                versaoProducao.getRoteiro());
+        supplyNetworkProjection.mapaListasTecnicas = Map.of(
+                versaoProducao.getListaTecnica().getId(),
+                versaoProducao.getListaTecnica());
         supplyNetworkProjection.mapaVersaoProducaoPorId = Map.of(
                 versaoProducao.getId(),
                 versaoProducao);

@@ -2,6 +2,7 @@ package com.opsfactor.community.capability.masterdata.network.supplynetwork.proj
 
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
+import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnicaComponente;
 import com.opsfactor.community.capability.masterdata.production.operation.domain.OperacaoRoteiro;
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
@@ -21,6 +22,7 @@ import com.opsfactor.community.platform.utility.Constantes;
 import com.opsfactor.community.platform.utility.FuncoesMap;
 import lombok.Builder;
 import lombok.Getter;
+import org.javatuples.Triplet;
 
 import jakarta.annotation.Nullable;
 import java.time.LocalDateTime;
@@ -115,6 +117,11 @@ public class SupplyNetworkProjection {
     protected Map<String, RecursoProdutivo> mapaRecursosProdutivos;
     protected Map<String, Roteiro> mapaRoteiros;
     protected Map<String, ListaTecnica> mapaListasTecnicas;
+    /** Árvore produtiva consolidada; cálculos não percorrem coleções JPA. */
+    protected Map<String, Set<OperacaoRoteiro>> mapaOperacoesPorRoteiroId = new HashMap<>();
+    protected Map<String, Set<ListaTecnicaComponente>> mapaComponentesPorListaTecnicaId =
+            new HashMap<>();
+    protected Map<String, Set<Produto>> mapaMateriaisInputPorListaTecnicaId = new HashMap<>();
 
     protected Map<Location,Set<RecursoProdutivo>> mapaRecursoProdutivoAtivoSetPorLocation;
     protected Map<RecursoProdutivo,Map<Produto,Set<Roteiro>>> mapaRoteiroSetPorRecursoProdutivoMaterial;
@@ -201,12 +208,14 @@ public class SupplyNetworkProjection {
                 .getOrDefault(location, new HashMap<>())
                 .getOrDefault(material, new HashSet<>()).stream()
                         .filter(versaoProducao -> isVersaoProducaoDisponivel(versaoProducao, consideraVersoesProducaoParalelas))
-                        .filter(versaoProducao -> possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(versaoProducao.getMateriaisInput()))
+                        .filter(versaoProducao -> possiveisMateriaisInput == null
+                                || possiveisMateriaisInput.containsAll(
+                                getMateriaisInput(versaoProducao)))
                         .sorted(Comparator.comparing(VersaoProducao::getPrioridade))
                         .findFirst();
         
         return versaoProducaoPrioritaria
-                .map(VersaoProducao::getRoteiros)
+                .map(versaoProducao -> Set.of(getRoteiroProjetado(versaoProducao)))
                 .orElseGet(HashSet::new);
         
     }
@@ -266,7 +275,8 @@ public class SupplyNetworkProjection {
                 .flatMap(entry -> entry.getValue().entrySet().stream())
                 .filter(entry -> possiveisMateriaisOutput == null || possiveisMateriaisOutput.contains(entry.getKey()))
                 .flatMap(entry -> entry.getValue().stream())
-                .filter(listaTecnica -> possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(listaTecnica.getMateriaisInput()))
+                .filter(listaTecnica -> possiveisMateriaisInput == null
+                        || possiveisMateriaisInput.containsAll(getMateriaisInput(listaTecnica)))
                 .collect(Collectors.toSet());
     }
 
@@ -329,12 +339,14 @@ public class SupplyNetworkProjection {
                 .getOrDefault(location, new HashMap<>())
                 .getOrDefault(material, new HashSet<>()).stream()
                         .filter(versaoProducao -> isVersaoProducaoDisponivel(versaoProducao, consideraVersoesProducaoParalelas))
-                        .filter(versaoProducao -> possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(versaoProducao.getMateriaisInput()))
+                        .filter(versaoProducao -> possiveisMateriaisInput == null
+                                || possiveisMateriaisInput.containsAll(
+                                getMateriaisInput(versaoProducao)))
                         .sorted(Comparator.comparing(VersaoProducao::getPrioridade))
                         .findFirst();
         
         return versaoProducaoPrioritaria
-                .map(VersaoProducao::getListasTecnicas)
+                .map(versaoProducao -> Set.of(getListaTecnicaProjetada(versaoProducao)))
                 .orElseGet(HashSet::new);
         
     }
@@ -346,7 +358,8 @@ public class SupplyNetworkProjection {
         return mapaListaTecnicaSetPorLocationMaterial
                 .getOrDefault(location, new HashMap<>())
                 .getOrDefault(material, new HashSet<>()).stream()
-                .filter(listaTecnica -> possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(listaTecnica.getMateriaisInput()))
+                .filter(listaTecnica -> possiveisMateriaisInput == null
+                        || possiveisMateriaisInput.containsAll(getMateriaisInput(listaTecnica)))
                 .collect(Collectors.toSet());
     }
 
@@ -357,7 +370,8 @@ public class SupplyNetworkProjection {
         return mapaListaTecnicaViavelSetPorLocationMaterial
                 .getOrDefault(location, new HashMap<>())
                 .getOrDefault(material, new HashSet<>()).stream()
-                .filter(listaTecnica -> possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(listaTecnica.getMateriaisInput()))
+                .filter(listaTecnica -> possiveisMateriaisInput == null
+                        || possiveisMateriaisInput.containsAll(getMateriaisInput(listaTecnica)))
                 .collect(Collectors.toSet());
     }
     
@@ -373,13 +387,15 @@ public class SupplyNetworkProjection {
                 .getOrDefault(location, new HashMap<>())
                 .getOrDefault(material, new HashSet<>()).stream()
                         .filter(versaoProducao -> isVersaoProducaoDisponivel(versaoProducao, consideraVersoesProducaoParalelas))
-                        .filter(x -> x.getRoteiros().contains(roteiro))
-                        .filter(x -> possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(x.getMateriaisInput()))
+                        .filter(x -> getRoteiroProjetado(x).equals(
+                                getRoteiroProjetado(roteiro)))
+                        .filter(x -> possiveisMateriaisInput == null
+                                || possiveisMateriaisInput.containsAll(getMateriaisInput(x)))
                         .sorted(Comparator.comparing(VersaoProducao::getPrioridade))
                         .findFirst();
         
         return versaoProducaoPrioritaria
-                .map(VersaoProducao::getListasTecnicas)
+                .map(versaoProducao -> Set.of(getListaTecnicaProjetada(versaoProducao)))
                 .orElseGet(HashSet::new);
         
     }
@@ -395,12 +411,13 @@ public class SupplyNetworkProjection {
                 .getOrDefault(location, new HashMap<>())
                 .getOrDefault(material, new HashSet<>()).stream()
                         .filter(versaoProducao -> isVersaoProducaoDisponivel(versaoProducao, consideraVersoesProducaoParalelas))
-                        .filter(x -> x.getListasTecnicas().contains(listaTecnica))
+                        .filter(x -> getListaTecnicaProjetada(x).equals(
+                                getListaTecnicaProjetada(listaTecnica)))
                         .sorted(Comparator.comparing(VersaoProducao::getPrioridade))
                         .findFirst();
         
         return versaoProducaoPrioritaria
-                .map(VersaoProducao::getRoteiros)
+                .map(versaoProducao -> Set.of(getRoteiroProjetado(versaoProducao)))
                 .orElseGet(HashSet::new);
         
     }
@@ -710,7 +727,7 @@ public class SupplyNetworkProjection {
                 .orElseThrow(() -> new IllegalStateException(
                         "Roteiro " + roteiro.getId() + " não encontrado na SupplyNetworkProjection"));
         
-        double horasTotais = roteiroConsiderado.getOperacaoRoteiroSet().stream()
+        double horasTotais = getOperacoesRoteiro(roteiroConsiderado).stream()
                 .map(operacao -> getHorasTotaisConsumidasDeOperacao(operacao, quantidade, unidadeMedidaQuantidade))
                 .reduce(0.0, (horasTotais1, horasTotais2) ->
                         Math.max(horasTotais1, horasTotais2));
@@ -758,7 +775,7 @@ public class SupplyNetworkProjection {
         ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
 
         double consumoCapacidade =  0.0;
-        for (OperacaoRoteiro operacao : roteiroPopulado.getOperacaoRoteiroSet()) {
+        for (OperacaoRoteiro operacao : getOperacoesRoteiro(roteiroPopulado)) {
 
             RecursoProdutivo recursoProdutivoOperacao = operacao.getRecursoProdutivo();
 
@@ -809,7 +826,7 @@ public class SupplyNetworkProjection {
         // populados antes do calculo de capacidade. Manter esta leitura centralizada evita lazy loading
         // acidental durante a rotina heuristica.
         
-        for (OperacaoRoteiro operacao : roteiroPopulado.getOperacaoRoteiroSet()) {
+        for (OperacaoRoteiro operacao : getOperacoesRoteiro(roteiroPopulado)) {
         
             RecursoProdutivo recursoProdutivo = operacao.getRecursoProdutivo();
             
@@ -857,7 +874,7 @@ public class SupplyNetworkProjection {
         // populados antes do calculo de capacidade. Manter esta leitura centralizada evita lazy loading
         // acidental durante a rotina heuristica.
         
-        for (OperacaoRoteiro operacao : roteiroPopulado.getOperacaoRoteiroSet()) {
+        for (OperacaoRoteiro operacao : getOperacoesRoteiro(roteiroPopulado)) {
         
             RecursoProdutivo recursoProdutivo = operacao.getRecursoProdutivo();
 
@@ -963,7 +980,7 @@ public class SupplyNetworkProjection {
                 consideraVersoesProducaoMultiplas,
                 null,
                 possiveisMateriaisInput).stream()
-                .flatMap(x -> x.getListasTecnicas().stream())
+                .map(this::getListaTecnicaProjetada)
                 .collect(Collectors.toSet());
         
     }
@@ -1053,12 +1070,13 @@ public class SupplyNetworkProjection {
             // O filtro por output ocorre na leitura do índice já materializado.
             for (VersaoProducao versaoProducao : getVersoesProducaoViaveisPrioritarias(
                     locationIterada, consideraVersoesProducaoMultiplas, null, null)) {
-                for (ListaTecnica listaTecnica : versaoProducao.getListasTecnicas()) {
+                for (ListaTecnica listaTecnica : Set.of(
+                        getListaTecnicaProjetada(versaoProducao))) {
                     ListaTecnica listaTecnicaPersistidaCompleta = getListaTecnicaFromId(listaTecnica.getId())
                             .orElseThrow(() -> new IllegalStateException(
                                     "Bill of Materials not projected while creating prioritized input index: "
                                             + listaTecnica.getId()));
-                    for (Produto materialInput : listaTecnicaPersistidaCompleta.getMateriaisInput()) {
+                    for (Produto materialInput : getMateriaisInput(listaTecnicaPersistidaCompleta)) {
                         listasTecnicasPorMaterialInput
                                 .computeIfAbsent(materialInput, material -> new HashSet<>())
                                 .add(listaTecnicaPersistidaCompleta);
@@ -1116,7 +1134,8 @@ public class SupplyNetworkProjection {
 
         return roteirosViaveisPorMaterial.entrySet().stream()
                 .filter(x -> x.getValue().stream()
-                        .anyMatch(y -> y.getRecursoProdutivoSet().contains(recursoProdutivo)))
+                        .anyMatch(roteiro -> getRecursosProdutivos(roteiro)
+                                .contains(recursoProdutivo)))
                 .map(x -> x.getKey())
                 .collect(Collectors.toSet());
         
@@ -1135,7 +1154,7 @@ public class SupplyNetworkProjection {
         return versaoProducaoViavelSet.stream()
                 .filter(versaoProducao -> isVersaoProducaoDisponivel(versaoProducao, consideraVersoesProducaoParalelas))
                 .filter(versaoProducao -> possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(
-                        versaoProducao.getMateriaisInput()))
+                        getMateriaisInput(versaoProducao)))
                 .sorted(Comparator.comparing(VersaoProducao::getPrioridade))
                 .collect(Collectors.toList());
         
@@ -1154,7 +1173,8 @@ public class SupplyNetworkProjection {
         return versaoProducaoViavelSet.stream()
                 .anyMatch(versaoProducao ->
                         isVersaoProducaoDisponivel(versaoProducao, consideraVersoesProducaoParalelas)
-                        && (possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(versaoProducao.getMateriaisInput())));
+                        && (possiveisMateriaisInput == null
+                        || possiveisMateriaisInput.containsAll(getMateriaisInput(versaoProducao))));
 
     }
     
@@ -1184,8 +1204,10 @@ public class SupplyNetworkProjection {
         
         return getVersoesProducaoViaveisOrdenadasPorPrioridade(
                 location, materialOutput, consideraVersoesProducaoParalelas, possiveisMateriaisInput).stream()
-                .filter(versaoProducao -> versaoProducao.getRoteiros().contains(roteiro))
-                .filter(versaoProducao -> versaoProducao.getListasTecnicas().contains(listaTecnica))
+                .filter(versaoProducao -> getRoteiroProjetado(versaoProducao).equals(
+                        getRoteiroProjetado(roteiro)))
+                .filter(versaoProducao -> getListaTecnicaProjetada(versaoProducao).equals(
+                        getListaTecnicaProjetada(listaTecnica)))
                 .findFirst();
         
     }    
@@ -1264,7 +1286,8 @@ public class SupplyNetworkProjection {
         return mapaVersaoProducaoViavelSetPorLocationMaterial
                 .getOrDefault(location, new HashMap<>())
                 .getOrDefault(material, new HashSet<>()).stream()
-                .filter(x -> possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(x.getListaTecnica().getMateriaisInput()))
+                .filter(x -> possiveisMateriaisInput == null
+                        || possiveisMateriaisInput.containsAll(getMateriaisInput(x)))
                 .sorted(Comparator.comparing(x -> x.getPrioridade()))
                 .findFirst();
         
@@ -1284,9 +1307,11 @@ public class SupplyNetworkProjection {
                         .filter(versaoProducao -> isVersaoProducaoDisponivel(
                                 versaoProducao, consideraVersoesProducaoMultiplas))
                         .filter(versaoProducao -> possiveisMateriaisOutput == null
-                                || possiveisMateriaisOutput.containsAll(versaoProducao.getMateriaisOutput()))
+                                || possiveisMateriaisOutput.containsAll(
+                                getMateriaisOutput(versaoProducao)))
                         .filter(versaoProducao -> possiveisMateriaisInput == null
-                                || possiveisMateriaisInput.containsAll(versaoProducao.getMateriaisInput()))
+                                || possiveisMateriaisInput.containsAll(
+                                getMateriaisInput(versaoProducao)))
                         .min(Comparator.comparing(VersaoProducao::getPrioridade)))
                 .flatMap(Optional::stream)
                 .collect(Collectors.toSet());
@@ -1423,6 +1448,266 @@ public class SupplyNetworkProjection {
     
     public Optional<ListaTecnica> getListaTecnicaFromId(String listaTecnicaId) {
         return Optional.ofNullable(mapaListasTecnicas.get(listaTecnicaId));
+    }
+
+    /** Retorna o roteiro materializado; o argumento pode ser um proxy JPA. */
+    public Roteiro getRoteiroProjetado(Roteiro roteiro) {
+
+        if (roteiro == null || roteiro.getId() == null) {
+            throw new IllegalStateException("Projected routing requires a persistent id");
+        }
+        return getRoteiroFromId(roteiro.getId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Routing not projected: " + roteiro.getId()));
+
+    }
+
+    /** Retorna a lista técnica materializada; o argumento pode ser proxy JPA. */
+    public ListaTecnica getListaTecnicaProjetada(ListaTecnica listaTecnica) {
+
+        if (listaTecnica == null || listaTecnica.getId() == null) {
+            throw new IllegalStateException("Projected BOM requires a persistent id");
+        }
+        return getListaTecnicaFromId(listaTecnica.getId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "BOM not projected: " + listaTecnica.getId()));
+
+    }
+
+    /** Operações resolvidas pelo índice da projection. */
+    public Set<OperacaoRoteiro> getOperacoesRoteiro(Roteiro roteiro) {
+
+        Roteiro roteiroProjetado = getRoteiroProjetado(roteiro);
+        Set<OperacaoRoteiro> operacoes = mapaOperacoesPorRoteiroId.get(roteiroProjetado.getId());
+        if (operacoes == null) {
+            throw new IllegalStateException(
+                    "Projected routing operations not indexed: " + roteiroProjetado.getId());
+        }
+        return operacoes;
+
+    }
+
+    /** Recursos derivados do índice de operações. */
+    public Set<RecursoProdutivo> getRecursosProdutivos(Roteiro roteiro) {
+
+        return getOperacoesRoteiro(roteiro).stream()
+                .map(OperacaoRoteiro::getRecursoProdutivo)
+                .collect(Collectors.toUnmodifiableSet());
+
+    }
+
+    /** Recursos da versão derivados do roteiro canônico da projection. */
+    public Set<RecursoProdutivo> getRecursosProdutivos(VersaoProducao versaoProducao) {
+
+        return getRecursosProdutivos(getRoteiroProjetado(versaoProducao));
+
+    }
+
+    /** Inputs obtidos exclusivamente do vetor canônico materializado. */
+    public Set<Produto> getMateriaisInput(ListaTecnica listaTecnica) {
+
+        ListaTecnica listaTecnicaProjetada = getListaTecnicaProjetada(listaTecnica);
+        Set<Produto> materiaisInput =
+                mapaMateriaisInputPorListaTecnicaId.get(listaTecnicaProjetada.getId());
+        if (materiaisInput == null) {
+            throw new IllegalStateException(
+                    "Projected BOM inputs not indexed: " + listaTecnicaProjetada.getId());
+        }
+        return materiaisInput;
+
+    }
+
+    /**
+     * Outputs da lista técnica resolvidos pelo cabeçalho canônico.
+     *
+     * <p>O Community materializa somente a variante de output único. O método
+     * permanece no contrato genérico para que consumidores não naveguem a
+     * entidade nem precisem conhecer a implementação concreta.</p>
+     */
+    public Set<Produto> getMateriaisOutput(ListaTecnica listaTecnica) {
+
+        return Set.of(getListaTecnicaProjetada(listaTecnica).getMaterialOutput());
+
+    }
+
+    /** Componentes resolvidos pelo índice da projection. */
+    public Set<ListaTecnicaComponente> getComponentesListaTecnica(ListaTecnica listaTecnica) {
+
+        ListaTecnica listaTecnicaProjetada = getListaTecnicaProjetada(listaTecnica);
+        Set<ListaTecnicaComponente> componentes =
+                mapaComponentesPorListaTecnicaId.get(listaTecnicaProjetada.getId());
+        if (componentes == null) {
+            throw new IllegalStateException(
+                    "Projected BOM components not indexed: " + listaTecnicaProjetada.getId());
+        }
+        return componentes;
+
+    }
+
+    /**
+     * Unidade do input resolvida no vetor de componentes já materializado.
+     * O cálculo operacional não navega pela coleção lazy da entidade.
+     */
+    public UnidadeMedida getUnidadeMedidaMaterialInput(
+            ListaTecnica listaTecnica,
+            Produto materialInput) {
+
+        ParametrosGlobais parametrosGlobais = conversaoUnidadeMedidaProjection.getParametrosGlobais();
+        return getComponentesListaTecnica(listaTecnica).stream()
+                .filter(componente -> componente.getMaterialComponente().equals(materialInput))
+                .findFirst()
+                .map(componente -> componente.getUnidadeMedidaMaterialComponente(parametrosGlobais))
+                .orElseThrow(() -> new IllegalStateException(
+                        "Projected BOM input not found: " + listaTecnica.getId()
+                                + " / " + materialInput.getId()));
+
+    }
+
+    /**
+     * Converte uma quantidade de output em consumo de input usando somente o
+     * cabeçalho canônico e o índice de componentes da projection.
+     */
+    public OptionalDouble getQuantidadeInputDeQuantidadeOutput(
+            ListaTecnica listaTecnica,
+            Produto materialInput,
+            UnidadeMedida unidadeMedidaOutput,
+            double quantidadeOutput,
+            UnidadeMedida unidadeMedidaInput) {
+
+        ListaTecnica listaTecnicaProjetada = getListaTecnicaProjetada(listaTecnica);
+        ParametrosGlobais parametrosGlobais = conversaoUnidadeMedidaProjection.getParametrosGlobais();
+        double quantidadeBaseOutput = listaTecnicaProjetada.getQuantidade()
+                * conversaoUnidadeMedidaProjection.getConversaoParaUnidadeDestino(
+                        listaTecnicaProjetada.getMaterialOutput(),
+                        listaTecnicaProjetada.getUnidadeMedidaMaterialOutput(parametrosGlobais),
+                        unidadeMedidaOutput);
+        if (quantidadeBaseOutput <= 0d) {
+            throw new IllegalStateException(
+                    "Projected BOM output base quantity must be positive: "
+                            + listaTecnicaProjetada.getId());
+        }
+
+        double quantidadeInput = getComponentesListaTecnica(listaTecnicaProjetada).stream()
+                .filter(componente -> componente.getMaterialComponente().equals(materialInput))
+                .mapToDouble(componente -> componente.getQuantidade()
+                        * conversaoUnidadeMedidaProjection.getConversaoParaUnidadeDestino(
+                                materialInput,
+                                componente.getUnidadeMedidaMaterialComponente(parametrosGlobais),
+                                unidadeMedidaInput)
+                        / quantidadeBaseOutput
+                        * quantidadeOutput)
+                .sum();
+        return quantidadeInput == 0d && quantidadeOutput != 0d
+                ? OptionalDouble.empty()
+                : OptionalDouble.of(quantidadeInput);
+
+    }
+
+    /** Roteiro da versão resolvido pelo índice canônico. */
+    public Roteiro getRoteiroProjetado(VersaoProducao versaoProducao) {
+
+        return getRoteiroProjetado(versaoProducao.getRoteiro());
+
+    }
+
+    /** Lista técnica da versão resolvida pelo índice canônico. */
+    public ListaTecnica getListaTecnicaProjetada(VersaoProducao versaoProducao) {
+
+        return getListaTecnicaProjetada(versaoProducao.getListaTecnica());
+
+    }
+
+    /** Inputs da versão resolvidos pela lista técnica indexada. */
+    public Set<Produto> getMateriaisInput(VersaoProducao versaoProducao) {
+
+        return getMateriaisInput(getListaTecnicaProjetada(versaoProducao));
+
+    }
+
+    /** Output simples da versão resolvido pelos dois mestres canônicos. */
+    public Set<Produto> getMateriaisOutput(VersaoProducao versaoProducao) {
+
+        return Set.of(getMaterialOutputProjetado(
+                getRoteiroProjetado(versaoProducao),
+                getListaTecnicaProjetada(versaoProducao)));
+
+    }
+
+    /** Detalhe simples da versão obtido exclusivamente dos cabeçalhos canônicos. */
+    public List<Triplet<Roteiro, ListaTecnica, Double>> getDetalhePorVersaoProducao(
+            VersaoProducao versaoProducao,
+            Produto materialReferencia,
+            UnidadeMedida unidadeMedidaMaterialReferencia,
+            double quantidadeMaterialReferencia) {
+
+        Produto materialOutput = getMateriaisOutput(versaoProducao).iterator().next();
+        if (!materialOutput.equals(materialReferencia)) {
+            throw new IllegalStateException(
+                    "Production version output differs from requested material: "
+                            + materialReferencia.getId());
+        }
+        return List.of(Triplet.with(
+                getRoteiroProjetado(versaoProducao),
+                getListaTecnicaProjetada(versaoProducao),
+                1d));
+
+    }
+
+    /**
+     * Consumo de input calculado sobre os componentes indexados. Este método
+     * substitui o cálculo didático da entidade nos fluxos operacionais.
+     */
+    public double getQuantidadeMaterialInputConsumido(
+            VersaoProducao versaoProducao,
+            Produto materialInput,
+            UnidadeMedida unidadeMedidaTargetMaterialInput,
+            Produto materialOutput,
+            UnidadeMedida unidadeMedidaMaterialOutput,
+            double quantidadeMaterialOutput) {
+
+        ListaTecnica listaTecnica = getListaTecnicaProjetada(versaoProducao);
+        ParametrosGlobais parametrosGlobais = conversaoUnidadeMedidaProjection.getParametrosGlobais();
+        double quantidadeBaseOutput = listaTecnica.getQuantidade()
+                * conversaoUnidadeMedidaProjection.getConversaoParaUnidadeDestino(
+                        materialOutput,
+                        listaTecnica.getUnidadeMedidaMaterialOutput(parametrosGlobais),
+                        unidadeMedidaMaterialOutput);
+        if (quantidadeBaseOutput <= 0d) {
+            throw new IllegalStateException(
+                    "Projected BOM output base quantity must be positive: "
+                            + listaTecnica.getId());
+        }
+
+        return getComponentesListaTecnica(listaTecnica).stream()
+                .filter(componente -> componente.getMaterialComponente().equals(materialInput))
+                .mapToDouble(componente -> componente.getQuantidade()
+                        * conversaoUnidadeMedidaProjection.getConversaoParaUnidadeDestino(
+                                materialInput,
+                                componente.getUnidadeMedidaMaterialComponente(parametrosGlobais),
+                                unidadeMedidaTargetMaterialInput)
+                        / quantidadeBaseOutput
+                        * quantidadeMaterialOutput)
+                .sum();
+
+    }
+
+    /**
+     * Output simples validado entre os dois mestres canônicos. O Community
+     * deliberadamente não conhece a especialização de múltiplos outputs.
+     */
+    public Produto getMaterialOutputProjetado(Roteiro roteiro, ListaTecnica listaTecnica) {
+
+        Roteiro roteiroProjetado = getRoteiroProjetado(roteiro);
+        ListaTecnica listaTecnicaProjetada = getListaTecnicaProjetada(listaTecnica);
+        if (!roteiroProjetado.getMaterialOutput().equals(
+                listaTecnicaProjetada.getMaterialOutput())) {
+            throw new IllegalStateException(
+                    "Routing " + roteiroProjetado.getId()
+                            + " and BOM " + listaTecnicaProjetada.getId()
+                            + " have different output materials");
+        }
+        return roteiroProjetado.getMaterialOutput();
+
     }
 
     /**
@@ -1617,7 +1902,7 @@ public class SupplyNetworkProjection {
         UnidadeMedida unidadeMedidaPadrao = getClusterEParametrosProjection().getSNPUnidadeMedidaPadrao(
                 roteiro.getMaterialOutput(), roteiro.getLocation());
         
-        double quantidadePorHoraMinimo = roteiro.getOperacaoRoteiroSet().stream()
+        double quantidadePorHoraMinimo = getOperacoesRoteiro(roteiro).stream()
                 .mapToDouble(operacao -> roteiro.getQuantidadeBase()
                         * getConversaoUnidadeMedidaProjection().getConversaoParaUnidadeDestino(
                                 roteiro.getMaterialOutput(), 
@@ -1641,7 +1926,8 @@ public class SupplyNetworkProjection {
                 .getOrDefault(material, new HashSet<>())
                 .stream()
                 .filter(versaoProducao -> !versaoProducao.isProducaoMultipla())
-                .filter(x -> possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(x.getMateriaisInput()))
+                .filter(x -> possiveisMateriaisInput == null
+                        || possiveisMateriaisInput.containsAll(getMateriaisInput(x)))
                 .collect(Collectors.toList());
                 
     }
@@ -1660,7 +1946,9 @@ public class SupplyNetworkProjection {
                 .getOrDefault(material, new HashSet<>())
                 .stream()
                 .filter(versaoProducao -> isVersaoProducaoDisponivel(versaoProducao, consideraVersoesProducaoParalelas))
-                .filter(versaoProducao -> possiveisMateriaisInput == null || possiveisMateriaisInput.containsAll(versaoProducao.getMateriaisInput()))
+                .filter(versaoProducao -> possiveisMateriaisInput == null
+                        || possiveisMateriaisInput.containsAll(
+                        getMateriaisInput(versaoProducao)))
                 .collect(Collectors.toSet());
         
     }

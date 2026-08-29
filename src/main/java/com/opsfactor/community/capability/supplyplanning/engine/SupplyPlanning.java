@@ -737,7 +737,7 @@ public class SupplyPlanning {
             
             if (consideraComoDependenciaInsumosEmListasTecnicas) {
                 dfusDependentes.addAll(supplyNetworkProjection.getListasTecnicasViaveis(location, material, null).stream()
-                        .map(x -> x.getMateriaisInput())
+                        .map(supplyNetworkProjection::getMateriaisInput)
                         .flatMap(x -> x.stream())
                         .distinct()
                         .map(x -> new DFU(x, location))

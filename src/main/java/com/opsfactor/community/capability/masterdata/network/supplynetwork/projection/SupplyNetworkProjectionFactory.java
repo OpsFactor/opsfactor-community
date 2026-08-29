@@ -279,6 +279,17 @@ public class SupplyNetworkProjectionFactory {
                 "bill of materials");
         supplyNetworkProjection.mapaListasTecnicas = listaTecnicaList.stream()
                 .collect(Collectors.toMap(ListaTecnica::getId, x -> x));
+        supplyNetworkProjection.mapaComponentesPorListaTecnicaId = listaTecnicaList.stream()
+                .collect(Collectors.toMap(
+                        ListaTecnica::getId,
+                        listaTecnica -> Set.copyOf(
+                                listaTecnica.getListaTecnicaComponenteSet())));
+        supplyNetworkProjection.mapaMateriaisInputPorListaTecnicaId = listaTecnicaList.stream()
+                .collect(Collectors.toMap(
+                        ListaTecnica::getId,
+                        listaTecnica -> listaTecnica.getListaTecnicaComponenteSet().stream()
+                                .map(componente -> componente.getMaterialComponente())
+                                .collect(Collectors.toUnmodifiableSet())));
 
         Set<ListaTecnica> listasTecnicasViaveisSet = listaTecnicaList.stream()
                 .filter(x -> x.getAtivo())
@@ -308,6 +319,10 @@ public class SupplyNetworkProjectionFactory {
                 "routing");
         supplyNetworkProjection.mapaRoteiros = roteiroList.stream()
                 .collect(Collectors.toMap(Roteiro::getId, x -> x));
+        supplyNetworkProjection.mapaOperacoesPorRoteiroId = roteiroList.stream()
+                .collect(Collectors.toMap(
+                        Roteiro::getId,
+                        roteiro -> Set.copyOf(roteiro.getOperacaoRoteiroSet())));
         Set<Roteiro> roteirosViaveisSet = roteiroList.stream()
                 .filter(x -> x.getAtivo())
                 .filter(x -> !supplyNetworkProjection.getListasTecnicasViaveis(x.getLocation(), x.getMaterialOutput(), null).isEmpty())
@@ -434,52 +449,47 @@ public class SupplyNetworkProjectionFactory {
 
             // sempre adiciona versoes de producao ao mapaVersaoProducaoSetPorLocationMaterial,
             // mesmo que inativas ou inviáveis
-            for (Produto material : versaoProducaoAbstract.getMateriaisOutput()) {
-                FuncoesMap.getOrAddElementoDeNestedMap(
-                        supplyNetworkProjection.mapaVersaoProducaoSetPorLocationMaterial,
-                        Set.class,
-                        () -> new HashSet<>(),
-                        location, material)
-                        .add(versaoProducaoAbstract);
-            }
+            Produto materialOutput = supplyNetworkProjection.getMaterialOutputProjetado(
+                    versaoProducaoAbstract.getRoteiro(),
+                    versaoProducaoAbstract.getListaTecnica());
+            FuncoesMap.getOrAddElementoDeNestedMap(
+                    supplyNetworkProjection.mapaVersaoProducaoSetPorLocationMaterial,
+                    Set.class,
+                    () -> new HashSet<>(),
+                    location, materialOutput)
+                    .add(versaoProducaoAbstract);
 
             // insere as versões de produção viáveis nos respectivos mapas
             if (!versaoProducaoAbstract.getAtivo()) continue;
 
             /*
-             * A factory valida exclusivamente pelo contrato genérico já
-             * materializado. Assim a extensão Enterprise pode fornecer
-             * mestres múltiplos sem introduzir branches de subtipo na camada
-             * consumidora nem disparar relações LAZY durante o cálculo.
+             * O Community valida seus mestres simples pelas referências
+             * canônicas. Especializações de múltiplos outputs pertencem ao
+             * Enterprise e não alteram este contrato base.
              */
-            boolean possuiRoteiroInviavel = versaoProducaoAbstract.getRoteiros().stream()
-                    .anyMatch(roteiro -> !supplyNetworkProjection.verificaSeRoteiroEViavel(roteiro));
-            boolean possuiListaTecnicaInviavel = versaoProducaoAbstract.getListasTecnicas().stream()
-                    .anyMatch(listaTecnica -> !supplyNetworkProjection.verificaSeListaTecnicaEViavel(
-                            listaTecnica));
+            Roteiro roteiro = supplyNetworkProjection.getRoteiroProjetado(
+                    versaoProducaoAbstract);
+            ListaTecnica listaTecnica = supplyNetworkProjection.getListaTecnicaProjetada(
+                    versaoProducaoAbstract);
+            boolean possuiRoteiroInviavel =
+                    !supplyNetworkProjection.verificaSeRoteiroEViavel(roteiro);
+            boolean possuiListaTecnicaInviavel =
+                    !supplyNetworkProjection.verificaSeListaTecnicaEViavel(listaTecnica);
 
             if (possuiRoteiroInviavel || possuiListaTecnicaInviavel) continue;
 
-            for (Produto material : versaoProducaoAbstract.getMateriaisOutput()) {
-                FuncoesMap.getOrAddElementoDeNestedMap(
-                        supplyNetworkProjection.mapaVersaoProducaoViavelSetPorLocationMaterial,
-                        Set.class,
-                        () -> new HashSet<>(),
-                        location, material)
-                        .add(versaoProducaoAbstract);
-            }
+            FuncoesMap.getOrAddElementoDeNestedMap(
+                    supplyNetworkProjection.mapaVersaoProducaoViavelSetPorLocationMaterial,
+                    Set.class,
+                    () -> new HashSet<>(),
+                    location, materialOutput)
+                    .add(versaoProducaoAbstract);
 
-            for (Roteiro roteiro : versaoProducaoAbstract.getRoteiros()) {
-                Roteiro roteiroComCamposPopulados = supplyNetworkProjection.getRoteiroFromId(roteiro.getId())
-                        .orElseThrow(() -> new IllegalStateException(
-                                "Roteiro "
-                                        + roteiro.getId()
-                                        + " não encontrado na SupplyNetworkProjection durante indexação de versões produtivas"));
-                for (RecursoProdutivo recursoProdutivo : roteiroComCamposPopulados.getRecursoProdutivoSet()) {
-                    supplyNetworkProjection.mapaVersaoProducaoViavelSetPorRecursoProdutivo
-                            .computeIfAbsent(recursoProdutivo, x -> new HashSet<>())
-                            .add(versaoProducaoAbstract);
-                }
+            for (RecursoProdutivo recursoProdutivo :
+                    supplyNetworkProjection.getRecursosProdutivos(roteiro)) {
+                supplyNetworkProjection.mapaVersaoProducaoViavelSetPorRecursoProdutivo
+                        .computeIfAbsent(recursoProdutivo, x -> new HashSet<>())
+                        .add(versaoProducaoAbstract);
             }
 
         }

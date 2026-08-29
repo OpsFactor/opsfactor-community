@@ -164,14 +164,9 @@ public class ProductionPlanLinha {
      * @return 
      */
     public Set<Produto> getMateriaisInput(SupplyNetworkProjection supplyNetworkProjection) {
-        // extrai lista técnica de SupplyNetworkProjection para evitar erro 'failed to lazily initialize a collection of role : com.opsfactor.community.capability.masterdata.domain.production.ListaTecnica.listaTecnicaComponenteSet'
-        ListaTecnica listaTecnica = supplyNetworkProjection.getListaTecnicaFromId(
-                productionPlanLinhaCompositeKey.getListaTecnica().getId())
-                .orElseThrow(() -> new IllegalStateException(
-                        "Lista técnica "
-                                + productionPlanLinhaCompositeKey.getListaTecnica().getId()
-                                + " não encontrada na SupplyNetworkProjection"));
-        return listaTecnica.getMateriaisInput();
+
+        return supplyNetworkProjection.getMateriaisInput(getListaTecnica());
+
     }
         
     public Location getLocation() {

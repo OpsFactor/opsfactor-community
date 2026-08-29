@@ -374,7 +374,7 @@ public class LowLevelCode {
             // de outro material output que faz parte das dfusRestantes?
             Set<ListaTecnica> listasTecnicasOndeMaterialEInput = supplyNetworkProjection.getListaTecnicaViavelPrioritariaSetOndeMaterialEInput(
                     dfu.getLocation(), dfu.getProduto(), 
-                    false, // false pois low level code só se aplica ao heurístico, onde não se consideram as versões de produção paralelas
+                    false, // o low level code usa somente o recorte produtivo do heurístico
                     materialProjection.getMateriaisAtivosOuNuloSeMaterialProjectionCompleto());
             if (listasTecnicasOndeMaterialEInput.stream()
                     .anyMatch(x -> dfusRestantes.contains(
