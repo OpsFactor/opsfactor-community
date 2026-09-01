@@ -44,6 +44,18 @@ public interface ListaTecnicaRepository extends JpaRepository<ListaTecnica,Strin
             @Param("locations") Collection<Location> locations,
             @Param("materiais") Collection<Produto> materiais);
 
+    /** Carrega listas técnicas de qualquer subtipo para a projection canônica. */
+    @Query("SELECT DISTINCT lt FROM ListaTecnica lt "
+            + "LEFT JOIN FETCH lt.location "
+            + "LEFT JOIN FETCH lt.materialOutput "
+            + "LEFT JOIN FETCH lt.unidadeMedidaMaterialOutput "
+            + "LEFT JOIN FETCH lt.listaTecnicaComponenteSet ltc "
+            + "LEFT JOIN FETCH ltc.materialComponente "
+            + "LEFT JOIN FETCH ltc.unidadeMedidaMaterialComponente "
+            + "WHERE lt.location IN :locations")
+    List<ListaTecnica> customFindAllByLocationInFetchListaTecnicaComponente(
+            @Param("locations") Collection<Location> locations);
+
     // OVERRIDES SAVE E DELETE PARA @CACHEEVICT -------------------------------------------------------------------------------------------
     // limpa caches dependentes em chamadas de saveAll e deleteAll (cacheEvict nao funciona em metodos @Override dos serviços de integração)
     /**

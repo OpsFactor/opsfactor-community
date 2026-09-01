@@ -20,6 +20,8 @@ import lombok.*;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -37,7 +39,6 @@ import java.util.Set;
 @Data // lombok: @ToString, @EqualsAndHashCode, @Getter on all fields @Setter on all non-final fields, and @RequiredArgsConstructor
 @EqualsAndHashCode(of="productionPlanLinhaCompositeKey")
 @NoArgsConstructor
-@RequiredArgsConstructor
 @Entity
 public class ProductionPlanLinha {
 
@@ -53,7 +54,6 @@ public class ProductionPlanLinha {
      */
     @Data // lombok: @ToString, @EqualsAndHashCode, @Getter on all fields @Setter on all non-final fields, and @RequiredArgsConstructor
     @NoArgsConstructor
-    @RequiredArgsConstructor
     @Embeddable
     @EqualsAndHashCode
     public static class ProductionPlanLinhaCompositeKey implements Serializable {
@@ -77,6 +77,9 @@ public class ProductionPlanLinha {
         @ManyToOne(optional = false)
         @NonNull // torna campo obrigatório e parâmetro do construtor gerado pelo @Data (lombok)
         private ListaTecnica listaTecnica;
+
+        @ManyToOne(optional = false)
+        private Produto materialOutput;
         
         /**
          * A data de referência indica qual o período para o qual se está sugerindo reposição de estoque.
@@ -84,6 +87,44 @@ public class ProductionPlanLinha {
          */
         @NonNull // null check pelo lombok : também usado para definir campos obrigatórios no construtor lombok
         private LocalDateTime dataReferencia;
+
+        public ProductionPlanLinhaCompositeKey(
+                SupplyPlan supplyPlan,
+                Location location,
+                VersaoProducao versaoProducao,
+                Roteiro roteiro,
+                ListaTecnica listaTecnica,
+                LocalDateTime dataReferencia) {
+
+            this(
+                    supplyPlan,
+                    location,
+                    versaoProducao,
+                    roteiro,
+                    listaTecnica,
+                    listaTecnica.getMaterialOutput(),
+                    dataReferencia);
+
+        }
+
+        public ProductionPlanLinhaCompositeKey(
+                SupplyPlan supplyPlan,
+                Location location,
+                VersaoProducao versaoProducao,
+                Roteiro roteiro,
+                ListaTecnica listaTecnica,
+                Produto materialOutput,
+                LocalDateTime dataReferencia) {
+
+            this.supplyPlan = supplyPlan;
+            this.location = location;
+            this.versaoProducao = versaoProducao;
+            this.roteiro = roteiro;
+            this.listaTecnica = listaTecnica;
+            this.materialOutput = materialOutput;
+            this.dataReferencia = dataReferencia;
+
+        }
         
     }
         
@@ -91,9 +132,59 @@ public class ProductionPlanLinha {
     @ManyToOne
     private UnidadeMedida unidadeMedida;
     
-    @NonNull
-    @ManyToOne(optional = false)
+    /**
+     * Espelho somente-leitura da associação na chave. Mantém as consultas JPQL
+     * legadas estáveis enquanto a unicidade passa a ser definida pelo material.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "material_output_id", insertable = false, updatable = false)
+    @lombok.Getter(AccessLevel.NONE)
+    @lombok.Setter(AccessLevel.NONE)
     private Produto materialOutput;
+
+    public ProductionPlanLinha(ProductionPlanLinhaCompositeKey productionPlanLinhaCompositeKey) {
+
+        this.productionPlanLinhaCompositeKey = productionPlanLinhaCompositeKey;
+
+    }
+
+    public ProductionPlanLinha(
+            ProductionPlanLinhaCompositeKey productionPlanLinhaCompositeKey,
+            Produto materialOutput) {
+
+        this(productionPlanLinhaCompositeKey);
+        if (materialOutput == null) {
+            throw new IllegalArgumentException("Production plan line requires an output material");
+        }
+        if (productionPlanLinhaCompositeKey.getMaterialOutput() == null) {
+            productionPlanLinhaCompositeKey.setMaterialOutput(materialOutput);
+        } else if (!productionPlanLinhaCompositeKey.getMaterialOutput().equals(materialOutput)) {
+            throw new IllegalArgumentException("Production plan line material differs from composite key material");
+        }
+        this.materialOutput = materialOutput;
+
+    }
+
+    public Produto getMaterialOutput() {
+
+        return materialOutput == null
+                ? productionPlanLinhaCompositeKey.getMaterialOutput()
+                : materialOutput;
+
+    }
+
+    /**
+     * Mantém compatibilidade com integrações que preenchem o material depois
+     * de criar a linha, espelhando-o também na chave persistida.
+     */
+    public void setMaterialOutput(Produto materialOutput) {
+
+        this.materialOutput = materialOutput;
+        if (productionPlanLinhaCompositeKey != null) {
+            productionPlanLinhaCompositeKey.setMaterialOutput(materialOutput);
+        }
+
+    }
         
     // produção sem considerar restrição do recurso produtivo
     @Deprecated
@@ -348,6 +439,7 @@ public class ProductionPlanLinha {
 
     private String getMaterialOutputIdParaMensagem() {
 
+        Produto materialOutput = getMaterialOutput();
         return (materialOutput == null || materialOutput.getId() == null)
                 ? "<sem-material>"
                 : materialOutput.getId();
@@ -587,8 +679,14 @@ public class ProductionPlanLinha {
                 getUnidadeMedida(parametrosGlobais), 
                 supplyNetworkProjection.getConversaoUnidadeMedidaProjection());
 
-        return supplyNetworkProjection.getConsumoCapacidadePorRecursoProdutivoEmHorasOuQuantidade(
-                getRoteiro(), quantidade, getUnidadeMedida(parametrosGlobais), tipoCapacidadeProdutiva);
+        return supplyNetworkProjection.getConsumoCapacidadePorVersaoProducao(
+                getVersaoProducao(),
+                getRoteiro(),
+                getListaTecnica(),
+                getMaterialOutput(),
+                getUnidadeMedida(parametrosGlobais),
+                quantidade,
+                tipoCapacidadeProdutiva);
         
     }
     
@@ -604,9 +702,30 @@ public class ProductionPlanLinha {
                 getUnidadeMedida(parametrosGlobais), 
                 supplyNetworkProjection.getConversaoUnidadeMedidaProjection());
 
-        return supplyNetworkProjection.getConsumoCapacidadePorRecursoProdutivoEmHoras(
-                getRoteiro(), quantidade, getUnidadeMedida(parametrosGlobais));
+        return supplyNetworkProjection.getConsumoCapacidadePorVersaoProducao(
+                getVersaoProducao(),
+                getRoteiro(),
+                getListaTecnica(),
+                getMaterialOutput(),
+                getUnidadeMedida(parametrosGlobais),
+                quantidade,
+                PerfilExecucaoSupplyPlan.TipoCapacidadeProdutiva.HORAS_POR_DIA);
         
+    }
+
+    /**
+     * Identifica a única linha material que responde pelos insumos e pela
+     * capacidade do pacote. As demais linhas são outputs físicos e não podem
+     * repetir esse consumo.
+     */
+    public boolean representaConsumoCompartilhadoDoPacote(
+            SupplyNetworkProjection supplyNetworkProjection) {
+
+        return getMaterialOutput().equals(supplyNetworkProjection.getMaterialOutputReferencia(
+                getVersaoProducao(),
+                getRoteiro(),
+                getListaTecnica()));
+
     }
         
     /**
@@ -614,10 +733,10 @@ public class ProductionPlanLinha {
      */
     public void verificaConsistencia() {
         if (!getLocation().equals(getRoteiro().getLocation())) throw new IllegalStateException("Location " + getLocation().getId() + " different than routing location " + getRoteiro().getLocation().getId());
-        if (!getMaterialOutput().equals(getRoteiro().getMaterialOutput())) throw new IllegalStateException("Output Material " + getMaterialOutput().getId() + " different than routing Output Material " + getRoteiro().getMaterialOutput().getId());
+        if (!getRoteiro().getMateriaisOutput().contains(getMaterialOutput())) throw new IllegalStateException("Output Material " + getMaterialOutput().getId() + " is not an output of routing " + getRoteiro().getId());
 
         if (!getLocation().equals(getListaTecnica().getLocation())) throw new IllegalStateException("Location " + getLocation().getId() + " different than bill of materials location " + getListaTecnica().getLocation().getId());
-        if (!getMaterialOutput().equals(getListaTecnica().getMaterialOutput())) throw new IllegalStateException("Output Material " + getMaterialOutput().getId() + " different than bill of materials Output Material " + getListaTecnica().getMaterialOutput().getId());
+        if (!getListaTecnica().getMateriaisOutput().contains(getMaterialOutput())) throw new IllegalStateException("Output Material " + getMaterialOutput().getId() + " is not an output of BOM " + getListaTecnica().getId());
     }
 
 }

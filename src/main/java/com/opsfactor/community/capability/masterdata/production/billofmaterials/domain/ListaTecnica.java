@@ -22,6 +22,9 @@ import java.util.stream.Collectors;
  * otimizadas de receita ficam no Enterprise.</p>
  */
 @Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "tipo_lista_tecnica")
+@DiscriminatorValue("simples")
 @Data
 @Builder
 @ToString(of="id")
@@ -38,8 +41,8 @@ public class ListaTecnica implements Comparable<ListaTecnica> {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Location location;
 
-    @NonNull
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    /** Output do cabeçalho simples; listas múltiplas usam a coleção do subtipo. */
+    @ManyToOne(fetch = FetchType.LAZY)
     private Produto materialOutput;
         
     private Double quantidade;
@@ -67,6 +70,49 @@ public class ListaTecnica implements Comparable<ListaTecnica> {
         return getListaTecnicaComponenteSet().stream()
                 .map(ListaTecnicaComponente::getMaterialComponente)
                 .collect(Collectors.toSet());
+    }
+
+    /** Outputs físicos do pacote; a lista simples preserva exatamente um. */
+    public Set<Produto> getMateriaisOutput() {
+
+        if (materialOutput == null) {
+            throw new IllegalStateException("BOM " + getId() + " has no output material");
+        }
+        return Set.of(materialOutput);
+
+    }
+
+    /** Atalho estritamente singular para consumidores de lista técnica simples. */
+    public Produto getMaterialOutput() {
+
+        Set<Produto> materiaisOutput = getMateriaisOutput();
+        if (materiaisOutput.size() != 1) {
+            throw new IllegalStateException("BOM " + getId() + " does not have exactly one output material");
+        }
+        return materiaisOutput.iterator().next();
+
+    }
+
+    /** Quantidade-base do output indicado, na unidade cadastrada para ele. */
+    public double getQuantidadeBaseOutput(Produto produtoOutput) {
+
+        if (!getMaterialOutput().equals(produtoOutput)) {
+            throw new IllegalArgumentException("Material " + produtoOutput.getId() + " is not an output of BOM " + getId());
+        }
+        return getQuantidade();
+
+    }
+
+    /** Unidade cadastrada do output indicado. */
+    public UnidadeMedida getUnidadeMedidaMaterialOutput(
+            Produto produtoOutput,
+            ParametrosGlobais parametrosGlobais) {
+
+        if (!getMaterialOutput().equals(produtoOutput)) {
+            throw new IllegalArgumentException("Material " + produtoOutput.getId() + " is not an output of BOM " + getId());
+        }
+        return getUnidadeMedidaMaterialOutput(parametrosGlobais);
+
     }
 
     /**

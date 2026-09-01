@@ -59,8 +59,8 @@ public class Roteiro implements Comparable<Roteiro> {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Location location;
 
-    @NonNull
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    /** Output do roteiro simples; o subtipo múltiplo mantém sua coleção própria. */
+    @ManyToOne(fetch = FetchType.LAZY)
     private Produto materialOutput;
 
     /**
@@ -153,10 +153,31 @@ public class Roteiro implements Comparable<Roteiro> {
                 .map(OperacaoAbstract::getRecursoProdutivo)
                 .collect(Collectors.toSet());
     }
+
+    /** Outputs físicos do pacote; o tipo simples preserva exatamente um. */
+    public Set<Produto> getMateriaisOutput() {
+
+        if (materialOutput == null) {
+            throw new IllegalStateException("Routing " + getId() + " has no output material");
+        }
+        return Set.of(materialOutput);
+
+    }
+
+    /** Atalho estritamente singular para consumidores de roteiro simples. */
+    public Produto getMaterialOutput() {
+
+        Set<Produto> materiaisOutput = getMateriaisOutput();
+        if (materiaisOutput.size() != 1) {
+            throw new IllegalStateException("Routing " + getId() + " does not have exactly one output material");
+        }
+        return materiaisOutput.iterator().next();
+
+    }
     
     public void verificaCompatibilidadeListaTecnica(ListaTecnica listaTecnica) {
-        if (!getMaterialOutput().equals(listaTecnica.getMaterialOutput())) {
-            throw new IllegalStateException("Routing material " + getMaterialOutput().getId() + " incompatible with BOM material " + listaTecnica.getMaterialOutput().getId());
+        if (!getMateriaisOutput().equals(listaTecnica.getMateriaisOutput())) {
+            throw new IllegalStateException("Routing outputs incompatible with BOM outputs");
         }
         if (!getLocation().equals(listaTecnica.getLocation())) {
             throw new IllegalStateException("Routing location " + getLocation().getId() + " incompatible with BOM location " + listaTecnica.getLocation().getId());

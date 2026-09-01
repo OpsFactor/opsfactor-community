@@ -27,6 +27,17 @@ public interface VersaoProducaoRepository extends JpaRepository<VersaoProducao, 
             @Param("locations") Collection<Location> locations,
             @Param("produtos") Collection<Produto> produtos);
 
+    /**
+     * Carrega versões pelo escopo de location sem supor output singular. A
+     * factory reassocia os mestres às instâncias canônicas já fetchadas.
+     */
+    @Query("SELECT DISTINCT vp FROM VersaoProducao vp "
+            + "JOIN FETCH vp.location "
+            + "JOIN FETCH vp.roteiro "
+            + "JOIN FETCH vp.listaTecnica "
+            + "WHERE vp.location IN :locations")
+    List<VersaoProducao> customFindAllByLocationIn(@Param("locations") Collection<Location> locations);
+
     @Query("SELECT DISTINCT vp FROM VersaoProducao vp "
             + "JOIN FETCH vp.location "
             + "JOIN FETCH vp.roteiro rt "

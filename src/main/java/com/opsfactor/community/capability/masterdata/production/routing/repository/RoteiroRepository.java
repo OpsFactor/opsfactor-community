@@ -57,6 +57,20 @@ public interface RoteiroRepository extends JpaRepository<Roteiro,String> {
             @Param("materiais") Collection<Produto> materiais);
 
     /**
+     * Carrega roteiros de qualquer subtipo. O filtro de outputs fica na
+     * factory, após o subtipo múltiplo materializar sua coleção filha.
+     */
+    @Query("SELECT DISTINCT r FROM Roteiro r "
+            + "LEFT JOIN FETCH r.location "
+            + "LEFT JOIN FETCH r.materialOutput "
+            + "LEFT JOIN FETCH r.unidadeMedidaQuantidadeBase "
+            + "LEFT JOIN FETCH r.operacaoRoteiroSet opr "
+            + "LEFT JOIN FETCH opr.recursoProdutivo "
+            + "WHERE r.location IN :locations")
+    List<Roteiro> customFindAllByLocationInFetchOperacaoRoteiroSet(
+            @Param("locations") Collection<Location> locations);
+
+    /**
      * Localiza, sem materializar os roteiros, os IDs de routing cluster que
      * ainda sao referenciados por roteiros Community.
      *

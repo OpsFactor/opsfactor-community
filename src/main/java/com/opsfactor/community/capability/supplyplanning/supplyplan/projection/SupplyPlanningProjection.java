@@ -310,6 +310,13 @@ public class SupplyPlanningProjection {
         validaProductionPlanLinhaParaIndexacao(
                 productionPlanLinha,
                 "Production Plan input indexing");
+
+        // Uma execução múltipla possui uma linha por output, mas componentes
+        // e capacidade pertencem ao pacote físico e entram uma única vez.
+        if (!productionPlanLinha.representaConsumoCompartilhadoDoPacote(
+                supplyNetworkProjection)) {
+            return;
+        }
         
         int posicaoPeriodo = calendario.getPosicaoPeriodo(productionPlanLinha.getDataReferencia());
         Roteiro roteiroProjetado = getRoteiroProjetado(productionPlanLinha);

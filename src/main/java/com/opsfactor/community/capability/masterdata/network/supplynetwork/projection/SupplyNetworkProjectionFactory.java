@@ -3,6 +3,8 @@ package com.opsfactor.community.capability.masterdata.network.supplynetwork.proj
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.network.location.domain.LocationAbstract;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
+import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnicaMultiplo;
+import com.opsfactor.community.capability.masterdata.production.billofmaterials.repository.ListaTecnicaMultiploRepository;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.repository.ListaTecnicaRepository;
 import com.opsfactor.community.capability.masterdata.production.operation.domain.OperacaoRoteiro;
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
@@ -10,6 +12,8 @@ import com.opsfactor.community.capability.masterdata.production.productionresour
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.capability.masterdata.production.productionversion.repository.VersaoProducaoRepository;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
+import com.opsfactor.community.capability.masterdata.production.routing.domain.RoteiroMultiplo;
+import com.opsfactor.community.capability.masterdata.production.routing.repository.RoteiroMultiploRepository;
 import com.opsfactor.community.capability.masterdata.production.routing.repository.RoteiroRepository;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.LinhaTransporte;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.LinhaTransporteProduto;
@@ -74,11 +78,17 @@ public class SupplyNetworkProjectionFactory {
     @Autowired
     private RoteiroRepository roteiroRepository;
 
+    @Autowired
+    private RoteiroMultiploRepository roteiroMultiploRepository;
+
     /**
      * Repository de listas tecnicas com componentes.
      */
     @Autowired
     private ListaTecnicaRepository listaTecnicaRepository;
+
+    @Autowired
+    private ListaTecnicaMultiploRepository listaTecnicaMultiploRepository;
 
     /**
      * Service que fornece a versao de producao inexistente usada como sentinel.
@@ -269,9 +279,19 @@ public class SupplyNetworkProjectionFactory {
                 .collect(Collectors.groupingBy(RecursoProdutivo::getLocation, Collectors.toSet()));
 
         // LISTAS TECNICAS -------------------
-        List<ListaTecnica> listaTecnicaList = listaTecnicaRepository.customFindAllByLocationInAndMaterialOutputInFetchListaTecnicaComponente(
-                        locationsFiltradasCopia,
-                        materiaisAtivosSet);
+        Map<String, ListaTecnicaMultiplo> listaTecnicaMultiploPorId = listaTecnicaMultiploRepository
+                .customFindAllByLocationInFetchOutputs(locationsFiltradasCopia)
+                .stream()
+                .collect(Collectors.toMap(ListaTecnicaMultiplo::getId, Function.identity()));
+        List<ListaTecnica> listaTecnicaList = listaTecnicaRepository
+                .customFindAllByLocationInFetchListaTecnicaComponente(locationsFiltradasCopia)
+                .stream()
+                .map(listaTecnica -> {
+                    ListaTecnicaMultiplo listaTecnicaMultiplo = listaTecnicaMultiploPorId.get(listaTecnica.getId());
+                    return listaTecnicaMultiplo == null ? listaTecnica : listaTecnicaMultiplo;
+                })
+                .filter(listaTecnica -> materiaisAtivosSet.containsAll(listaTecnica.getMateriaisOutput()))
+                .toList();
         validaEntidadesComId(
                 listaTecnicaList,
                 ListaTecnica::getId,
@@ -293,25 +313,35 @@ public class SupplyNetworkProjectionFactory {
 
         Set<ListaTecnica> listasTecnicasViaveisSet = listaTecnicaList.stream()
                 .filter(x -> x.getAtivo())
-                .filter(x -> supplyNetworkProjection.clusterEParametrosProjection.isDfuAtiva(
-                        x.getMaterialOutput(), x.getLocation()))
+                .filter(x -> x.getMateriaisOutput().stream().allMatch(materialOutput ->
+                        supplyNetworkProjection.clusterEParametrosProjection.isDfuAtiva(
+                                materialOutput,
+                                x.getLocation())))
                 // todos os componentes da lista técnica devem ser ativos
                 .filter(x -> x.getMateriaisInput().size() ==
                         x.getMateriaisInput().stream().filter(y ->
                                 supplyNetworkProjection.clusterEParametrosProjection.isDfuAtiva(y, x.getLocation())).count())
                 .collect(Collectors.toSet());
         // Map<Location,Map<Produto,Set<ListaTecnica>>>
-        supplyNetworkProjection.mapaListaTecnicaSetPorLocationMaterial = listaTecnicaList.stream()
-                .collect(Collectors.groupingBy(ListaTecnica::getLocation,
-                        Collectors.groupingBy(ListaTecnica::getMaterialOutput, Collectors.toSet())));
-        supplyNetworkProjection.mapaListaTecnicaViavelSetPorLocationMaterial = listasTecnicasViaveisSet.stream()
-                .collect(Collectors.groupingBy(ListaTecnica::getLocation,
-                        Collectors.groupingBy(ListaTecnica::getMaterialOutput, Collectors.toSet())));
+        supplyNetworkProjection.mapaListaTecnicaSetPorLocationMaterial = getListaTecnicaPorLocationEMaterial(
+                listaTecnicaList);
+        supplyNetworkProjection.mapaListaTecnicaViavelSetPorLocationMaterial = getListaTecnicaPorLocationEMaterial(
+                listasTecnicasViaveisSet);
 
         // ROTEIROS ------------------------------
-        List<Roteiro> roteiroList = roteiroRepository.customFindAllByLocationInAndMaterialOutputInFetchOperacaoRoteiroSet(
-                        locationsFiltradasCopia,
-                        materiaisAtivosSet);
+        Map<String, RoteiroMultiplo> roteiroMultiploPorId = roteiroMultiploRepository
+                .customFindAllByLocationInFetchMateriaisOutput(locationsFiltradasCopia)
+                .stream()
+                .collect(Collectors.toMap(RoteiroMultiplo::getId, Function.identity()));
+        List<Roteiro> roteiroList = roteiroRepository
+                .customFindAllByLocationInFetchOperacaoRoteiroSet(locationsFiltradasCopia)
+                .stream()
+                .map(roteiro -> {
+                    RoteiroMultiplo roteiroMultiplo = roteiroMultiploPorId.get(roteiro.getId());
+                    return roteiroMultiplo == null ? roteiro : roteiroMultiplo;
+                })
+                .filter(roteiro -> materiaisAtivosSet.containsAll(roteiro.getMateriaisOutput()))
+                .toList();
         validaEntidadesComId(
                 roteiroList,
                 Roteiro::getId,
@@ -325,24 +355,24 @@ public class SupplyNetworkProjectionFactory {
                         roteiro -> Set.copyOf(roteiro.getOperacaoRoteiroSet())));
         Set<Roteiro> roteirosViaveisSet = roteiroList.stream()
                 .filter(x -> x.getAtivo())
-                .filter(x -> !supplyNetworkProjection.getListasTecnicasViaveis(x.getLocation(), x.getMaterialOutput(), null).isEmpty())
+                .filter(x -> x.getMateriaisOutput().stream().allMatch(materialOutput ->
+                        !supplyNetworkProjection.getListasTecnicasViaveis(
+                                x.getLocation(),
+                                materialOutput,
+                                null).isEmpty()))
                 .filter(x -> !x.getOperacaoRoteiroSet().stream()
                         .anyMatch(y -> !recursoProdutivoAtivoSet.contains(y.getRecursoProdutivo())))
-                .filter(x -> supplyNetworkProjection.clusterEParametrosProjection.isDfuAtiva(
-                        x.getMaterialOutput(), x.getLocation()))
+                .filter(x -> x.getMateriaisOutput().stream().allMatch(materialOutput ->
+                        supplyNetworkProjection.clusterEParametrosProjection.isDfuAtiva(
+                                materialOutput,
+                                x.getLocation())))
                 .collect(Collectors.toSet());
-        supplyNetworkProjection.mapaRoteiroSetPorRecursoProdutivoMaterial = roteiroList.stream()
-                .flatMap(x -> x.getOperacaoRoteiroSet().stream())
-                .collect(Collectors.groupingBy(OperacaoRoteiro::getRecursoProdutivo,
-                        Collectors.groupingBy(operacaoRoteiro -> operacaoRoteiro.getRoteiro().getMaterialOutput(),
-                                Collectors.mapping(OperacaoRoteiro::getRoteiro, Collectors.toSet()))));
+        supplyNetworkProjection.mapaRoteiroSetPorRecursoProdutivoMaterial = getRoteiroPorRecursoEMaterial(
+                roteiroList);
         // Map<Location,Map<Produto,Set<Roteiro>>>
-        supplyNetworkProjection.mapaRoteiroSetPorLocationMaterial = roteiroList.stream()
-                .collect(Collectors.groupingBy(Roteiro::getLocation,
-                        Collectors.groupingBy(Roteiro::getMaterialOutput, Collectors.toSet())));
-        supplyNetworkProjection.mapaRoteiroViavelSetPorLocationMaterial = roteirosViaveisSet.stream()
-                .collect(Collectors.groupingBy(Roteiro::getLocation,
-                        Collectors.groupingBy(Roteiro::getMaterialOutput, Collectors.toSet())));
+        supplyNetworkProjection.mapaRoteiroSetPorLocationMaterial = getRoteiroPorLocationEMaterial(roteiroList);
+        supplyNetworkProjection.mapaRoteiroViavelSetPorLocationMaterial = getRoteiroPorLocationEMaterial(
+                roteirosViaveisSet);
         // VERSAO PRODUCAO INEXISTENTE
         supplyNetworkProjection.versaoProducaoInexistente = versaoProducaoService.getOuPersisteVersaoProducaoInexistente();
 
@@ -350,9 +380,11 @@ public class SupplyNetworkProjectionFactory {
         Set<VersaoProducao> versaoProducaoAbstractSet = new HashSet<>();
 
         // VERSOES PRODUCAO PERSISTIDAS ---------------------------------------
-        List<VersaoProducao> versaoProducaoList = versaoProducaoRepository.customFindAllByLocationInAndMaterialOutputIn(
-                        locationsFiltradasCopia,
-                        materiaisAtivosSet);
+        List<VersaoProducao> versaoProducaoList = versaoProducaoRepository
+                .customFindAllByLocationIn(locationsFiltradasCopia)
+                .stream()
+                .filter(versaoProducao -> materiaisAtivosSet.containsAll(versaoProducao.getMateriaisOutput()))
+                .toList();
         validaEntidadesComId(
                 versaoProducaoList,
                 VersaoProducao::getId,
@@ -449,15 +481,15 @@ public class SupplyNetworkProjectionFactory {
 
             // sempre adiciona versoes de producao ao mapaVersaoProducaoSetPorLocationMaterial,
             // mesmo que inativas ou inviáveis
-            Produto materialOutput = supplyNetworkProjection.getMaterialOutputProjetado(
-                    versaoProducaoAbstract.getRoteiro(),
-                    versaoProducaoAbstract.getListaTecnica());
-            FuncoesMap.getOrAddElementoDeNestedMap(
-                    supplyNetworkProjection.mapaVersaoProducaoSetPorLocationMaterial,
-                    Set.class,
-                    () -> new HashSet<>(),
-                    location, materialOutput)
-                    .add(versaoProducaoAbstract);
+            Set<Produto> materiaisOutput = supplyNetworkProjection.getMateriaisOutput(versaoProducaoAbstract);
+            for (Produto materialOutput : materiaisOutput) {
+                FuncoesMap.getOrAddElementoDeNestedMap(
+                        supplyNetworkProjection.mapaVersaoProducaoSetPorLocationMaterial,
+                        Set.class,
+                        () -> new HashSet<>(),
+                        location, materialOutput)
+                        .add(versaoProducaoAbstract);
+            }
 
             // insere as versões de produção viáveis nos respectivos mapas
             if (!versaoProducaoAbstract.getAtivo()) continue;
@@ -478,12 +510,14 @@ public class SupplyNetworkProjectionFactory {
 
             if (possuiRoteiroInviavel || possuiListaTecnicaInviavel) continue;
 
-            FuncoesMap.getOrAddElementoDeNestedMap(
-                    supplyNetworkProjection.mapaVersaoProducaoViavelSetPorLocationMaterial,
-                    Set.class,
-                    () -> new HashSet<>(),
-                    location, materialOutput)
-                    .add(versaoProducaoAbstract);
+            for (Produto materialOutput : materiaisOutput) {
+                FuncoesMap.getOrAddElementoDeNestedMap(
+                        supplyNetworkProjection.mapaVersaoProducaoViavelSetPorLocationMaterial,
+                        Set.class,
+                        () -> new HashSet<>(),
+                        location, materialOutput)
+                        .add(versaoProducaoAbstract);
+            }
 
             for (RecursoProdutivo recursoProdutivo :
                     supplyNetworkProjection.getRecursosProdutivos(roteiro)) {
@@ -996,6 +1030,59 @@ public class SupplyNetworkProjectionFactory {
         }
 
         return (int) Math.ceil(leadTimeDiasLocationOrigemPadraoMateriasPrimas);
+    }
+
+    /** Indexa uma lista técnica em cada um dos outputs físicos do pacote. */
+    private Map<Location, Map<Produto, Set<ListaTecnica>>> getListaTecnicaPorLocationEMaterial(
+            Collection<ListaTecnica> listaTecnicaCollection) {
+
+        Map<Location, Map<Produto, Set<ListaTecnica>>> resultado = new HashMap<>();
+        for (ListaTecnica listaTecnica : listaTecnicaCollection) {
+            for (Produto materialOutput : listaTecnica.getMateriaisOutput()) {
+                resultado
+                        .computeIfAbsent(listaTecnica.getLocation(), location -> new HashMap<>())
+                        .computeIfAbsent(materialOutput, material -> new HashSet<>())
+                        .add(listaTecnica);
+            }
+        }
+        return resultado;
+
+    }
+
+    /** Indexa um roteiro em cada material produzido e em todos os seus recursos. */
+    private Map<Location, Map<Produto, Set<Roteiro>>> getRoteiroPorLocationEMaterial(
+            Collection<Roteiro> roteiroCollection) {
+
+        Map<Location, Map<Produto, Set<Roteiro>>> resultado = new HashMap<>();
+        for (Roteiro roteiro : roteiroCollection) {
+            for (Produto materialOutput : roteiro.getMateriaisOutput()) {
+                resultado
+                        .computeIfAbsent(roteiro.getLocation(), location -> new HashMap<>())
+                        .computeIfAbsent(materialOutput, material -> new HashSet<>())
+                        .add(roteiro);
+            }
+        }
+        return resultado;
+
+    }
+
+    /** Indexa o mesmo pacote em todos os recursos/operações e outputs associados. */
+    private Map<RecursoProdutivo, Map<Produto, Set<Roteiro>>> getRoteiroPorRecursoEMaterial(
+            Collection<Roteiro> roteiroCollection) {
+
+        Map<RecursoProdutivo, Map<Produto, Set<Roteiro>>> resultado = new HashMap<>();
+        for (Roteiro roteiro : roteiroCollection) {
+            for (OperacaoRoteiro operacaoRoteiro : roteiro.getOperacaoRoteiroSet()) {
+                for (Produto materialOutput : roteiro.getMateriaisOutput()) {
+                    resultado
+                            .computeIfAbsent(operacaoRoteiro.getRecursoProdutivo(), recurso -> new HashMap<>())
+                            .computeIfAbsent(materialOutput, material -> new HashSet<>())
+                            .add(roteiro);
+                }
+            }
+        }
+        return resultado;
+
     }
 
 }

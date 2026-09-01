@@ -116,7 +116,7 @@ public class VersaoProducao implements Serializable, Comparable<VersaoProducao> 
         if (!listaTecnica.getLocation().equals(location)) {
             throw new IllegalStateException("BOM location differs from production version location");
         }
-        if (!listaTecnica.getMaterialOutput().equals(roteiro.getMaterialOutput())) {
+        if (!listaTecnica.getMateriaisOutput().equals(roteiro.getMateriaisOutput())) {
             throw new IllegalStateException("Routing and BOM output materials differ");
         }
 
@@ -125,7 +125,7 @@ public class VersaoProducao implements Serializable, Comparable<VersaoProducao> 
     public Set<Produto> getMateriaisOutput() {
 
         geraErroSeUsoProdutivoDaSentinela();
-        return Set.of(roteiro.getMaterialOutput());
+        return listaTecnica.getMateriaisOutput();
 
     }
 
