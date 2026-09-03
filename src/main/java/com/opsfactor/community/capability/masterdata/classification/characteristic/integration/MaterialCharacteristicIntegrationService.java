@@ -24,12 +24,15 @@ public class MaterialCharacteristicIntegrationService implements IntegrationServ
         MaterialCharacteristicIntegrationMapper,
         EmptyIntegrationDataFilter> {
 
+    /** Repository usado para persistir caracteristicas de material em lote. */
     @Autowired
     private CaracteristicaMaterialRepository caracteristicaMaterialRepository;
 
+    /** Repository usado para validar ids conflitantes de caracteristicas de location. */
     @Autowired
     private CaracteristicaLocationRepository caracteristicaLocationRepository;
 
+    /** Mapper do contrato publico de integracao de caracteristicas de material. */
     @Autowired
     private MaterialCharacteristicIntegrationMapper materialCharacteristicIntegrationMapper;
 

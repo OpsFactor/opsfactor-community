@@ -1,6 +1,6 @@
 # OpsFactor Community
 
-OpsFactor Community is the backend of the OpsFactor Open Core foundation for
+OpsFactor Community is the source-available backend foundation for
 demand and supply chain planning. It is an independently buildable Spring Boot
 application and never depends on sources or artifacts from OpsFactor Enterprise.
 

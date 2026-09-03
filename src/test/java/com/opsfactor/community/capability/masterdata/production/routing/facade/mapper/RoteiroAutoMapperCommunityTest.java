@@ -1,5 +1,6 @@
 package com.opsfactor.community.capability.masterdata.production.routing.facade.mapper;
 
+import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.masterdata.production.routing.facade.dto.RoteiroDTO;
 import org.junit.jupiter.api.Assertions;
@@ -18,6 +19,7 @@ class RoteiroAutoMapperCommunityTest {
     void shouldExposeConfiguredValueWithoutApplyingEntityFallback() {
 
         Roteiro roteiroSemConfiguracao = new Roteiro();
+        roteiroSemConfiguracao.setMaterialOutput(new Produto("MAT-1"));
         roteiroSemConfiguracao.setHabilitadoParaUsoSemVersaoProducao(null);
 
         RoteiroDTO dtoSemConfiguracao = roteiroAutoMapper.converte(roteiroSemConfiguracao);
@@ -26,6 +28,7 @@ class RoteiroAutoMapperCommunityTest {
         Assertions.assertTrue(roteiroSemConfiguracao.getHabilitadoParaUsoSemVersaoProducao());
 
         Roteiro roteiroBloqueado = new Roteiro();
+        roteiroBloqueado.setMaterialOutput(new Produto("MAT-2"));
         roteiroBloqueado.setHabilitadoParaUsoSemVersaoProducao(false);
 
         RoteiroDTO dtoBloqueado = roteiroAutoMapper.converte(roteiroBloqueado);

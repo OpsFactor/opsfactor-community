@@ -42,6 +42,8 @@ public class ProductionFrontDtoCommunityContractTest {
                         "priority",
                         "locationId",
                         "outputMaterialId",
+                        "baseQuantity",
+                        "baseQuantityUomId",
                         "canBeUsedWithoutProductionVersion",
                         "active"));
         assertFieldNames(
@@ -50,9 +52,8 @@ public class ProductionFrontDtoCommunityContractTest {
                         "routingId",
                         "operationPosition",
                         "productionResourceId",
-                        "unitOfMeasureId",
-                        "baseQuantity",
-                        "hoursByBaseQuantity"));
+                        "operationDuration",
+                        "timeUnit"));
         assertFieldNames(
                 ListaTecnicaDTO.class,
                 Set.of(

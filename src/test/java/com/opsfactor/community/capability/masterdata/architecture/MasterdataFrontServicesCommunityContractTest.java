@@ -1010,7 +1010,7 @@ class MasterdataFrontServicesCommunityContractTest {
                 IllegalStateException.class,
                 roteiroFrontServiceComRoteiroSemMaterial::getRoteiroDTOList);
         Assertions.assertEquals(
-                "Production Routing at index 0 has no output material in list snapshot.",
+                "Routing ROUT-01 has no output material",
                 missingOutputMaterialException.getMessage());
 
     }
@@ -1324,7 +1324,7 @@ class MasterdataFrontServicesCommunityContractTest {
                 IllegalStateException.class,
                 listaTecnicaFrontServiceComListaSemMaterial::getListaTecnicaDTOList);
         Assertions.assertEquals(
-                "Bill of Materials at index 0 has no output material in list snapshot.",
+                "BOM BOM-01 has no output material",
                 missingOutputMaterialException.getMessage());
 
         ListaTecnicaFacade listaTecnicaFrontServiceComUnidadeSemId =

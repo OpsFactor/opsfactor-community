@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
@@ -19,7 +20,7 @@ class VersaoProducaoServiceCommunityContractTest {
         VersaoProducao sentinelaPersistida = criaSentinela();
         Mockito.when(versaoProducaoRepository.findById(VersaoProducao.ID_VERSAO_PRODUCAO_VAZIA))
                 .thenReturn(Optional.of(sentinelaPersistida));
-        VersaoProducaoService versaoProducaoService = new VersaoProducaoService(versaoProducaoRepository);
+        VersaoProducaoService versaoProducaoService = criaService(versaoProducaoRepository);
 
         VersaoProducao resultado = versaoProducaoService.getOuPersisteVersaoProducaoInexistente();
 
@@ -36,7 +37,7 @@ class VersaoProducaoServiceCommunityContractTest {
                 .thenReturn(Optional.empty());
         Mockito.when(versaoProducaoRepository.save(Mockito.any(VersaoProducao.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-        VersaoProducaoService versaoProducaoService = new VersaoProducaoService(versaoProducaoRepository);
+        VersaoProducaoService versaoProducaoService = criaService(versaoProducaoRepository);
 
         VersaoProducao resultado = versaoProducaoService.getOuPersisteVersaoProducaoInexistente();
 
@@ -54,6 +55,18 @@ class VersaoProducaoServiceCommunityContractTest {
         versaoProducao.setId(VersaoProducao.ID_VERSAO_PRODUCAO_VAZIA);
         versaoProducao.setAtivo(false);
         return versaoProducao;
+
+    }
+
+    private static VersaoProducaoService criaService(
+            VersaoProducaoRepository versaoProducaoRepository) {
+
+        VersaoProducaoService versaoProducaoService = new VersaoProducaoService();
+        ReflectionTestUtils.setField(
+                versaoProducaoService,
+                "versaoProducaoRepository",
+                versaoProducaoRepository);
+        return versaoProducaoService;
 
     }
 

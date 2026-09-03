@@ -21,6 +21,7 @@ import java.util.List;
 @RestController
 public class DemandPlanDetailedExportController {
 
+    /** Service que monta a fotografia detalhada do Demand Plan para download. */
     @Autowired
     private DemandPlanDetailedExportService demandPlanDetailedExportService;
 

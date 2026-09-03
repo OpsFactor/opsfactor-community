@@ -13,6 +13,14 @@ import com.opsfactor.community.web.restcontroller.dataupload.masterdata.Location
 import com.opsfactor.community.web.restcontroller.dataupload.masterdata.MaterialIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.masterdata.ParametrosMaterialLocationIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.masterdata.UnidadeMedidaIntegrationController;
+import com.opsfactor.community.web.restcontroller.dataupload.DemandPlanDetailedExportController;
+import com.opsfactor.community.web.restcontroller.dataupload.DistributionPlanIntegrationController;
+import com.opsfactor.community.web.restcontroller.dataupload.LocationCharacteristicIntegrationController;
+import com.opsfactor.community.web.restcontroller.dataupload.LocationCharacteristicValueIntegrationController;
+import com.opsfactor.community.web.restcontroller.dataupload.MaterialCharacteristicIntegrationController;
+import com.opsfactor.community.web.restcontroller.dataupload.MaterialCharacteristicValueIntegrationController;
+import com.opsfactor.community.web.restcontroller.dataupload.ProductionPlanOccupationIntegrationController;
+import com.opsfactor.community.web.restcontroller.dataupload.ProductionPlanVolumeIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.masterdata.inventorypolicy.InventoryPolicyDetailIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.masterdata.inventorypolicy.InventoryPolicyIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.masterdata.malha.LinhaTransporteIntegrationController;
@@ -30,6 +38,7 @@ import com.opsfactor.community.web.restcontroller.dataupload.planning.supply.Inv
 import com.opsfactor.community.web.restcontroller.dataupload.transactionaldata.EstoqueIntegrationController;
 import com.opsfactor.community.web.restcontroller.dataupload.transactionaldata.SelloutIntegrationController;
 import com.opsfactor.community.web.restcontroller.masterdata.ClusteringRestController;
+import com.opsfactor.community.web.restcontroller.masterdata.CharacteristicCatalogRestController;
 import com.opsfactor.community.web.restcontroller.masterdata.LinhaTransporteController;
 import com.opsfactor.community.web.restcontroller.masterdata.LocationRestController;
 import com.opsfactor.community.web.restcontroller.masterdata.MaterialRestController;
@@ -90,6 +99,14 @@ public class CommunityRestControllerSurfaceContractTest {
                         ProcessStatusController.class,
                         RuntimeInfoController.class,
                         UserConfigurationController.class,
+                        DemandPlanDetailedExportController.class,
+                        DistributionPlanIntegrationController.class,
+                        LocationCharacteristicIntegrationController.class,
+                        LocationCharacteristicValueIntegrationController.class,
+                        MaterialCharacteristicIntegrationController.class,
+                        MaterialCharacteristicValueIntegrationController.class,
+                        ProductionPlanOccupationIntegrationController.class,
+                        ProductionPlanVolumeIntegrationController.class,
                         ConversaoUnidadeIntegrationController.class,
                         ConversaoUnidadeProdutoIntegrationController.class,
                         LocationIntegrationController.class,
@@ -112,6 +129,7 @@ public class CommunityRestControllerSurfaceContractTest {
                         InventoryPlanIntegrationController.class,
                         EstoqueIntegrationController.class,
                         SelloutIntegrationController.class,
+                        CharacteristicCatalogRestController.class,
                         ClusteringRestController.class,
                         LinhaTransporteController.class,
                         LocationRestController.class,

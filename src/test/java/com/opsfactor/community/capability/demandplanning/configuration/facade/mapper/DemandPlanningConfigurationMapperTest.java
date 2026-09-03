@@ -932,7 +932,7 @@ public class DemandPlanningConfigurationMapperTest {
             setField(compositeKey, "perfilExecucaoDemandPlan", null);
         }
         if (clusterMateriaisDemandPlanning == null) {
-            setField(compositeKey, "clusterProdutosDemandPlanning", null);
+            setField(compositeKey, "clusterMateriais", null);
         }
         if (clusterLocations == null) {
             setField(compositeKey, "clusterLocations", null);

@@ -24,12 +24,15 @@ public class LocationCharacteristicIntegrationService implements IntegrationServ
         LocationCharacteristicIntegrationMapper,
         EmptyIntegrationDataFilter> {
 
+    /** Repository usado para persistir caracteristicas de location em lote. */
     @Autowired
     private CaracteristicaLocationRepository caracteristicaLocationRepository;
 
+    /** Repository usado para validar ids conflitantes de caracteristicas de material. */
     @Autowired
     private CaracteristicaMaterialRepository caracteristicaMaterialRepository;
 
+    /** Mapper do contrato publico de integracao de caracteristicas de location. */
     @Autowired
     private LocationCharacteristicIntegrationMapper locationCharacteristicIntegrationMapper;
 

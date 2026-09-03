@@ -29,12 +29,15 @@ import java.util.List;
 @Service
 public class CommunityDemandPlanDetailedExportService implements DemandPlanDetailedExportService {
 
+    /** Repository do cabecalho do Demand Plan exportado. */
     @Autowired
     private DemandPlanRepository demandPlanRepository;
 
+    /** Repository das linhas detalhadas exportadas em lote. */
     @Autowired
     private DemandPlanItemRepository demandPlanItemRepository;
 
+    /** Factory dos parametros e clusters usados para contextualizar a exportacao. */
     @Autowired
     private ClusterEParametrosProjectionFactory clusterAndParametersProjectionFactory;
 
