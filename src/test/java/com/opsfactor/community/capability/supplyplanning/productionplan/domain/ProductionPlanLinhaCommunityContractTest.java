@@ -40,7 +40,7 @@ class ProductionPlanLinhaCommunityContractTest {
                         listaTecnica));
 
         Assertions.assertEquals(
-                "Bill of Materials output material FG_LINE different than version material FG_ROUTING",
+                "Routing and BOM output materials differ",
                 illegalStateException.getMessage());
 
     }
@@ -62,7 +62,7 @@ class ProductionPlanLinhaCommunityContractTest {
                         listaTecnica));
 
         Assertions.assertEquals(
-                "Bill of Materials output material FG_BOM different than version material FG_LINE",
+                "Routing and BOM output materials differ",
                 illegalStateException.getMessage());
 
     }

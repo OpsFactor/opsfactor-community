@@ -17,8 +17,10 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.p
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjectionFactory;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.repository.LinhaTransporteRepository;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.repository.VersaoMalhaRepository;
+import com.opsfactor.community.capability.masterdata.production.billofmaterials.repository.ListaTecnicaMultiploRepository;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.repository.ListaTecnicaRepository;
 import com.opsfactor.community.capability.masterdata.production.productionresource.repository.RecursoProdutivoRepository;
+import com.opsfactor.community.capability.masterdata.production.routing.repository.RoteiroMultiploRepository;
 import com.opsfactor.community.capability.masterdata.production.routing.repository.RoteiroRepository;
 import com.opsfactor.community.capability.masterdata.production.productionversion.repository.VersaoProducaoRepository;
 import com.opsfactor.community.capability.masterdata.production.productionversion.service.VersaoProducaoService;
@@ -399,7 +401,10 @@ class SupplyNetworkProjectionCommunityContractTest {
         SupplyNetworkProjectionFactory supplyNetworkProjectionFactory =
                 getSupplyNetworkProjectionFactoryComDadosMestresProducao(
                         List.of(),
-                        List.of(new ListaTecnica()),
+                        List.of(getListaTecnica(
+                                null,
+                                new Location("PLANT"),
+                                new Produto("FG"))),
                         List.of());
         SupplyNetworkProjection supplyNetworkProjection =
                 getSupplyNetworkProjectionComCluster(new Location("PLANT"), new Produto("FG"));
@@ -447,7 +452,10 @@ class SupplyNetworkProjectionCommunityContractTest {
                 getSupplyNetworkProjectionFactoryComDadosMestresProducao(
                         List.of(),
                         List.of(),
-                        List.of(new Roteiro()));
+                        List.of(getRoteiro(
+                                null,
+                                new Location("PLANT"),
+                                new Produto("FG"))));
         SupplyNetworkProjection supplyNetworkProjection =
                 getSupplyNetworkProjectionComCluster(new Location("PLANT"), new Produto("FG"));
 
@@ -492,7 +500,12 @@ class SupplyNetworkProjectionCommunityContractTest {
 
         SupplyNetworkProjectionFactory supplyNetworkProjectionFactory =
                 getSupplyNetworkProjectionFactoryComVersoesProducao(
-                        List.of(new VersaoProducao()));
+                        List.of(new VersaoProducao(
+                                null,
+                                new Location("PLANT"),
+                                1,
+                                getRoteiro("ROUTING", new Location("PLANT"), new Produto("FG")),
+                                getListaTecnica("BOM", new Location("PLANT"), new Produto("FG")))));
         SupplyNetworkProjection supplyNetworkProjection =
                 getSupplyNetworkProjectionComCluster(new Location("PLANT"), new Produto("FG"));
 
@@ -614,16 +627,32 @@ class SupplyNetworkProjectionCommunityContractTest {
                 .thenReturn(recursoProdutivoList);
         ListaTecnicaRepository listaTecnicaRepository =
                 Mockito.mock(ListaTecnicaRepository.class);
-        Mockito.when(listaTecnicaRepository.customFindAllByLocationInAndMaterialOutputInFetchListaTecnicaComponente(
-                        Mockito.anyCollection(),
+        Mockito.when(listaTecnicaRepository.customFindAllByLocationInFetchListaTecnicaComponente(
                         Mockito.anyCollection()))
                 .thenReturn(listaTecnicaList);
+        ListaTecnicaMultiploRepository listaTecnicaMultiploRepository =
+                Mockito.mock(ListaTecnicaMultiploRepository.class);
+        Mockito.when(listaTecnicaMultiploRepository.customFindAllByLocationInFetchOutputs(
+                        Mockito.anyCollection()))
+                .thenReturn(List.of());
+        RoteiroMultiploRepository roteiroMultiploRepository =
+                Mockito.mock(RoteiroMultiploRepository.class);
+        Mockito.when(roteiroMultiploRepository.customFindAllByLocationInFetchMateriaisOutput(
+                        Mockito.anyCollection()))
+                .thenReturn(List.of());
         RoteiroRepository roteiroRepository =
                 Mockito.mock(RoteiroRepository.class);
-        Mockito.when(roteiroRepository.customFindAllByLocationInAndMaterialOutputInFetchOperacaoRoteiroSet(
-                        Mockito.anyCollection(),
+        Mockito.when(roteiroRepository.customFindAllByLocationInFetchOperacaoRoteiroSet(
                         Mockito.anyCollection()))
                 .thenReturn(roteiroList);
+        VersaoProducaoService versaoProducaoService =
+                Mockito.mock(VersaoProducaoService.class);
+        Mockito.when(versaoProducaoService.getOuPersisteVersaoProducaoInexistente())
+                .thenReturn(criaVersaoProducaoSentinela());
+        VersaoProducaoRepository versaoProducaoRepository =
+                Mockito.mock(VersaoProducaoRepository.class);
+        Mockito.when(versaoProducaoRepository.customFindAllByLocationIn(Mockito.anyCollection()))
+                .thenReturn(List.of());
 
         setPrivateField(
                 supplyNetworkProjectionFactory,
@@ -635,8 +664,24 @@ class SupplyNetworkProjectionCommunityContractTest {
                 listaTecnicaRepository);
         setPrivateField(
                 supplyNetworkProjectionFactory,
+                "listaTecnicaMultiploRepository",
+                listaTecnicaMultiploRepository);
+        setPrivateField(
+                supplyNetworkProjectionFactory,
+                "roteiroMultiploRepository",
+                roteiroMultiploRepository);
+        setPrivateField(
+                supplyNetworkProjectionFactory,
                 "roteiroRepository",
                 roteiroRepository);
+        setPrivateField(
+                supplyNetworkProjectionFactory,
+                "versaoProducaoService",
+                versaoProducaoService);
+        setPrivateField(
+                supplyNetworkProjectionFactory,
+                "versaoProducaoRepository",
+                versaoProducaoRepository);
 
         return supplyNetworkProjectionFactory;
 
@@ -657,10 +702,8 @@ class SupplyNetworkProjectionCommunityContractTest {
                 .thenReturn(criaVersaoProducaoSentinela());
         VersaoProducaoRepository versaoProducaoRepository =
                 Mockito.mock(VersaoProducaoRepository.class);
-        Mockito.when(versaoProducaoRepository
-                        .customFindAllByLocationInAndMaterialOutputIn(
-                                Mockito.anyCollection(),
-                                Mockito.anyCollection()))
+        Mockito.when(versaoProducaoRepository.customFindAllByLocationIn(
+                        Mockito.anyCollection()))
                 .thenReturn(versaoProducaoList);
 
         setPrivateField(

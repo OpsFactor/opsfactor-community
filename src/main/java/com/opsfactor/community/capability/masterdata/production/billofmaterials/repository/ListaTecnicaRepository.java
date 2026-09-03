@@ -31,12 +31,16 @@ public interface ListaTecnicaRepository extends JpaRepository<ListaTecnica,Strin
             + "LEFT JOIN FETCH lt.unidadeMedidaMaterialOutput")
     List<ListaTecnica> customFindAllWithLocationMaterialOutputAndUnidadeMedidaMaterialOutput();
 
+    /**
+     * Carrega BOMs do recorte material/location com componentes e unidades já
+     * inicializados para a projection da malha de suprimentos.
+     */
     @Query("SELECT DISTINCT lt FROM ListaTecnica lt "
             + "LEFT JOIN FETCH lt.location "
             + "LEFT JOIN FETCH lt.materialOutput "
             + "LEFT JOIN FETCH lt.unidadeMedidaMaterialOutput "
             + "LEFT JOIN FETCH lt.listaTecnicaComponenteSet ltc "
-            + "LEFT JOIN FETCH ltc.materialComponente "
+            + "LEFT JOIN FETCH ltc.listaTecnicaComponenteCompositeKey.materialComponente "
             + "LEFT JOIN FETCH ltc.unidadeMedidaMaterialComponente "
             + "WHERE lt.location IN :locations "
             + "AND lt.materialOutput IN :materiais")
@@ -44,13 +48,16 @@ public interface ListaTecnicaRepository extends JpaRepository<ListaTecnica,Strin
             @Param("locations") Collection<Location> locations,
             @Param("materiais") Collection<Produto> materiais);
 
-    /** Carrega listas técnicas de qualquer subtipo para a projection canônica. */
+    /**
+     * Carrega BOMs de qualquer subtipo por location com componentes e unidades
+     * já inicializados para a projection canônica.
+     */
     @Query("SELECT DISTINCT lt FROM ListaTecnica lt "
             + "LEFT JOIN FETCH lt.location "
             + "LEFT JOIN FETCH lt.materialOutput "
             + "LEFT JOIN FETCH lt.unidadeMedidaMaterialOutput "
             + "LEFT JOIN FETCH lt.listaTecnicaComponenteSet ltc "
-            + "LEFT JOIN FETCH ltc.materialComponente "
+            + "LEFT JOIN FETCH ltc.listaTecnicaComponenteCompositeKey.materialComponente "
             + "LEFT JOIN FETCH ltc.unidadeMedidaMaterialComponente "
             + "WHERE lt.location IN :locations")
     List<ListaTecnica> customFindAllByLocationInFetchListaTecnicaComponente(
