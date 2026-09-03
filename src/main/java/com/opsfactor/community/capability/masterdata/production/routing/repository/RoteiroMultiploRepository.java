@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 public interface RoteiroMultiploRepository extends JpaRepository<RoteiroMultiplo, String> {
 
     @Query("SELECT DISTINCT r FROM RoteiroMultiplo r "
+            + "LEFT JOIN FETCH r.location "
             + "LEFT JOIN FETCH r.roteiroMultiploMaterialSet rm "
             + "LEFT JOIN FETCH rm.roteiroMultiploMaterialCompositeKey.material "
             + "WHERE r.location IN :locations")

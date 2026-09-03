@@ -634,7 +634,7 @@ class ProductionIntegrationServicesCommunityContractTest {
         RoteiroRepository roteiroRepository =
                 criaRepositoryProxy(
                         RoteiroRepository.class,
-                        "findAll",
+                        "customFindAllForFront",
                         List.of(new Roteiro()));
         ListaTecnicaRepository listaTecnicaRepository =
                 criaRepositoryProxy(

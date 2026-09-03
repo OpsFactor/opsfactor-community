@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 public interface ListaTecnicaMultiploRepository extends JpaRepository<ListaTecnicaMultiplo, String> {
 
     @Query("SELECT DISTINCT lt FROM ListaTecnicaMultiplo lt "
+            + "LEFT JOIN FETCH lt.location "
             + "LEFT JOIN FETCH lt.listaTecnicaMultiploOutputSet output "
             + "LEFT JOIN FETCH output.listaTecnicaMultiploOutputCompositeKey.materialOutput "
             + "LEFT JOIN FETCH output.unidadeMedida "

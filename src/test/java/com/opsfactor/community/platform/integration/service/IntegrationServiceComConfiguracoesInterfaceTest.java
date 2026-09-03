@@ -36,6 +36,14 @@ import java.util.Set;
 class IntegrationServiceComConfiguracoesInterfaceTest {
 
     @Test
+    void genericServicesKeepTheirExistingParallelConversionPolicy() {
+
+        Assertions.assertTrue(new DummyIntegrationService(List.of())
+                .getDtoConversionStream(List.of()).isParallel());
+
+    }
+
+    @Test
     void persistedEntityMapShouldRejectNullSnapshot() {
 
         DummyIntegrationService dummyIntegrationService =

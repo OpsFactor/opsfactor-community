@@ -18,6 +18,7 @@ import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Contrato comum dos services de importacao/exportacao de dados.
@@ -41,6 +42,17 @@ public interface IntegrationServiceComConfiguracoesInterface<
     Logger log = LoggerFactory.getLogger(IntegrationServiceComConfiguracoesInterface.class);
 
     public MAPPER getMapper();
+
+    /**
+     * Selects conversion concurrency without changing the persistence batch.
+     * Services whose mapper can access managed JPA references must override
+     * this hook with a sequential stream on the owning request thread.
+     */
+    default Stream<DTO> getDtoConversionStream(Collection<DTO> dtos) {
+
+        return dtos.parallelStream();
+
+    }
 
     /**
      * Persiste um lote de entidades e retorna as entidades efetivamente gravadas.
@@ -126,7 +138,7 @@ public interface IntegrationServiceComConfiguracoesInterface<
 
         // popula as listas de entidades a remover e salvar. registros ignorados por dependencia nao
         // resolvida sao marcados para nao seguirem para importacao neste lote.
-        List<ENTITY> entitiesToRemove = dtosToRemove.parallelStream()
+        List<ENTITY> entitiesToRemove = getDtoConversionStream(dtosToRemove)
                 .filter(dto -> !dto.allFieldsAreEmpty())
                 .map(dto -> convertDTOToEntityAndTreatError(dto, dtoBatchList, currentlyPersistedEntitiesByPrimaryKey, supportData, metodoAtualizacaoPorCampo, options, initialBatchPosition, integrationLoggingContext))
                 .filter(Objects::nonNull)
@@ -135,7 +147,7 @@ public interface IntegrationServiceComConfiguracoesInterface<
          * Mantém o DTO ao lado da entidade convertida para classificar, sem
          * ambiguidade, se a chave já constava no snapshot JPA do upload.
          */
-        List<Map.Entry<DTO, ENTITY>> dtoEntityEntryList = dtosToSave.parallelStream()
+        List<Map.Entry<DTO, ENTITY>> dtoEntityEntryList = getDtoConversionStream(dtosToSave)
                 .filter(dto -> !dto.allFieldsAreEmpty())
                 .map(dto -> new AbstractMap.SimpleImmutableEntry<>(
                         dto,
