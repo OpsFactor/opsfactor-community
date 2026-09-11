@@ -9,7 +9,7 @@ import com.opsfactor.community.capability.demandplanning.demandplan.projection.D
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionMaterialLocation;
 import com.opsfactor.community.capability.demandplanning.facade.dto.SimulatedDemandPlanDTO;
 import com.opsfactor.community.capability.demandplanning.facade.dto.SimulatedDemandPlanMaterialLocationDTO;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.MetodosUtilidade;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +42,7 @@ public class DemandAnalysisMapper {
      */
     public SimulatedDemandPlanDTO demandPlanProjectionToDemandModelSetupDTO(
             DemandPlanningClusterLevelConfigurationDTO demandPlanningClusterLevelConfigurationDTO,
-            Calendario calendario,
+            CalendarioSimples calendario,
             List<? extends DemandPlanForecastProjection> demandPlanForecastProjectionsExecucao,
             SalesProjectionLocationMaterialData salesProjection) {
 
@@ -170,7 +170,7 @@ public class DemandAnalysisMapper {
      */
     private void validaEntradasDemandAnalysisMapperCommunity(
             DemandPlanningClusterLevelConfigurationDTO demandPlanningClusterLevelConfigurationDTO,
-            Calendario calendario,
+            CalendarioSimples calendario,
             List<? extends DemandPlanForecastProjection> demandPlanForecastProjectionsExecucao,
             SalesProjectionLocationMaterialData salesProjection) {
 
@@ -217,7 +217,7 @@ public class DemandAnalysisMapper {
             DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocation,
             int projectionIndex,
             int materialLocationIndex,
-            Calendario calendario) {
+            CalendarioSimples calendario) {
 
         String contextoSerie =
                 "projection "

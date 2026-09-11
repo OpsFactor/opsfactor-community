@@ -14,6 +14,7 @@ import com.opsfactor.community.capability.masterdata.product.material.domain.Pro
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
@@ -258,7 +259,7 @@ public class ClusterEParametrosProjection {
     public Optional<Integer> getShelfLifePeriods(
             Location location,
             Produto material,
-            Calendario calendario) {
+            CalendarioSimples calendario) {
 
         OptionalDouble shelfLifeDays = getShelfLifeDays(location, material);
         if (shelfLifeDays.isEmpty()) {
@@ -276,7 +277,7 @@ public class ClusterEParametrosProjection {
     public Optional<Integer> getMinimumShelfLifePeriods(
             Produto material,
             Collection<Location> locationsToEvaluate,
-            Calendario calendario) {
+            CalendarioSimples calendario) {
 
         return locationsToEvaluate.stream()
                 .map(location -> getShelfLifeDays(location, material))
@@ -500,16 +501,16 @@ public class ClusterEParametrosProjection {
                     () -> new IllegalStateException("Parâmetros material/location presentes não podem desaparecer"));
             if (parametrosProdutoLocation.getNumeroDiasHorizonteCongeladoDpCadastrado() != null) {
                 return Optional.of(
-                    (int) Math.ceil((double) calendarioDemandPlan.converteDiasParaPeriodosCalendario(parametrosProdutoLocation.getNumeroDiasHorizonteCongeladoDp())));
+                    (int) Math.ceil((double) calendarioDemandPlan.converteDiasParaPeriodosCalendario(parametrosProdutoLocation.getNumeroDiasHorizonteCongeladoDp(), calendarioDemandPlan.getPosicaoPeriodoPresente())));
             } else if (parametrosGlobais.getDiasHorizonteCongelado() != null) {
                 return Optional.of(
-                    (int) Math.ceil((double) calendarioDemandPlan.converteDiasParaPeriodosCalendario(parametrosGlobais.getDiasHorizonteCongelado())));
+                    (int) Math.ceil((double) calendarioDemandPlan.converteDiasParaPeriodosCalendario(parametrosGlobais.getDiasHorizonteCongelado(), calendarioDemandPlan.getPosicaoPeriodoPresente())));
             } else {
                 return Optional.empty();
             }
         } else if (parametrosGlobais.getDiasHorizonteCongelado() != null) {
             return Optional.of(
-                    (int) Math.ceil((double) calendarioDemandPlan.converteDiasParaPeriodosCalendario(parametrosGlobais.getDiasHorizonteCongelado())));
+                    (int) Math.ceil((double) calendarioDemandPlan.converteDiasParaPeriodosCalendario(parametrosGlobais.getDiasHorizonteCongelado(), calendarioDemandPlan.getPosicaoPeriodoPresente())));
         } else {
             return Optional.empty();
         }
@@ -521,7 +522,8 @@ public class ClusterEParametrosProjection {
         Integer totalizador = null;
         for (Location location : locations) {
             for (Produto material : materiais) {
-                Optional<Integer> optionalValor = getDPHorizonteCongeladoEmPeriodos(location, material, calendarioDemandPlan);
+                Optional<Integer> optionalValor = getDPHorizonteCongeladoEmPeriodos(location, material,
+                        calendarioDemandPlan);
                 if (optionalValor.isPresent()) {
                     int valor = optionalValor.orElseThrow(() -> new IllegalStateException(
                             "Horizonte congelado presente não pode desaparecer durante totalização"));

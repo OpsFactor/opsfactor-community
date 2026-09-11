@@ -4,7 +4,7 @@ import com.opsfactor.community.capability.masterdata.production.productionresour
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.CapacidadeProdutivaEfetivaRecursoProdutivoSupplyPlan;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.capability.supplyplanning.productionplan.repository.CapacidadeProdutivaEfetivaRecursoProdutivoSupplyPlanRepository;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -248,9 +248,9 @@ class CapacidadeEfetivaSupplyPlanServiceCommunityContractTest {
 
     }
 
-    private static Calendario getCalendarioTeste() {
+    private static CalendarioSimples getCalendarioTeste() {
 
-        return Calendario.criaCalendarioDeOffsetsDias(
+        return CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,

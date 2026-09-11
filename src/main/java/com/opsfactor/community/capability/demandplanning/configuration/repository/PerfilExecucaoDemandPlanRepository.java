@@ -3,6 +3,7 @@ package com.opsfactor.community.capability.demandplanning.configuration.reposito
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -15,6 +16,11 @@ import java.util.Optional;
 @Repository
 public interface PerfilExecucaoDemandPlanRepository extends JpaRepository<PerfilExecucaoDemandPlan, String> {
 
+    /** Jobs resolvem bucket/horizonte após a transação curta; carregar a receita evita lazy detached. */
+    @Override
+    @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = "perfilCalendario")
+    Optional<PerfilExecucaoDemandPlan> findById(String id);
+
     /*
      * Community carrega apenas os relacionamentos usados pela tela e pela rodada
      * estatistica basica. Campos de MAPE/auto-fit existem temporariamente na
@@ -22,10 +28,12 @@ public interface PerfilExecucaoDemandPlanRepository extends JpaRepository<Perfil
      * padrao desta edicao.
      */
     @Query("SELECT pedp FROM PerfilExecucaoDemandPlan pedp " +
+            "LEFT JOIN FETCH pedp.perfilCalendario " +
             "LEFT JOIN FETCH pedp.unidadeMedidaPadraoDP")
     public List<PerfilExecucaoDemandPlan> customFindAll();
 
     @Query("SELECT pedp FROM PerfilExecucaoDemandPlan pedp " +
+            "LEFT JOIN FETCH pedp.perfilCalendario " +
             "LEFT JOIN FETCH pedp.unidadeMedidaPadraoDP " +
             "WHERE pedp.id = :id")
     public Optional<PerfilExecucaoDemandPlan> customFindById(String id);

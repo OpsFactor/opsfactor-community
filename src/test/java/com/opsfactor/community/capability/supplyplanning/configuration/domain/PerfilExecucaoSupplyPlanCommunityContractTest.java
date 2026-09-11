@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.supplyplanning.configuration.domain;
 
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.masterdata.network.location.domain.LocationAbstract;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 
 import java.time.LocalDateTime;
@@ -255,7 +255,7 @@ class PerfilExecucaoSupplyPlanCommunityContractTest {
         PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan = new PerfilExecucaoSupplyPlan();
         perfilExecucaoSupplyPlan.setIncrementaImpactoFuncaoObjetivoPrimeirosPeriodos(true);
         perfilExecucaoSupplyPlan.setIncrementoPercentualImpactoFuncaoObjetivoPrimeiroPeriodo(4.0);
-        Calendario calendario = criaCalendarioComDozePeriodosFuturos();
+        CalendarioSimples calendario = criaCalendarioComDozePeriodosFuturos();
 
         /*
          * O Community bloqueia a configuracao de funcao objetivo nas bordas de
@@ -265,11 +265,13 @@ class PerfilExecucaoSupplyPlanCommunityContractTest {
          */
         Assertions.assertEquals(
                 5.0,
-                perfilExecucaoSupplyPlan.getMultiplicadorTemporalFuncaoObjetivoPrimeirosPeriodos(0, calendario),
+                perfilExecucaoSupplyPlan.getMultiplicadorTemporalFuncaoObjetivoPrimeirosPeriodos(0,
+                        calendario),
                 1E-9);
         Assertions.assertEquals(
                 1.0,
-                perfilExecucaoSupplyPlan.getMultiplicadorTemporalFuncaoObjetivoPrimeirosPeriodos(11, calendario),
+                perfilExecucaoSupplyPlan.getMultiplicadorTemporalFuncaoObjetivoPrimeirosPeriodos(11,
+                        calendario),
                 1E-9);
 
     }
@@ -284,27 +286,32 @@ class PerfilExecucaoSupplyPlanCommunityContractTest {
                 PerfilExecucaoSupplyPlan.ModeloDecaimentoImpactoTemporal.EXPONENCIAL);
         perfilExecucaoSupplyPlan.setFatorDecaimentoExponencialImpactoTemporalFuncaoObjetivo(0.35);
         perfilExecucaoSupplyPlan.setPisoMultiplicadorImpactoTemporalFuncaoObjetivo(0.20);
-        Calendario calendario = criaCalendarioComDozePeriodosFuturos();
+        CalendarioSimples calendario = criaCalendarioComDozePeriodosFuturos();
 
         Assertions.assertEquals(
                 5.0,
-                perfilExecucaoSupplyPlan.getMultiplicadorTemporalFuncaoObjetivoPrimeirosPeriodos(0, calendario),
+                perfilExecucaoSupplyPlan.getMultiplicadorTemporalFuncaoObjetivoPrimeirosPeriodos(0,
+                        calendario),
                 1E-9);
         Assertions.assertEquals(
                 1.75,
-                perfilExecucaoSupplyPlan.getMultiplicadorTemporalFuncaoObjetivoPrimeirosPeriodos(1, calendario),
+                perfilExecucaoSupplyPlan.getMultiplicadorTemporalFuncaoObjetivoPrimeirosPeriodos(1,
+                        calendario),
                 1E-9);
         Assertions.assertEquals(
                 0.6125,
-                perfilExecucaoSupplyPlan.getMultiplicadorTemporalFuncaoObjetivoPrimeirosPeriodos(2, calendario),
+                perfilExecucaoSupplyPlan.getMultiplicadorTemporalFuncaoObjetivoPrimeirosPeriodos(2,
+                        calendario),
                 1E-9);
         Assertions.assertEquals(
                 0.20,
-                perfilExecucaoSupplyPlan.getMultiplicadorTemporalFuncaoObjetivoPrimeirosPeriodos(4, calendario),
+                perfilExecucaoSupplyPlan.getMultiplicadorTemporalFuncaoObjetivoPrimeirosPeriodos(4,
+                        calendario),
                 1E-9);
         Assertions.assertEquals(
                 -1.75,
-                perfilExecucaoSupplyPlan.aplicaMultiplicadorTemporalFuncaoObjetivo(-1.0, 1, calendario),
+                perfilExecucaoSupplyPlan.aplicaMultiplicadorTemporalFuncaoObjetivo(-1.0, 1,
+                        calendario),
                 1E-9);
 
     }
@@ -407,9 +414,9 @@ class PerfilExecucaoSupplyPlanCommunityContractTest {
 
     }
 
-    private Calendario criaCalendarioComDozePeriodosFuturos() {
+    private CalendarioSimples criaCalendarioComDozePeriodosFuturos() {
 
-        return Calendario.criaCalendarioDeOffsetsPeriodos(
+        return CalendarioSimples.criaCalendarioDeOffsetsPeriodos(
                 Constantes.TamanhoBucket.MENSAL,
                 LocalDateTime.of(2026, 1, 1, 0, 0),
                 0,

@@ -7,7 +7,7 @@ import com.opsfactor.community.capability.masterdata.demand.dfu.projection.Locat
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjectionFactory;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void bottomUpBottomUpShouldUseMaterialLocationSeriesAsExecutionUnits() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         Location location = getLocation("LOCATION_A", true);
         Produto material = getMaterial("MATERIAL_A", true);
@@ -64,7 +64,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void topDownBottomUpShouldCreateOneAggregatePerLocation() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         Location locationA = getLocation("LOCATION_A", true);
         Location locationB = getLocation("LOCATION_B", true);
@@ -135,7 +135,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void topDownBottomUpShouldSkipLocationWithoutMaterialLocationSeries() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         Location locationComHistorico = getLocation("LOCATION_WITH_HISTORY", true);
         Location locationSemHistorico = getLocation("LOCATION_WITHOUT_HISTORY", true);
@@ -173,7 +173,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void topDownBottomUpShouldReturnEmptyListWhenThereAreNoMaterialLocationSeries() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         Location location = getLocation("LOCATION_A", true);
         LocationProjection locationProjection = LocationProjectionFactory.getProjectionSetLocations(
@@ -204,7 +204,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void topDownBottomUpShouldFailExplicitlyWhenLocationProjectionIsMissing() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocation =
                 getDemandPlanForecastProjectionMaterialLocation(
@@ -241,7 +241,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void topDownBottomUpShouldFailWhenLocationScopeReturnsNullCollection() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocation =
                 getDemandPlanForecastProjectionMaterialLocation(
@@ -273,7 +273,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void topDownBottomUpShouldFailWhenLocationScopeContainsNullItem() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocation =
                 getDemandPlanForecastProjectionMaterialLocation(
@@ -305,7 +305,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void bottomUpTopDownShouldCreateOneAggregatePerMaterial() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         Location locationA = getLocation("LOCATION_A", true);
         Location locationB = getLocation("LOCATION_B", true);
@@ -376,7 +376,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void bottomUpTopDownShouldSkipMaterialWithoutMaterialLocationSeries() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         Location location = getLocation("LOCATION_A", true);
         Produto materialComHistorico = getMaterial("MATERIAL_WITH_HISTORY", true);
@@ -414,7 +414,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void bottomUpTopDownShouldReturnEmptyListWhenThereAreNoMaterialLocationSeries() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         Produto material = getMaterial("MATERIAL_A", true);
         MaterialProjection materialProjection = MaterialProjectionFactory.getProjectionSetMateriais(
@@ -445,7 +445,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void bottomUpTopDownShouldFailExplicitlyWhenMaterialProjectionIsMissing() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocation =
                 getDemandPlanForecastProjectionMaterialLocation(
@@ -482,7 +482,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void bottomUpTopDownShouldFailWhenMaterialScopeReturnsNullCollection() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocation =
                 getDemandPlanForecastProjectionMaterialLocation(
@@ -514,7 +514,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void bottomUpTopDownShouldFailWhenMaterialScopeContainsNullItem() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocation =
                 getDemandPlanForecastProjectionMaterialLocation(
@@ -546,7 +546,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void materialLocationSeriesListShouldBeRequiredBeforeAnyAggregationBranch() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
 
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
@@ -571,7 +571,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void materialLocationSeriesListShouldNotContainNullItems() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
 
         IllegalStateException illegalStateException = Assertions.assertThrows(
@@ -596,7 +596,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void materialLocationSeriesConstructorShouldRequireLocationIdentity() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         Produto material = getMaterial("MATERIAL_A", true);
 
@@ -618,7 +618,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void materialLocationSeriesConstructorShouldRequireMaterialIdentity() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         Location location = getLocation("LOCATION_A", true);
 
@@ -671,7 +671,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void aggregateExecutionShouldRequireUnidadeMedidaWhenThereAreMaterialLocationSeries() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocation =
                 getDemandPlanForecastProjectionMaterialLocation(
                         calendario,
@@ -702,7 +702,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void topDownTopDownShouldCreateSingleAggregateAndSetParentOnMaterialLocationSeries() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
 
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocationA =
@@ -756,7 +756,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void aggregateRecalculationShouldNotDuplicatePreviouslyConsolidatedValues() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
 
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocationA =
@@ -806,7 +806,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void topDownTopDownShouldReturnEmptyListWhenThereAreNoMaterialLocationSeries() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
 
         List<? extends DemandPlanForecastProjection> demandPlanForecastProjectionsExecucao =
@@ -828,7 +828,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void missingAggregationTypesShouldUseConservativeTopDownTopDown() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
 
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocationA =
@@ -878,7 +878,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void topDownBottomUpShouldSkipInactiveLocationWhenExecutionUsesOnlyActiveDfus() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         Location inactiveLocation = getLocation("LOCATION_INACTIVE", false);
         Produto material = getMaterial("MATERIAL_A", true);
@@ -917,7 +917,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void topDownBottomUpShouldKeepInactiveLocationWhenExecutionAllowsInactiveDfus() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         Location inactiveLocation = getLocation("LOCATION_INACTIVE", false);
         Produto material = getMaterial("MATERIAL_A", true);
@@ -954,7 +954,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void bottomUpTopDownShouldSkipInactiveMaterialWhenExecutionUsesOnlyActiveDfus() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         Location location = getLocation("LOCATION_A", true);
         Produto inactiveMaterial = getMaterial("MATERIAL_INACTIVE", false);
@@ -994,7 +994,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     @Test
     public void bottomUpTopDownShouldKeepInactiveMaterialWhenExecutionAllowsInactiveDfus() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         Location location = getLocation("LOCATION_A", true);
         Produto inactiveMaterial = getMaterial("MATERIAL_INACTIVE", false);
@@ -1028,9 +1028,9 @@ public class DemandPlanForecastProjectionFactoryTest {
 
     }
 
-    private static Calendario getCalendarioTeste() {
+    private static CalendarioSimples getCalendarioTeste() {
 
-        return Calendario.criaCalendarioDeOffsetsDias(
+        return CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -1041,7 +1041,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     }
 
     private static DemandPlanForecastProjectionMaterialLocation getDemandPlanForecastProjectionMaterialLocation(
-            Calendario calendario,
+            CalendarioSimples calendario,
             UnidadeMedida unidadeMedida,
             String locationId,
             String materialId,
@@ -1060,7 +1060,7 @@ public class DemandPlanForecastProjectionFactoryTest {
     }
 
     private static DemandPlanForecastProjectionMaterialLocation getDemandPlanForecastProjectionMaterialLocation(
-            Calendario calendario,
+            CalendarioSimples calendario,
             UnidadeMedida unidadeMedida,
             Location location,
             Produto material,

@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosMediaMovel;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionMaterialLocation;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ class MovingAverageForecastEnginesTest {
     @Test
     void movingAverageShouldKeepSimpleAverageAcrossFutureHorizon() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocation =
                 getDemandPlanForecastProjectionMaterialLocation(calendario);
 
@@ -49,7 +49,7 @@ class MovingAverageForecastEnginesTest {
     @Test
     void rollingMovingAverageShouldFeedFutureForecastBackIntoWindow() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocation =
                 getDemandPlanForecastProjectionMaterialLocation(calendario);
 
@@ -69,9 +69,9 @@ class MovingAverageForecastEnginesTest {
 
     }
 
-    private static Calendario getCalendarioTeste() {
+    private static CalendarioSimples getCalendarioTeste() {
 
-        return Calendario.criaCalendarioDeOffsetsDias(
+        return CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -82,7 +82,7 @@ class MovingAverageForecastEnginesTest {
     }
 
     private static DemandPlanForecastProjectionMaterialLocation getDemandPlanForecastProjectionMaterialLocation(
-            Calendario calendario) {
+            CalendarioSimples calendario) {
 
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocation =
                 new DemandPlanForecastProjectionMaterialLocation(

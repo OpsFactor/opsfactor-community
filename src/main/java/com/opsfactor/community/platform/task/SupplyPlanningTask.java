@@ -2,7 +2,6 @@ package com.opsfactor.community.platform.task;
 
 import com.opsfactor.community.capability.supplyplanning.service.SupplyPlanService;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.facade.dto.VersaoSupplyPlanDTO;
-import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.scheduler.domain.ScheduledTaskAbstract;
 import com.opsfactor.community.platform.scheduler.services.ScheduledTaskExecutionService;
 import com.opsfactor.community.platform.scheduler.services.ScheduledTaskPersistenceService;
@@ -51,9 +50,7 @@ public class SupplyPlanningTask extends Task <VersaoSupplyPlanDTO, SupplyPlanSer
                 dtoParametros.getSupplyNetworkVersionId(),
                 dtoParametros.getPresetConstraintGroupId(),
                 dtoParametros.getTamanhoBucket(),
-                (dtoParametros.getPeriodoReferencia() == null) ? null : Calendario.getPrimeiraDataFromDescricaoPeriodo(
-                        dtoParametros.getPeriodoReferencia(), 
-                        dtoParametros.getTamanhoBucket()),
+                dtoParametros.getDataInicioPlano(),
                 dtoParametros.getDescricaoSupplyPlan(),
                 getUserId());
         

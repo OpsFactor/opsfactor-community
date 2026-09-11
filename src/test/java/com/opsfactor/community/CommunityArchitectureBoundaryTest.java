@@ -1,7 +1,9 @@
 package com.opsfactor.community;
 
+import com.opsfactor.community.platform.database.CalendarProfileMigrationInitializer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -649,6 +651,9 @@ class CommunityArchitectureBoundaryTest {
     );
 
     private static final List<String> COMMUNITY_ALLOWED_MODEL_REPOSITORY_FILES = List.of(
+            "masterdata/calendar/profile/repository/PerfilCalendarioRepository.java",
+            "masterdata/calendar/profile/repository/PerfilCalendarioSimplesRepository.java",
+            "supplyplanning/supplyplan/repository/calendar/PerfilCalendarioSupplyPlanRepository.java",
             "cluster/location/ClusterLocationsRepository.java",
             "cluster/material/ClusterProdutosDemandPlanningRepository.java",
             "cluster/material/ClusterProdutosRepository.java",
@@ -703,6 +708,10 @@ class CommunityArchitectureBoundaryTest {
     );
 
     private static final List<String> COMMUNITY_ALLOWED_MODEL_DOMAIN_FILES = List.of(
+            "masterdata/calendar/profile/domain/PerfilCalendario.java",
+            "masterdata/calendar/profile/domain/PerfilCalendarioSimples.java",
+            "supplyplanning/supplyplan/domain/calendar/PerfilCalendarioSupplyPlan.java",
+            "supplyplanning/supplyplan/domain/calendar/PerfilCalendarioSimplesSupplyPlan.java",
             "cluster/location/ClusterLocations.java",
             "cluster/location/RegraAlocacaoClusterLocations.java",
             "cluster/location/RegraAlocacaoClusterLocationsPaisEstado.java",
@@ -861,6 +870,7 @@ class CommunityArchitectureBoundaryTest {
     );
 
     private static final List<String> COMMUNITY_ALLOWED_SERVICE_DTO_FILES = List.of(
+            "masterdata/calendar/profile/dto/PerfilCalendarioDTO.java",
             "bi/dto/CommunityDemandSalesOverviewDTO.java",
             "bi/dto/CommunityDemandSalesOverviewPeriodDTO.java",
             "bi/dto/CommunityDemandSalesOverviewSelectionDTO.java",
@@ -3231,10 +3241,17 @@ class CommunityArchitectureBoundaryTest {
          * A distribuicao Community publica o servidor web e executa tasks apenas
          * quando chamadas explicitamente pelo fluxo sincronizado. Beans
          * ApplicationRunner/CommandLineRunner recriariam comportamento batch/job
-         * automatico dentro do bootstrap web.
+         * automatico dentro do bootstrap web. A única exceção é o backfill de
+         * calendários explicitamente habilitado pelo operador; o teste seguinte
+         * protege sua condição desabilitada por padrão, sem liberar outros runners.
          */
         for (Path javaSourcePath : findWorkspaceFiles(communityWorkspaceDirectory, ".java")) {
             if (isTestSource(javaSourcePath)) {
+                continue;
+            }
+
+            if (communityWorkspaceDirectory.relativize(javaSourcePath).toString().replace('\\', '/')
+                    .equals("src/main/java/com/opsfactor/community/platform/database/CalendarProfileMigrationInitializer.java")) {
                 continue;
             }
 
@@ -3251,6 +3268,31 @@ class CommunityArchitectureBoundaryTest {
                 violations.isEmpty(),
                 "Community nao deve registrar runners automaticos de startup/batch:\n"
                         + String.join("\n", violations));
+
+    }
+
+    @Test
+    void calendarProfileMigrationRunnerShouldRequireExplicitOperatorOptIn() throws IOException {
+
+        ConditionalOnProperty condition = CalendarProfileMigrationInitializer.class
+                .getAnnotation(ConditionalOnProperty.class);
+        Assertions.assertNotNull(condition, "O único runner aprovado exige opt-in explícito.");
+        Assertions.assertArrayEquals(new String[]{"opsfactor.calendar-profile-migration.enabled"}, condition.name());
+        Assertions.assertEquals("", condition.prefix());
+        Assertions.assertEquals("true", condition.havingValue());
+        Assertions.assertFalse(condition.matchIfMissing(), "Ausência da propriedade deve impedir o backfill.");
+
+        // Um profile distribuído também não pode habilitar silenciosamente o backfill.
+        Path resourcesDirectory = resolveCommunityWorkspaceDirectory().resolve("src/main/resources");
+        for (Path propertiesPath : findWorkspaceFiles(resourcesDirectory, ".properties")) {
+            Properties properties = new Properties();
+            try (Reader reader = Files.newBufferedReader(propertiesPath, StandardCharsets.UTF_8)) {
+                properties.load(reader);
+            }
+            String configuredValue = properties.getProperty("opsfactor.calendar-profile-migration.enabled", "false");
+            Assertions.assertEquals("false", configuredValue.trim(),
+                    "A distribuição não deve habilitar o backfill: " + propertiesPath);
+        }
 
     }
 

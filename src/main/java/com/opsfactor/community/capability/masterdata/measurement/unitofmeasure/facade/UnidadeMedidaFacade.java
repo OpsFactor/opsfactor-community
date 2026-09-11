@@ -43,6 +43,7 @@ import com.opsfactor.community.capability.supplyplanning.engine.SupplyPlanning;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade.dto.UnidadeConversaoFaltanteDTO;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade.dto.UnidadeConversaoFaltanteDTO.NecessidadeConversao;
 import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import com.opsfactor.community.platform.utility.Constantes.TamanhoBucket;
 import lombok.extern.slf4j.Slf4j;
@@ -316,7 +317,7 @@ public class UnidadeMedidaFacade {
                 
                 // DEMANDA DIRETA (DP) : tenta converter cada linha do plano de demanda para unid. padrao SNP
                 Calendario calendario = demandPlanningProjection.getCalendario();
-                for (int i=calendario.getPosicaoPeriodoPresente(); i<calendario.getPosicaoPeriodoFinalFuturo(); i++) {
+                for (int i = calendario.getPosicaoPeriodoPresente(); i< calendario.getPosicaoPeriodoFinalFuturo(); i++) {
                 
                     DemandPlanItem demandPlanItem = demandPlanningProjection.getDemandPlanItem(location, material, i);
                     if (demandPlanItem != null) {
@@ -687,12 +688,12 @@ public class UnidadeMedidaFacade {
         ParametrosDemandPlanProjection parametrosDemandPlanProjection = parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjectionDeCache(perfilExecucaoDemandPlanId);
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = parametrosDemandPlanProjection.getPerfilExecucaoDemandPlan();
 
-        LocalDateTime dataReferenciaDpTratada = Calendario.getPrimeiraDataFromDescricaoPeriodo(
+        LocalDateTime dataReferenciaDpTratada = CalendarioSimples.getPrimeiraDataFromDescricaoPeriodo(
                 dataReferenciaDP,
                 perfilExecucaoDemandPlan.getTamanhoBucket());
 
         // cria calendário que arredonda # dias passados para semanas ou meses, se necessário
-        Calendario calendario = Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                 parametrosDemandPlanProjection.getPerfilExecucaoDemandPlan().getTamanhoBucket(),
                 dataReferenciaDpTratada.minusDays(
                         parametrosDemandPlanProjection.getNumeroMaximoDiasHistoricoVendasParaForecast() + 1),

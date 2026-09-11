@@ -1,6 +1,6 @@
 package com.opsfactor.community.platform.rinstance;
 
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -64,7 +64,7 @@ class InstanciaRCallerCommunityContractTest {
     @Test
     void treatedHistoryShouldRejectShortArrayBeforeRRuntime() {
 
-        Calendario calendario = getCalendarioForecastTeste();
+        CalendarioSimples calendario = getCalendarioForecastTeste();
         double[] historicoCurto = new double[]{10.0d};
 
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
@@ -84,7 +84,7 @@ class InstanciaRCallerCommunityContractTest {
     @Test
     void treatedHistoryShouldRejectNonFiniteValuesBeforeRRuntime() {
 
-        Calendario calendario = getCalendarioForecastTeste();
+        CalendarioSimples calendario = getCalendarioForecastTeste();
         double[] historicoComValorNaoFinito =
                 new double[]{
                         10.0d,
@@ -118,9 +118,9 @@ class InstanciaRCallerCommunityContractTest {
 
     }
 
-    private static Calendario getCalendarioForecastTeste() {
+    private static CalendarioSimples getCalendarioForecastTeste() {
 
-        return Calendario.criaCalendarioDeOffsetsDias(
+        return CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,

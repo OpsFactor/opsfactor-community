@@ -19,7 +19,11 @@ import com.opsfactor.community.capability.transactionaldata.common.aggregation.p
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByMaterialUOMImpl;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.IntervaloExtracaoCalendario;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
 import lombok.extern.slf4j.Slf4j;
@@ -91,7 +95,7 @@ public class SalesProjectionFactory {
      */
     public SalesProjectionMaterialData getSalesProjectionMaterialData(
             Constantes.TipoDocumentoVenda tipoDocumentoVenda,
-            Calendario calendario, Set<Location> locations, Set<Produto> produtos,
+            CalendarioSimples calendario, Set<Location> locations, Set<Produto> produtos,
             UnidadeMedidaProjection unidadeMedidaProjection,
             ClusterEParametrosProjection clusterEParametrosProjection,
             UnidadeMedida unidadePadrao) {
@@ -132,7 +136,13 @@ public class SalesProjectionFactory {
             salesProjection.addSalesAgregado(AggregatedByMaterialUOMDateImpl.builder()
                     .material(aggregatedByMaterialUOMDate.getMaterial())
                     .uom(unidadeMedida)
-                    .referenceDate(aggregatedByMaterialUOMDate.getReferenceDate())
+                    // A query anual usa agregados mensais. Todos os meses do
+                    // mesmo ano entram no mesmo fechamento; a projection soma
+                    // suas contribuições (300 + 200 = 500), sem alterar o ano seguinte.
+                    .referenceDate(calendario.getTamanhoBucket() == Constantes.TamanhoBucket.ANUAL
+                            ? calendario.getUltimaDataPeriodo(calendario.getPosicaoPeriodo(
+                                    aggregatedByMaterialUOMDate.getReferenceDate()))
+                            : aggregatedByMaterialUOMDate.getReferenceDate())
                     .totalQuantity(aggregatedByMaterialUOMDate.getTotalQuantity())
                     .build());
         }
@@ -185,37 +195,50 @@ public class SalesProjectionFactory {
                 null
                 : produtos.stream().map(Produto::getId).collect(Collectors.toSet());
 
-        Collection<AggregatedByLocationMaterialUOMDate> listaSelloutAgregado =
-                historicalSalesSource.getAggregatedByLocationMaterialUomDate(
-                        calendario,
-                        locationIds,
-                        materialIds);
+        // Uma chamada por item configurado, sem extrair diariamente para
+        // corrigir semanas técnicas. A fronteira exata deve chegar ao WHERE.
+        for (IntervaloExtracaoCalendario intervalo : calendario.getIntervalosExtracao()) {
+            Constantes.TamanhoBucket bucketConsulta = intervalo.tamanhoBucket() == Constantes.TamanhoBucket.ANUAL
+                    ? Constantes.TamanhoBucket.MENSAL : intervalo.tamanhoBucket();
+            IntervaloExtracaoCalendario intervaloConsulta = new IntervaloExtracaoCalendario(
+                    intervalo.dataHorarioInicial(), intervalo.dataHorarioFinal(), bucketConsulta);
+            Collection<AggregatedByLocationMaterialUOMDate> listaSelloutAgregado =
+                    calendario instanceof CalendarioSimples simples
+                            ? historicalSalesSource.getAggregatedByLocationMaterialUomDate(simples, locationIds, materialIds)
+                            : historicalSalesSource.getAggregatedByLocationMaterialUomDate(
+                                    intervaloConsulta, locationIds, materialIds);
 
-        // Carrega os agregados de sales sell-out do Community no bucket solicitado.
-        // Quando material/location sao informados, a consulta usa ids para evitar
-        // problemas de identidade de entidade em execucao paralela.
-        for (AggregatedByLocationMaterialUOMDate aggregatedByLocationMaterialUOMDate : listaSelloutAgregado) {
-            UnidadeMedida unidadeMedida = aggregatedByLocationMaterialUOMDate.getUom();
-            if (unidadeMedida == null) {
-                // Hibernate 6 não aceita mais coalesce de entidade; o fallback da UOM
-                // precisa acontecer depois da leitura do agregado.
-                unidadeMedida = (unidadePadrao != null)
-                        ? unidadePadrao
-                        : clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
-            }
+            // Carrega os agregados de sales sell-out do Community no bucket solicitado.
+            // Quando material/location sao informados, a consulta usa ids para evitar
+            // problemas de identidade de entidade em execucao paralela.
+            for (AggregatedByLocationMaterialUOMDate aggregatedByLocationMaterialUOMDate : listaSelloutAgregado) {
+                UnidadeMedida unidadeMedida = aggregatedByLocationMaterialUOMDate.getUom();
+                if (unidadeMedida == null) {
+                    // Hibernate 6 não aceita mais coalesce de entidade; o fallback da UOM
+                    // precisa acontecer depois da leitura do agregado.
+                    unidadeMedida = (unidadePadrao != null)
+                            ? unidadePadrao
+                            : clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
+                }
 
-            AggregatedByLocationMaterialUOMDate aggregatedNormalizado = AggregatedByLocationMaterialUOMDateImpl.builder()
-                    .material(aggregatedByLocationMaterialUOMDate.getMaterial())
-                    .location(aggregatedByLocationMaterialUOMDate.getLocation())
-                    .uom(unidadeMedida)
-                    .referenceDate(aggregatedByLocationMaterialUOMDate.getReferenceDate())
-                    .totalQuantity(aggregatedByLocationMaterialUOMDate.getTotalQuantity())
-                    .build();
-            if (locationIds == null || locationIds.contains(aggregatedNormalizado.getLocation().getId())) {
-                if (materialIds == null || materialIds.contains(aggregatedNormalizado.getMaterial().getId())) {
-                    salesProjection.addSalesAgregado(aggregatedNormalizado);
+                AggregatedByLocationMaterialUOMDate aggregatedNormalizado = AggregatedByLocationMaterialUOMDateImpl.builder()
+                        .material(aggregatedByLocationMaterialUOMDate.getMaterial())
+                        .location(aggregatedByLocationMaterialUOMDate.getLocation())
+                        .uom(unidadeMedida)
+                        .referenceDate(calendario instanceof CalendarioSimples simples
+                                && simples.getTamanhoBucket() != Constantes.TamanhoBucket.ANUAL
+                                ? aggregatedByLocationMaterialUOMDate.getReferenceDate()
+                                : normalizaDataReferenciaSalesAgregado(aggregatedByLocationMaterialUOMDate.getReferenceDate(),
+                                        tipoDocumentoVenda, intervaloConsulta, calendario))
+                        .totalQuantity(aggregatedByLocationMaterialUOMDate.getTotalQuantity())
+                        .build();
+                if (locationIds == null || locationIds.contains(aggregatedNormalizado.getLocation().getId())) {
+                    if (materialIds == null || materialIds.contains(aggregatedNormalizado.getMaterial().getId())) {
+                        salesProjection.addSalesAgregado(aggregatedNormalizado);
+                    }
                 }
             }
+
         }
 
         return salesProjection;
@@ -283,7 +306,7 @@ public class SalesProjectionFactory {
 
     public SalesProjectionLocationMaterialData getSalesProjectionLocationMaterialDataConsolidandoComModoPropagacaoDemanda(
             Constantes.TipoDocumentoVenda tipoDocumentoVenda,
-            Calendario calendario,
+            CalendarioSimples calendario,
             VersaoMalha versaoMalha,
             PerfilExecucaoSupplyPlan.ModoPropagacaoDemanda modoPropagacaoDemanda,
             LocationProjection locationProjection,
@@ -372,7 +395,7 @@ public class SalesProjectionFactory {
      */
     public SalesProjectionMaterialData getSalesProjectionMaterialData(
             Constantes.TipoDocumentoVenda tipoDocumentoVenda,
-            Calendario calendario, Location location, Set<Produto> produtos,
+            CalendarioSimples calendario, Location location, Set<Produto> produtos,
             UnidadeMedidaProjection conversaoUnidadeMedidaProjection,
             ClusterEParametrosProjection clusterEParametrosProjection,
             UnidadeMedida unidadePadrao) {
@@ -390,7 +413,7 @@ public class SalesProjectionFactory {
 
     public SalesProjectionMaterial getSalesProjectionMaterial(
             Constantes.TipoDocumentoVenda tipoDocumentoVenda,
-            Calendario calendario, Set<Location> locations, Set<Produto> produtos,
+            CalendarioSimples calendario, Set<Location> locations, Set<Produto> produtos,
             UnidadeMedidaProjection conversaoUnidadeMedidaProjection,
             ClusterEParametrosProjection clusterEParametrosProjection,
             UnidadeMedida unidadePadrao) {
@@ -439,7 +462,7 @@ public class SalesProjectionFactory {
 
     public SalesProjectionLocationMaterial getSalesProjectionMaterialLocation(
             Constantes.TipoDocumentoVenda tipoDocumentoVenda,
-            Calendario calendario, Set<Location> locations, Set<Produto> produtos,
+            CalendarioSimples calendario, Set<Location> locations, Set<Produto> produtos,
             UnidadeMedidaProjection conversaoUnidadeMedidaProjection,
             ClusterEParametrosProjection clusterEParametrosProjection,
             UnidadeMedida unidadePadrao) {
@@ -493,7 +516,7 @@ public class SalesProjectionFactory {
      */
     public FirstLastSalesProjection getFirstLastSalesProjectionLocationMaterial(
             Constantes.TipoDocumentoVenda tipoDocumentoVenda,
-            Calendario calendario) {
+            CalendarioSimples calendario) {
 
         HistoricalSalesSource historicalSalesSource = getHistoricalSalesSource(tipoDocumentoVenda);
 
@@ -535,5 +558,36 @@ public class SalesProjectionFactory {
      * Valida a malha usada para consolidar vendas de clientes em locations
      * internas no modo de propagacao de demanda.
      */
+
+    /**
+     * Corrige somente a chave de tempo depois do filtro SQL, sem ratear valores.
+     * Ex.: a query semanal limitada a 03/05 pode devolver 300 unidades com a
+     * referência nominal domingo 05/05. Fazemos min(fim nominal, 03/05) e
+     * indexamos em 03/05; as 300 unidades já excluem 04/05 e 05/05 pelo WHERE.
+     * A primeira semana técnica passa pela mesma regra, com seu domingo dentro
+     * da janela. Não há chamadas extras ou mapa auxiliar para suas duas pontas.
+     *
+     * <p>Pedidos preservam a assimetria legada: filtro por finalização e
+     * agrupamento por data de pedido podem devolver bucket fora da faixa.
+     * Nesse caso a referência original é mantida, nunca descartada.</p>
+     */
+    public static LocalDate normalizaDataReferenciaSalesAgregado(LocalDate referenciaOriginal,
+                                                          Constantes.TipoDocumentoVenda documento,
+                                                          IntervaloExtracaoCalendario intervalo,
+                                                          Calendario calendario) {
+
+        LocalDateTime inicioNominal = CalendarioSimples.getPrimeiraDataHorarioPeriodo(
+                referenciaOriginal.atStartOfDay(), intervalo.tamanhoBucket());
+        LocalDateTime fimNominal = CalendarioSimples.getUltimaDataHorarioPeriodo(
+                referenciaOriginal.atStartOfDay(), intervalo.tamanhoBucket());
+        if (fimNominal.isBefore(intervalo.dataHorarioInicial()) || inicioNominal.isAfter(intervalo.dataHorarioFinal())) {
+            if (documento == Constantes.TipoDocumentoVenda.PEDIDO) return referenciaOriginal;
+            throw new IllegalStateException("Sales aggregate bucket does not overlap queried interval: " + intervalo);
+        }
+        LocalDateTime referenciaRecortada = fimNominal.isBefore(intervalo.dataHorarioFinal())
+                ? fimNominal : intervalo.dataHorarioFinal();
+        return calendario.getUltimaDataPeriodo(calendario.getPosicaoPeriodo(referenciaRecortada));
+
+    }
 
 }

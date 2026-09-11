@@ -72,7 +72,8 @@ public class SupplyPlanBiProjectionFactory {
         Calendario calendario = supplyPlan.getCalendarioDoSupplyPlan(
                 supplyNetworkProjection.getClusterEParametrosProjection().getParametrosGlobais());
         DemandaDiretaConsideradaProjection demandaDiretaConsideradaProjection =
-                demandaDiretaConsideradaProjectionFactory.getDemandaDiretaConsideradaProjectionCompleto(supplyPlan, calendario);
+                demandaDiretaConsideradaProjectionFactory.getDemandaDiretaConsideradaProjectionCompleto(supplyPlan,
+                        calendario);
         SupplyPlanningBiProjection supplyPlanningBiProjection = new SupplyPlanningBiProjection(
                 supplyPlan, perfilExecucaoSupplyPlan, supplyNetworkProjection, politicaEstoquesProjection,
                 materialProjection, locationProjection, demandaDiretaConsideradaProjection);

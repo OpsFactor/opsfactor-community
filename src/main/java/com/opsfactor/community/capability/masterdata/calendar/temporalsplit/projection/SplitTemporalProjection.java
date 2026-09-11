@@ -2,6 +2,8 @@ package com.opsfactor.community.capability.masterdata.calendar.temporalsplit.pro
 
 import com.opsfactor.community.platform.exception.UnitOfMeasureConversionException;
 import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.PeriodoCalendario;
+import java.time.Duration;
 import com.opsfactor.community.platform.exception.IncompatibleCalendarException;
 import lombok.Getter;
 
@@ -23,34 +25,22 @@ import java.util.stream.Collectors;
 @Getter
 public class SplitTemporalProjection {
 
-    /**
-     * Calendario origem, por exemplo Demand Planning.
-     */
-    protected final Calendario calendarioOrigem;
+    protected final Calendario calendarioOrigem; // ex : calendário DP
+    protected final Calendario calendarioTarget; // ex : calendário SNP
 
-    /**
-     * Calendario target, por exemplo Supply Planning.
-     */
-    protected final Calendario calendarioTarget;
-
-    /*
-     * Community usa somente a curva flat implicita. Implementacoes Enterprise
-     * podem reintroduzir selecao configuravel de curvas temporais por DFU.
-     */
+//    // qualquer tipo de split : será inicializado a depender de um CurvaSplitTemporal ter sido passado na inicialização ou não
+//    // se sim, pode ser SplitTemporalProjectionCurva MesDiaMes / SemanaDiaSemana
+//    // se não for passado um CurvaSplitTemporal, será um CurvaFlat
     protected SplitTemporalProjectionCurva splitTemporalProjectionCurvaBase;
 
-    /**
-     * Periodo origem -> periodos target com algum overlap.
-     */
+    // Periodo Origem -> Conjunto de Períodos Target com algum overlap
     protected Map<Integer,Set<Integer>> mapaSetPeriodosTargetDentroDePeriodoOrigem = new ConcurrentHashMap<>();
 
     // CONSTRUTOR
     public SplitTemporalProjection(Calendario calendarioOrigem, Calendario calendarioTarget) {
-
         this.calendarioOrigem = calendarioOrigem;
         this.calendarioTarget = calendarioTarget;
         inicializaMapaSetPeriodosTargetDentroDePeriodoOrigem();
-
     }
 
     public Set<Integer> getPeriodosOrigemAPartirPeriodoCalendarioTarget(int periodoCalendarioTarget) {
@@ -76,24 +66,25 @@ public class SplitTemporalProjection {
             SplitTemporalProjectionCurva splitTemporalProjectionCurva,
             ToDoubleFunction<Integer> valorPorPeriodoCalendarioOriginal,
             int posicaoPeriodoCalendarioTarget) throws IncompatibleCalendarException, UnitOfMeasureConversionException {
-                if (calendarioTarget.getTamanhoBucket().equals(calendarioOrigem.getTamanhoBucket())) {
-                    int posicaoPeriodoCalendarioOrigem = calendarioOrigem.getPosicaoPeriodo(calendarioTarget.getPrimeiraDataHorarioPeriodo(posicaoPeriodoCalendarioTarget));
-                    return valorPorPeriodoCalendarioOriginal.applyAsDouble(posicaoPeriodoCalendarioOrigem);
-                } else if (calendarioTarget.getTamanhoBucket().getNivelAgregacao() > calendarioOrigem.getTamanhoBucket().getNivelAgregacao()) {
-                    return getValorOndeCalendarioTargetMaisAgregadoQueCalendarioOriginal(valorPorPeriodoCalendarioOriginal, posicaoPeriodoCalendarioTarget);
-                } else {
-                    double valorAcumulado = 0;
-                    Map<Integer, Double> mapaParticipacaoPeriodosTargetNoCalendarioOrigem = splitTemporalProjectionCurva.getMapaDecomposicaoPeriodoTargetComoSomaSplitsPeriodosOrigem().get(posicaoPeriodoCalendarioTarget);
-                    if (mapaParticipacaoPeriodosTargetNoCalendarioOrigem == null) {
-                        return 0;
-                    }
-                    for (Integer posicaoPeriodoCalendarioOrigem : mapaParticipacaoPeriodosTargetNoCalendarioOrigem.keySet()) {
-                        double valorNoCalendarioOriginal = valorPorPeriodoCalendarioOriginal.applyAsDouble(posicaoPeriodoCalendarioOrigem);
-                        valorAcumulado += mapaParticipacaoPeriodosTargetNoCalendarioOrigem.get(posicaoPeriodoCalendarioOrigem) * valorNoCalendarioOriginal;
-                    }
-                    return valorAcumulado;
-                }
-            }
+
+        Integer posicaoPeriodoOrigemComMesmoIntervalo = getPosicaoPeriodoOrigemComMesmoIntervalo(
+                posicaoPeriodoCalendarioTarget);
+
+        // A cópia direta só é válida quando as fronteiras inclusivas são idênticas.
+        // Comparar apenas o bucket nominal não funciona num calendário misto: duas
+        // posições semanais podem ser uma semana cheia e uma semana técnica cortada.
+        if (posicaoPeriodoOrigemComMesmoIntervalo != null) {
+            return valorPorPeriodoCalendarioOriginal.applyAsDouble(posicaoPeriodoOrigemComMesmoIntervalo);
+        }
+
+        if (splitTemporalProjectionCurva == null) {
+            throw new IllegalArgumentException("Curva de split temporal obrigatória para períodos com fronteiras diferentes");
+        }
+        return splitTemporalProjectionCurva.getValorNoCalendarioTargetSplitTemporalComDesagregacao(
+                valorPorPeriodoCalendarioOriginal,
+                posicaoPeriodoCalendarioTarget);
+
+    }
 
     public double getValorNoCalendarioTargetSplitTemporalComCurvaBase(
             ToDoubleFunction<Integer> valorPorPeriodoCalendarioOriginal,
@@ -105,82 +96,83 @@ public class SplitTemporalProjection {
                 posicaoPeriodoFinalCalendarioTarget);
     }
 
+    /**
+     * Versão por intervalo do split flat padrão, usada quando o consumidor
+     * desloca uma janela temporal em dias em vez de apontar para uma posição
+     * específica do calendário de destino.
+     */
+    public double getValorNoRangeSplitTemporalComCurvaBase(
+            ToDoubleFunction<Integer> valorPorPeriodoCalendarioOriginal,
+            LocalDateTime dataHorarioInicialInclusivo,
+            LocalDateTime dataHorarioFinalInclusivo) {
+
+        if (splitTemporalProjectionCurvaBase == null) {
+            throw new IllegalStateException("Curva base de split temporal obrigatória");
+        }
+        return splitTemporalProjectionCurvaBase.getValorNoRangeSplitTemporal(
+                valorPorPeriodoCalendarioOriginal,
+                dataHorarioInicialInclusivo,
+                dataHorarioFinalInclusivo);
+
+    }
+
     public double getValorNoCalendarioTargetSplitTemporal(
             SplitTemporalProjectionCurva splitTemporalProjectionCurva,
             ToDoubleFunction<Integer> valorPorPeriodoCalendarioOriginal,
             int posicaoPeriodoInicialCalendarioTarget, int posicaoPeriodoFinalCalendarioTarget) throws IncompatibleCalendarException, UnitOfMeasureConversionException {
-                double valorAcumulado = 0;
-                for (int i = posicaoPeriodoInicialCalendarioTarget; i <= posicaoPeriodoFinalCalendarioTarget; i++) {
-                    valorAcumulado += getValorNoCalendarioTargetSplitTemporal(splitTemporalProjectionCurva, valorPorPeriodoCalendarioOriginal, i);
-                }
-                return valorAcumulado;
-            }
 
-    protected double getValorOndeCalendarioTargetMaisAgregadoQueCalendarioOriginal(
-            ToDoubleFunction<Integer> valorPorPeriodoCalendarioOriginal,
-            int posicaoPeriodoCalendarioTarget) {
-                LocalDateTime dataHorarioInicialPosicaoPeriodoCalendarioTarget = calendarioTarget.getPrimeiraDataHorarioPeriodo(posicaoPeriodoCalendarioTarget);
-                LocalDateTime dataHorarioFinalPosicaoPeriodoCalendarioTarget = calendarioTarget.getUltimaDataHorarioPeriodo(posicaoPeriodoCalendarioTarget);
-                int posicaoPeriodoInicialCalendarioOriginal = calendarioOrigem.getPosicaoPeriodo(dataHorarioInicialPosicaoPeriodoCalendarioTarget);
-                int posicaoPeriodoFinalCalendarioOriginal = calendarioOrigem.getPosicaoPeriodo(dataHorarioFinalPosicaoPeriodoCalendarioTarget);
-                double valorAcumulado = 0;
-                for (int i = posicaoPeriodoInicialCalendarioOriginal; i <= posicaoPeriodoFinalCalendarioOriginal; i++) {
-                    valorAcumulado += valorPorPeriodoCalendarioOriginal.applyAsDouble(i);
-                }
-                return valorAcumulado;
-            }
+        double valorAcumulado = 0;
+        for (int i = posicaoPeriodoInicialCalendarioTarget; i <= posicaoPeriodoFinalCalendarioTarget ; i++) {
+            valorAcumulado += getValorNoCalendarioTargetSplitTemporal(
+                    splitTemporalProjectionCurva,
+                    valorPorPeriodoCalendarioOriginal,
+                    i);
+        }
+
+        return valorAcumulado;
+
+    }
 
     private void inicializaMapaSetPeriodosTargetDentroDePeriodoOrigem() {
-        for (int periodoTarget = 0; periodoTarget < calendarioTarget.getNumeroPeriodosTotais(); periodoTarget++) {
+        for (Integer periodoTarget : calendarioTarget.getListaPosicoesPeriodo()) {
+            PeriodoCalendario periodoCalendarioTarget = calendarioTarget.getPeriodo(periodoTarget);
 
-            LocalDateTime dataHorarioInicialPeriodoTarget = calendarioTarget.getPrimeiraDataHorarioPeriodo(periodoTarget);
-            LocalDateTime dataHorarioFinalPeriodoTarget = calendarioTarget.getUltimaDataHorarioPeriodo(periodoTarget);
+            for (Integer periodoOrigem : calendarioOrigem.getListaPosicoesPeriodo()) {
+                PeriodoCalendario periodoCalendarioOrigem = calendarioOrigem.getPeriodo(periodoOrigem);
 
-            for (int periodoOrigem = 0; periodoOrigem < calendarioOrigem.getNumeroPeriodosTotais(); periodoOrigem++) {
-
-                LocalDateTime dataHorarioInicialPeriodoOrigem = calendarioOrigem.getPrimeiraDataHorarioPeriodo(periodoOrigem);
-                LocalDateTime dataHorarioFinalPeriodoOrigem = calendarioOrigem.getUltimaDataHorarioPeriodo(periodoOrigem);
-
-                LocalDateTime dataHorarioAtual = dataHorarioInicialPeriodoOrigem.plusDays(0);
-
-                while (dataHorarioAtual.isBefore(dataHorarioFinalPeriodoOrigem.plusSeconds(1))) {
-                    if (dataHorarioAtual.isAfter(dataHorarioInicialPeriodoTarget.minusSeconds(1)) && dataHorarioAtual.isBefore(dataHorarioFinalPeriodoTarget.plusSeconds(1))) {
-                        // mapa de suporte, sem relação com o cálculo
-                        mapaSetPeriodosTargetDentroDePeriodoOrigem
-                                .computeIfAbsent(periodoOrigem,
-                                        x -> new HashSet<>())
-                                .add(periodoTarget);
-                    }
-
-                    switch (calendarioTarget.getTamanhoBucket()) {
-                        case TURNO:
-                            dataHorarioAtual = dataHorarioAtual.plusHours(8);
-                            break;
-                        case HORARIO:
-                            dataHorarioAtual = dataHorarioAtual.plusHours(1);
-                            break;
-                        case MEIA_HORA:
-                            dataHorarioAtual = dataHorarioAtual.plusMinutes(30);
-                            break;
-                        case QUARTO_HORA:
-                            dataHorarioAtual = dataHorarioAtual.plusMinutes(15);
-                            break;
-                        case SEXTO_HORA:
-                            dataHorarioAtual = dataHorarioAtual.plusMinutes(10);
-                            break;
-                        case MINUTO:
-                            dataHorarioAtual = dataHorarioAtual.plusMinutes(1);
-                            break;
-                        case SEGUNDO:
-                            dataHorarioAtual = dataHorarioAtual.plusSeconds(1);
-                            break;
-                        // se >= dia, somar 1 dia
-                        default:
-                            dataHorarioAtual = dataHorarioAtual.plusDays(1);
-                    }
+                // As fronteiras são inclusivas. Basta comparar os intervalos; não
+                // precisamos percorrer dia a dia nem conhecer o bucket de destino.
+                boolean periodosPossuemIntersecao =
+                        !periodoCalendarioOrigem.dataHorarioFinal().isBefore(periodoCalendarioTarget.dataHorarioInicial())
+                        && !periodoCalendarioOrigem.dataHorarioInicial().isAfter(periodoCalendarioTarget.dataHorarioFinal());
+                if (periodosPossuemIntersecao) {
+                    mapaSetPeriodosTargetDentroDePeriodoOrigem
+                            .computeIfAbsent(periodoOrigem, x -> new HashSet<>())
+                            .add(periodoTarget);
                 }
             }
         }
+    }
+
+    /**
+     * Retorna a posição de origem somente quando origem e destino representam
+     * exatamente a mesma janela inclusiva. Essa decisão local substitui as antigas
+     * comparações de bucket global e funciona igualmente para períodos simples,
+     * compostos e semanas técnicas.
+     */
+    protected Integer getPosicaoPeriodoOrigemComMesmoIntervalo(int posicaoPeriodoCalendarioTarget) {
+
+        PeriodoCalendario periodoCalendarioTarget = calendarioTarget.getPeriodo(posicaoPeriodoCalendarioTarget);
+        return getPeriodosOrigemAPartirPeriodoCalendarioTarget(posicaoPeriodoCalendarioTarget)
+                .stream()
+                .filter(posicaoPeriodoOrigem -> {
+                    PeriodoCalendario periodoCalendarioOrigem = calendarioOrigem.getPeriodo(posicaoPeriodoOrigem);
+                    return periodoCalendarioOrigem.dataHorarioInicial().equals(periodoCalendarioTarget.dataHorarioInicial())
+                            && periodoCalendarioOrigem.dataHorarioFinal().equals(periodoCalendarioTarget.dataHorarioFinal());
+                })
+                .findFirst()
+                .orElse(null);
+
     }
 
     

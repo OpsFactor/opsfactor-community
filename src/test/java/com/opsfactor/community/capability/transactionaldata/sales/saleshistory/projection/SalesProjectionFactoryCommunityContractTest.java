@@ -7,7 +7,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.transactionaldata.sales.sellout.repository.SelloutRepository;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
@@ -322,18 +322,18 @@ public class SalesProjectionFactoryCommunityContractTest {
 
     }
 
-    private static Calendario criaCalendarioAnual() {
+    private static CalendarioSimples criaCalendarioAnual() {
 
-        return Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        return CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                 Constantes.TamanhoBucket.ANUAL,
                 LocalDateTime.of(2026, 1, 1, 0, 0),
                 LocalDateTime.of(2026, 12, 31, 23, 59));
 
     }
 
-    private static Calendario criaCalendarioDiario() {
+    private static CalendarioSimples criaCalendarioDiario() {
 
-        return Calendario.criaCalendarioDeOffsetsDias(
+        return CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 1, 0, 0),
                 0,

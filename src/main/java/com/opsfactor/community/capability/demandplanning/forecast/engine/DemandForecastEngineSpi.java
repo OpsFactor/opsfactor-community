@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.demandplanning.forecast.engine;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosAgregacaoForecast;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjection;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 
 /**
  * Contrato comum de uma engine de forecast de Demand Planning.
@@ -44,7 +44,7 @@ public interface DemandForecastEngineSpi {
      * execucao recebida.
      */
     void executaForecast(
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosForecastProjection parametrosForecastProjection,
             DemandPlanForecastProjection demandPlanForecastProjection);
 

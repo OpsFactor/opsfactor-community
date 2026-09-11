@@ -39,6 +39,7 @@ import com.opsfactor.community.capability.demandplanning.forecast.preprocessing.
 import com.opsfactor.community.capability.demandplanning.forecast.preprocessing.engine.DemandForecastStockoutTreatmentProcessor;
 import com.opsfactor.community.capability.demandplanning.forecast.service.DemandForecastWorkflowService;
 import com.opsfactor.community.capability.demandplanning.service.spi.CommunityDemandPlanReferenceCopySpi;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
@@ -77,7 +78,7 @@ public class DemandPlanningServiceCommunityContractTest {
 
         Method resolvedParametersHook = DemandPlanningService.class.getDeclaredMethod(
                 "geraDemandPlanForecastProjectionsExecucaoComParametrosResolvidos",
-                Calendario.class,
+                CalendarioSimples.class,
                 ParametrosDemandPlanNivelClusterProjection.class,
                 MaterialProjection.class,
                 LocationProjection.class,
@@ -89,7 +90,7 @@ public class DemandPlanningServiceCommunityContractTest {
         Method stockoutContextHook = DemandPlanningService.class.getDeclaredMethod(
                 "geraDemandPlanForecastProjectionsExecucaoComForecastEContextoStockout",
                 List.class,
-                Calendario.class,
+                CalendarioSimples.class,
                 MaterialProjection.class,
                 LocationProjection.class,
                 ParametrosGeraisDemandPlanningProjection.class,
@@ -342,7 +343,7 @@ public class DemandPlanningServiceCommunityContractTest {
     @Test
     public void geraForecastAgregadoShouldRejectAllEnterpriseStatisticalModels() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -449,7 +450,7 @@ public class DemandPlanningServiceCommunityContractTest {
         Assertions.assertThrows(
                 RequiresEnterpriseVersionException.class,
                 () -> demandPlanningService.geraDemandPlanForecastProjectionsExecucaoComForecast(
-                        Calendario.criaCalendarioDeOffsetsDias(
+                        CalendarioSimples.criaCalendarioDeOffsetsDias(
                                 Constantes.TamanhoBucket.DIARIO,
                                 LocalDateTime.of(2026, 1, 10, 0, 0),
                                 0,
@@ -572,7 +573,7 @@ public class DemandPlanningServiceCommunityContractTest {
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> demandPlanningService.geraDemandPlanForecastProjectionsExecucaoComForecast(
-                        Calendario.criaCalendarioDeOffsetsDias(
+                        CalendarioSimples.criaCalendarioDeOffsetsDias(
                                 Constantes.TamanhoBucket.DIARIO,
                                 LocalDateTime.of(2026, 1, 10, 0, 0),
                                 0,
@@ -597,7 +598,7 @@ public class DemandPlanningServiceCommunityContractTest {
     public void geraForecastProjectionAwareShouldRejectMissingProjectionInputsBeforeStaticRoutine() {
 
         DemandPlanningService demandPlanningService = new DemandPlanningService();
-        Calendario calendario = getCalendarioForecastTeste();
+        CalendarioSimples calendario = getCalendarioForecastTeste();
         ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection =
                 getParametrosGeraisDemandPlanningProjectionBottomUp();
         ClusterEParametrosProjection clusterEParametrosProjection =
@@ -678,7 +679,7 @@ public class DemandPlanningServiceCommunityContractTest {
     public void geraForecastProjectionAwareShouldRejectMissingAggregationAndUomBeforeStaticRoutine() {
 
         DemandPlanningService demandPlanningService = new DemandPlanningService();
-        Calendario calendario = getCalendarioForecastTeste();
+        CalendarioSimples calendario = getCalendarioForecastTeste();
         ClusterEParametrosProjection clusterEParametrosProjection =
                 new ClusterEParametrosProjectionStub(new ParametrosGlobais());
         MaterialProjection materialProjection = new MaterialProjection();
@@ -1127,7 +1128,7 @@ public class DemandPlanningServiceCommunityContractTest {
                 "demandPlanItemRepository",
                 capturingDemandPlanItemRepositoryInvocationHandler.getProxy());
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -1397,7 +1398,7 @@ public class DemandPlanningServiceCommunityContractTest {
                         demandPlanningService,
                         "demandForecastWorkflowService",
                         criaDemandForecastWorkflowService()));
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -1415,7 +1416,7 @@ public class DemandPlanningServiceCommunityContractTest {
 
         for (int periodo = calendario.getPosicaoPeriodoInicialPassado();
              periodo <= calendario.getPosicaoPeriodoFinalPassado();
-            periodo++) {
+             periodo++) {
             demandPlanForecastProjectionMaterialLocation.demanda[periodo] = 10.0d;
             demandPlanForecastProjectionMaterialLocation.vendaHistoricaTratamentoStockouts[periodo] = 10.0d;
             demandPlanForecastProjectionMaterialLocation.vendaHistoricaTratamentoOutliers[periodo] = 10.0d;
@@ -1474,7 +1475,7 @@ public class DemandPlanningServiceCommunityContractTest {
                         demandPlanningService,
                         "demandForecastWorkflowService",
                         criaDemandForecastWorkflowService()));
-        Calendario calendario = getCalendarioForecastTeste();
+        CalendarioSimples calendario = getCalendarioForecastTeste();
         ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection =
                 getParametrosGeraisDemandPlanningProjectionBottomUp();
         List<DemandPlanForecastProjectionMaterialLocation> demandPlanForecastProjectionMaterialLocationListComItemNulo =
@@ -1976,9 +1977,9 @@ public class DemandPlanningServiceCommunityContractTest {
 
     }
 
-    private static Calendario getCalendarioForecastTeste() {
+    private static CalendarioSimples getCalendarioForecastTeste() {
 
-        return Calendario.criaCalendarioDeOffsetsDias(
+        return CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,

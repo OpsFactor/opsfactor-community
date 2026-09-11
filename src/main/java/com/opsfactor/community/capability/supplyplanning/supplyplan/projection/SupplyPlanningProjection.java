@@ -21,7 +21,6 @@ import com.opsfactor.community.platform.exception.UnitOfMeasureConversionExcepti
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
-import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjectionCompleto;
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.projection.PoliticaEstoquesProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
@@ -91,7 +90,28 @@ public class SupplyPlanningProjection {
     private final PoliticaEstoquesProjection politicaEstoquesProjection;
 
     /** Calendario usado para indexacao por periodo. */
-    private final Calendario calendario;
+    private Calendario calendario;
+
+    /**
+     * Restringe somente o horizonte ativo desta projection de execução. Os
+     * períodos preservam posições, datas e lookup da grade global do snapshot;
+     * nunca são reconstruídos com o bucket base ou com outro perfil.
+     * A política privada é aplicada antes de cálculo/loaders e não altera
+     * projections globais de dados nem objetos compartilhados em cache.
+     */
+    public void configuraHorizonteLocation(Integer numeroPeriodosFuturos) {
+
+        if (numeroPeriodosFuturos == null) {
+            return;
+        }
+        if (numeroPeriodosFuturos <= 0) {
+            throw new IllegalArgumentException("Location plan horizon in periods must be positive.");
+        }
+        // Uma location nunca amplia a grade ativa definida no cabeçalho.
+        calendario = calendario.comHorizonteFuturo(
+                Math.min(numeroPeriodosFuturos, calendario.getNumeroPeriodosFuturos()));
+
+    }
 
     /** Location planejada por esta instancia da projection. */
     private final Location location;
@@ -149,12 +169,12 @@ public class SupplyPlanningProjection {
     }
 
     // CONSTRUTOR
-    public SupplyPlanningProjection(SupplyPlan supplyPlan, 
-            PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlanConsiderado,
-            SupplyNetworkProjection supplyNetworkProjection,
-            PoliticaEstoquesProjection politicaEstoquesProjection,
-            Calendario calendario, Location location, 
-            MaterialProjection materialProjection, LocationProjection locationProjectionLocationsOrigem) {
+    public SupplyPlanningProjection(SupplyPlan supplyPlan,
+                                    PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlanConsiderado,
+                                    SupplyNetworkProjection supplyNetworkProjection,
+                                    PoliticaEstoquesProjection politicaEstoquesProjection,
+                                    Calendario calendario, Location location,
+                                    MaterialProjection materialProjection, LocationProjection locationProjectionLocationsOrigem) {
 
         SupplyNetworkProjection supplyNetworkProjectionObrigatoria =
                 supplyNetworkProjection;
@@ -1330,7 +1350,12 @@ public class SupplyPlanningProjection {
             FirmePlanejado firmePlanejado,
             TipoPlano tipoPlano) {
         
-        if (!supplyPlan.getTamanhoBucket().equals(calendario.getTamanhoBucket())) {
+        // A posição do projection deve representar a mesma janela salva no plano;
+        // comparar bucket global rejeitaria semanas técnicas válidas do Enterprise.
+        if (supplyPlan.getPerfilCalendarioSupplyPlan() != null
+                ? !calendario.getPeriodo(posicaoPeriodoReferencia).equals(supplyPlan.getPerfilCalendarioSupplyPlan()
+                    .criarCalendario(supplyPlan.getDataInicioPlano()).getPeriodo(posicaoPeriodoReferencia))
+                : !supplyPlan.getTamanhoBucket().equals(calendario.getTamanhoBucket(posicaoPeriodoReferencia))) {
             throw new IncompatibleCalendarException("Calendar time bucket different from supply plan time bucket");
         }
         
@@ -1345,7 +1370,8 @@ public class SupplyPlanningProjection {
         DistributionPlanItem distributionPlanItem = optionalDistributionPlanItem.orElseGet(() -> {
 
             Pair<LocalDateTime,LocalDateTime> datasExpedicaoERecebimento = DistributionPlanItem.getDatasExpedicaoERecebimentoDeReferencia(
-                    referenciaPeriodo, calendario, posicaoPeriodoReferencia, 
+                    referenciaPeriodo,
+                    calendario, posicaoPeriodoReferencia,
                     getSupplyPlan().getVersaoMalha(),
                     material, locationOrigem, location, supplyNetworkProjection);
                         

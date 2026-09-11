@@ -34,6 +34,7 @@ import com.opsfactor.community.capability.cluster.service.ClusterLocationService
 import com.opsfactor.community.capability.demandplanning.facade.dto.SimulatedDemandPlanDTO;
 import com.opsfactor.community.capability.demandplanning.facade.mapper.DemandAnalysisMapper;
 import com.opsfactor.community.capability.demandplanning.service.DemandPlanningService;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
@@ -623,7 +624,7 @@ public class DemandSimulationFacadeCommunityContractTest {
         Produto material = new Produto("MATERIAL");
         TestUnidadeMedidaProjection unidadeMedidaProjection =
                 new TestUnidadeMedidaProjection(parametrosGlobais);
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 getCommunityDemandPlanningPreviaForecastRequestDTO().referenceDate.atStartOfDay(),
                 0,
@@ -1060,7 +1061,7 @@ public class DemandSimulationFacadeCommunityContractTest {
 
         @Override
         public List<? extends DemandPlanForecastProjection> geraDemandPlanForecastProjectionsExecucaoComForecast(
-                Calendario calendario,
+                CalendarioSimples calendario,
                 ParametrosDemandPlanNivelClusterProjection parametrosDemandPlanNivelClusterProjection,
                 MaterialProjection materialProjection,
                 LocationProjection locationProjection,
@@ -1088,7 +1089,7 @@ public class DemandSimulationFacadeCommunityContractTest {
         @Override
         public SimulatedDemandPlanDTO demandPlanProjectionToDemandModelSetupDTO(
                 DemandPlanningClusterLevelConfigurationDTO demandPlanningClusterLevelConfigurationDTO,
-                Calendario calendario,
+                CalendarioSimples calendario,
                 List<? extends DemandPlanForecastProjection> demandPlanForecastProjectionsExecucao,
                 SalesProjectionLocationMaterialData salesProjection) {
 

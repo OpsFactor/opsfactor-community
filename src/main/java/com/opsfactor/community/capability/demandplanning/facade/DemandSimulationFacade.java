@@ -33,7 +33,7 @@ import com.opsfactor.community.capability.demandplanning.engine.DemandPlanning;
 import com.opsfactor.community.capability.demandplanning.facade.dto.SimulatedDemandPlanDTO;
 import com.opsfactor.community.capability.demandplanning.facade.mapper.DemandAnalysisMapper;
 import com.opsfactor.community.capability.demandplanning.service.DemandPlanningService;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -218,7 +218,7 @@ public class DemandSimulationFacade {
 
         // A simulacao Community trabalha com historico em dias porque a projection de vendas compartilhada
         // e diaria. Granularidades menores exigem uma projection de sales especifica.
-        Calendario calendario = DemandPlanning.getCalendarioDemandPlanComPeriodosPassadosEFuturos(
+        CalendarioSimples calendario = DemandPlanning.getCalendarioDemandPlanComPeriodosPassadosEFuturos(
                 parametrosDemandPlanNivelClusterProjection,
                 perfilExecucaoDemandPlan,
                 demandPlanningPreviaForecastRequestDTO.referenceDate.atStartOfDay());
@@ -239,7 +239,7 @@ public class DemandSimulationFacade {
                 .getUnidadeMedidaDP();
         SalesProjectionLocationMaterialData salesProjection = salesProjectionFactory.getSalesProjectionLocationMaterialData(
                         perfilExecucaoDemandPlan.getTipoDocumentoVenda(parametrosGlobais),
-                        calendario,
+                calendario,
                         locationsCluster, materiaisDoCluster,
                         unidadeMedidaProjection,
                         clusterEParametrosProjection,

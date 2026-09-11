@@ -8,6 +8,7 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.domai
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import com.opsfactor.community.platform.utility.Constantes.StatusProduto;
 import lombok.*;
@@ -219,7 +220,7 @@ public class LinhaTransporte implements Serializable {
         return habilitadoProdutosNaoCadastradosLinhaTransporte;
     }
     
-    public Integer getLeadTimePeriodos(Calendario calendario) {
+    public Integer getLeadTimePeriodos(CalendarioSimples calendario) {
         return (int) Math.floor(calendario.converteDiasParaPeriodosCalendario(getLeadTimeDiasInteiro()));
     }
     

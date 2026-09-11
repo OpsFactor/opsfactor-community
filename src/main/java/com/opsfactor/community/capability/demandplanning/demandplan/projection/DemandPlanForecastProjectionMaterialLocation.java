@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.demandplanning.demandplan.projection;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,7 +31,7 @@ public class DemandPlanForecastProjectionMaterialLocation extends DemandPlanFore
     private Produto material;
 
     public DemandPlanForecastProjectionMaterialLocation(
-            Calendario calendario,
+            CalendarioSimples calendario,
             UnidadeMedida unidadeMedida,
             Location location,
             Produto material,

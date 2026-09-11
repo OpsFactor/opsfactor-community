@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionAgregado;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionMaterialLocation;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ class HistoricalSalesForecastDisaggregationTest {
     @Test
     void shouldPropagateStlHistoricalSeasonalSeriesAlongWithTrend() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado =
                 getDemandPlanForecastProjectionAgregadoComDoisLeafs(calendario);
         DemandPlanForecastProjectionMaterialLocation primeiraDemandPlanForecastProjectionMaterialLocation =
@@ -70,7 +70,7 @@ class HistoricalSalesForecastDisaggregationTest {
     @Test
     void shouldLeaveLeafSeriesUntouchedWhenAllDfusAreInactive() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado =
                 getDemandPlanForecastProjectionAgregadoComDoisLeafs(calendario);
         DemandPlanForecastProjectionMaterialLocation primeiraDemandPlanForecastProjectionMaterialLocation =
@@ -108,9 +108,9 @@ class HistoricalSalesForecastDisaggregationTest {
 
     }
 
-    private static Calendario getCalendarioTeste() {
+    private static CalendarioSimples getCalendarioTeste() {
 
-        return Calendario.criaCalendarioDeOffsetsDias(
+        return CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -121,7 +121,7 @@ class HistoricalSalesForecastDisaggregationTest {
     }
 
     private static DemandPlanForecastProjectionAgregado getDemandPlanForecastProjectionAgregadoComDoisLeafs(
-            Calendario calendario) {
+            CalendarioSimples calendario) {
 
         DemandPlanForecastProjectionMaterialLocation primeiraDemandPlanForecastProjectionMaterialLocation =
                 getDemandPlanForecastProjectionMaterialLocation(
@@ -149,7 +149,7 @@ class HistoricalSalesForecastDisaggregationTest {
     }
 
     private static DemandPlanForecastProjectionMaterialLocation getDemandPlanForecastProjectionMaterialLocation(
-            Calendario calendario,
+            CalendarioSimples calendario,
             String materialId,
             double[] demandaHistorica) {
 

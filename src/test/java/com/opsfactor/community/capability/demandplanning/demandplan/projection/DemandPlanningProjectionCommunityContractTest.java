@@ -13,7 +13,7 @@ import com.opsfactor.community.capability.masterdata.demand.dfu.projection.Filtr
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigureStandard;
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigureStandardEnum;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
@@ -588,7 +588,7 @@ class DemandPlanningProjectionCommunityContractTest {
 
     private static Fixture getFixture() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,

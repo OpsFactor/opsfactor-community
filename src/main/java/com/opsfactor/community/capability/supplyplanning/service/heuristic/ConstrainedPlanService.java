@@ -282,7 +282,7 @@ public class ConstrainedPlanService {
         BIProjectionCapacidadeProdutiva biProjectionCapacidadeProdutiva =
                 biProjectionCapacidadeProdutivaFactory.getBIProjectionCapacidadeProdutiva(
                                 supplyPlan,
-                                calendario);
+                        calendario);
 
         // GERA MAPA DE DFUS ORDENADOS POR LOW LEVEL CODE ------------------------------------
         LowLevelCode lowLevelCode = new LowLevelCode(
@@ -295,8 +295,8 @@ public class ConstrainedPlanService {
         
         restringePlano(
                 supplyPlan, 
-                perfilExecucaoSupplyPlan, 
-                calendario, 
+                perfilExecucaoSupplyPlan,
+                calendario,
                 supplyNetworkProjection, 
                 biProjectionCapacidadeProdutiva,
                 politicaEstoquesProjection,
@@ -447,7 +447,7 @@ public class ConstrainedPlanService {
         // restricoes de armazenagem, inbound ou outbound. A unica rodada de restricao
         // fisica mantida aqui e a de insumos e capacidade produtiva por horas/dia.
         
-        for (int i=calendario.getPosicaoPeriodoPresente(); i <= calendario.getPosicaoPeriodoFinalFuturo(); i++) {
+        for (int i = calendario.getPosicaoPeriodoPresente(); i <= calendario.getPosicaoPeriodoFinalFuturo(); i++) {
             // guardará o consumo acumulado por recurso/período a cada etapa das iterações
             // importante pois podem haver diversas passagens pelo recurso em diferentes momentos da iteração de DFUs
             // a princípio se assume que o consumo de capacidade acumulado é de 0 horas: o valor é atualizado após cada iteração

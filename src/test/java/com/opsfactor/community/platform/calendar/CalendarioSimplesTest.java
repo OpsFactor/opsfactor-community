@@ -19,14 +19,14 @@ import org.junit.jupiter.api.Test;
 /**
  * Contratos basicos do calendario compartilhado pelas rotinas Community.
  */
-public class CalendarioTest {
+public class CalendarioSimplesTest {
 
     @Test
     public void testGetPosicaoPeriodoEmOutroCalendario() {
         
-        Calendario calendarioMensal = Calendario.criaCalendarioDeOffsetsPeriodos(Constantes.TamanhoBucket.MENSAL,
+        CalendarioSimples calendarioMensal = CalendarioSimples.criaCalendarioDeOffsetsPeriodos(Constantes.TamanhoBucket.MENSAL,
                 LocalDateTime.of(2017, Month.AUGUST, 3, 6, 17), 10, 3, 15, 2);
-        Calendario calendarioDiario = Calendario.criaCalendarioDeOffsetsPeriodos(Constantes.TamanhoBucket.DIARIO,
+        CalendarioSimples calendarioDiario = CalendarioSimples.criaCalendarioDeOffsetsPeriodos(Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2017, Month.JULY, 3, 6, 17), 10, 3, 15, 2);
         
         calendarioDiario.getPosicaoPeriodoDePosicaoPeriodoOutroCalendario(calendarioMensal, 2);
@@ -38,9 +38,9 @@ public class CalendarioTest {
     @Test
     public void testGetNumeroPeriodosNoBucketReferencia() {
         
-        Calendario calendarioMensal = Calendario.criaCalendarioDeOffsetsPeriodos(Constantes.TamanhoBucket.MENSAL,
+        CalendarioSimples calendarioMensal = CalendarioSimples.criaCalendarioDeOffsetsPeriodos(Constantes.TamanhoBucket.MENSAL,
                 LocalDateTime.of(2017, Month.AUGUST, 3, 6, 17), 10, 3, 15, 2);
-        Calendario calendarioDiario = Calendario.criaCalendarioDeOffsetsPeriodos(Constantes.TamanhoBucket.DIARIO,
+        CalendarioSimples calendarioDiario = CalendarioSimples.criaCalendarioDeOffsetsPeriodos(Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2017, Month.JULY, 3, 6, 17), 10, 3, 15, 2);
 
         assertEquals(31, calendarioMensal.getNumeroPeriodosNoBucketReferencia(3, TamanhoBucket.DIARIO), 0.0001);
@@ -66,13 +66,13 @@ public class CalendarioTest {
         mapaDadosPorData.put(LocalDate.of(2025, Month.APRIL, 7), 54d);
         mapaDadosPorData.put(LocalDate.of(2025, Month.APRIL, 8), 47d);
         
-        Calendario calendarioSemanal = Calendario.criaCalendarioDeOffsetsPeriodos(Constantes.TamanhoBucket.SEMANAL,
+        CalendarioSimples calendarioSemanal = CalendarioSimples.criaCalendarioDeOffsetsPeriodos(Constantes.TamanhoBucket.SEMANAL,
                 LocalDateTime.of(2025, Month.APRIL, 3, 6, 17), 0, 0, 4, 0);
-        Calendario calendarioTurno = Calendario.criaCalendarioDeOffsetsPeriodos(Constantes.TamanhoBucket.TURNO,
+        CalendarioSimples calendarioTurno = CalendarioSimples.criaCalendarioDeOffsetsPeriodos(Constantes.TamanhoBucket.TURNO,
                 LocalDateTime.of(2025, Month.APRIL, 3, 6, 17), 0, 0, 8, 0);
 
         assertEquals(222, calendarioSemanal.consolidaDadosNoCalendario(0, TamanhoBucket.DIARIO, x -> mapaDadosPorData.get(x.toLocalDate())), 0.0001);
-        assertEquals(22d/3, calendarioTurno.consolidaDadosNoCalendario(0, TamanhoBucket.DIARIO, x -> mapaDadosPorData.get(x.toLocalDate())), 0.0001);        
+        assertEquals(22d/3, calendarioTurno.consolidaDadosNoCalendario(0, TamanhoBucket.DIARIO, x -> mapaDadosPorData.get(x.toLocalDate())), 0.0001);
                 
     }
 
@@ -81,7 +81,7 @@ public class CalendarioTest {
 
         IllegalArgumentException illegalArgumentException = assertThrows(
                 IllegalArgumentException.class,
-                () -> Calendario.getNumeroMedioDiasPorPeriodo(null));
+                () -> CalendarioSimples.getNumeroMedioDiasPorPeriodo(null));
 
         assertTrue(illegalArgumentException.getMessage().contains(
                 "Calendario.getNumeroMedioDiasPorPeriodo does not support calendar bucket null"));
@@ -91,7 +91,7 @@ public class CalendarioTest {
     @Test
     public void getAgregadorPeriodoShouldRejectUnsupportedSubHourlyBucketWithRealBucketName() {
 
-        Calendario calendarioQuartoHora = Calendario.criaCalendarioDeOffsetsPeriodos(
+        CalendarioSimples calendarioQuartoHora = CalendarioSimples.criaCalendarioDeOffsetsPeriodos(
                 TamanhoBucket.QUARTO_HORA,
                 LocalDateTime.of(2026, Month.JUNE, 24, 9, 15),
                 0,
@@ -112,7 +112,7 @@ public class CalendarioTest {
     @Test
     public void getNumeroMedioPeriodosNoAnoShouldRejectSubDailyBucketWithCalendarContractMessage() {
 
-        Calendario calendarioTurno = Calendario.criaCalendarioDeOffsetsPeriodos(
+        CalendarioSimples calendarioTurno = CalendarioSimples.criaCalendarioDeOffsetsPeriodos(
                 TamanhoBucket.TURNO,
                 LocalDateTime.of(2026, Month.JUNE, 24, 9, 0),
                 0,
@@ -138,10 +138,10 @@ public class CalendarioTest {
          * mascarar erros arbitrarios; null e formato invalido sao os dois
          * casos esperados de retorno false.
          */
-        assertTrue(Calendario.verificaSeLocalDate("2026-06-25"));
-        assertTrue(Calendario.verificaSeLocalDate("25/06/2026"));
-        assertFalse(Calendario.verificaSeLocalDate(null));
-        assertFalse(Calendario.verificaSeLocalDate("not-a-date"));
+        assertTrue(CalendarioSimples.verificaSeLocalDate("2026-06-25"));
+        assertTrue(CalendarioSimples.verificaSeLocalDate("25/06/2026"));
+        assertFalse(CalendarioSimples.verificaSeLocalDate(null));
+        assertFalse(CalendarioSimples.verificaSeLocalDate("not-a-date"));
 
     }
 
@@ -150,7 +150,7 @@ public class CalendarioTest {
 
         DateTimeParseException dateTimeParseException = assertThrows(
                 DateTimeParseException.class,
-                () -> Calendario.stringToLocalDate("not-a-date"));
+                () -> CalendarioSimples.stringToLocalDate("not-a-date"));
 
         assertTrue(dateTimeParseException.getMessage().contains(
                 "Incompatible date format : not-a-date"));
@@ -163,7 +163,7 @@ public class CalendarioTest {
 
         DateTimeParseException dateTimeParseException = assertThrows(
                 DateTimeParseException.class,
-                () -> Calendario.stringToLocalDateTime("not-a-date-time"));
+                () -> CalendarioSimples.stringToLocalDateTime("not-a-date-time"));
 
         assertTrue(dateTimeParseException.getMessage().contains(
                 "Incompatible date format : not-a-date-time"));
@@ -176,7 +176,7 @@ public class CalendarioTest {
 
         DateTimeParseException dateTimeParseException = assertThrows(
                 DateTimeParseException.class,
-                () -> Calendario.stringToLocalTime("not-a-time"));
+                () -> CalendarioSimples.stringToLocalTime("not-a-time"));
 
         assertTrue(dateTimeParseException.getMessage().contains(
                 "Incompatible date format : not-a-time"));

@@ -17,7 +17,7 @@ import com.opsfactor.community.platform.task.DeleteSupplyPlanTask;
 import com.opsfactor.community.platform.task.SupplyPlanningTask;
 import com.opsfactor.community.platform.security.login.AuthenticationService;
 import com.opsfactor.community.platform.security.login.CommunitySecurityConstants;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import com.opsfactor.community.platform.scheduler.facade.WebControllerTaskSchedulingService;
 import lombok.extern.slf4j.Slf4j;
@@ -158,7 +158,7 @@ public class SupplyPlanningController {
             log.info("Iniciando geração da relação de DFUs por Low Level Code");
             Map<Integer,Set<DFUDTO>> mapaLowLevelCode = lowLevelCodeFrontService.getLowLevelCodePorDFU(
                     supplyNetworkVersionId, LocalDateTime.now());
-            log.info("Tempo Total Relação LLC - DFU : " + Calendario.timeBetween(inicio,LocalDateTime.now()));
+            log.info("Tempo Total Relação LLC - DFU : " + CalendarioSimples.timeBetween(inicio,LocalDateTime.now()));
             return ResponseEntity.ok(mapaLowLevelCode);
         } catch (RuntimeException e) {
             log.error("Error calculating Low Level Code by DFU for supply network version {}", supplyNetworkVersionId, e);

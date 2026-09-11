@@ -24,6 +24,7 @@ import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.p
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.service.SupplyPlanPersistedBaselinePreflight;
 import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -168,8 +169,9 @@ public class SupplyPlanProjectionFactory {
 
         if (calendario == null
                 || supplyPlan == null
-                || !Objects.equals(calendario.getTamanhoBucket(), supplyPlan.getTamanhoBucket())) {
-            throw getIncompatibleSupplyPlanCalendarException(supplyPlan, calendario);
+                || !calendarioCompativelComPlano(supplyPlan, calendario)) {
+            throw getIncompatibleSupplyPlanCalendarException(supplyPlan,
+                    calendario);
         }
 
         SupplyPlanningProjection supplyPlanningProjection = new SupplyPlanningProjection(
@@ -182,13 +184,27 @@ public class SupplyPlanProjectionFactory {
 
     }
 
+    /** Compara janelas resolvidas do snapshot; planos antigos preservam validação por bucket. */
+    private boolean calendarioCompativelComPlano(SupplyPlan supplyPlan, Calendario calendario) {
+
+        if (supplyPlan.getPerfilCalendarioSupplyPlan() == null) {
+            return calendario instanceof CalendarioSimples simples
+                    && Objects.equals(simples.getTamanhoBucket(), supplyPlan.getTamanhoBucket());
+        }
+        Calendario calendarioPlano = supplyPlan.getPerfilCalendarioSupplyPlan().criarCalendario(supplyPlan.getDataInicioPlano());
+        return calendario.getPeriodos().stream().allMatch(periodo ->
+                periodo.equals(calendarioPlano.getPeriodo(periodo.posicaoPeriodo())));
+
+    }
+
     private IllegalArgumentException getIncompatibleSupplyPlanCalendarException(
             SupplyPlan supplyPlan,
             Calendario calendario) {
 
         return new IllegalArgumentException(
                 "SupplyPlanProjectionFactory requires the projection calendar bucket to match the Supply Plan bucket; projection bucket="
-                        + (calendario == null ? "null" : calendario.getTamanhoBucket())
+                        + (calendario == null ? "null" : calendario instanceof CalendarioSimples simples
+                                ? simples.getTamanhoBucket() : calendario.getIntervalosExtracao())
                         + ", supply plan bucket="
                         + (supplyPlan == null ? "null" : supplyPlan.getTamanhoBucket())
                         + ". Build the Supply Planning projection with a calendar derived from the same Supply Plan.");

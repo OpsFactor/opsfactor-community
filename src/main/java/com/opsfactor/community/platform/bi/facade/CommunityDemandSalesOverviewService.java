@@ -27,7 +27,7 @@ import com.opsfactor.community.platform.bi.facade.dto.CommunityDemandSalesOvervi
 import com.opsfactor.community.platform.bi.facade.dto.CommunityDemandSalesOverviewPeriodDTO;
 import com.opsfactor.community.platform.bi.facade.dto.CommunityDemandSalesOverviewSelectionDTO;
 import com.opsfactor.community.capability.demandplanning.service.DemandPlanningService;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -119,10 +119,10 @@ public class CommunityDemandSalesOverviewService {
                                         dfuProjection,
                                         selectedDemandPlanPeriodEndDates,
                                         false);
-        Calendario demandPlanCalendar = demandPlanningProjection == null
+        CalendarioSimples demandPlanCalendar = demandPlanningProjection == null
                 ? null
                 : demandPlanningProjection.getCalendario();
-        Calendario salesCalendar = getSalesCalendar(
+        CalendarioSimples salesCalendar = getSalesCalendar(
                 demandPlanCalendar,
                 getHistoricalPeriods(selectionDTO.historicalPeriods()));
 
@@ -348,11 +348,11 @@ public class CommunityDemandSalesOverviewService {
      * Mantém o eixo do legado: com plano, usa seu bucket e horizonte; sem
      * plano, abre o histórico mensal até o instante atual.
      */
-    private Calendario getSalesCalendar(Calendario demandPlanCalendar, int historicalPeriods) {
+    private CalendarioSimples getSalesCalendar(CalendarioSimples demandPlanCalendar, int historicalPeriods) {
 
         if (demandPlanCalendar == null) {
             LocalDateTime currentDateTime = LocalDateTime.now();
-            return Calendario.criaCalendarioPeriodosFuturosDeDatas(
+            return CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                     Constantes.TamanhoBucket.MENSAL,
                     currentDateTime.minusMonths(historicalPeriods),
                     currentDateTime);
@@ -360,7 +360,7 @@ public class CommunityDemandSalesOverviewService {
 
         LocalDateTime historicalStart = demandPlanCalendar.getPrimeiraDataPeriodo(
                 demandPlanCalendar.getPosicaoPeriodoPresente() - historicalPeriods).atStartOfDay();
-        return Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        return CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                 demandPlanCalendar.getTamanhoBucket(),
                 historicalStart,
                 demandPlanCalendar.getDataHorarioFinal());
@@ -394,7 +394,7 @@ public class CommunityDemandSalesOverviewService {
                     "Demand Plan selected periods must not contain null reference dates.");
         }
 
-        Calendario demandPlanHorizon = demandPlan.getCalendarioDoDemandPlanSemHistorico(
+        CalendarioSimples demandPlanHorizon = demandPlan.getCalendarioDoDemandPlanSemHistorico(
                 clusterAndParametersProjection);
         Map<LocalDateTime, LocalDateTime> periodEndDateByStartDate = new HashMap<>();
         for (int period = demandPlanHorizon.getPosicaoPeriodoPresente();
@@ -420,7 +420,7 @@ public class CommunityDemandSalesOverviewService {
     }
 
     /** Publica todos os fechamentos mesmo quando nenhuma série possui valor. */
-    private List<LocalDateTime> getPeriods(Calendario calendar) {
+    private List<LocalDateTime> getPeriods(CalendarioSimples calendar) {
 
         List<LocalDateTime> periods = new ArrayList<>();
         for (int period = 0; period <= calendar.getPosicaoPeriodoFinalFuturo(); period++) {

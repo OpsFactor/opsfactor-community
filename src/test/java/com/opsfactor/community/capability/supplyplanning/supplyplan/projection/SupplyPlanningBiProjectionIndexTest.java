@@ -9,7 +9,7 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.proje
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.supplyplanning.distributionplan.projection.DistributionPlanItemBiProjection;
 import com.opsfactor.community.capability.supplyplanning.productionplan.projection.ProductionPlanLinhaBiProjection;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -26,7 +26,7 @@ class SupplyPlanningBiProjectionIndexTest {
     @Test
     void distributionPlanItemDeveSerUnicaEVisivelPorOrigemEDestino() {
 
-        Calendario calendario = mock(Calendario.class);
+        CalendarioSimples calendario = mock(CalendarioSimples.class);
         when(calendario.getPosicaoPeriodo(org.mockito.ArgumentMatchers.any(LocalDateTime.class))).thenReturn(0);
         DistributionPlanItemBiProjection projection = new DistributionPlanItemBiProjection(
                 calendario, mock(UnidadeMedidaProjection.class));
@@ -77,7 +77,7 @@ class SupplyPlanningBiProjectionIndexTest {
     @Test
     void distributionIndexDeveIsolarLinhasDeSupplyPlansDistintos() {
 
-        Calendario calendario = mock(Calendario.class);
+        CalendarioSimples calendario = mock(CalendarioSimples.class);
         when(calendario.getPosicaoPeriodo(org.mockito.ArgumentMatchers.any(LocalDateTime.class))).thenReturn(0);
         DistributionPlanItemBiProjection projection = new DistributionPlanItemBiProjection(
                 calendario, mock(UnidadeMedidaProjection.class));

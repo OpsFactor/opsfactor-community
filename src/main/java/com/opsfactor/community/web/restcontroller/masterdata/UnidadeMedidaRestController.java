@@ -4,7 +4,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.f
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.repository.UnidadeMedidaRepository;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade.UnidadeMedidaFacade;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade.dto.UnidadeConversaoFaltanteDTO;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes.TamanhoBucket;
 import com.opsfactor.community.platform.utility.MetodosUtilidade;
 import lombok.extern.slf4j.Slf4j;
@@ -90,7 +90,7 @@ public class UnidadeMedidaRestController {
 
             return ResponseEntity.ok(
                     unidadeConversaoFrontService.getUnidadeConversaoFaltanteSNPListDTO(
-                            Calendario.getPrimeiraDataFromDescricaoPeriodo(
+                            CalendarioSimples.getPrimeiraDataFromDescricaoPeriodo(
                                     referenceDateAsString,
                                     bucketSize),
                             bucketSize,

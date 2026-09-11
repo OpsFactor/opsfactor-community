@@ -15,7 +15,7 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.proje
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjectionFactory;
 import com.opsfactor.community.capability.masterdata.production.productionresource.repository.DisponibilidadeRecursoProdutivoRepository;
 import com.opsfactor.community.capability.supplyplanning.productionplan.repository.CapacidadeProdutivaEfetivaRecursoProdutivoSupplyPlanRepository;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
@@ -326,7 +326,7 @@ class BIProjectionCapacidadeProdutivaCommunityContractTest {
 
     private static ProjectionFixture criaProjectionComTipoCapacidade(
             PerfilExecucaoSupplyPlan.TipoCapacidadeProdutiva tipoCapacidadeProdutiva,
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosGlobais parametrosGlobais) {
 
         Location location = new Location();
@@ -393,9 +393,9 @@ class BIProjectionCapacidadeProdutivaCommunityContractTest {
 
     }
 
-    private static Calendario getCalendarioTeste() {
+    private static CalendarioSimples getCalendarioTeste() {
 
-        return Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        return CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 1, 0, 0),
                 LocalDateTime.of(2026, 1, 3, 0, 0));

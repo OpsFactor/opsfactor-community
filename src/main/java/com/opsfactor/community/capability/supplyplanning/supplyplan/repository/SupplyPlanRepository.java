@@ -2,6 +2,7 @@ package com.opsfactor.community.capability.supplyplanning.supplyplan.repository;
 
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,6 +20,7 @@ import java.util.Optional;
 @Repository
 public interface SupplyPlanRepository extends JpaRepository<SupplyPlan,Long> {
     
+    @EntityGraph(attributePaths = "perfilCalendarioSupplyPlan")
     public List<SupplyPlan> findAll();
         
     public boolean existsById(Long supplyPlanId);
@@ -48,6 +50,7 @@ public interface SupplyPlanRepository extends JpaRepository<SupplyPlan,Long> {
     
     @Query("SELECT DISTINCT sp FROM SupplyPlan sp " + // distinct pois há um join com 2 coleções
             "LEFT JOIN FETCH sp.perfilExecucaoSupplyPlan pesp " +
+            "LEFT JOIN FETCH sp.perfilCalendarioSupplyPlan " +
             "WHERE sp.id = :supplyPlanId")
     Optional<SupplyPlan> customFindById(
             Long supplyPlanId);
@@ -57,6 +60,7 @@ public interface SupplyPlanRepository extends JpaRepository<SupplyPlan,Long> {
      * consulta, evitando navegar por relacoes lazy para cada plano listado.
      */
     @Query("SELECT sp FROM SupplyPlan sp "
+            + "LEFT JOIN FETCH sp.perfilCalendarioSupplyPlan "
             + "LEFT JOIN FETCH sp.demandPlan demandPlan "
             + "LEFT JOIN FETCH sp.versaoMalha versaoMalha "
             + "LEFT JOIN FETCH sp.perfilExecucaoSupplyPlan perfilExecucaoSupplyPlan")
@@ -101,6 +105,7 @@ public interface SupplyPlanRepository extends JpaRepository<SupplyPlan,Long> {
             @Param("presetConstraintGroupIdCollection")
             Collection<String> presetConstraintGroupIdCollection);
 
+    @EntityGraph(attributePaths = "perfilCalendarioSupplyPlan")
     List<SupplyPlan> findByDemandPlanId(Long demandPlanId);
 
 }

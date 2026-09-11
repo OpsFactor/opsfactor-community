@@ -1,6 +1,6 @@
 package com.opsfactor.community.platform.utility.fileprocessing;
 
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.exception.DataUploadException;
 import com.opsfactor.community.platform.utility.MetodosUtilidade;
 import lombok.Data;
@@ -113,7 +113,7 @@ public class ProcessedFileRow {
             return ((LocalDate) columnValue).atTime(0, 0, 0);
         } else {
             try {
-                return Calendario.stringToLocalDateTime(columnValue.toString());
+                return CalendarioSimples.stringToLocalDateTime(columnValue.toString());
             } catch (DateTimeParseException dateTimeParseException) {
                 throw new DataUploadException(
                         "Incompatible type for column " + (columnPosition + 1) + " : should be date/time but found " + columnValue.toString(),
@@ -138,7 +138,7 @@ public class ProcessedFileRow {
             return ((LocalDate) columnValue).atTime(0, 0, 0).toLocalTime();
         } else {
             try {
-                return Calendario.stringToLocalTime(columnValue.toString());
+                return CalendarioSimples.stringToLocalTime(columnValue.toString());
             } catch (DateTimeParseException dateTimeParseException) {
                 throw new DataUploadException(
                         "Incompatible type for column " + (columnPosition + 1) + " : should be time but found " + columnValue.toString(),
@@ -160,7 +160,7 @@ public class ProcessedFileRow {
             return (LocalDate) columnValue;
         } else {
             try {
-                return Calendario.stringToLocalDate(columnValue.toString());
+                return CalendarioSimples.stringToLocalDate(columnValue.toString());
             } catch (DateTimeParseException dateTimeParseException) {
                 throw new DataUploadException(
                         "Incompatible type for column " + (columnPosition + 1) + " : should be date/time but found " + columnValue.toString(),

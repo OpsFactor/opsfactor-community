@@ -9,7 +9,7 @@ import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.Suppl
 import com.opsfactor.community.capability.supplyplanning.distributionplan.domain.DistributionPlanItem;
 import com.opsfactor.community.capability.supplyplanning.inventoryplan.domain.InventoryPlanLinha;
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -104,7 +104,7 @@ class SupplyPlanProjectionFactoryCommunityContractTest {
 
         SupplyPlan supplyPlan = new SupplyPlan();
         supplyPlan.setTamanhoBucket(Constantes.TamanhoBucket.MENSAL);
-        Calendario calendarioSemanal = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendarioSemanal = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.SEMANAL,
                 LocalDateTime.of(2026, 6, 24, 0, 0),
                 0,

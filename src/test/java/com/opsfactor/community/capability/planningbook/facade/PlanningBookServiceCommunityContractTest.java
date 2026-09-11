@@ -15,6 +15,7 @@ import com.opsfactor.community.capability.planningbook.keyfigure.domain.EditMode
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
 import com.opsfactor.community.capability.configuration.user.projection.ConfiguredViewProjection;
 import com.opsfactor.community.capability.planningbook.keyfigure.projection.KeyFigureProjection;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
@@ -64,7 +65,7 @@ class PlanningBookServiceCommunityContractTest {
     void planningBookDtoShouldAlwaysMaterializeDistinctMaterialLocationLeavesEvenWithLegacyFlagsDisabled() {
 
         PlanningBookService planningBookService = new PlanningBookService();
-        Calendario calendario = getCalendario();
+        CalendarioSimples calendario = getCalendario();
 
         ConfiguredView configuredView = new ConfiguredView(
                 new ConfiguredView.ConfiguredViewCompositeKey(
@@ -159,7 +160,7 @@ class PlanningBookServiceCommunityContractTest {
     @Test
     void zeroFillShouldNotReplaceUnavailableReasonWithArtificialNumericValue() throws Exception {
 
-        Calendario calendario = getCalendario();
+        CalendarioSimples calendario = getCalendario();
         String unavailablePeriod = calendario.getUltimaDataHorarioPeriodo(0).toString();
         KeyFigureDTOPadrao keyFigureDTO = new KeyFigureDTOPadrao(
                 "Any derived value",
@@ -179,7 +180,8 @@ class PlanningBookServiceCommunityContractTest {
                 PlanningBookDTO.class,
                 Calendario.class);
         zeroFillMethod.setAccessible(true);
-        zeroFillMethod.invoke(planningBookService, planningBookDTO, calendario);
+        zeroFillMethod.invoke(planningBookService, planningBookDTO,
+                calendario);
 
         Assertions.assertFalse(keyFigureDTO.values.containsKey(unavailablePeriod));
         Assertions.assertEquals(
@@ -201,9 +203,9 @@ class PlanningBookServiceCommunityContractTest {
 
     }
 
-    private static Calendario getCalendario() {
+    private static CalendarioSimples getCalendario() {
 
-        return Calendario.criaCalendarioDeOffsetsPeriodos(
+        return CalendarioSimples.criaCalendarioDeOffsetsPeriodos(
                 Constantes.TamanhoBucket.MENSAL,
                 LocalDateTime.of(2026, 1, 1, 0, 0),
                 0,

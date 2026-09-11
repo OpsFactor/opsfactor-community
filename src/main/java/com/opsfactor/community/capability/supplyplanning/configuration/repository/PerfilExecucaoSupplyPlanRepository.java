@@ -16,11 +16,13 @@ import java.util.Optional;
 public interface PerfilExecucaoSupplyPlanRepository extends JpaRepository<PerfilExecucaoSupplyPlan,String> {
 	 
     @Query("SELECT DISTINCT pesp FROM PerfilExecucaoSupplyPlan pesp " +
+            "LEFT JOIN FETCH pesp.perfilCalendario " +
             "LEFT JOIN FETCH pesp.setPerfilExecucaoPoliticaEstoques pepe " +
             "LEFT JOIN FETCH pepe.perfilExecucaoPoliticaEstoquesCompositeKey.politicaEstoques")
     List<PerfilExecucaoSupplyPlan> customFindAll();
 
     @Query("SELECT DISTINCT pesp FROM PerfilExecucaoSupplyPlan pesp " +
+            "LEFT JOIN FETCH pesp.perfilCalendario " +
             "LEFT JOIN FETCH pesp.setPerfilExecucaoPoliticaEstoques pepe " +
             "LEFT JOIN FETCH pepe.perfilExecucaoPoliticaEstoquesCompositeKey.politicaEstoques " +
             "WHERE pesp.id = :perfilExecucaoSupplyPlanId")

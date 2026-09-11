@@ -24,6 +24,7 @@ public interface PerfilExecucaoDemandPlanAutoMapper {
     @Mapping(source = "perfilExecucaoDemandPlan.id", target = "id")
     @Mapping(source = "perfilExecucaoDemandPlan.descricao", target = "description")
     @Mapping(expression = "java(com.opsfactor.community.platform.utility.Constantes.TipoDocumentoVenda.SELLOUT)", target = "historicalSalesDocumentType")
+    @Mapping(source = "perfilExecucaoDemandPlan.perfilCalendario.id", target = "calendarProfileId")
     @Mapping(source = "perfilExecucaoDemandPlan.tamanhoBucket", target = "bucketSize")
     @Mapping(source = "perfilExecucaoDemandPlan.numeroPeriodosHorizontePlanejamento", target = "planningHorizonInPeriods")
     @Mapping(expression = "java(false)", target = "constrainPlanEditPeriods")

@@ -7,6 +7,7 @@ import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByLocationMaterialUOMDate;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.pivovarit.function.ThrowingFunction;
@@ -241,8 +242,16 @@ public class SalesProjectionLocationMaterialData extends SalesProjectionAbstract
     // EXTRAÇÃO QUANTIDADE SALES MATERIAL/LOCATION/PERIODO
     public double getQuantidadeSales(Produto produto, Location location, Calendario calendario, int posicaoPeriodo, UnidadeMedida unidadeMedida) {
         if (calendario == null
-                || this.calendario == null
-                || !Objects.equals(calendario.getTamanhoBucket(), this.calendario.getTamanhoBucket())) {
+                || this.calendario == null) {
+            throw getIncompatibleSalesProjectionCalendarException(calendario);
+        }
+        // Igualdade de bucket nominal não basta: uma semana cheia e uma semana
+        // técnica podem ter a mesma granularidade e janelas distintas.
+        LocalDate inicioConsulta = calendario.getPrimeiraDataPeriodo(posicaoPeriodo);
+        LocalDate fimConsulta = calendario.getUltimaDataPeriodo(posicaoPeriodo);
+        int posicaoNaProjection = this.calendario.getPosicaoPeriodo(fimConsulta);
+        if (!inicioConsulta.equals(this.calendario.getPrimeiraDataPeriodo(posicaoNaProjection))
+                || !fimConsulta.equals(this.calendario.getUltimaDataPeriodo(posicaoNaProjection))) {
             throw getIncompatibleSalesProjectionCalendarException(calendario);
         }
         return getQuantidadeSales(produto, location, calendario.getUltimaDataPeriodo(posicaoPeriodo), unidadeMedida);
@@ -284,7 +293,8 @@ public class SalesProjectionLocationMaterialData extends SalesProjectionAbstract
                 .sum();
     }
 
-    private IllegalArgumentException getIncompatibleSalesProjectionCalendarException(Calendario calendarioConsulta) {
+    private IllegalArgumentException getIncompatibleSalesProjectionCalendarException(
+            Calendario calendarioConsulta) {
 
         return new IllegalArgumentException(
                 "SalesProjectionLocationMaterialData requires the query calendar bucket to match the projection calendar bucket; query bucket="
@@ -297,7 +307,8 @@ public class SalesProjectionLocationMaterialData extends SalesProjectionAbstract
 
     private static String getTamanhoBucket(Calendario calendario) {
 
-        return calendario == null ? "null" : String.valueOf(calendario.getTamanhoBucket());
+        return calendario == null ? "null"
+                : String.valueOf(calendario.getTamanhoBucket(calendario.getPosicaoPeriodoPresente()));
 
     }
     public double getQuantidadeSales(Location location, UnidadeMedida unidadeMedida) {

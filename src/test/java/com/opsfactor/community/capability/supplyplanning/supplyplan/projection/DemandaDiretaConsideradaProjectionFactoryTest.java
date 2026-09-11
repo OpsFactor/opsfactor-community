@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.Suppl
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjectionFactory;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.repository.DemandaDiretaConsideradaLinhaRepository;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -216,9 +216,9 @@ public class DemandaDiretaConsideradaProjectionFactoryTest {
 
     }
 
-    private Calendario getCalendarioTeste() {
+    private CalendarioSimples getCalendarioTeste() {
 
-        return Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        return CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 1, 0, 0),
                 LocalDateTime.of(2026, 1, 3, 0, 0));

@@ -1,11 +1,11 @@
 package com.opsfactor.community.platform.rinstance.model;
 
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 
 /**
  * Resultado bruto retornado pelos modelos estatisticos executados em R.
  *
- * <p>Os arrays seguem as posicoes do {@link Calendario}. Em geral, `forecast`,
+ * <p>Os arrays seguem as posicoes do {@link CalendarioSimples}. Em geral, `forecast`,
  * `trend`, `seasonal`, `lowerBound` e `upperBound` usam o calendario completo,
  * enquanto `fitHistorico` representa o ajuste historico quando o modelo R
  * disponibiliza essa serie. As engines Community copiam estes arrays para a
@@ -14,7 +14,7 @@ import com.opsfactor.community.platform.calendar.Calendario;
  */
 public class ResultadoForecastEstatistico {
     
-    Calendario calendario;
+    CalendarioSimples calendario;
     
     /**
      * Forecast baseline indexado pelo calendario completo.
@@ -50,7 +50,7 @@ public class ResultadoForecastEstatistico {
         
     }
     
-    public ResultadoForecastEstatistico(Calendario calendario) {
+    public ResultadoForecastEstatistico(CalendarioSimples calendario) {
         
         this.calendario = calendario;
         

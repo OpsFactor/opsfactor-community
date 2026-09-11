@@ -3,7 +3,7 @@ package com.opsfactor.community.platform.rinstance;
 import com.github.rcaller.rstuff.RCaller;
 import com.github.rcaller.rstuff.RCode;
 import com.opsfactor.community.platform.rinstance.model.ResultadoForecastEstatistico;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -20,7 +20,7 @@ import java.util.*;
 public class InstanciaRCaller {
 
     public static ResultadoForecastEstatistico geraForecastHoltWinters(
-            double[] demandaHistorica, Calendario calendario,
+            double[] demandaHistorica, CalendarioSimples calendario,
             Double alfa, Double beta, Double gama) {
 
         double[] historico = getHistoricoTratamentoOutliersObrigatorio(
@@ -177,7 +177,7 @@ public class InstanciaRCaller {
 
     public static ResultadoForecastEstatistico geraForecastAutoArima(
             double[] demandaHistorica,
-            Calendario calendario) {
+            CalendarioSimples calendario) {
 
         double[] historico = getHistoricoTratamentoOutliersObrigatorio(
                 demandaHistorica,
@@ -248,7 +248,7 @@ public class InstanciaRCaller {
     }
 
     public static ResultadoForecastEstatistico geraForecastExponentialSmoothing(
-            double[] demandaHistorica, Calendario calendario) {
+            double[] demandaHistorica, CalendarioSimples calendario) {
 
         double[] historico = getHistoricoTratamentoOutliersObrigatorio(
                 demandaHistorica,
@@ -325,7 +325,7 @@ public class InstanciaRCaller {
      */
     private static double[] getHistoricoTratamentoOutliersObrigatorio(
             double[] vendaHistoricaTratamentoOutliers,
-            Calendario calendario,
+            CalendarioSimples calendario,
             String modeloEstatistico) {
 
         if (calendario == null) {

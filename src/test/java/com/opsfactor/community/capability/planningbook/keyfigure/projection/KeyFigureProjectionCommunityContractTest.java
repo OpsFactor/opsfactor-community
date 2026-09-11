@@ -7,7 +7,7 @@ import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigur
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigureStandard;
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigureStandardEnum;
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.dfudata.DFUDataKeyFigureAbstract;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -107,7 +107,7 @@ class KeyFigureProjectionCommunityContractTest {
 
     private static KeyFigureProjection getKeyFigureProjectionComBi() {
 
-        Calendario calendario = getCalendario();
+        CalendarioSimples calendario = getCalendario();
         KeyFigureProjection keyFigureProjection = new KeyFigureProjection();
         keyFigureProjection.calendario = calendario;
         keyFigureProjection.biEmMemoriaDFUDataKeyFigure =
@@ -129,9 +129,9 @@ class KeyFigureProjectionCommunityContractTest {
 
     }
 
-    private static Calendario getCalendario() {
+    private static CalendarioSimples getCalendario() {
 
-        return Calendario.criaCalendarioDeOffsetsPeriodos(
+        return CalendarioSimples.criaCalendarioDeOffsetsPeriodos(
                 Constantes.TamanhoBucket.MENSAL,
                 LocalDateTime.of(2026, 1, 1, 0, 0),
                 0,

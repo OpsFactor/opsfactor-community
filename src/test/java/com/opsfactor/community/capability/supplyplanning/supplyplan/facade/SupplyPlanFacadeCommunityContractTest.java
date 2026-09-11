@@ -147,6 +147,7 @@ class SupplyPlanFacadeCommunityContractTest {
                         "supplyPlanId",
                         "supplyNetworkVersionId",
                         "executionProfileId",
+                        "calendarProfileId",
                         "description",
                         "bucketSize",
                         "timeOfExecution",
@@ -186,7 +187,8 @@ class SupplyPlanFacadeCommunityContractTest {
                         "descricaoDemandPlan",
                         "tamanhoBucket",
                         "horarioGeracao",
-                        "periodoReferencia"));
+                        "periodoReferencia",
+                        "dataInicioPlano"));
 
     }
 

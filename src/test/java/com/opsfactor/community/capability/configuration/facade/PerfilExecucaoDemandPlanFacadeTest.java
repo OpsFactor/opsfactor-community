@@ -1,5 +1,9 @@
 package com.opsfactor.community.capability.configuration.facade;
 
+import org.springframework.test.util.ReflectionTestUtils;
+import org.mockito.Mockito;
+import com.opsfactor.community.capability.masterdata.calendar.profile.domain.PerfilCalendarioSimples;
+import com.opsfactor.community.capability.masterdata.calendar.profile.repository.PerfilCalendarioSimplesRepository;
 import com.opsfactor.community.capability.demandplanning.configuration.facade.dto.PerfilExecucaoDemandPlanDTO;
 import com.opsfactor.community.capability.demandplanning.configuration.facade.mapper.PerfilExecucaoDemandPlanAutoMapper;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
@@ -32,6 +36,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
     private static final Set<String> COMMUNITY_ACCEPTED_FIELD_NAMES = Set.of(
             "id",
             "description",
+            "calendarProfileId",
             "bucketSize",
             "planningHorizonInPeriods",
             "defaultDemandPlanningUomId");
@@ -108,7 +113,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
     public void savePerfilExecucaoDemandPlanDTOShouldRejectMissingPayload() {
 
         PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService =
-                new PerfilExecucaoDemandPlanFacade();
+                createCalendarConfiguredFacade();
 
         IllegalArgumentException missingPayloadException = Assertions.assertThrows(
                 IllegalArgumentException.class,
@@ -117,7 +122,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
                 "Demand Planning execution profile DTO is required.",
                 missingPayloadException.getMessage());
 
-        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = new PerfilExecucaoDemandPlanDTO();
+        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoDemandPlanDTO.id = " ";
 
         IllegalArgumentException missingIdException = Assertions.assertThrows(
@@ -134,7 +139,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
     public void savePerfilExecucaoDemandPlanDTOShouldRejectIdLongerThanPersistedColumnBeforeRepository() {
 
         PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService =
-                new PerfilExecucaoDemandPlanFacade();
+                createCalendarConfiguredFacade();
         PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO =
                 criaPerfilExecucaoDemandPlanDTOCommunityMinimoParaTeste();
         perfilExecucaoDemandPlanDTO.id = "P".repeat(51);
@@ -154,7 +159,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
     public void savePerfilExecucaoDemandPlanDTOShouldRejectNonPositivePlanningHorizonBeforeRepository() {
 
         PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService =
-                new PerfilExecucaoDemandPlanFacade();
+                createCalendarConfiguredFacade();
         PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO =
                 criaPerfilExecucaoDemandPlanDTOCommunityMinimoParaTeste();
         perfilExecucaoDemandPlanDTO.planningHorizonInPeriods = 0;
@@ -177,7 +182,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
 
     @Test
     public void savePerfilExecucaoDemandPlanDTOShouldRejectEnterpriseHistoricalSalesDocumentType() {
-        PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService = new PerfilExecucaoDemandPlanFacade();
+        PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService = createCalendarConfiguredFacade();
         PerfilExecucaoDemandPlanRepositoryStub perfilExecucaoDemandPlanRepositoryStub = new PerfilExecucaoDemandPlanRepositoryStub();
         setPerfilExecucaoDemandPlanRepository(
                 perfilExecucaoDemandPlanFrontService,
@@ -187,7 +192,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
         perfilExecucaoDemandPlanPersistido.setTipoDocumentoVenda(Constantes.TipoDocumentoVenda.SELLOUT);
         perfilExecucaoDemandPlanRepositoryStub.existingEntity = perfilExecucaoDemandPlanPersistido;
 
-        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = new PerfilExecucaoDemandPlanDTO();
+        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoDemandPlanDTO.id = "PERFIL_PADRAO";
         perfilExecucaoDemandPlanDTO.historicalSalesDocumentType = Constantes.TipoDocumentoVenda.SELLIN;
 
@@ -200,7 +205,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
     @Test
     public void savePerfilExecucaoDemandPlanDTOShouldRejectSalesOrdersHistoricalSalesDocumentType() {
 
-        PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService = new PerfilExecucaoDemandPlanFacade();
+        PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService = createCalendarConfiguredFacade();
         PerfilExecucaoDemandPlanRepositoryStub perfilExecucaoDemandPlanRepositoryStub = new PerfilExecucaoDemandPlanRepositoryStub();
         setPerfilExecucaoDemandPlanRepository(
                 perfilExecucaoDemandPlanFrontService,
@@ -210,7 +215,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
         perfilExecucaoDemandPlanPersistido.setTipoDocumentoVenda(Constantes.TipoDocumentoVenda.SELLOUT);
         perfilExecucaoDemandPlanRepositoryStub.existingEntity = perfilExecucaoDemandPlanPersistido;
 
-        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = new PerfilExecucaoDemandPlanDTO();
+        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoDemandPlanDTO.id = "PERFIL_PADRAO";
         perfilExecucaoDemandPlanDTO.historicalSalesDocumentType = Constantes.TipoDocumentoVenda.PEDIDO;
 
@@ -245,8 +250,8 @@ public class PerfilExecucaoDemandPlanFacadeTest {
                     "Campo sem valor de teste Enterprise configurado: " + field.getName());
 
             PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService =
-                    new PerfilExecucaoDemandPlanFacade();
-            PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = new PerfilExecucaoDemandPlanDTO();
+                    createCalendarConfiguredFacade();
+            PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = createCalendarConfiguredDto();
             perfilExecucaoDemandPlanDTO.id = "PERFIL_PADRAO";
             field.setAccessible(true);
             field.set(perfilExecucaoDemandPlanDTO, enterpriseFieldValue);
@@ -266,7 +271,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
 
     @Test
     public void savePerfilExecucaoDemandPlanDTOShouldPersistSelloutAsCommunityHistoricalSalesDocumentType() {
-        PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService = new PerfilExecucaoDemandPlanFacade();
+        PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService = createCalendarConfiguredFacade();
         PerfilExecucaoDemandPlanRepositoryStub perfilExecucaoDemandPlanRepositoryStub = new PerfilExecucaoDemandPlanRepositoryStub();
         setPerfilExecucaoDemandPlanRepository(
                 perfilExecucaoDemandPlanFrontService,
@@ -276,7 +281,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
         perfilExecucaoDemandPlanPersistido.setTipoDocumentoVenda(Constantes.TipoDocumentoVenda.SELLOUT);
         perfilExecucaoDemandPlanRepositoryStub.existingEntity = perfilExecucaoDemandPlanPersistido;
 
-        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = new PerfilExecucaoDemandPlanDTO();
+        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoDemandPlanDTO.id = "PERFIL_PADRAO";
         perfilExecucaoDemandPlanDTO.historicalSalesDocumentType = Constantes.TipoDocumentoVenda.SELLOUT;
 
@@ -294,7 +299,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
     public void savePerfilExecucaoDemandPlanDTOShouldRejectNullSavedSnapshotAfterRepository() {
 
         PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService =
-                new PerfilExecucaoDemandPlanFacade();
+                createCalendarConfiguredFacade();
         PerfilExecucaoDemandPlanRepositoryStub perfilExecucaoDemandPlanRepositoryStub =
                 new PerfilExecucaoDemandPlanRepositoryStub();
         perfilExecucaoDemandPlanRepositoryStub.saveReturnsNull = true;
@@ -325,7 +330,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
     public void savePerfilExecucaoDemandPlanDTOShouldRejectBrokenSavedSnapshotAfterRepository() {
 
         PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService =
-                new PerfilExecucaoDemandPlanFacade();
+                createCalendarConfiguredFacade();
         PerfilExecucaoDemandPlanRepositoryStub perfilExecucaoDemandPlanRepositoryStub =
                 new PerfilExecucaoDemandPlanRepositoryStub();
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlanSalvoSemId =
@@ -355,7 +360,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
     public void savePerfilExecucaoDemandPlanDTOShouldRejectNullRepositoryOptionalBeforeCreatingEntity() {
 
         PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService =
-                new PerfilExecucaoDemandPlanFacade();
+                createCalendarConfiguredFacade();
         PerfilExecucaoDemandPlanRepositoryStub perfilExecucaoDemandPlanRepositoryStub =
                 new PerfilExecucaoDemandPlanRepositoryStub();
         perfilExecucaoDemandPlanRepositoryStub.findByIdReturnsNullOptional = true;
@@ -363,7 +368,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
                 perfilExecucaoDemandPlanFrontService,
                 perfilExecucaoDemandPlanRepositoryStub.getRepository());
 
-        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = new PerfilExecucaoDemandPlanDTO();
+        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoDemandPlanDTO.id = "PERFIL_PADRAO";
         perfilExecucaoDemandPlanDTO.historicalSalesDocumentType = Constantes.TipoDocumentoVenda.SELLOUT;
 
@@ -381,13 +386,13 @@ public class PerfilExecucaoDemandPlanFacadeTest {
     @Test
     public void savePerfilExecucaoDemandPlanDTOShouldRejectMapeAggregationLevels() {
 
-        PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService = new PerfilExecucaoDemandPlanFacade();
+        PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService = createCalendarConfiguredFacade();
         PerfilExecucaoDemandPlanRepositoryStub perfilExecucaoDemandPlanRepositoryStub = new PerfilExecucaoDemandPlanRepositoryStub();
         setPerfilExecucaoDemandPlanRepository(
                 perfilExecucaoDemandPlanFrontService,
                 perfilExecucaoDemandPlanRepositoryStub.getRepository());
 
-        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = new PerfilExecucaoDemandPlanDTO();
+        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoDemandPlanDTO.id = "PERFIL_PADRAO";
         perfilExecucaoDemandPlanDTO.historicalSalesDocumentType = Constantes.TipoDocumentoVenda.SELLOUT;
         perfilExecucaoDemandPlanDTO.mapeMaterialAggregationLevelId = "MAPE_MATERIAL";
@@ -402,13 +407,13 @@ public class PerfilExecucaoDemandPlanFacadeTest {
     @Test
     public void savePerfilExecucaoDemandPlanDTOShouldRejectMapeLocationAggregationLevel() {
 
-        PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService = new PerfilExecucaoDemandPlanFacade();
+        PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService = createCalendarConfiguredFacade();
         PerfilExecucaoDemandPlanRepositoryStub perfilExecucaoDemandPlanRepositoryStub = new PerfilExecucaoDemandPlanRepositoryStub();
         setPerfilExecucaoDemandPlanRepository(
                 perfilExecucaoDemandPlanFrontService,
                 perfilExecucaoDemandPlanRepositoryStub.getRepository());
 
-        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = new PerfilExecucaoDemandPlanDTO();
+        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoDemandPlanDTO.id = "PERFIL_PADRAO";
         perfilExecucaoDemandPlanDTO.historicalSalesDocumentType = Constantes.TipoDocumentoVenda.SELLOUT;
         perfilExecucaoDemandPlanDTO.mapeLocationAggregationLevelId = "MAPE_LOCATION";
@@ -423,13 +428,13 @@ public class PerfilExecucaoDemandPlanFacadeTest {
     @Test
     public void savePerfilExecucaoDemandPlanDTOShouldRejectAutoFitConfiguration() {
 
-        PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService = new PerfilExecucaoDemandPlanFacade();
+        PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService = createCalendarConfiguredFacade();
         PerfilExecucaoDemandPlanRepositoryStub perfilExecucaoDemandPlanRepositoryStub = new PerfilExecucaoDemandPlanRepositoryStub();
         setPerfilExecucaoDemandPlanRepository(
                 perfilExecucaoDemandPlanFrontService,
                 perfilExecucaoDemandPlanRepositoryStub.getRepository());
 
-        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = new PerfilExecucaoDemandPlanDTO();
+        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoDemandPlanDTO.id = "PERFIL_PADRAO";
         perfilExecucaoDemandPlanDTO.historicalSalesDocumentType = Constantes.TipoDocumentoVenda.SELLOUT;
         perfilExecucaoDemandPlanDTO.defaultAutoTunedDemandPlanConfigurationId = 10L;
@@ -482,13 +487,13 @@ public class PerfilExecucaoDemandPlanFacadeTest {
     private static void assertSaveRejectsEnterpriseParameter(
             Consumer<PerfilExecucaoDemandPlanDTO> perfilExecucaoDemandPlanDTOConsumer) {
 
-        PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService = new PerfilExecucaoDemandPlanFacade();
+        PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService = createCalendarConfiguredFacade();
         PerfilExecucaoDemandPlanRepositoryStub perfilExecucaoDemandPlanRepositoryStub = new PerfilExecucaoDemandPlanRepositoryStub();
         setPerfilExecucaoDemandPlanRepository(
                 perfilExecucaoDemandPlanFrontService,
                 perfilExecucaoDemandPlanRepositoryStub.getRepository());
 
-        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = new PerfilExecucaoDemandPlanDTO();
+        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoDemandPlanDTO.id = "PERFIL_PADRAO";
         perfilExecucaoDemandPlanDTO.historicalSalesDocumentType = Constantes.TipoDocumentoVenda.SELLOUT;
         perfilExecucaoDemandPlanDTOConsumer.accept(perfilExecucaoDemandPlanDTO);
@@ -502,7 +507,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
 
     private static PerfilExecucaoDemandPlanDTO criaPerfilExecucaoDemandPlanDTOCommunityMinimoParaTeste() {
 
-        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = new PerfilExecucaoDemandPlanDTO();
+        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoDemandPlanDTO.id = "PERFIL_PADRAO";
         perfilExecucaoDemandPlanDTO.historicalSalesDocumentType = Constantes.TipoDocumentoVenda.SELLOUT;
         return perfilExecucaoDemandPlanDTO;
@@ -513,7 +518,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
             List<PerfilExecucaoDemandPlanDTO> perfilExecucaoDemandPlanDTOList) {
 
         PerfilExecucaoDemandPlanFacade perfilExecucaoDemandPlanFrontService =
-                new PerfilExecucaoDemandPlanFacade();
+                createCalendarConfiguredFacade();
         PerfilExecucaoDemandPlanRepositoryStub perfilExecucaoDemandPlanRepositoryStub =
                 new PerfilExecucaoDemandPlanRepositoryStub();
         perfilExecucaoDemandPlanRepositoryStub.customFindAllResult =
@@ -534,7 +539,7 @@ public class PerfilExecucaoDemandPlanFacadeTest {
 
     private static PerfilExecucaoDemandPlanDTO criaPerfilExecucaoDemandPlanDTOListagemCommunity(String id) {
 
-        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = new PerfilExecucaoDemandPlanDTO();
+        PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoDemandPlanDTO.id = id;
         perfilExecucaoDemandPlanDTO.historicalSalesDocumentType = Constantes.TipoDocumentoVenda.SELLOUT;
         return perfilExecucaoDemandPlanDTO;
@@ -733,4 +738,25 @@ public class PerfilExecucaoDemandPlanFacadeTest {
             return unidadeMedida;
         }
     }
+    /** Fixture explicita da receita; os campos legados de bucket/horizonte nao configuram mais a execucao. */
+    private static PerfilExecucaoDemandPlanDTO createCalendarConfiguredDto() {
+
+        PerfilExecucaoDemandPlanDTO dto = new PerfilExecucaoDemandPlanDTO();
+        dto.calendarProfileId = "CALENDAR_TEST";
+        return dto;
+
+    }
+
+    /** Injeta somente o catalogo de calendarios; cada teste continua dono dos outros colaboradores. */
+    private static PerfilExecucaoDemandPlanFacade createCalendarConfiguredFacade() {
+
+        PerfilExecucaoDemandPlanFacade facade = new PerfilExecucaoDemandPlanFacade();
+        PerfilCalendarioSimplesRepository calendarRepository = Mockito.mock(PerfilCalendarioSimplesRepository.class);
+        Mockito.when(calendarRepository.findById(Mockito.anyString())).thenReturn(Optional.of(
+                new PerfilCalendarioSimples("CALENDAR_TEST", Constantes.TamanhoBucket.MENSAL, 12)));
+        ReflectionTestUtils.setField(facade, "perfilCalendarioSimplesRepository", calendarRepository);
+        return facade;
+
+    }
+
 }

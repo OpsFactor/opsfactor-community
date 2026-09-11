@@ -24,7 +24,7 @@ import com.opsfactor.community.capability.planningbook.keyfigure.domain.dfudata.
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.capability.demandplanning.planningbook.domain.DemandPlanningPlanningBookCatalog;
 import com.opsfactor.community.capability.supplyplanning.planningbook.domain.SupplyPlanningPlanningBookCatalog;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import com.opsfactor.community.platform.utility.MetodosUtilidade;
 import java.lang.reflect.Field;
@@ -543,8 +543,8 @@ class KeyFigureProjectionFactoryCommunityContractTest {
 
     private static KeyFigureProjection createKeyFigureProjectionWithEmptyBi() throws Exception {
 
-        Calendario calendario =
-                Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        CalendarioSimples calendario =
+                CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                         Constantes.TamanhoBucket.DIARIO,
                         LocalDateTime.of(2026, 1, 1, 0, 0),
                         LocalDateTime.of(2026, 1, 1, 0, 0));

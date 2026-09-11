@@ -1,6 +1,7 @@
 package com.opsfactor.community.capability.configuration.facade;
 
 import com.opsfactor.community.capability.supplyplanning.configuration.facade.dto.PerfilExecucaoSupplyPlanDTO;
+import com.opsfactor.community.capability.masterdata.calendar.profile.facade.PerfilCalendarioFacade;
 import com.opsfactor.community.capability.supplyplanning.configuration.facade.mapper.PerfilExecucaoSupplyPlanAutoMapper;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoPoliticaEstoques;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
@@ -29,6 +30,10 @@ import java.util.stream.Collectors;
  */
 @Service
 public class PerfilExecucaoSupplyPlanFacade {
+
+    /** Resolve a receita completa pela extensão permitida na edição ativa. */
+    @Autowired
+    private PerfilCalendarioFacade perfilCalendarioFacade;
 
     private static final String SUPPLY_PLANNING_LOCATION_LEVEL_PROFILE = "Supply Planning location-level execution profile";
 
@@ -128,6 +133,11 @@ public class PerfilExecucaoSupplyPlanFacade {
         validaPedidosTransacionaisCommunity(perfilExecucaoSupplyPlanDTO);
         validaCapacidadesEConstraintsCommunity(perfilExecucaoSupplyPlanDTO);
 
+        String calendarProfileId = perfilExecucaoSupplyPlanDTO.getCalendarProfileId();
+        if (calendarProfileId == null || calendarProfileId.isBlank()) {
+            throw new IllegalArgumentException("Supply Planning requires calendarProfileId.");
+        }
+
         List<PoliticaEstoques> politicaEstoquesList = politicaEstoquesRepository.findAll();
         validaSnapshotPoliticasEstoqueCommunity(politicaEstoquesList);
         Map<String,PoliticaEstoques> mapaPoliticasEstoques = politicaEstoquesList.stream()
@@ -139,6 +149,11 @@ public class PerfilExecucaoSupplyPlanFacade {
                 .collect(Collectors.toSet());
 
         PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan = perfilExecucaoSupplyPlanAutoMapper.converte(perfilExecucaoSupplyPlanDTO);
+        if (perfilExecucaoSupplyPlan == null) {
+            throw new IllegalStateException("Supply Planning execution profile mapper returned null entity.");
+        }
+        // A associação é polimórfica; a implementação privada só existe no classpath Enterprise.
+        perfilExecucaoSupplyPlan.setPerfilCalendario(perfilCalendarioFacade.obterPerfilCompleto(calendarProfileId));
         /*
          * O modo de execucao nao e estado persistido no Community. A validacao
          * acima bloqueia payload Enterprise e o getter da entidade fixa o

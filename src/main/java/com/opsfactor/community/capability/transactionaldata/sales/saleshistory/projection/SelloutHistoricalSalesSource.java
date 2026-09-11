@@ -5,7 +5,8 @@ import com.opsfactor.community.capability.transactionaldata.common.aggregation.p
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByMaterialUOM;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByMaterialUOMDate;
 import com.opsfactor.community.capability.transactionaldata.sales.sellout.repository.SelloutRepository;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
+import com.opsfactor.community.platform.calendar.IntervaloExtracaoCalendario;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -36,12 +37,14 @@ public class SelloutHistoricalSalesSource implements HistoricalSalesSource {
 
     @Override
     public Collection<AggregatedByMaterialUOMDate> getAggregatedByMaterialUomDate(
-            Calendario calendario,
+            CalendarioSimples calendario,
             Set<String> locationIds,
             Set<String> materialIds) {
 
+        // Sem query anual específica: os meses são preservados na extração e
+        // consolidados pela factory no fim do ano, sem perder meses de mesmo valor.
         return switch (calendario.getTamanhoBucket()) {
-            case MENSAL -> selloutRepository.consolidatedSelloutByMaterialUOMMonthForMaterialLocationIds(
+            case MENSAL, ANUAL -> selloutRepository.consolidatedSelloutByMaterialUOMMonthForMaterialLocationIds(
                     calendario.getDataHorarioInicial(), calendario.getDataHorarioFinal(), locationIds, materialIds);
             case SEMANAL -> selloutRepository.consolidatedSelloutByMaterialUOMWeekForMaterialLocationIds(
                     calendario.getDataHorarioInicial(), calendario.getDataHorarioFinal(), locationIds, materialIds);
@@ -54,34 +57,34 @@ public class SelloutHistoricalSalesSource implements HistoricalSalesSource {
 
     @Override
     public Collection<AggregatedByLocationMaterialUOMDate> getAggregatedByLocationMaterialUomDate(
-            Calendario calendario,
+            IntervaloExtracaoCalendario intervaloExtracao,
             Set<String> locationIds,
             Set<String> materialIds) {
 
-        return switch (calendario.getTamanhoBucket()) {
+        return switch (intervaloExtracao.tamanhoBucket()) {
             case MENSAL -> (locationIds != null && materialIds != null)
                     ? selloutRepository.consolidatedSelloutByLocationMaterialUOMMonthForMaterialLocationIds(
-                    calendario.getDataHorarioInicial(), calendario.getDataHorarioFinal(), locationIds, materialIds)
+                    intervaloExtracao.dataHorarioInicial(), intervaloExtracao.dataHorarioFinal(), locationIds, materialIds)
                     : selloutRepository.consolidatedSelloutByLocationMaterialUOMMonth(
-                    calendario.getDataHorarioInicial(), calendario.getDataHorarioFinal());
+                    intervaloExtracao.dataHorarioInicial(), intervaloExtracao.dataHorarioFinal());
             case SEMANAL -> (locationIds != null && materialIds != null)
                     ? selloutRepository.consolidatedSelloutByLocationMaterialUOMWeekForMaterialLocationIds(
-                    calendario.getDataHorarioInicial(), calendario.getDataHorarioFinal(), locationIds, materialIds)
+                    intervaloExtracao.dataHorarioInicial(), intervaloExtracao.dataHorarioFinal(), locationIds, materialIds)
                     : selloutRepository.consolidatedSelloutByLocationMaterialUOMWeek(
-                    calendario.getDataHorarioInicial(), calendario.getDataHorarioFinal());
+                    intervaloExtracao.dataHorarioInicial(), intervaloExtracao.dataHorarioFinal());
             case DIARIO -> (locationIds != null && materialIds != null)
                     ? selloutRepository.consolidatedSelloutByLocationMaterialUOMDayForMaterialLocationIds(
-                    calendario.getDataHorarioInicial(), calendario.getDataHorarioFinal(), locationIds, materialIds)
+                    intervaloExtracao.dataHorarioInicial(), intervaloExtracao.dataHorarioFinal(), locationIds, materialIds)
                     : selloutRepository.consolidatedSelloutByLocationMaterialUOMDay(
-                    calendario.getDataHorarioInicial(), calendario.getDataHorarioFinal());
-            default -> throw getUnsupportedBucketException(calendario);
+                    intervaloExtracao.dataHorarioInicial(), intervaloExtracao.dataHorarioFinal());
+            default -> throw new IllegalArgumentException("Historical sales source does not support bucket size " + intervaloExtracao.tamanhoBucket());
         };
 
     }
 
     @Override
     public Collection<AggregatedByMaterialUOM> getAggregatedByMaterialUom(
-            Calendario calendario,
+            CalendarioSimples calendario,
             Set<String> locationIds,
             Set<String> materialIds) {
 
@@ -92,7 +95,7 @@ public class SelloutHistoricalSalesSource implements HistoricalSalesSource {
 
     @Override
     public Collection<AggregatedByLocationMaterialUOM> getAggregatedByLocationMaterialUom(
-            Calendario calendario,
+            CalendarioSimples calendario,
             Set<String> locationIds,
             Set<String> materialIds) {
 
@@ -122,7 +125,7 @@ public class SelloutHistoricalSalesSource implements HistoricalSalesSource {
 
     }
 
-    private IllegalArgumentException getUnsupportedBucketException(Calendario calendario) {
+    private IllegalArgumentException getUnsupportedBucketException(CalendarioSimples calendario) {
 
         return new IllegalArgumentException(
                 "Historical sales source does not support bucket size "

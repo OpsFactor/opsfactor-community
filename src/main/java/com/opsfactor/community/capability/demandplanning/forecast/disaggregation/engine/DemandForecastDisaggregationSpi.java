@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.demandplanning.forecast.disaggregatio
 
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionAgregado;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 
 /**
@@ -28,7 +28,7 @@ public interface DemandForecastDisaggregationSpi {
      * Desagrega o forecast do agregado recebido para as series material/location.
      */
     void desagregaForecast(
-            Calendario calendario,
+            CalendarioSimples calendario,
             int numeroDiasSplitTopDown,
             DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado,
             ClusterEParametrosProjection clusterEParametrosProjection);

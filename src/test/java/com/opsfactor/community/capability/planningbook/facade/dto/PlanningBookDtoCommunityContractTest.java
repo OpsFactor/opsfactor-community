@@ -131,6 +131,10 @@ public class PlanningBookDtoCommunityContractTest {
                         "enableSorting",
                         "enableHiding",
                         "enablePinning",
+                        "periodIndex",
+                        "bucketSize",
+                        "startDateTime",
+                        "endDateTime",
                         "pinnedLeft"),
                 getDeclaredFieldNames(ColumnDefDTO.class));
 

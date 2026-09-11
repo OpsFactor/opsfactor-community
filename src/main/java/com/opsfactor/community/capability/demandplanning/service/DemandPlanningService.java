@@ -39,7 +39,7 @@ import com.opsfactor.community.capability.demandplanning.engine.DemandPlanning;
 import com.opsfactor.community.capability.demandplanning.forecast.preprocessing.engine.DemandForecastStockoutContext;
 import com.opsfactor.community.capability.demandplanning.forecast.service.DemandForecastWorkflowService;
 import com.opsfactor.community.capability.demandplanning.service.spi.DemandPlanReferenceCopySpi;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.capability.demandplanning.forecast.configuration.DemandPlanningModelCatalog;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
@@ -442,7 +442,7 @@ public class DemandPlanningService {
                                 "No Demand Plan execution profiled found with id = "
                                         + perfilExecucaoDemandPlanId));
 
-        LocalDateTime dataInicioPlano = Calendario.getPrimeiraDataFromDescricaoPeriodo(
+        LocalDateTime dataInicioPlano = CalendarioSimples.getPrimeiraDataFromDescricaoPeriodo(
                 dataReferenciaComoString,
                 perfilExecucaoDemandPlan.getTamanhoBucket());
 
@@ -507,21 +507,25 @@ public class DemandPlanningService {
                 parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjectionDeCache(perfilExecucaoDemandPlan);
 
         if (descricao == null || descricao.isBlank()) {
-            descricao = "Demand Plan " + String.valueOf(Calendario.getDescricaoIntegerPeriodo(LocalDateTime.now(), perfilExecucaoDemandPlan.getTamanhoBucket()));
+            descricao = "Demand Plan " + String.valueOf(CalendarioSimples.getDescricaoIntegerPeriodo(LocalDateTime.now(), perfilExecucaoDemandPlan.getTamanhoBucket()));
         }
 
         DemandPlan demandPlan = new DemandPlan();
         demandPlan.setPerfilExecucaoDemandPlan(perfilExecucaoDemandPlan);
+        if (perfilExecucaoDemandPlan.getPerfilCalendario() == null) {
+            throw new IllegalArgumentException("Select a simple calendar profile before creating a Demand Plan.");
+        }
+        demandPlan.setPerfilCalendarioOrigemId(perfilExecucaoDemandPlan.getPerfilCalendario().getId());
         demandPlan.setDescricao(descricao);
         demandPlan.setHorarioGeracao(LocalDateTime.now());
         demandPlan.setUsuarioGeradorPlano((userId != null) ? userId : "System");
         demandPlan.setTamanhoBucket(perfilExecucaoDemandPlan.getTamanhoBucket());
         // ao salvar no banco converte a data para a 1a data do período (diario, semanal ou mensal)
-        demandPlan.setDataInicioPlano(Calendario.getPrimeiraDataHorarioPeriodo(dataInicioPlano, perfilExecucaoDemandPlan.getTamanhoBucket()));
+        demandPlan.setDataInicioPlano(CalendarioSimples.getPrimeiraDataHorarioPeriodo(dataInicioPlano, perfilExecucaoDemandPlan.getTamanhoBucket()));
         aplicaJanelaEdicaoPlanningBookCommunity(demandPlan, perfilExecucaoDemandPlan);
 
         // Calendario maximo entre todas as combinacoes cluster material / cluster location.
-        Calendario calendarioHistoricoMaximo = demandPlan.getCalendarioDoDemandPlanComHistoricoMaximo(parametrosDemandPlanProjection);
+        CalendarioSimples calendarioHistoricoMaximo = demandPlan.getCalendarioDoDemandPlanComHistoricoMaximo(parametrosDemandPlanProjection);
         demandPlan.setDataFimPlano(calendarioHistoricoMaximo.getDataHorarioFinal());
 
         demandPlan = validaDemandPlanSalvoInicialCommunity(
@@ -567,7 +571,7 @@ public class DemandPlanningService {
                         if (!parametrosGeraisDemandPlanningProjection.executaPlanoDemanda) return;
 
                         // Calendario com historico determinado pela combinacao cluster material / cluster location.
-                        Calendario calendario = demandPlanParaLambda.getCalendarioDoDemandPlan(
+                        CalendarioSimples calendario = demandPlanParaLambda.getCalendarioDoDemandPlan(
                                 parametrosDemandPlanProjection,
                                 clusterMateriaisDemandPlanning,
                                 clusterLocations);
@@ -700,12 +704,12 @@ public class DemandPlanningService {
             return;
         }
 
-        demandPlan.setDataInicioEdicao(Calendario.getPrimeiraDataHorarioPeriodoCalendarioComOffset(
+        demandPlan.setDataInicioEdicao(CalendarioSimples.getPrimeiraDataHorarioPeriodoCalendarioComOffset(
                 demandPlan.getDataInicioPlano(),
                 perfilExecucaoDemandPlan.getPeriodoInicialEdicaoPlano() - 1,
                 perfilExecucaoDemandPlan.getTamanhoBucket())
                 .toLocalDate());
-        demandPlan.setDataFimEdicao(Calendario.getPrimeiraDataHorarioPeriodoCalendarioComOffset(
+        demandPlan.setDataFimEdicao(CalendarioSimples.getPrimeiraDataHorarioPeriodoCalendarioComOffset(
                         demandPlan.getDataInicioPlano(),
                         perfilExecucaoDemandPlan.getPeriodoFinalEdicaoPlano() - 1,
                         perfilExecucaoDemandPlan.getTamanhoBucket())
@@ -1048,7 +1052,7 @@ public class DemandPlanningService {
      * um contexto opaco de execucao.</p>
      */
     public List<? extends DemandPlanForecastProjection> geraDemandPlanForecastProjectionsExecucaoComForecast(
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosDemandPlanNivelClusterProjection parametrosDemandPlanNivelClusterProjection,
             boolean preencheHorizonteForecastComDemandaHistorica) {
 
@@ -1118,7 +1122,7 @@ public class DemandPlanningService {
      * vezes sem abrir mao das validacoes Community de perfil, modelo e split.</p>
      */
     public List<? extends DemandPlanForecastProjection> geraDemandPlanForecastProjectionsExecucaoComForecast(
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosDemandPlanNivelClusterProjection parametrosDemandPlanNivelClusterProjection,
             MaterialProjection materialProjection,
             LocationProjection locationProjection,
@@ -1179,7 +1183,7 @@ public class DemandPlanningService {
      */
     protected List<? extends DemandPlanForecastProjection>
             geraDemandPlanForecastProjectionsExecucaoComParametrosResolvidos(
-                    Calendario calendario,
+                    CalendarioSimples calendario,
                     ParametrosDemandPlanNivelClusterProjection parametrosDemandPlanNivelClusterProjection,
                     MaterialProjection materialProjection,
                     LocationProjection locationProjection,
@@ -1242,7 +1246,7 @@ public class DemandPlanningService {
      * Enterprise.</p>
      */
     public List<? extends DemandPlanForecastProjection> geraDemandPlanForecastProjectionsExecucaoComForecast(
-            Calendario calendario,
+            CalendarioSimples calendario,
             MaterialProjection materialProjection,
             LocationProjection locationProjection,
             SalesProjectionLocationMaterialData salesProjection,
@@ -1313,7 +1317,7 @@ public class DemandPlanningService {
     protected List<DemandPlanForecastProjectionMaterialLocation>
             preparaFolhasAntesDoWorkflowForecast(
                     List<DemandPlanForecastProjectionMaterialLocation> forecastLeaves,
-                    Calendario calendario,
+                    CalendarioSimples calendario,
                     MaterialProjection materialProjection,
                     LocationProjection locationProjection,
                     ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
@@ -1341,7 +1345,7 @@ public class DemandPlanningService {
      * `NullPointerException` sem contexto funcional.</p>
      */
     private void validaInputsProjectionAwareForecastCommunity(
-            Calendario calendario,
+            CalendarioSimples calendario,
             MaterialProjection materialProjection,
             LocationProjection locationProjection,
             SalesProjectionLocationMaterialData salesProjection,
@@ -1414,7 +1418,7 @@ public class DemandPlanningService {
      */
     public List<? extends DemandPlanForecastProjection> geraDemandPlanForecastProjectionsExecucaoComForecast(
             List<DemandPlanForecastProjectionMaterialLocation> demandPlanForecastProjectionMaterialLocationList,
-            Calendario calendario,
+            CalendarioSimples calendario,
             MaterialProjection materialProjection,
             LocationProjection locationProjection,
             ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
@@ -1463,7 +1467,7 @@ public class DemandPlanningService {
             geraDemandPlanForecastProjectionsExecucaoComForecastEContextoStockout(
                     List<DemandPlanForecastProjectionMaterialLocation>
                             demandPlanForecastProjectionMaterialLocationList,
-                    Calendario calendario,
+                    CalendarioSimples calendario,
                     MaterialProjection materialProjection,
                     LocationProjection locationProjection,
                     ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
@@ -1512,7 +1516,7 @@ public class DemandPlanningService {
      * folhas da rodada, evitando N+1 dentro do workflow paralelo.</p>
      */
     protected DemandForecastStockoutContext criaDemandForecastStockoutContext(
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
             ParametrosForecastProjection parametrosForecastProjection,
             ClusterEParametrosProjection clusterEParametrosProjection,
@@ -1533,7 +1537,7 @@ public class DemandPlanningService {
      */
     private void validaInputsListaForecastCommunity(
             List<DemandPlanForecastProjectionMaterialLocation> demandPlanForecastProjectionMaterialLocationList,
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection) {
 
         if (parametrosGeraisDemandPlanningProjection == null) {

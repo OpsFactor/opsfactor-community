@@ -19,7 +19,7 @@ import com.opsfactor.community.capability.demandplanning.demandplan.projection.D
 import com.opsfactor.community.capability.demandplanning.forecast.statisticalmodel.engine.MovingAverageForecastEngine;
 import com.opsfactor.community.capability.demandplanning.forecast.preprocessing.engine.DemandForecastHistoryCleaningProcessor;
 import com.opsfactor.community.capability.demandplanning.forecast.preprocessing.engine.DemandForecastStockoutTreatmentProcessor;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
@@ -50,7 +50,7 @@ class DemandPlanningCommunityContractTest {
     @Test
     void communityHistoryProcessorsShouldKeepObservedSalesWithoutNormalization() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -94,7 +94,7 @@ class DemandPlanningCommunityContractTest {
     @Test
     void communityHistoryProcessorsShouldKeepOnlyHistoricalWindowWhenDemandArrayHasFutureHorizon() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -147,7 +147,7 @@ class DemandPlanningCommunityContractTest {
     @Test
     void communityStockoutProcessorShouldRejectEnterpriseStockoutTreatmentConfiguration() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -193,7 +193,7 @@ class DemandPlanningCommunityContractTest {
     @Test
     void communityHistoryCleaningProcessorShouldRejectEnterpriseHistoryCleaningConfiguration() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -246,7 +246,7 @@ class DemandPlanningCommunityContractTest {
     @Test
     void communityStockoutProcessorShouldRejectIncompleteForecastProjection() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -335,7 +335,7 @@ class DemandPlanningCommunityContractTest {
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> DemandPlanning.desagregaForecast(
-                        (Calendario) null,
+                        (CalendarioSimples) null,
                         null,
                         0,
                         null,
@@ -387,7 +387,7 @@ class DemandPlanningCommunityContractTest {
     @Test
     void movingAverageAndRollingMovingAverageShouldKeepTheirDistinctCommunityBehavior() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -434,14 +434,14 @@ class DemandPlanningCommunityContractTest {
     @Test
     void forecastProjectionGenerationShouldRejectSalesProjectionWithDifferentBucket() {
 
-        Calendario calendarioDemandPlan = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendarioDemandPlan = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
                 3,
                 2,
                 0);
-        Calendario calendarioSalesProjection = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendarioSalesProjection = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.SEMANAL,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -475,7 +475,7 @@ class DemandPlanningCommunityContractTest {
     @Test
     void forecastProjectionGenerationShouldRejectMissingStructuralInputsBeforeLoopingSales() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -561,7 +561,7 @@ class DemandPlanningCommunityContractTest {
     @Test
     void forecastProjectionGenerationShouldRejectBrokenMaterialAndLocationSnapshots() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -723,7 +723,7 @@ class DemandPlanningCommunityContractTest {
     @Test
     void historicoDemandPlanItemGenerationShouldPersistNamedHistoricalTreatmentStages() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -776,7 +776,7 @@ class DemandPlanningCommunityContractTest {
     @Test
     void historicalSalesDisaggregationShouldSplitAggregateForecastByRecentHistoricalMix() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -849,7 +849,7 @@ class DemandPlanningCommunityContractTest {
     @Test
     void historicalSalesDisaggregationShouldRedistributeInactiveDfuShareToActiveDfus() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -915,7 +915,7 @@ class DemandPlanningCommunityContractTest {
     @Test
     void historicalSalesDisaggregationShouldSplitUniformlyWhenActiveHistoryIsZero() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -996,7 +996,7 @@ class DemandPlanningCommunityContractTest {
     }
 
     private static DemandPlanForecastProjectionMaterialLocation getDemandPlanForecastProjectionMaterialLocationComHistorico(
-            Calendario calendario) {
+            CalendarioSimples calendario) {
 
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocation =
                 new DemandPlanForecastProjectionMaterialLocation(
@@ -1076,7 +1076,7 @@ class DemandPlanningCommunityContractTest {
         RequiresEnterpriseVersionException requiresEnterpriseVersionException = Assertions.assertThrows(
                 RequiresEnterpriseVersionException.class,
                 () -> DemandPlanning.desagregaForecast(
-                        (Calendario) null,
+                        (CalendarioSimples) null,
                         dpModeloSplit,
                         0,
                         null,

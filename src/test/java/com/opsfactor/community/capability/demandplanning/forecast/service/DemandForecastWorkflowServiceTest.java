@@ -12,7 +12,7 @@ import com.opsfactor.community.capability.demandplanning.demandplan.projection.D
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionMaterialLocation;
 import com.opsfactor.community.capability.demandplanning.forecast.preprocessing.engine.DemandForecastHistoryCleaningProcessor;
 import com.opsfactor.community.capability.demandplanning.forecast.preprocessing.engine.DemandForecastStockoutTreatmentProcessor;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -216,7 +216,7 @@ class DemandForecastWorkflowServiceTest {
 
         DemandForecastWorkflowService demandForecastWorkflowService =
                 criaDemandForecastWorkflowService();
-        Calendario calendario = getCalendarioForecastTeste();
+        CalendarioSimples calendario = getCalendarioForecastTeste();
 
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
                 IllegalArgumentException.class,
@@ -237,7 +237,7 @@ class DemandForecastWorkflowServiceTest {
 
         DemandForecastWorkflowService demandForecastWorkflowService =
                 criaDemandForecastWorkflowService();
-        Calendario calendario = getCalendarioForecastTeste();
+        CalendarioSimples calendario = getCalendarioForecastTeste();
         DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado =
                 new DemandPlanForecastProjectionAgregado(
                         calendario,
@@ -265,7 +265,7 @@ class DemandForecastWorkflowServiceTest {
     void executaForecastEDesagregacaoShouldTreatAggregateHistoryBeforeHistoricalSalesSplit() {
 
         DemandForecastWorkflowService demandForecastWorkflowService = criaDemandForecastWorkflowService();
-        Calendario calendario = getCalendarioForecastTeste();
+        CalendarioSimples calendario = getCalendarioForecastTeste();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
         DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado =
                 new DemandPlanForecastProjectionAgregado(
@@ -346,7 +346,7 @@ class DemandForecastWorkflowServiceTest {
     void executaForecastEDesagregacaoShouldAllowBottomUpWithoutClusterProjection() {
 
         DemandForecastWorkflowService demandForecastWorkflowService = criaDemandForecastWorkflowService();
-        Calendario calendario = getCalendarioForecastTeste();
+        CalendarioSimples calendario = getCalendarioForecastTeste();
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocation =
                 new DemandPlanForecastProjectionMaterialLocation(
                         calendario,
@@ -380,7 +380,7 @@ class DemandForecastWorkflowServiceTest {
     void executaForecastEDesagregacaoShouldFailWhenTopDownConfigReceivesLeafProjection() {
 
         DemandForecastWorkflowService demandForecastWorkflowService = criaDemandForecastWorkflowService();
-        Calendario calendario = getCalendarioForecastTeste();
+        CalendarioSimples calendario = getCalendarioForecastTeste();
         DemandPlanForecastProjectionMaterialLocation demandPlanForecastProjectionMaterialLocation =
                 new DemandPlanForecastProjectionMaterialLocation(
                         calendario,
@@ -409,7 +409,7 @@ class DemandForecastWorkflowServiceTest {
     void executaForecastEDesagregacaoShouldFailWhenBottomUpConfigReceivesAggregateProjection() {
 
         DemandForecastWorkflowService demandForecastWorkflowService = criaDemandForecastWorkflowService();
-        Calendario calendario = getCalendarioForecastTeste();
+        CalendarioSimples calendario = getCalendarioForecastTeste();
         DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado =
                 new DemandPlanForecastProjectionAgregado(
                         calendario,
@@ -450,9 +450,9 @@ class DemandForecastWorkflowServiceTest {
 
     }
 
-    private static Calendario getCalendarioForecastTeste() {
+    private static CalendarioSimples getCalendarioForecastTeste() {
 
-        return Calendario.criaCalendarioDeOffsetsDias(
+        return CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -464,7 +464,7 @@ class DemandForecastWorkflowServiceTest {
 
     private static DemandPlanForecastProjectionMaterialLocation getDemandPlanForecastProjectionMaterialLocationVazia() {
 
-        Calendario calendario = getCalendarioForecastTeste();
+        CalendarioSimples calendario = getCalendarioForecastTeste();
         return new DemandPlanForecastProjectionMaterialLocation(
                 calendario,
                 new UnidadeMedida("UN"),
@@ -531,7 +531,7 @@ class DemandForecastWorkflowServiceTest {
     private static class DemandPlanForecastProjectionComFolhaInvalida extends DemandPlanForecastProjection {
 
         private DemandPlanForecastProjectionComFolhaInvalida(
-                Calendario calendario,
+                CalendarioSimples calendario,
                 UnidadeMedida unidadeMedida) {
 
             super(calendario, unidadeMedida, false);

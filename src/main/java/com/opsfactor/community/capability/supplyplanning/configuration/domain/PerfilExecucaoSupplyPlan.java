@@ -2,6 +2,7 @@ package com.opsfactor.community.capability.supplyplanning.configuration.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
+import com.opsfactor.community.capability.masterdata.calendar.profile.domain.PerfilCalendario;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.network.location.domain.LocationAbstract;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
@@ -32,6 +33,10 @@ import java.util.*;
 @AllArgsConstructor
 @Entity
 public class PerfilExecucaoSupplyPlan implements Serializable, Cloneable {
+
+    /** Receita única do cabeçalho, compartilhada por todas as locations e etapas. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    private PerfilCalendario perfilCalendario;
         
     /*
      * Define como a demanda direta e escolhida para cada bucket.
@@ -671,6 +676,12 @@ public class PerfilExecucaoSupplyPlan implements Serializable, Cloneable {
 
     }
     public int getUltimoPeriodoFuturoHorizonteAPartirPeriodoPresente(Location location, Calendario calendario, ClusterEParametrosProjection clusterEParametrosProjection) {
+
+        // Com receita explícita o horizonte vem dos períodos resolvidos. O campo
+        // legado em dias só serve aos planos antigos ainda sem perfil calendário.
+        if (getPerfilCalendario() != null) {
+            return calendario.getPosicaoPeriodoFinalFuturo();
+        }
         int numeroDiasHorizonte = getHorizontePlanoDias(clusterEParametrosProjection, location);
         int posicaoPeriodoPresente = calendario.getPosicaoPeriodoPresente();
 
@@ -1856,7 +1867,8 @@ public class PerfilExecucaoSupplyPlan implements Serializable, Cloneable {
             Integer periodo,
             Calendario calendario) {
 
-        return coeficienteBase * getMultiplicadorTemporalFuncaoObjetivoPrimeirosPeriodos(periodo, calendario);
+        return coeficienteBase * getMultiplicadorTemporalFuncaoObjetivoPrimeirosPeriodos(periodo,
+                calendario);
 
     }
 
@@ -1886,7 +1898,8 @@ public class PerfilExecucaoSupplyPlan implements Serializable, Cloneable {
             return getMultiplicadorTemporalFuncaoObjetivoExponencial(periodoNormalizado);
         }
 
-        return getMultiplicadorTemporalFuncaoObjetivoLinear(periodoNormalizado, calendario);
+        return getMultiplicadorTemporalFuncaoObjetivoLinear(periodoNormalizado,
+                calendario);
 
     }
 

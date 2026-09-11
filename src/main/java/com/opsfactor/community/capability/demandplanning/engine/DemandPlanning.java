@@ -29,6 +29,7 @@ import com.opsfactor.community.capability.demandplanning.forecast.statisticalmod
 import com.opsfactor.community.capability.demandplanning.forecast.statisticalmodel.engine.HoltWintersForecastEngine;
 import com.opsfactor.community.capability.demandplanning.forecast.statisticalmodel.engine.MovingAverageForecastEngine;
 import com.opsfactor.community.capability.demandplanning.forecast.statisticalmodel.engine.RollingMovingAverageForecastEngine;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
@@ -65,7 +66,7 @@ public class DemandPlanning {
      * a etapa posterior do workflow decide se precisa desagregar.</p>
      */
     public static void geraForecastAgregadoNoDemandPlanForecastProjection(
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosForecastProjection parametrosForecastProjection,
             DemandPlanForecastProjection demandPlanForecastProjection) {
 
@@ -130,7 +131,7 @@ public class DemandPlanning {
     }
 
     public static void desagregaForecast(
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosForecastProjection parametrosForecastProjection,
             DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado,
             ClusterEParametrosProjection clusterEParametrosProjection) {
@@ -154,7 +155,7 @@ public class DemandPlanning {
      * objeto completo de parametros estatisticos.</p>
      */
     public static void desagregaForecast(
-            Calendario calendario,
+            CalendarioSimples calendario,
             Constantes.DPModeloSplit dpModeloSplit,
             int numeroDiasSplitTopDown,
             DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado,
@@ -210,7 +211,7 @@ public class DemandPlanning {
      * historico para os indices do forecast fica ambigua e o fluxo deve falhar.</p>
      */
     public static List<DemandPlanForecastProjectionMaterialLocation> geraDemandPlanForecastProjectionMaterialLocationListComDemandaHistoricaPopuladaCommunity(
-            Calendario calendario,
+            CalendarioSimples calendario,
             LocationProjection locationProjection,
             MaterialProjection materialProjection,
             UnidadeMedida unidadeMedidaPadraoDp,
@@ -222,7 +223,7 @@ public class DemandPlanning {
         if (calendario == null
                 || salesProjection == null
                 || salesProjection.getCalendario() == null
-                || !Objects.equals(calendario.getTamanhoBucket(), salesProjection.getCalendario().getTamanhoBucket())) {
+                || !Objects.equals(calendario.getTamanhoBucket(), getTamanhoBucket(salesProjection))) {
             throw getIncompatibleDemandPlanningSalesProjectionCalendarException(calendario, salesProjection);
         }
 
@@ -277,11 +278,11 @@ public class DemandPlanning {
                         preencheHorizonteForecastComDemandaHistorica);
                 demandPlanForecastProjectionMaterialLocationList.add(demandPlanForecastProjectionMaterialLocation);
 
-                for (int i=calendario.getPosicaoPeriodoInicialPassado();
+                for (int i = calendario.getPosicaoPeriodoInicialPassado();
                      (preencheHorizonteForecastComDemandaHistorica) ?
                              i <= calendario.getPosicaoPeriodoFinalFuturo() // períodos futuros recebem venda observada (por ex. para avaliação posterior mape/bias)
                              : i < calendario.getPosicaoPeriodoInicialFuturo(); // periodos futuros não recebem venda observada (menor número de buscas no sales projection)
-                    i++) {
+                     i++) {
                     /*
                      * Puxa a venda usando como referencia de periodo o calendario
                      * passado como argumento. Ele pode divergir do calendario da
@@ -289,7 +290,8 @@ public class DemandPlanning {
                      * do proprio objeto de sales.
                      */
                     demandPlanForecastProjectionMaterialLocation.demanda[i] += salesProjection.getQuantidadeSales(
-                            material, location, calendario, i, unidadeMedidaPadraoDp);
+                            material, location,
+                            calendario, i, unidadeMedidaPadraoDp);
                 }
 
             }
@@ -343,7 +345,7 @@ public class DemandPlanning {
 
     public static List<? extends DemandPlanForecastProjection> geraDemandPlanForecastProjectionsExecucaoComDemandaHistoricaPopuladaCommunity(
             List<DemandPlanForecastProjectionMaterialLocation> demandPlanForecastProjectionMaterialLocationList,
-            Calendario calendario,
+            CalendarioSimples calendario,
             MaterialProjection materialProjection,
             LocationProjection locationProjection,
             ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
@@ -369,7 +371,7 @@ public class DemandPlanning {
 
     public static void redistribuiForecastBaselineTrendSeasonalEntreMateriaisAtivosCommunity(
             List<? extends DemandPlanForecastProjection> demandPlanForecastProjectionsExecucao,
-            Calendario calendario,
+            CalendarioSimples calendario,
             ClusterEParametrosProjection clusterEParametrosProjection,
             ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection) {
 
@@ -497,7 +499,7 @@ public class DemandPlanning {
     }
 
     private static IllegalArgumentException getIncompatibleDemandPlanningSalesProjectionCalendarException(
-            Calendario calendario,
+            CalendarioSimples calendario,
             SalesProjectionLocationMaterialData salesProjection) {
 
         return new IllegalArgumentException(
@@ -511,7 +513,11 @@ public class DemandPlanning {
 
     private static Constantes.TamanhoBucket getTamanhoBucket(Calendario calendario) {
 
-        return calendario == null ? null : calendario.getTamanhoBucket();
+        if (calendario == null) return null;
+        if (!(calendario instanceof CalendarioSimples uniforme)) {
+            throw new IllegalArgumentException("Demand Planning requires a simple calendar");
+        }
+        return uniforme.getTamanhoBucket();
 
     }
 
@@ -546,10 +552,11 @@ public class DemandPlanning {
     public static boolean verificaSeAjusteDentroHorizonteCongelado(
             LocalDate dataAjuste,
             Collection<Location> locations, Collection<Produto> materiais, 
-            Calendario calendarioDemandPlan, 
+            CalendarioSimples calendarioDemandPlan,
             ClusterEParametrosProjection clusterEParametrosProjection) {
         
-        Optional<Integer> leadTimeEmPeriodosOptional = clusterEParametrosProjection.getDPHorizonteCongeladoEmPeriodos(locations, materiais, calendarioDemandPlan);
+        Optional<Integer> leadTimeEmPeriodosOptional = clusterEParametrosProjection.getDPHorizonteCongeladoEmPeriodos(locations, materiais,
+                calendarioDemandPlan);
         
         if (leadTimeEmPeriodosOptional.isEmpty()) return true;
         
@@ -566,7 +573,7 @@ public class DemandPlanning {
     public static List<DemandPlanItem> geraDemandPlanItemListDeDemandPlanForecastProjectionsExecucao(
             DemandPlan demandPlan,
             List<? extends DemandPlanForecastProjection> demandPlanForecastProjectionsExecucao,
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
             ClusterEParametrosProjection clusterEParametrosProjection) {
 
@@ -637,7 +644,7 @@ public class DemandPlanning {
     public static List<HistoricoDemandPlanItem> geraHistoricoDemandPlanItemListDeDemandPlanForecastProjectionsExecucao(
             DemandPlan demandPlan,
             List<? extends DemandPlanForecastProjection> demandPlanForecastProjectionsExecucao,
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
             ClusterEParametrosProjection clusterEParametrosProjection) {
 
@@ -693,7 +700,7 @@ public class DemandPlanning {
         return historicoDemandPlanItemList;
     }
 
-    public static Calendario getCalendarioDemandPlanComPeriodosPassadosEFuturos(
+    public static CalendarioSimples getCalendarioDemandPlanComPeriodosPassadosEFuturos(
             ParametrosDemandPlanNivelClusterProjection parametrosDemandPlanNivelClusterProjection,
             PerfilExecucaoDemandPlan perfilExecucaoDemandPlan,
             LocalDateTime dataHorarioPeriodoInicioHorizonteForecast) {
@@ -712,7 +719,7 @@ public class DemandPlanning {
 
     }
 
-    public static Calendario getCalendarioDemandPlanComPeriodosPassadosEFuturosComInputsEmDias(
+    public static CalendarioSimples getCalendarioDemandPlanComPeriodosPassadosEFuturosComInputsEmDias(
             Constantes.TamanhoBucket tamanhoBucket,
             int diasHistoricosForecastEstatistico,
             int diasFuturosHorizonteForecast,
@@ -720,7 +727,7 @@ public class DemandPlanning {
 
         // Entrada em dias: este helper converte a janela para o calendario operacional do Demand Planning.
         // Granularidade menor que diaria depende de projections de sales especificas.
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 tamanhoBucket,
                 dataHorarioPeriodoInicioHorizonteForecast,
                 0, diasHistoricosForecastEstatistico,
@@ -730,7 +737,7 @@ public class DemandPlanning {
 
     }
 
-    public static Calendario getCalendarioDemandPlanComPeriodosPassadosEFuturosComInputsEmPeriodos(
+    public static CalendarioSimples getCalendarioDemandPlanComPeriodosPassadosEFuturosComInputsEmPeriodos(
             Constantes.TamanhoBucket tamanhoBucket,
             int periodosHistoricosForecastEstatistico,
             int periodosFuturosHorizonteForecast,
@@ -738,7 +745,7 @@ public class DemandPlanning {
 
         // Entrada em periodos: usado quando a propria configuracao ja foi traduzida para buckets.
         // Granularidade menor que diaria depende de projections de sales especificas.
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsPeriodos(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsPeriodos(
                 tamanhoBucket,
                 dataHorarioPeriodoInicioHorizonteForecast,
                 0, periodosHistoricosForecastEstatistico,

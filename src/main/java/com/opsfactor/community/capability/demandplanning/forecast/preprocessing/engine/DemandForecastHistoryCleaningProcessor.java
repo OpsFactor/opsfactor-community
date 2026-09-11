@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.demandplanning.forecast.preprocessing
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosLimpezaHistoricoForecast;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjection;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.springframework.stereotype.Component;
@@ -28,7 +28,7 @@ public class DemandForecastHistoryCleaningProcessor {
      * Materializa a serie historica final consumida pelas engines estatisticas.
      */
     public void processa(
-            Calendario calendario,
+            CalendarioSimples calendario,
             DemandPlanForecastProjection demandPlanForecastProjection,
             ParametrosForecastProjection parametrosForecastProjection) {
 

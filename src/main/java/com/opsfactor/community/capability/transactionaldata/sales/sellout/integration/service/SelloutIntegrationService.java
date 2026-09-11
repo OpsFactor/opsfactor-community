@@ -10,7 +10,7 @@ import com.opsfactor.community.capability.masterdata.product.material.repository
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.repository.UnidadeMedidaRepository;
 import com.opsfactor.community.capability.masterdata.network.location.service.LocationService;
 import com.opsfactor.community.platform.integration.service.IntegrationServiceInterface;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.exception.DataUploadException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -208,11 +208,11 @@ public class SelloutIntegrationService implements IntegrationServiceInterface<Se
         if (filtroDto.locationType == null || filtroDto.locationType.isEmpty()) {
             return selloutRepository.customFindByDataVendaBetween(
                     filtroDto.startDate.atStartOfDay(),
-                    Calendario.getUltimoSegundoData(filtroDto.endDate));
+                    CalendarioSimples.getUltimoSegundoData(filtroDto.endDate));
         } else {
             return selloutRepository.customFindByDataVendaBetweenAndLocationDestinoTypeIn(
                     filtroDto.startDate.atStartOfDay(),
-                    Calendario.getUltimoSegundoData(filtroDto.endDate),
+                    CalendarioSimples.getUltimoSegundoData(filtroDto.endDate),
                     filtroDto.locationType);
         }
 

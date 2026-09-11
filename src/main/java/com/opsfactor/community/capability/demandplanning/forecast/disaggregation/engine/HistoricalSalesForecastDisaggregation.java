@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.configuration.projection.parametros.Cl
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjection;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionAgregado;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionMaterialLocation;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public class HistoricalSalesForecastDisaggregation implements DemandForecastDisa
 
     @Override
     public void desagregaForecast(
-            Calendario calendario,
+            CalendarioSimples calendario,
             int numeroDiasSplitTopDown,
             DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado,
             ClusterEParametrosProjection clusterEParametrosProjection) {
@@ -50,7 +50,7 @@ public class HistoricalSalesForecastDisaggregation implements DemandForecastDisa
     }
 
     private double calculaDemandaHistoricaReferencia(
-            Calendario calendario,
+            CalendarioSimples calendario,
             int numeroDiasSplitTopDown,
             DemandPlanForecastProjection demandPlanForecastProjectionReferencia) {
 
@@ -81,7 +81,7 @@ public class HistoricalSalesForecastDisaggregation implements DemandForecastDisa
      * modelo estatistico do agregado tiver produzido trend, seasonal ou bounds.
      */
     private void desagregaForecastComMixHistorico(
-            Calendario calendario,
+            CalendarioSimples calendario,
             DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado,
             ClusterEParametrosProjection clusterEParametrosProjection,
             ToDoubleFunction<DemandPlanForecastProjection> funcaoValorReferenciaParaCalculoSplit) {
@@ -143,7 +143,7 @@ public class HistoricalSalesForecastDisaggregation implements DemandForecastDisa
     }
 
     private void inicializaArraysOpcionaisNoLeaf(
-            Calendario calendario,
+            CalendarioSimples calendario,
             DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado,
             DemandPlanForecastProjection demandPlanForecastProjectionLeaf) {
 
@@ -174,7 +174,7 @@ public class HistoricalSalesForecastDisaggregation implements DemandForecastDisa
     }
 
     private void atualizaSeriesDoLeafComParticipacaoDoAgregado(
-            Calendario calendario,
+            CalendarioSimples calendario,
             DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado,
             DemandPlanForecastProjection demandPlanForecastProjectionLeaf,
             double participacaoFilhoNoPai) {

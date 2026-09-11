@@ -13,7 +13,7 @@ import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.Suppl
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjectionCompleto;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -221,7 +221,7 @@ class SupplyPlanningProjectionCommunityContractTest {
     void productionPlanIndexingShouldUseCanonicalProductionMasterData() {
 
         SupplyNetworkProjection supplyNetworkProjection = mock(SupplyNetworkProjection.class);
-        Calendario calendario = mock(Calendario.class);
+        CalendarioSimples calendario = mock(CalendarioSimples.class);
         Location location = new Location("LOC-CANONICAL");
         Produto material = new Produto("MAT-CANONICAL");
         Roteiro roteiroPersistido = getRoteiro("ROUTING-CANONICAL", location, material);

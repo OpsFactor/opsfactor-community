@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.demandplan.domain;
 
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +23,7 @@ class DemandPlanCalendarioTest {
         demandPlan.setDataInicioPlano(LocalDateTime.of(2026, 5, 1, 0, 0));
         demandPlan.setDataFimPlano(LocalDateTime.of(2026, 8, 31, 23, 59, 59));
 
-        Calendario calendario = demandPlan.getCalendarioDoDemandPlanComNumeroPeriodosHistoricosFixo(
+        CalendarioSimples calendario = demandPlan.getCalendarioDoDemandPlanComNumeroPeriodosHistoricosFixo(
                 perfilExecucaoDemandPlan,
                 4);
 

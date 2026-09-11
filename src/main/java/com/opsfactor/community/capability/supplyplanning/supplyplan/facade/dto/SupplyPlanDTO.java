@@ -24,6 +24,9 @@ public class SupplyPlanDTO {
     /** Perfil heuristico usado na execucao. */
     public String executionProfileId;
 
+    /** Identidade da receita original copiada no plano, não do cadastro atual. */
+    public String calendarProfileId;
+
     /** Descricao informada pelo usuario para a rodada. */
     public String description;
 

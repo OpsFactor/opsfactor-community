@@ -4,20 +4,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 /**
  * Configuracao de seguranca simples da edicao Community.
@@ -27,8 +19,7 @@ import java.util.List;
  * Mecanismos avancados de identidade ficam no overlay Enterprise.</p>
  */
 @Configuration
-@EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true) // permite o uso de @Secured, @RolesAllowed
+@Import(SharedHttpSecurityConfiguration.class)
 public class CustomHttpSecurityConfig {
 
     /**
@@ -62,16 +53,6 @@ public class CustomHttpSecurityConfig {
 
     @Value("${opsfactor.openapi.enabled:false}")
     private Boolean openApiEnabled;
-
-    /**
-     * Encoder padrao da edicao Community para credenciais locais.
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-
-        return new BCryptPasswordEncoder();
-
-    }
 
     /**
      * Configuracao Community para backend orientado a API.
@@ -134,24 +115,4 @@ public class CustomHttpSecurityConfig {
 
     }
 
-    /**
-     * Fonte CORS aberta para a SPA desacoplada consumir os endpoints Community.
-     */
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
-        configuration.setExposedHeaders(List.of("Authorization"));
-        configuration.setAllowCredentials(false);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration);
-        source.registerCorsConfiguration("/logout", configuration);
-        source.registerCorsConfiguration("/health-status", configuration);
-        source.registerCorsConfiguration("/actuator/**", configuration);
-        return source;
-
-    }
 }

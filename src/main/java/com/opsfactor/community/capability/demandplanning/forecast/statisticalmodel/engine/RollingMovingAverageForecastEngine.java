@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.demandplanning.forecast.statisticalmo
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosMediaMovel;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjection;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import com.opsfactor.community.platform.utility.MetodosUtilidade;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -28,7 +28,7 @@ public class RollingMovingAverageForecastEngine implements DemandForecastStatist
 
     @Override
     public void executaForecast(
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosForecastProjection parametrosForecastProjection,
             DemandPlanForecastProjection demandPlanForecastProjection) {
 
@@ -53,7 +53,7 @@ public class RollingMovingAverageForecastEngine implements DemandForecastStatist
     }
 
     private double[] calculaForecastMediaMovelRolling(
-            Calendario calendario,
+            CalendarioSimples calendario,
             double[] demandaHistorica,
             double[] forecast,
             int periodosMediaMovel) {

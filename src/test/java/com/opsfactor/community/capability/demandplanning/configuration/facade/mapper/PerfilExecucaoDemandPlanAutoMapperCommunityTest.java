@@ -1,5 +1,6 @@
 package com.opsfactor.community.capability.demandplanning.configuration.facade.mapper;
 
+import com.opsfactor.community.capability.masterdata.calendar.profile.domain.PerfilCalendarioSimples;
 import com.opsfactor.community.capability.demandplanning.configuration.facade.dto.PerfilExecucaoDemandPlanDTO;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
@@ -31,7 +32,8 @@ public class PerfilExecucaoDemandPlanAutoMapperCommunityTest {
         perfilExecucaoDemandPlan.setDescricao("Perfil Padrao");
         perfilExecucaoDemandPlan.setTipoDocumentoVenda(Constantes.TipoDocumentoVenda.SELLIN);
         perfilExecucaoDemandPlan.setTamanhoBucket(Constantes.TamanhoBucket.MENSAL);
-        perfilExecucaoDemandPlan.setNumeroPeriodosHorizontePlanejamento(12);
+        perfilExecucaoDemandPlan.setNumeroPeriodosHorizontePlanejamento(99);
+        perfilExecucaoDemandPlan.setPerfilCalendario(new PerfilCalendarioSimples("CALENDAR_TEST", Constantes.TamanhoBucket.MENSAL, 12));
         perfilExecucaoDemandPlan.setRestringePeriodosEdicaoPlano(true);
         perfilExecucaoDemandPlan.setPeriodoInicialEdicaoPlano(1);
         perfilExecucaoDemandPlan.setPeriodoFinalEdicaoPlano(3);
@@ -45,6 +47,7 @@ public class PerfilExecucaoDemandPlanAutoMapperCommunityTest {
                         perfilExecucaoDemandPlan,
                         parametrosGlobais);
 
+        Assertions.assertEquals("CALENDAR_TEST", perfilExecucaoDemandPlanDTO.calendarProfileId);
         Assertions.assertEquals("PERFIL_PADRAO", perfilExecucaoDemandPlanDTO.id);
         Assertions.assertEquals("Perfil Padrao", perfilExecucaoDemandPlanDTO.description);
         Assertions.assertEquals(Constantes.TipoDocumentoVenda.SELLOUT, perfilExecucaoDemandPlanDTO.historicalSalesDocumentType);

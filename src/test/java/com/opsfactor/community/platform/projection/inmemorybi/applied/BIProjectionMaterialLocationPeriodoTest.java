@@ -2,7 +2,7 @@ package com.opsfactor.community.platform.projection.inmemorybi.applied;
 
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.javatuples.Pair;
 import org.junit.jupiter.api.Assertions;
@@ -39,7 +39,7 @@ public class BIProjectionMaterialLocationPeriodoTest {
 
         BIProjectionMaterialLocationPeriodo<RegistroTeste> biProjectionMaterialLocationPeriodo =
                 new BIProjectionMaterialLocationPeriodo<>(
-                        Calendario.criaCalendarioDeOffsetsPeriodos(
+                        CalendarioSimples.criaCalendarioDeOffsetsPeriodos(
                                 Constantes.TamanhoBucket.MENSAL,
                                 LocalDateTime.of(2026, 1, 1, 0, 0),
                                 0,

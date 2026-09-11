@@ -44,7 +44,8 @@ import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanP
 import com.opsfactor.community.capability.supplyplanning.service.heuristic.ConstrainedPlanService;
 import com.opsfactor.community.capability.supplyplanning.service.heuristic.HeuristicoService;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
+import com.opsfactor.community.capability.masterdata.calendar.profile.domain.PerfilCalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -1386,6 +1387,9 @@ public class SupplyPlanServiceCommunityContractTest {
         perfilExecucaoSupplyPlan.setId("PERFIL_PROCESS_CHAIN");
         perfilExecucaoSupplyPlan.setModoExecucao(PerfilExecucaoSupplyPlan.ModoExecucao.PROCESS_CHAIN);
         perfilExecucaoSupplyPlan.setHorizontePlanoDias(7);
+        perfilExecucaoSupplyPlan.setPerfilCalendario(
+                new PerfilCalendarioSimples(
+                        "DIARIO_7", Constantes.TamanhoBucket.DIARIO, 7));
         DemandPlan demandPlan = new DemandPlan();
         demandPlan.setId(42L);
         VersaoMalha versaoMalha = new VersaoMalha();
@@ -3284,9 +3288,9 @@ public class SupplyPlanServiceCommunityContractTest {
 
     }
 
-    private static Calendario criaCalendarioConstrainedPlanningTeste() {
+    private static CalendarioSimples criaCalendarioConstrainedPlanningTeste() {
 
-        return Calendario.criaCalendarioDeDatas(
+        return CalendarioSimples.criaCalendarioDeDatas(
                 Constantes.TamanhoBucket.MENSAL,
                 LocalDateTime.of(2026, 1, 1, 0, 0),
                 LocalDateTime.of(2026, 1, 1, 0, 0),
@@ -3296,7 +3300,7 @@ public class SupplyPlanServiceCommunityContractTest {
 
     private static SplitTemporalProjectionPorDfu criaSplitTemporalProjectionPorDfuTeste() {
 
-        Calendario calendario = criaCalendarioConstrainedPlanningTeste();
+        CalendarioSimples calendario = criaCalendarioConstrainedPlanningTeste();
 
         /*
          * Estes testes exercitam apenas a validacao de entrada da ponte

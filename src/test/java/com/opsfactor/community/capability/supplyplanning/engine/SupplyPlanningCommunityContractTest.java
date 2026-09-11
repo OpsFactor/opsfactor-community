@@ -11,6 +11,7 @@ import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.p
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.projection.SupplyPlanningProjection;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
@@ -72,7 +73,7 @@ class SupplyPlanningCommunityContractTest {
 
         Produto material = new Produto("MAT-02");
         Location location = new Location("LOC-02");
-        Calendario calendario = Calendario.criaCalendarioDeDatas(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeDatas(
                 Constantes.TamanhoBucket.MENSAL,
                 LocalDateTime.of(2026, 1, 1, 0, 0),
                 LocalDateTime.of(2026, 1, 1, 0, 0),
@@ -107,7 +108,7 @@ class SupplyPlanningCommunityContractTest {
 
         Produto material = new Produto("MAT-03");
         Location location = new Location("LOC-03");
-        Calendario calendario = Calendario.criaCalendarioDeDatas(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeDatas(
                 Constantes.TamanhoBucket.MENSAL,
                 LocalDateTime.of(2026, 1, 1, 0, 0),
                 LocalDateTime.of(2026, 1, 1, 0, 0),

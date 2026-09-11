@@ -10,7 +10,7 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
 import com.opsfactor.community.capability.supplyplanning.configuration.repository.PerfilExecucaoPoliticaEstoquesRepository;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
@@ -121,9 +121,9 @@ class PoliticaEstoquesProjectionFactoryCommunityContractTest {
 
     }
 
-    private static Calendario getCalendarioTeste() {
+    private static CalendarioSimples getCalendarioTeste() {
 
-        return Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        return CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 1, 0, 0),
                 LocalDateTime.of(2026, 1, 3, 0, 0));

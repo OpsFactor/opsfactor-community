@@ -41,6 +41,7 @@ import com.opsfactor.community.capability.configuration.user.repository.Configur
 import com.opsfactor.community.capability.planningbook.keyfigure.service.KeyFigureService;
 import com.opsfactor.community.capability.supplyplanning.engine.SupplyPlanning;
 import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
 import com.opsfactor.community.platform.utility.MetodosUtilidade;
@@ -1315,7 +1316,11 @@ public class KeyFigureProjectionFactory {
         // se houver cache, usá-lo
         if (keyFigureProjection.salesProjectionCache == null) {
             // caso contrário, popular o cache e retorná-lo
-            Calendario calendarioDemandPlan = keyFigureProjection.calendario;
+            // Histórico estatístico pertence ao Demand Planning, cujo contrato
+            // é calendário simples mesmo quando o Supply usa uma grade mista.
+            if (!(keyFigureProjection.calendario instanceof CalendarioSimples calendarioDemandPlan)) {
+                throw new IllegalArgumentException("Demand Planning history requires a simple calendar");
+            }
             ConfiguredViewProjection configuredViewProjection = keyFigureProjection.configuredViewProjection;
             UnidadeMedidaProjection unidadeMedidaProjection = keyFigureProjection.unidadeMedidaProjection;
             ClusterEParametrosProjection clusterEParametrosProjection = configuredViewProjection.getClusterEParametrosProjection();
@@ -1335,9 +1340,9 @@ public class KeyFigureProjectionFactory {
 
             LocalDateTime dataHorarioInicialCalendarioSales = calendarioDemandPlan.getDataHorarioInicialPresente();
 
-            Calendario calendarioSales = Calendario.criaCalendarioDeDatas(
+            CalendarioSimples calendarioSales = CalendarioSimples.criaCalendarioDeDatas(
                     calendarioDemandPlan.getTamanhoBucket(),
-                    Calendario.getPrimeiraDataHorarioPeriodoCalendarioComOffset(
+                    CalendarioSimples.getPrimeiraDataHorarioPeriodoCalendarioComOffset(
                             dataHorarioInicialCalendarioSales,
                             -numeroPeriodosHistoricosSales,
                             calendarioDemandPlan.getTamanhoBucket()),

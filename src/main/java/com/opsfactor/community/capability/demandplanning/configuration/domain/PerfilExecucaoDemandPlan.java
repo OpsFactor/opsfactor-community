@@ -1,8 +1,9 @@
 package com.opsfactor.community.capability.demandplanning.configuration.domain;
 
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
+import com.opsfactor.community.capability.masterdata.calendar.profile.domain.PerfilCalendarioSimples;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import lombok.*;
 
@@ -29,6 +30,11 @@ public class PerfilExecucaoDemandPlan {
 
     private String descricao;
 
+    /** Receita reutilizável. Demand Planning aceita somente bucket homogêneo nas duas edições. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    private PerfilCalendarioSimples perfilCalendario;
+
+    /** Coluna de transição: consumida apenas enquanto o cadastro antigo não foi vinculado. */
     private Constantes.TamanhoBucket tamanhoBucket;
 
     @Getter(AccessLevel.NONE)
@@ -69,6 +75,9 @@ public class PerfilExecucaoDemandPlan {
     private Set<ParametrosDemandPlanNivelCluster> parametrosForecast = new HashSet<>();
 
     public Constantes.TamanhoBucket getTamanhoBucket() {
+        if (perfilCalendario != null) {
+            return perfilCalendario.getTamanhoBucketBase();
+        }
         return (tamanhoBucket == null) ? Constantes.TamanhoBucket.MENSAL : tamanhoBucket;
     }
 
@@ -81,6 +90,9 @@ public class PerfilExecucaoDemandPlan {
     }
 
     public int getNumeroPeriodosHorizontePlanejamento() {
+        if (perfilCalendario != null) {
+            return perfilCalendario.getNumeroPeriodosBucketBase();
+        }
         return (numeroPeriodosHorizontePlanejamento == null)
                 ? 1
                 : getInteiroOperacionalPositivoCadastrado(
@@ -89,18 +101,18 @@ public class PerfilExecucaoDemandPlan {
     }
 
     public int getNumeroDiasHorizontePlanejamento(LocalDateTime dataHorarioReferencia) {
-        if (numeroPeriodosHorizontePlanejamento == null) {
+        if (perfilCalendario == null && numeroPeriodosHorizontePlanejamento == null) {
             return 1;
         }
 
         int numeroPeriodosHorizontePlanejamentoCadastrado =
                 getInteiroOperacionalPositivoCadastrado(
-                        numeroPeriodosHorizontePlanejamento,
+                        getNumeroPeriodosHorizontePlanejamento(),
                         "Demand Planning execution profile planning horizon in periods");
 
-        return Calendario.getOffsetPeriodosEntreDataHorarios(
+        return CalendarioSimples.getOffsetPeriodosEntreDataHorarios(
                 dataHorarioReferencia,
-                Calendario.getPrimeiraDataHorarioPeriodoCalendarioComOffset(
+                CalendarioSimples.getPrimeiraDataHorarioPeriodoCalendarioComOffset(
                         dataHorarioReferencia,
                         numeroPeriodosHorizontePlanejamentoCadastrado,
                         getTamanhoBucket()),

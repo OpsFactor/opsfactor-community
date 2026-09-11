@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.supplyplanning.configuration.facade.mapper;
 
+import com.opsfactor.community.platform.utility.Constantes;
+import com.opsfactor.community.capability.masterdata.calendar.profile.domain.PerfilCalendarioSimples;
 import com.opsfactor.community.capability.supplyplanning.configuration.facade.dto.PerfilExecucaoSupplyPlanDTO;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
 import org.junit.jupiter.api.Assertions;
@@ -127,6 +129,23 @@ class PerfilExecucaoSupplyPlanAutoMapperTest {
 
         Assertions.assertFalse(perfilExecucaoSupplyPlanCommunity.getEnableLineSequencing());
         Assertions.assertFalse(perfilExecucaoSupplyPlanCommunity.getEnableGreenfieldBrownfield());
+
+    }
+
+    /** Calendar ID is carried by the read DTO; resolving the recipe belongs to the facade. */
+    @Test
+    void shouldMapCalendarIdentityWithoutRecreatingTheRecipeFromLegacyFields() {
+
+        PerfilExecucaoSupplyPlan profile = new PerfilExecucaoSupplyPlan();
+        profile.setPerfilCalendario(new PerfilCalendarioSimples("CALENDAR_TEST", Constantes.TamanhoBucket.DIARIO, 30));
+        PerfilExecucaoSupplyPlanDTO dto = perfilExecucaoSupplyPlanAutoMapper.converte(profile);
+        Assertions.assertEquals("CALENDAR_TEST", dto.getCalendarProfileId());
+
+        PerfilExecucaoSupplyPlanDTO input = new PerfilExecucaoSupplyPlanDTO();
+        input.setCalendarProfileId("CALENDAR_TEST");
+        input.setPlanHorizonInDays(999);
+        PerfilExecucaoSupplyPlan mapped = perfilExecucaoSupplyPlanAutoMapper.converte(input);
+        Assertions.assertNull(mapped.getPerfilCalendario(), "The mapper must not fabricate a partial calendar entity.");
 
     }
 

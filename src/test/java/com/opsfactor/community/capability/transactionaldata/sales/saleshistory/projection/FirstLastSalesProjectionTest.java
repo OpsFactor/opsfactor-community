@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.transactionaldata.sales.saleshistory.
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -140,7 +140,7 @@ class FirstLastSalesProjectionTest {
 
     private FirstLastSalesProjection criaFirstLastSalesProjection() {
 
-        return new FirstLastSalesProjection(Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        return new FirstLastSalesProjection(CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 1, 0, 0),
                 LocalDateTime.of(2026, 1, 3, 0, 0)));

@@ -49,7 +49,8 @@ public class DemandaDiretaConsideradaProjectionFactory {
                 "Direct demand considered projection");
 
         UnidadeMedidaProjection unidadeMedidaProjection = unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
-        DemandaDiretaConsideradaProjection demandaDiretaConsideradaProjection = new DemandaDiretaConsideradaProjection(supplyPlan, calendario, unidadeMedidaProjection);
+        DemandaDiretaConsideradaProjection demandaDiretaConsideradaProjection = new DemandaDiretaConsideradaProjection(supplyPlan,
+                calendario, unidadeMedidaProjection);
 
         /*
          * A ordenacao deixa deterministica a deduplicacao feita pela projection
@@ -83,7 +84,8 @@ public class DemandaDiretaConsideradaProjectionFactory {
                 "Direct demand considered projection for location");
 
         UnidadeMedidaProjection unidadeMedidaProjection = unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
-        DemandaDiretaConsideradaProjection demandaDiretaConsideradaProjection = new DemandaDiretaConsideradaProjection(supplyPlan, calendario, unidadeMedidaProjection);
+        DemandaDiretaConsideradaProjection demandaDiretaConsideradaProjection = new DemandaDiretaConsideradaProjection(supplyPlan,
+                calendario, unidadeMedidaProjection);
 
         /*
          * Mesmo filtrando por location no banco, a projection continua sendo a
@@ -124,7 +126,8 @@ public class DemandaDiretaConsideradaProjectionFactory {
         }
 
         UnidadeMedidaProjection unidadeMedidaProjection = unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
-        DemandaDiretaConsideradaProjection demandaDiretaConsideradaProjection = new DemandaDiretaConsideradaProjection(supplyPlan, calendario, unidadeMedidaProjection);
+        DemandaDiretaConsideradaProjection demandaDiretaConsideradaProjection = new DemandaDiretaConsideradaProjection(supplyPlan,
+                calendario, unidadeMedidaProjection);
 
         /*
          * Este caminho reaproveita um snapshot completo ja carregado. Ainda

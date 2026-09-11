@@ -28,6 +28,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.p
 import com.opsfactor.community.capability.supplyplanning.supplyplan.projection.SupplyPlanningProjection;
 import com.opsfactor.community.capability.masterdata.calendar.temporalsplit.projection.SplitTemporalProjectionPorDfu;
 import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.exception.IncompatibleCalendarException;
 import com.opsfactor.community.platform.utility.Constantes;
 import com.opsfactor.community.platform.utility.Constantes.*;
@@ -160,7 +161,7 @@ public class SupplyPlanning {
                 versaoMalha, 
                 location, 
                 material, 
-                calendario.getDataHorarioInicialPresente(), 
+                calendario.getDataHorarioInicialPresente(),
                 consideraVersoesProducaoParalelas,
                 filtroLocationsOrigemConsiderado,
                 filtroMateriaisInputConsiderado);
@@ -270,8 +271,8 @@ public class SupplyPlanning {
                         getPeriodoPadraoParaPrimeiraDisponibilizacaoMaterial(
                                 material, 
                                 location, 
-                                posicaoPeriodo, 
-                                calendario, 
+                                posicaoPeriodo,
+                                calendario,
                                 versaoMalha, 
                                 consideraVersoesProducaoParalelas, 
                                 locationProjectionLocationsOrigem,
@@ -1049,7 +1050,7 @@ public class SupplyPlanning {
                 versaoMalha, 
                 location, 
                 material, 
-                calendario.getDataHorarioInicialPresente(), 
+                calendario.getDataHorarioInicialPresente(),
                 consideraVersoesProducaoParalelas,
                 locationsOrigemFiltradas,
                 materialProjection.getMateriaisAtivosOuNuloSeMaterialProjectionCompleto());
@@ -1093,7 +1094,7 @@ public class SupplyPlanning {
             LocationProjection locationProjectionPerfilExecucaoSupplyPlan,
             TipoPlano tipoPlano) {
         
-        Calendario calendario = supplyPlanningProjection.getCalendario();        
+        Calendario calendario = supplyPlanningProjection.getCalendario();
         VersaoMalha versaoMalha = supplyPlanningProjection.getSupplyPlan().getVersaoMalha();
         
         ClusterEParametrosProjection clusterEparametrosProjection = supplyPlanningProjection.getClusterEParametrosProjection();
@@ -1132,7 +1133,8 @@ public class SupplyPlanning {
             if (optionalLinhaTransporteInboundPrioritaria.isPresent()) {
                 leadTime = supplyNetworkProjection
                         .getLeadTimeEmPeriodosDeOrigemPrioritaria(
-                                versaoMalha, location, material, calendario, 
+                                versaoMalha, location, material,
+                                calendario,
                                 calendario.getDataHorarioInicialPresente(),
                                 locationProjectionPerfilExecucaoSupplyPlan.getLocationsAtivasOuNuloSeLocationProjectionCompleto())
                         .orElseThrow(() -> new NoSuchElementException(
@@ -1144,7 +1146,7 @@ public class SupplyPlanning {
             } else if (!location.getConsideraRestricaoLinhaInbound()) {
                 leadTime = 0;
             }
-            for (int i=supplyPlanningProjection.getCalendario().getPosicaoPeriodoPresente(); i<supplyPlanningProjection.getCalendario().getNumeroPeriodosTotais(); i++) {
+            for (int i = supplyPlanningProjection.getCalendario().getPosicaoPeriodoPresente(); i<supplyPlanningProjection.getCalendario().getNumeroPeriodosTotais(); i++) {
 
             double estoqueSeguranca = supplyPlanningProjection.getQuantidadeEstoqueSeguranca(i, material, tipoPlano, unidadeMedidaPadrao);
             double estoqueMaximo = supplyPlanningProjection.getQuantidadeEstoqueMaximo(i, material, tipoPlano, unidadeMedidaPadrao);
@@ -1195,7 +1197,7 @@ public class SupplyPlanning {
                                             versaoMalha, 
                                             location, 
                                             material, 
-                                            calendario.getDataHorarioInicialPresente(), 
+                                            calendario.getDataHorarioInicialPresente(),
                                             consideraVersoesProducaoParalelas,
                                             locationProjectionPerfilExecucaoSupplyPlan.getLocationsAtivasOuNuloSeLocationProjectionCompleto(),
                                             materialProjectionPerfilExecucaoSupplyPlan.getMateriaisAtivosOuNuloSeMaterialProjectionCompleto())
@@ -1244,7 +1246,7 @@ public class SupplyPlanning {
                                             versaoMalha, 
                                             location, 
                                             material, 
-                                            calendario.getDataHorarioInicialPresente(), 
+                                            calendario.getDataHorarioInicialPresente(),
                                             consideraVersoesProducaoParalelas,
                                             locationProjectionPerfilExecucaoSupplyPlan.getLocationsAtivasOuNuloSeLocationProjectionCompleto(),
                                             materialProjectionPerfilExecucaoSupplyPlan.getMateriaisAtivosOuNuloSeMaterialProjectionCompleto())
@@ -1346,7 +1348,7 @@ public class SupplyPlanning {
                                         versaoMalha, 
                                         location, 
                                         material, 
-                                        calendario.getDataHorarioInicialPresente(), 
+                                        calendario.getDataHorarioInicialPresente(),
                                         consideraVersoesProducaoParalelas,
                                         locationProjectionPerfilExecucaoSupplyPlan.getLocationsAtivasOuNuloSeLocationProjectionCompleto(),
                                         materialProjectionPerfilExecucaoSupplyPlan.getMateriaisAtivosOuNuloSeMaterialProjectionCompleto())
@@ -1405,7 +1407,7 @@ public class SupplyPlanning {
                                         versaoMalha, 
                                         location, 
                                         material, 
-                                        calendario.getDataHorarioInicialPresente(), 
+                                        calendario.getDataHorarioInicialPresente(),
                                         consideraVersoesProducaoParalelas,
                                         locationProjectionPerfilExecucaoSupplyPlan.getLocationsAtivasOuNuloSeLocationProjectionCompleto(),
                                         materialProjectionPerfilExecucaoSupplyPlan.getMateriaisAtivosOuNuloSeMaterialProjectionCompleto())
@@ -1545,7 +1547,7 @@ public class SupplyPlanning {
 
             if (valorRestanteParaAtendimentoDemandaDiretaOuIndireta < 0.00001) continue;
 
-            for (int i=supplyPlanningProjection.getCalendario().getPosicaoPeriodoPresente(); i<supplyPlanningProjection.getCalendario().getNumeroPeriodosTotais(); i++) {
+            for (int i = supplyPlanningProjection.getCalendario().getPosicaoPeriodoPresente(); i<supplyPlanningProjection.getCalendario().getNumeroPeriodosTotais(); i++) {
 
                 if (valorRestanteParaAtendimentoDemandaDiretaOuIndireta <= 0) break;
 
@@ -1667,7 +1669,7 @@ public class SupplyPlanning {
         Calendario calendario = supplyPlanningProjection.getCalendario();
         
         materiais.stream().forEach(material -> {
-            for (int i=calendario.getPosicaoPeriodoPresente(); i<calendario.getNumeroPeriodosTotais(); i++) {
+            for (int i = calendario.getPosicaoPeriodoPresente(); i< calendario.getNumeroPeriodosTotais(); i++) {
                 SupplyPlanning.atualizaEstoqueProjetadoSemLimitarAZero(
                         supplyPlanningProjection,
                         i,
@@ -1714,7 +1716,7 @@ public class SupplyPlanning {
         UnidadeMedida unidadeMedidaPadrao = parametrosProjection.getSNPUnidadeMedidaPadrao(
                 material, location);
 
-        for (int i=calendario.getPosicaoPeriodoPresente() - 1; i<calendario.getPosicaoPeriodoFinalFuturo(); i++) {
+        for (int i = calendario.getPosicaoPeriodoPresente() - 1; i< calendario.getPosicaoPeriodoFinalFuturo(); i++) {
 
             SNPModeloReabastecimento modeloReabastecimento = politicaEstoquesProjection.getSNPModeloReabastecimento(i, material, location);
             boolean modeloDrp = supplyPlanningProjection.getPerfilExecucaoSupplyPlanConsiderado().getTrataPoliticaEstoqueComoDrp(location)
@@ -1844,7 +1846,7 @@ public class SupplyPlanning {
         ClusterEParametrosProjection clusterEParametrosProjection = supplyPlanningProjection.getClusterEParametrosProjection();
         ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
 
-        double coberturaSegurancaPeriodos = calendario.converteDiasParaPeriodosCalendario(coberturaEstoqueEmDias);
+        double coberturaSegurancaPeriodos = calendario.converteDiasParaPeriodosCalendario(coberturaEstoqueEmDias, i + 1);
 
         double estoqueSeguranca = 0;
         
@@ -1893,7 +1895,7 @@ public class SupplyPlanning {
                 material, location);
         
         double demandaAcumulada = 0;
-        for (int i=calendario.getPosicaoPeriodoPresente(); i<=calendario.getPosicaoPeriodoFinalFuturo(); i++) {
+        for (int i = calendario.getPosicaoPeriodoPresente(); i<= calendario.getPosicaoPeriodoFinalFuturo(); i++) {
             demandaAcumulada += getDemandaDiretaConsideradaParaEstoqueProjetado(
                     supplyPlanningProjection,
                     i, material, tipoPlano, unidadeMedidaPadrao);
@@ -2138,15 +2140,16 @@ public class SupplyPlanning {
      * @param parametrosGlobais
      * @return Optional<Boolean> : caso optional esteja vazio não há linha de transporte inbound para este material
      */
-    public static Optional<Boolean> verificaSeDentroDoLeadTime(Produto material, Location locationDestino, 
-            Calendario calendario, int posicaoPeriodo, ParametrosGlobais parametrosGlobais) {
+    public static Optional<Boolean> verificaSeDentroDoLeadTime(Produto material, Location locationDestino,
+                                                               Calendario calendario, int posicaoPeriodo, ParametrosGlobais parametrosGlobais) {
         
         Optional<LinhaTransporteProduto> optionalLinhaTransporteProduto = locationDestino.getLinhaTransporteProdutoPrioritariaOndeDestino(
                 material, calendario.getPrimeiraDataHorarioPeriodo(posicaoPeriodo), parametrosGlobais);
         
         return optionalLinhaTransporteProduto
                 .map(linhaTransporteProduto -> {
-                    int leadTimePeriodos = linhaTransporteProduto.getLeadTimePeriodos(calendario);
+                    int leadTimePeriodos = linhaTransporteProduto.getLeadTimePeriodos(calendario,
+                            calendario.getPosicaoPeriodoPresente());
                     return posicaoPeriodo < calendario.getPosicaoPeriodoPresente() + leadTimePeriodos;
                 });
     }
@@ -2159,15 +2162,15 @@ public class SupplyPlanning {
      * @param parametrosGlobais
      * @return 
      */
-    public static Calendario getCalendarioDeDataReferencia(LocalDateTime dataReferencia, Constantes.TamanhoBucket tamanhoBucket, 
-            PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan, ParametrosGlobais parametrosGlobais) {
+    public static Calendario getCalendarioDeDataReferencia(LocalDateTime dataReferencia, Constantes.TamanhoBucket tamanhoBucket,
+                                                                  PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan, ParametrosGlobais parametrosGlobais) {
         
-        LocalDateTime dataInicial = Calendario.getPrimeiraDataHorarioPeriodo(dataReferencia, tamanhoBucket);
+        LocalDateTime dataInicial = CalendarioSimples.getPrimeiraDataHorarioPeriodo(dataReferencia, tamanhoBucket);
         // data final não-efetiva : deveria ser a última data do último período
         // no entanto, como se exporta o calendário e não a data este deixa de ser um problema
         LocalDateTime dataFinal = dataInicial.plusDays(perfilExecucaoSupplyPlan.getHorizontePlanoDiasMaximo(parametrosGlobais) - 1);
         
-        Calendario calendario = Calendario.criaCalendarioPeriodosFuturosDeDatas(tamanhoBucket, dataInicial, dataFinal);
+        Calendario calendario = CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(tamanhoBucket, dataInicial, dataFinal);
         
         return calendario;
         
@@ -2248,7 +2251,7 @@ public class SupplyPlanning {
                 quantidadeDiasEstoque += calendario.getNumeroDiasNoPeriodo(i);
             } else {
                 // # dias * estoque de abertura do período / consumo total período
-                quantidadeDiasEstoque += calendario.getNumeroDiasNoPeriodo(i) 
+                quantidadeDiasEstoque += calendario.getNumeroDiasNoPeriodo(i)
                         * quantidadeEstoque / (-variacaoEstoque);
                 return quantidadeDiasEstoque;
             }
@@ -2469,9 +2472,11 @@ public class SupplyPlanning {
             ClusterEParametrosProjection clusterEParametrosProjection) {
 
         Optional<Integer> optionalPrazoValidade =
-                clusterEParametrosProjection.getPrazoValidadeEmPeriodos(location, material, calendario);
+                clusterEParametrosProjection.getPrazoValidadeEmPeriodos(location, material,
+                        calendario);
         Optional<Integer> optionalTempoProcesso =
-                clusterEParametrosProjection.getTempoProcessoEmPeriodos(location, material, calendario);
+                clusterEParametrosProjection.getTempoProcessoEmPeriodos(location, material,
+                        calendario);
 
         if (optionalPrazoValidade.isPresent() && optionalTempoProcesso.isPresent()) {
             int prazoValidade = optionalPrazoValidade.orElseThrow(() -> new IllegalStateException(

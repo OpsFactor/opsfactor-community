@@ -21,7 +21,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.p
 import com.opsfactor.community.capability.demandplanning.demandplan.repository.DemandPlanItemRepository;
 import com.opsfactor.community.capability.demandplanning.demandplan.repository.HistoricoDemandPlanItemRepository;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import com.opsfactor.community.platform.utility.FuncoesMap;
 import org.javatuples.Pair;
@@ -210,7 +210,7 @@ public class DemandPlanProjectionFactory {
             ParametrosDemandPlanProjection parametrosDemandPlanProjection) {
 
 
-        Calendario calendario = demandPlan.getCalendarioDoDemandPlanComHistoricoMaximo(
+        CalendarioSimples calendario = demandPlan.getCalendarioDoDemandPlanComHistoricoMaximo(
                 parametrosDemandPlanProjection);
 
         return getDemandPlanningProjectionVazio(
@@ -225,7 +225,7 @@ public class DemandPlanProjectionFactory {
 
     public DemandPlanningProjection getDemandPlanningProjectionVazio(
             DemandPlan demandPlan,
-            Calendario calendario,
+            CalendarioSimples calendario,
             FiltroDFUProjection dfuProjection) {
 
 
@@ -242,7 +242,7 @@ public class DemandPlanProjectionFactory {
 
     public DemandPlanningProjection getDemandPlanningProjectionVazio(
             DemandPlan demandPlan,
-            Calendario calendario,
+            CalendarioSimples calendario,
             FiltroDFUProjection dfuProjection,
             UnidadeMedidaProjection unidadeMedidaProjection,
             ClusterEParametrosProjection clusterEParametrosProjection,
@@ -278,7 +278,7 @@ public class DemandPlanProjectionFactory {
             UnidadeMedidaProjection unidadeMedidaProjection,
             ClusterEParametrosProjection clusterEParametrosProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
-            Calendario calendario,
+            CalendarioSimples calendario,
             FiltroDFUProjection dfuProjection,
             boolean consolidacaoDemandaClientes,
             PerfilExecucaoSupplyPlan.ModoPropagacaoDemanda modoPropagacaoDemanda,
@@ -652,7 +652,7 @@ public class DemandPlanProjectionFactory {
 
         FiltroDFUProjection dfuProjection = demandPlanningProjection.getFiltroDfuProjection();
 
-        Calendario calendario = demandPlanningProjection.getCalendario();
+        CalendarioSimples calendario = demandPlanningProjection.getCalendario();
         LocalDateTime dataHorarioFinalPeriodoLagPeriodos = calendario
                 .getUltimaDataHorarioPeriodo(
                         calendario.getPosicaoPeriodoPresente() + lagPeriodos);
@@ -1022,7 +1022,7 @@ public class DemandPlanProjectionFactory {
                 demandPlanningProjectionOriginal.getUnidadeMedidaProjection();
         ParametrosDemandPlanProjection parametrosDemandPlanProjection =
                 demandPlanningProjectionOriginal.getParametrosDemandPlanProjection();
-        Calendario calendarioOriginal = demandPlanningProjectionOriginal.getCalendario();
+        CalendarioSimples calendarioOriginal = demandPlanningProjectionOriginal.getCalendario();
         FiltroDFUProjection filtroDFUProjection =
                 demandPlanningProjectionOriginal.getFiltroDfuProjection();
 

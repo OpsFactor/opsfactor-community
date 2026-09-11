@@ -99,7 +99,7 @@ public class RecursoProdutivo implements Serializable, Comparable<RecursoProduti
     public Float getDisponibilidadeHorasPeriodo(Calendario calendario, int posicaoPeriodo) {
         
         // método do calendário já considera difrenças entre tamanhoBucket do calendário e da tabela de capacidades logísticas
-        return (float) calendario.consolidaDadosNoCalendario(posicaoPeriodo, Constantes.TamanhoBucket.DIARIO, localDateTime -> 
+        return (float) calendario.consolidaDadosNoCalendario(posicaoPeriodo, Constantes.TamanhoBucket.DIARIO, localDateTime ->
                 getDisponibilidadesRecursoProdutivo().stream()
                         .filter(x -> x.getDataReferencia().equals(localDateTime.toLocalDate()))
                         .findAny()

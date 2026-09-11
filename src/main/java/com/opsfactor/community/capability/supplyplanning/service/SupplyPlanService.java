@@ -68,6 +68,7 @@ import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanO
 import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanOptimizationServiceSpi;
 import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanProcessChainServiceSpi;
 import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanPresetConstraintGroupSpi;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.utility.Constantes;
 import com.opsfactor.community.platform.utility.Constantes.ReferenciaPeriodo;
@@ -479,13 +480,18 @@ public class SupplyPlanService {
                     resolvePresetConstraintGroupParaNovoSupplyPlan(
                             restricaoPredefinidaGrupoId));
             supplyPlan.setDataInicioPlano(dataInicioPlano);
-            supplyPlan.setTamanhoBucket(tamanhoBucket);
+            if (perfilExecucaoSupplyPlanNovo.getPerfilCalendario() == null) {
+                throw new IllegalArgumentException("Select a calendar profile in the Supply Planning execution profile before creating a plan.");
+            }
+            // Congela a receita antes de construir a grade: reexecuções nunca consultam o cadastro atual.
+            supplyPlan.setPerfilCalendarioSupplyPlan(perfilExecucaoSupplyPlanNovo.getPerfilCalendario().copiarParaSupplyPlan(supplyPlan));
+            supplyPlan.setTamanhoBucket(supplyPlan.getPerfilCalendarioSupplyPlan().getTamanhoBucketBase());
 
             /*
-             * O calendario do Supply Plan normaliza a data inicial para o
-             * primeiro instante do bucket e calcula o fim como o maior horizonte
-             * entre as locations do perfil. Persistimos esse intervalo
-             * normalizado no snapshot do plano novo.
+             * A receita copiada resolve o início pelo primeiro bucket e o fim
+             * pelo horizonte total. Assim um início diário no dia 15 não é
+             * arredondado ao primeiro dia do mês-base. Locations só limitam
+             * sua própria janela; não alteram esta grade do cabeçalho.
              */
             ClusterEParametrosProjection clusterEParametrosProjection =
                     clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
@@ -494,7 +500,6 @@ public class SupplyPlanService {
             Calendario calendarioSupplyPlan = supplyPlan.getCalendarioDoSupplyPlan(parametrosGlobais);
             supplyPlan.setDataInicioPlano(calendarioSupplyPlan.getDataHorarioInicial());
             supplyPlan.setDataFimPlano(calendarioSupplyPlan.getDataHorarioFinal());
-            supplyPlan.setTamanhoBucket(tamanhoBucket);
             supplyPlan.setDemandPlan(demandPlan);
         }
 
@@ -716,7 +721,7 @@ public class SupplyPlanService {
             return descricao;
         }
 
-        return "Supply Plan " + String.valueOf(Calendario.getDescricaoIntegerPeriodo(
+        return "Supply Plan " + String.valueOf(CalendarioSimples.getDescricaoIntegerPeriodo(
                 LocalDateTime.now(),
                 tamanhoBucket));
 
@@ -946,7 +951,8 @@ public class SupplyPlanService {
              */
             BIProjectionCapacidadeProdutiva biProjectionCapacidadeProdutiva = biProjectionCapacidadeProdutivaFactory
                     .getBIProjectionCapacidadeProdutiva(
-                            supplyPlan, calendarioSupply);
+                            supplyPlan,
+                            calendarioSupply);
 
             switch (perfilExecucaoSupplyPlan.getModoExecucao()) {
                 case HEURISTICO:
@@ -3029,7 +3035,10 @@ public class SupplyPlanService {
             log.info("Calculating starting inventory for location " + location.getId() + " at period " + dataHorarioEstoqueAProjetar.toString() + " estimated from "
                     + "inventory at period " + ultimaDataHorarioComEstoqueAntesReferencia.toString() + " and supply plan " + supplyPlanParaProjecaoEstoqueInicial.getId());
 
-            Calendario calendarioSupplyPlanParaProjecaoEstoqueInicial = Calendario.criaCalendarioDeDatas(
+            Calendario calendarioSupplyPlanParaProjecaoEstoqueInicial =
+                    supplyPlanParaProjecaoEstoqueInicial.getPerfilCalendarioSupplyPlan() != null
+                    ? supplyPlanParaProjecaoEstoqueInicial.getCalendarioDoSupplyPlan(parametrosGlobais)
+                    : CalendarioSimples.criaCalendarioDeDatas(
                             supplyPlanParaProjecaoEstoqueInicial.getTamanhoBucket(),
                             ultimaDataHorarioComEstoqueAntesReferencia, dataHorarioEstoqueAProjetar, dataHorarioEstoqueAProjetar);
 
@@ -3072,8 +3081,9 @@ public class SupplyPlanService {
 
             // Bucket / calendario calculo Pre-Estoque. Possuem granularidade equivalente ou maior ao bucket / calendario de supplyPlanParaProjecaoEstoqueInicial
             TamanhoBucket tamanhoBucketConsideradoProjecaoPreEstoque = getTamanhoBucketConsideradoParaProjecaoEstoqueInicialAPartirPreEstoque(
-                    calendarioSupplyPlanParaProjecaoEstoqueInicial.getTamanhoBucket());
-            Calendario calendarioParaProjecaoPreEstoque = Calendario.criaCalendarioDeDatas(
+                    calendarioSupplyPlanParaProjecaoEstoqueInicial.getTamanhoBucket(
+                            calendarioSupplyPlanParaProjecaoEstoqueInicial.getPosicaoPeriodo(dataHorarioEstoqueAProjetar)));
+            CalendarioSimples calendarioParaProjecaoPreEstoque = CalendarioSimples.criaCalendarioDeDatas(
                     tamanhoBucketConsideradoProjecaoPreEstoque,
                     ultimaDataHorarioComEstoqueAntesReferencia, dataHorarioEstoqueAProjetar, dataHorarioEstoqueAProjetar);
 
@@ -3243,7 +3253,8 @@ public class SupplyPlanService {
                 LocationAbstract.TipoLocation.INTERNA);
 
         // projection que será populado com primeira versão dos dados de demanda direta
-        DemandaDiretaConsideradaProjection demandaDiretaConsideradaProjection = new DemandaDiretaConsideradaProjection(supplyPlan, calendarioSupplyPlan, unidadeMedidaProjection);
+        DemandaDiretaConsideradaProjection demandaDiretaConsideradaProjection = new DemandaDiretaConsideradaProjection(supplyPlan,
+                calendarioSupplyPlan, unidadeMedidaProjection);
 
         // PROCESSA PLANO DE DEMANDA, 1 LOCATION POR VEZ ----------------------------------------------------------------------------------------------
         locationsClientesFinaisSemExclusaoNoPerfilExecucao.parallelStream().forEach(locationComPlanoDemanda -> {
@@ -3302,7 +3313,8 @@ public class SupplyPlanService {
                                 .orElse(0)
                         : 0; // não houve propagação para location interna : não há offset de deslocamento da demanda
 
-                for (int i=calendarioSupplyPlan.getPosicaoPeriodoPresente(); i <= perfilExecucaoSupplyPlan.getUltimoPeriodoFuturoHorizonteAPartirPeriodoPresente(locationComPlanoDemanda,  calendarioSupplyPlan, clusterEParametrosProjection) - offsetPeriodosLeadTime; i++) {
+                for (int i = calendarioSupplyPlan.getPosicaoPeriodoPresente(); i <= perfilExecucaoSupplyPlan.getUltimoPeriodoFuturoHorizonteAPartirPeriodoPresente(locationComPlanoDemanda,
+                        calendarioSupplyPlan, clusterEParametrosProjection) - offsetPeriodosLeadTime; i++) {
                     double quantidadeDemandPlanNoBucketSupply = getQuantidadeDemandPlanCommunityNoBucketSupply(
                             demandPlanningProjection,
                             splitTemporalProjectionPorDfu,

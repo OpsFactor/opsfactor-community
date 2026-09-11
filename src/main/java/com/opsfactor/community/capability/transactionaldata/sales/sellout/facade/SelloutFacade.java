@@ -21,7 +21,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.p
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjectionFactory;
 import com.opsfactor.community.capability.transactionaldata.sales.sellout.repository.SelloutRepository;
 import com.opsfactor.community.capability.transactionaldata.sales.sellout.integration.service.SelloutIntegrationService;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -94,7 +94,7 @@ public class SelloutFacade {
             
             entidadesSelloutFiltradas = selloutRepository.customFindByDataVendaBetweenMaterialInAndLocationIn(
                     selloutReportParametrosDTO.startDate.atStartOfDay(), 
-                    Calendario.getUltimoSegundoData(selloutReportParametrosDTO.endDate),
+                    CalendarioSimples.getUltimoSegundoData(selloutReportParametrosDTO.endDate),
                     locationProjection.getLocationsAtivas(), 
                     materialProjection.getMateriaisAtivos());
         } else {

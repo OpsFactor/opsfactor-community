@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.planningbook.facade.dto.specializedke
 
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.EditMode;
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.dfudata.DFUDataKeyFigureRelacaoEntreValores;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +16,7 @@ class KeyFigureDTORazaoEntreSomasTest {
     @Test
     void aggregatesAveragePriceAsRatioOfMonetaryAndQuantitySums() {
 
-        Calendario calendario = Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 8, 1, 0, 0),
                 LocalDateTime.of(2026, 8, 1, 0, 0));
@@ -45,7 +45,7 @@ class KeyFigureDTORazaoEntreSomasTest {
     }
 
     private KeyFigureDTORazaoEntreSomas criaPrecoMedio(
-            Calendario calendario,
+            CalendarioSimples calendario,
             LocalDateTime data,
             double valorMonetario,
             double quantidade) {

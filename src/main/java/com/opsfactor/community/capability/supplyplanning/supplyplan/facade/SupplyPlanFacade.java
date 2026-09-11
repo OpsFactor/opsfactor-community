@@ -399,7 +399,7 @@ public class SupplyPlanFacade {
             supplyPlanPeriodDTOList.add(new SupplyPlanPeriodDTO(
                     periodIndex,
                     calendario.getDescricaoPeriodoDePosicaoPeriodo(periodIndex),
-                    calendario.getTamanhoBucket(),
+                    calendario.getTamanhoBucket(periodIndex),
                     calendario.getPrimeiraDataHorarioPeriodo(periodIndex),
                     calendario.getPrimeiraDataHorarioPeriodo(periodIndex),
                     calendario.getUltimaDataHorarioPeriodo(periodIndex)));

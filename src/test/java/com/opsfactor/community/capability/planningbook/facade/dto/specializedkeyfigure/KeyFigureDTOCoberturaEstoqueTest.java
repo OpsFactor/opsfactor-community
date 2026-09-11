@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.planningbook.facade.dto.specializedke
 
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.EditMode;
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.dfudata.DFUDataKeyFigureCoberturaEstoque;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +17,7 @@ class KeyFigureDTOCoberturaEstoqueTest {
     @Test
     void calculaEsgotamentoComEstoqueEFluxosAgregadosSemMultiplicarDiasPorSku() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsPeriodos(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsPeriodos(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 3, 1, 0, 0),
                 0,
@@ -48,7 +48,7 @@ class KeyFigureDTOCoberturaEstoqueTest {
     @Test
     void calculaEsgotamentoAgregadoMensalConvertendoCadaPeriodoUmaUnicaVezParaDias() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsPeriodos(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsPeriodos(
                 Constantes.TamanhoBucket.MENSAL,
                 LocalDateTime.of(2026, 3, 1, 0, 0),
                 0,
@@ -80,7 +80,7 @@ class KeyFigureDTOCoberturaEstoqueTest {
     }
 
     private KeyFigureDTOCoberturaEstoque criaCobertura(
-            Calendario calendario,
+            CalendarioSimples calendario,
             List<Double> estoquesProjetados,
             List<Double> saldosEntradasSaidas) {
 

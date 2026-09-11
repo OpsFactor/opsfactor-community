@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.demandplanning.forecast.foundationmod
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosAgregacaoForecast;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjection;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -80,7 +80,7 @@ class DemandForecastFoundationModelEngineSpiTest {
 
         @Override
         public void executaForecast(
-                Calendario calendario,
+                CalendarioSimples calendario,
                 ParametrosForecastProjection parametrosForecastProjection,
                 DemandPlanForecastProjection demandPlanForecastProjection) {
 

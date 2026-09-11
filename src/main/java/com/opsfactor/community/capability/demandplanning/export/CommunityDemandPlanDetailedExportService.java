@@ -8,7 +8,7 @@ import com.opsfactor.community.capability.demandplanning.demandplan.domain.Deman
 import com.opsfactor.community.capability.demandplanning.demandplan.repository.DemandPlanItemRepository;
 import com.opsfactor.community.capability.demandplanning.demandplan.repository.DemandPlanRepository;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import jakarta.persistence.NoResultException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -58,10 +58,10 @@ public class CommunityDemandPlanDetailedExportService implements DemandPlanDetai
         }
         DemandPlan demandPlan = getDemandPlan(demandPlanId);
         LocalDateTime periodReferenceDate = referenceDate.atStartOfDay();
-        LocalDateTime initialReferenceDate = Calendario.getPrimeiraDataHorarioPeriodo(
+        LocalDateTime initialReferenceDate = CalendarioSimples.getPrimeiraDataHorarioPeriodo(
                 periodReferenceDate,
                 demandPlan.getTamanhoBucket());
-        LocalDateTime finalReferenceDate = Calendario.getUltimaDataHorarioPeriodo(
+        LocalDateTime finalReferenceDate = CalendarioSimples.getUltimaDataHorarioPeriodo(
                 periodReferenceDate,
                 demandPlan.getTamanhoBucket());
         return buildFile(demandPlanItemRepository.customFindSnapshotForDetailedExport(

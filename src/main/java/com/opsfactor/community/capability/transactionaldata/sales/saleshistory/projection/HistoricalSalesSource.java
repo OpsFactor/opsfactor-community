@@ -4,7 +4,8 @@ import com.opsfactor.community.capability.transactionaldata.common.aggregation.p
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByLocationMaterialUOMDate;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByMaterialUOM;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByMaterialUOMDate;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
+import com.opsfactor.community.platform.calendar.IntervaloExtracaoCalendario;
 import com.opsfactor.community.platform.utility.Constantes;
 
 import java.util.Collection;
@@ -29,23 +30,34 @@ public interface HistoricalSalesSource {
      * Carrega agregados por material, UOM e data para filtros obrigatórios.
      */
     Collection<AggregatedByMaterialUOMDate> getAggregatedByMaterialUomDate(
-            Calendario calendario,
+            CalendarioSimples calendario,
             Set<String> locationIds,
             Set<String> materialIds);
 
     /**
      * Carrega agregados por location, material, UOM e data, com filtros opcionais.
      */
-    Collection<AggregatedByLocationMaterialUOMDate> getAggregatedByLocationMaterialUomDate(
-            Calendario calendario,
+    default Collection<AggregatedByLocationMaterialUOMDate> getAggregatedByLocationMaterialUomDate(
+            CalendarioSimples calendario,
             Set<String> locationIds,
-            Set<String> materialIds);
+            Set<String> materialIds) {
+
+        return getAggregatedByLocationMaterialUomDate(new IntervaloExtracaoCalendario(
+                calendario.getDataHorarioInicial(), calendario.getDataHorarioFinal(),
+                calendario.getTamanhoBucket() == Constantes.TamanhoBucket.ANUAL
+                        ? Constantes.TamanhoBucket.MENSAL : calendario.getTamanhoBucket()), locationIds, materialIds);
+
+    }
+
+    /** Filtra fatos pelos limites exatos do item antes do GROUP BY nominal. */
+    Collection<AggregatedByLocationMaterialUOMDate> getAggregatedByLocationMaterialUomDate(
+            IntervaloExtracaoCalendario intervaloExtracao, Set<String> locationIds, Set<String> materialIds);
 
     /**
      * Carrega agregados por material e UOM para filtros obrigatórios.
      */
     Collection<AggregatedByMaterialUOM> getAggregatedByMaterialUom(
-            Calendario calendario,
+            CalendarioSimples calendario,
             Set<String> locationIds,
             Set<String> materialIds);
 
@@ -53,7 +65,7 @@ public interface HistoricalSalesSource {
      * Carrega agregados por location, material e UOM para filtros obrigatórios.
      */
     Collection<AggregatedByLocationMaterialUOM> getAggregatedByLocationMaterialUom(
-            Calendario calendario,
+            CalendarioSimples calendario,
             Set<String> locationIds,
             Set<String> materialIds);
 

@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.demandplan.projection;
 
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ public class DemandPlanForecastProjectionAgregado extends DemandPlanForecastProj
     private final List<DemandPlanForecastProjection> demandPlanForecastProjectionDesagregados = new ArrayList<>();
 
     public DemandPlanForecastProjectionAgregado(
-            Calendario calendario,
+            CalendarioSimples calendario,
             UnidadeMedida unidadeMedida,
             boolean preencheHorizonteForecastComDemandaHistorica) {
         super(calendario, unidadeMedida, preencheHorizonteForecastComDemandaHistorica);

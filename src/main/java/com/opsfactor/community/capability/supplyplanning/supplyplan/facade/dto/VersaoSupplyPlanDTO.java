@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.supplyplanning.supplyplan.facade.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -61,6 +61,9 @@ public class VersaoSupplyPlanDTO implements Serializable {
     /** Periodo de referencia derivado do Demand Plan. */
     String periodoReferencia;
 
+    /** Data local escolhida pelo bucket inicial da receita, sem forçar o bucket-base. */
+    LocalDateTime dataInicioPlano;
+
     /**
      * Monta o DTO a partir da entidade persistida.
      *
@@ -82,7 +85,8 @@ public class VersaoSupplyPlanDTO implements Serializable {
         descricaoDemandPlan = supplyPlan.getDemandPlan().getDescricao();
         tamanhoBucket = supplyPlan.getTamanhoBucket();
         horarioGeracao = supplyPlan.getHorarioGeracao();
-        periodoReferencia = Calendario.getDescricaoPeriodo(supplyPlan.getDemandPlan().getDataInicioPlano(), supplyPlan.getDemandPlan().getTamanhoBucket());
+        dataInicioPlano = supplyPlan.getDataInicioPlano();
+        periodoReferencia = CalendarioSimples.getDescricaoPeriodo(supplyPlan.getDemandPlan().getDataInicioPlano(), supplyPlan.getDemandPlan().getTamanhoBucket());
 
     }
 }

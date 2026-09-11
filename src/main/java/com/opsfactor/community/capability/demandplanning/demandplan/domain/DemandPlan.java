@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.demandplanning.configuration.domain.Pe
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import lombok.*;
 
@@ -41,6 +41,10 @@ public class DemandPlan {
 
     @ManyToOne
     private PerfilExecucaoDemandPlan perfilExecucaoDemandPlan;
+
+    /** Identidade histórica por valor; não acompanha alterações posteriores do perfil de execução. */
+    @Column(length = 50, updatable = false)
+    private String perfilCalendarioOrigemId;
     
     private LocalDateTime horarioGeracao;
     
@@ -123,17 +127,17 @@ public class DemandPlan {
         return (dataFimEdicao == null) ? LocalDate.now() : dataFimEdicao;
     }
     
-    public Calendario getCalendarioDoDemandPlanSemHistorico(ClusterEParametrosProjection clusterEParametrosProjection) {
+    public CalendarioSimples getCalendarioDoDemandPlanSemHistorico(ClusterEParametrosProjection clusterEParametrosProjection) {
         
         Constantes.TamanhoBucket tamanhoBucketConsiderado = (getTamanhoBucket() == null) ? Constantes.TamanhoBucket.MENSAL : getTamanhoBucket();
-        LocalDateTime dataInicial = (getDataInicioPlano() == null) ? Calendario.getPrimeiraDataHorarioPeriodo(LocalDateTime.now(), tamanhoBucketConsiderado) : getDataInicioPlano();
+        LocalDateTime dataInicial = (getDataInicioPlano() == null) ? CalendarioSimples.getPrimeiraDataHorarioPeriodo(LocalDateTime.now(), tamanhoBucketConsiderado) : getDataInicioPlano();
         // data final não-efetiva : deveria ser a última data do último período
         // no entanto, como se exporta o calendário e não a data este deixa de ser um problema
         LocalDateTime dataFinal = (getDataFimPlano() == null) ? 
                 dataInicial.plusDays(clusterEParametrosProjection.getDPHorizonteForecastDias() - 1) 
                 : getDataFimPlano();
         
-        Calendario calendario = Calendario.criaCalendarioDeDatas(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeDatas(
                 tamanhoBucketConsiderado, 
                 dataInicial, 
                 dataInicial, 
@@ -149,11 +153,11 @@ public class DemandPlan {
      * este método traz o valor máximo de períodos possível
      * @return
      */
-    public Calendario getCalendarioDoDemandPlanComHistoricoMaximo(
+    public CalendarioSimples getCalendarioDoDemandPlanComHistoricoMaximo(
             ParametrosDemandPlanProjection parametrosDemandPlanProjection) {
         
         Constantes.TamanhoBucket tamanhoBucketConsiderado = (getTamanhoBucket() == null) ? Constantes.TamanhoBucket.MENSAL : getTamanhoBucket();
-        LocalDateTime dataInicial = (getDataInicioPlano() == null) ? Calendario.getPrimeiraDataHorarioPeriodo(LocalDateTime.now(), tamanhoBucketConsiderado) : getDataInicioPlano();
+        LocalDateTime dataInicial = (getDataInicioPlano() == null) ? CalendarioSimples.getPrimeiraDataHorarioPeriodo(LocalDateTime.now(), tamanhoBucketConsiderado) : getDataInicioPlano();
         // data final não-efetiva : deveria ser a última data do último período
         // no entanto, como se exporta o calendário e não a data este deixa de ser um problema
         LocalDateTime dataFinal = (getDataFimPlano() == null) ? 
@@ -163,7 +167,7 @@ public class DemandPlan {
                         - 1)
                 : getDataFimPlano();
         
-        Calendario calendario = Calendario.criaCalendarioDeDatas(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeDatas(
                 tamanhoBucketConsiderado,
                 dataInicial.minusDays(
                         parametrosDemandPlanProjection.getNumeroMaximoDiasHistoricoVendasParaForecast()),
@@ -174,10 +178,10 @@ public class DemandPlan {
         
     }
 
-    public Calendario getCalendarioDoDemandPlanComNumeroPeriodosHistoricosFixo(PerfilExecucaoDemandPlan perfilExecucaoDemandPlan, int numeroPeriodosPassados) {
+    public CalendarioSimples getCalendarioDoDemandPlanComNumeroPeriodosHistoricosFixo(PerfilExecucaoDemandPlan perfilExecucaoDemandPlan, int numeroPeriodosPassados) {
 
         Constantes.TamanhoBucket tamanhoBucketConsiderado = (getTamanhoBucket() == null) ? Constantes.TamanhoBucket.MENSAL : getTamanhoBucket();
-        LocalDateTime dataInicial = (getDataInicioPlano() == null) ? Calendario.getPrimeiraDataHorarioPeriodo(LocalDateTime.now(), tamanhoBucketConsiderado) : getDataInicioPlano();
+        LocalDateTime dataInicial = (getDataInicioPlano() == null) ? CalendarioSimples.getPrimeiraDataHorarioPeriodo(LocalDateTime.now(), tamanhoBucketConsiderado) : getDataInicioPlano();
         // data final não-efetiva : deveria ser a última data do último período
         // no entanto, como se exporta o calendário e não a data este deixa de ser um problema
         LocalDateTime dataFinal = (getDataFimPlano() == null) ?
@@ -186,12 +190,12 @@ public class DemandPlan {
                         - 1)
                 : getDataFimPlano();
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsPeriodos(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsPeriodos(
                 tamanhoBucketConsiderado,
                 dataInicial,
                 0,
                 numeroPeriodosPassados,
-                Calendario.getOffsetPeriodosEntreDataHorarios(
+                CalendarioSimples.getOffsetPeriodosEntreDataHorarios(
                         dataInicial,
                         dataFinal,
                         tamanhoBucketConsiderado) + 1,
@@ -207,13 +211,13 @@ public class DemandPlan {
      * este método traz o valor específico do histórico para os clusters passados como argumento
      * @return
      */
-    public Calendario getCalendarioDoDemandPlan(
+    public CalendarioSimples getCalendarioDoDemandPlan(
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
             ClusterMateriais clusterMateriais,
             ClusterLocations clusterLocations) {
         
         Constantes.TamanhoBucket tamanhoBucketConsiderado = (getTamanhoBucket() == null) ? Constantes.TamanhoBucket.MENSAL : getTamanhoBucket();
-        LocalDateTime dataInicial = (getDataInicioPlano() == null) ? Calendario.getPrimeiraDataHorarioPeriodo(LocalDateTime.now(), tamanhoBucketConsiderado) : getDataInicioPlano();
+        LocalDateTime dataInicial = (getDataInicioPlano() == null) ? CalendarioSimples.getPrimeiraDataHorarioPeriodo(LocalDateTime.now(), tamanhoBucketConsiderado) : getDataInicioPlano();
         // data final não-efetiva : deveria ser a última data do último período
         // no entanto, como se exporta o calendário e não a data este deixa de ser um problema
         LocalDateTime dataFinal = (getDataFimPlano() == null) ? 
@@ -224,7 +228,7 @@ public class DemandPlan {
                                 - 1)
                 : getDataFimPlano();
         
-        Calendario calendario = Calendario.criaCalendarioDeDatas(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeDatas(
                 tamanhoBucketConsiderado, 
                 dataInicial.minusDays(
                         parametrosDemandPlanProjection

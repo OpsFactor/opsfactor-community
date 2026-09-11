@@ -2,6 +2,7 @@ package com.opsfactor.community.capability.demandplanning.configuration.facade.d
 
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.opsfactor.community.platform.utility.Constantes;
 
 import jakarta.annotation.Nullable;
@@ -28,6 +29,9 @@ public class PerfilExecucaoDemandPlanDTO {
      */
     public String description;
 
+    /** Calendário simples reutilizável que determina bucket e horizonte. */
+    public String calendarProfileId;
+
     /**
      * Tipo de documento historico aceito pelo perfil.
      *
@@ -40,11 +44,13 @@ public class PerfilExecucaoDemandPlanDTO {
     /**
      * Granularidade temporal do calendario de Demand Planning.
      */
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Constantes.TamanhoBucket bucketSize;
 
     /**
      * Numero de periodos futuros planejados no perfil.
      */
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Integer planningHorizonInPeriods;
 
     /**

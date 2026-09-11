@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.demandplanning.demandplan.facade.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -89,7 +89,7 @@ public class VersaoDemandPlanDTO implements Serializable {
         executionProfileId = demandPlan.getPerfilExecucaoDemandPlan().getId();
         bucketSize = demandPlan.getPerfilExecucaoDemandPlan().getTamanhoBucket();
         horarioGeracao = demandPlan.getHorarioGeracao();
-        periodoReferencia = Calendario.getDescricaoPeriodo(demandPlan.getDataInicioPlano(), demandPlan.getTamanhoBucket());
+        periodoReferencia = CalendarioSimples.getDescricaoPeriodo(demandPlan.getDataInicioPlano(), demandPlan.getTamanhoBucket());
         planStartDate = demandPlan.getDataInicioPlano();
         planEndDate = demandPlan.getDataFimPlano();
 

@@ -5,6 +5,8 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
+import com.opsfactor.community.platform.utility.Constantes;
 import lombok.*;
 
 import jakarta.persistence.*;
@@ -139,8 +141,22 @@ public class LinhaTransporteProduto implements Serializable {
      * @param calendario
      * @return 
      */
-    public Integer getLeadTimePeriodos(Calendario calendario) {
+    /** Conversão independente de posição só é válida no calendário uniforme. */
+    public Integer getLeadTimePeriodos(CalendarioSimples calendario) {
+
         return (int) Math.floor(calendario.converteDiasParaPeriodosCalendario(getLeadTimeDias()));
+
+    }
+
+    /** Consulta em dias na origem preserva a tradução global ao atravessar itens. */
+    public Integer getLeadTimePeriodos(Calendario calendario, int posicaoPeriodoOrigem) {
+
+        if (calendario instanceof CalendarioSimples uniforme) {
+            return (int) Math.floor(uniforme.converteDiasParaPeriodosCalendario(getLeadTimeDias()));
+        }
+        return calendario.getPosicaoPeriodoAposOffsetDoInicioPeriodoReferencia(
+                posicaoPeriodoOrigem, getLeadTimeDias(), Constantes.TamanhoBucket.DIARIO) - posicaoPeriodoOrigem;
+
     }
     
     public Integer getPrioridade() {
@@ -200,4 +216,3 @@ public class LinhaTransporteProduto implements Serializable {
      */
     
 }
-

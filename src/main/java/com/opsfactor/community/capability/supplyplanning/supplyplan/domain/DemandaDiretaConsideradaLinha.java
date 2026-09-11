@@ -1235,11 +1235,14 @@ public class DemandaDiretaConsideradaLinha {
                 getQuantidadePlanoDemandaTotal(),
                 getQuantidadeCarteiraNoPeriodoPresente(calendario),
                 getValorPlanoDemandaTotal(ValorDemandaDireta.GROSS),
-                getValorCarteiraNoPeriodoPresente(ValorDemandaDireta.GROSS, calendario),
+                getValorCarteiraNoPeriodoPresente(ValorDemandaDireta.GROSS,
+                        calendario),
                 getValorPlanoDemandaTotal(ValorDemandaDireta.IMPOSTOS),
-                getValorCarteiraNoPeriodoPresente(ValorDemandaDireta.IMPOSTOS, calendario),
+                getValorCarteiraNoPeriodoPresente(ValorDemandaDireta.IMPOSTOS,
+                        calendario),
                 getValorPlanoDemandaTotal(ValorDemandaDireta.FRETE),
-                getValorCarteiraNoPeriodoPresente(ValorDemandaDireta.FRETE, calendario));
+                getValorCarteiraNoPeriodoPresente(ValorDemandaDireta.FRETE,
+                        calendario));
     }
 
     private void atualizaDemandaDiretaIrrestritaComPlanoDemandaEMaisCarteira() {
@@ -1262,7 +1265,8 @@ public class DemandaDiretaConsideradaLinha {
         setQuantidadeDemandaDiretaEstoqueSeguranca(getQuantidadeCarteiraTotal());
     }
 
-    private void atualizaDemandaDiretaEstoqueSegurancaComPlanoDemandaEMaisCarteiraBacklog(Calendario calendario) {
+    private void atualizaDemandaDiretaEstoqueSegurancaComPlanoDemandaEMaisCarteiraBacklog(
+            Calendario calendario) {
         setQuantidadeDemandaDiretaEstoqueSeguranca(getQuantidadePlanoDemandaTotal() + getQuantidadeCarteiraNoPeriodoPresente(calendario));
     }
 

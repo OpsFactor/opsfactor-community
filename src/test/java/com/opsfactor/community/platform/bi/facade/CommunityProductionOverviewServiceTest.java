@@ -7,7 +7,7 @@ import com.opsfactor.community.platform.bi.service.CommunitySupplyOverviewBaseFa
 import com.opsfactor.community.platform.bi.facade.dto.CommunityProductionOverviewDTO;
 import com.opsfactor.community.platform.bi.facade.dto.CommunityProductionOverviewSelectionDTO;
 import com.opsfactor.community.platform.bi.facade.dto.CommunitySupplyOverviewBaseDTO;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -23,7 +23,7 @@ class CommunityProductionOverviewServiceTest {
     @Test
     void shouldUseOneProjectionContextAndPublishTheSharedBaseWhenNoEligibleLocationExists() {
 
-        Calendario calendar = Mockito.mock(Calendario.class);
+        CalendarioSimples calendar = Mockito.mock(CalendarioSimples.class);
         List<LocalDateTime> expectedDates = List.of(LocalDateTime.of(2026, 7, 1, 0, 0));
         Mockito.when(calendar.getListaDatasHorarios()).thenReturn(expectedDates);
         SupplyNetworkProjection supplyNetworkProjection = Mockito.mock(SupplyNetworkProjection.class);

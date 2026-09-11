@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.demandplanning.demandplan.projection;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -130,7 +130,7 @@ public abstract class DemandPlanForecastProjection {
     private @Nullable DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado;
 
     public DemandPlanForecastProjection(
-            Calendario calendario,
+            CalendarioSimples calendario,
             UnidadeMedida unidadeMedida,
             boolean preencheHorizonteForecastComDemandaHistorica) {
         validaCalendarioInicializacao(calendario);
@@ -142,7 +142,7 @@ public abstract class DemandPlanForecastProjection {
         inicializaArrays(calendario, preencheHorizonteForecastComDemandaHistorica);
     }
 
-    public DemandPlanForecastProjection inicializaArrays(Calendario calendario, boolean preencheHorizonteForecastComDemandaHistorica) {
+    public DemandPlanForecastProjection inicializaArrays(CalendarioSimples calendario, boolean preencheHorizonteForecastComDemandaHistorica) {
         validaCalendarioInicializacao(calendario);
         if (preencheHorizonteForecastComDemandaHistorica) {
             demanda = new double[calendario.getNumeroPeriodosTotais()];
@@ -169,7 +169,7 @@ public abstract class DemandPlanForecastProjection {
      * {@link NullPointerException} ou array com tamanho inesperado dentro de
      * engines, processors ou desagregacoes.</p>
      */
-    private static void validaCalendarioInicializacao(Calendario calendario) {
+    private static void validaCalendarioInicializacao(CalendarioSimples calendario) {
 
         if (calendario == null) {
             throw new IllegalArgumentException(

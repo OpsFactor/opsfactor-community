@@ -1,6 +1,8 @@
 package com.opsfactor.community.capability.configuration.facade;
 
 import com.opsfactor.community.capability.demandplanning.configuration.facade.dto.PerfilExecucaoDemandPlanDTO;
+import com.opsfactor.community.capability.masterdata.calendar.profile.domain.PerfilCalendarioSimples;
+import com.opsfactor.community.capability.masterdata.calendar.profile.repository.PerfilCalendarioSimplesRepository;
 import com.opsfactor.community.capability.demandplanning.configuration.facade.mapper.PerfilExecucaoDemandPlanAutoMapper;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
@@ -27,6 +29,23 @@ import java.util.Optional;
  */
 @Service
 public class PerfilExecucaoDemandPlanFacade {
+
+    /** Catálogo tipado: Demand Planning somente admite receita simples. */
+    @Autowired
+    private PerfilCalendarioSimplesRepository perfilCalendarioSimplesRepository;
+
+    /** Resolve por tipo, impedindo um calendário não homogêneo também no Enterprise. */
+    protected PerfilCalendarioSimples resolvePerfilCalendarioDemandPlan(String calendarProfileId) {
+
+        if (calendarProfileId == null || calendarProfileId.isBlank()) {
+            throw new IllegalArgumentException("Demand Planning requires calendarProfileId.");
+        }
+        PerfilCalendarioSimples perfilCalendario = perfilCalendarioSimplesRepository.findById(calendarProfileId)
+                .orElseThrow(() -> new IllegalArgumentException("Simple calendar profile not found: " + calendarProfileId));
+        perfilCalendario.validarEstrutura();
+        return perfilCalendario;
+
+    }
 
     /**
      * Repository do perfil de execucao de Demand Planning. Toda escrita passa
@@ -125,8 +144,10 @@ public class PerfilExecucaoDemandPlanFacade {
 
         perfilExecucaoDemandPlan.setTipoDocumentoVenda(Constantes.TipoDocumentoVenda.SELLOUT);
         perfilExecucaoDemandPlan.setDescricao(perfilExecucaoDemandPlanDTO.description);
-        perfilExecucaoDemandPlan.setTamanhoBucket(perfilExecucaoDemandPlanDTO.bucketSize);
-        perfilExecucaoDemandPlan.setNumeroPeriodosHorizontePlanejamento(perfilExecucaoDemandPlanDTO.planningHorizonInPeriods);
+        perfilExecucaoDemandPlan.setPerfilCalendario(resolvePerfilCalendarioDemandPlan(perfilExecucaoDemandPlanDTO.calendarProfileId));
+        // Colunas antigas não são mais configuração independente após a vinculação.
+        perfilExecucaoDemandPlan.setTamanhoBucket(null);
+        perfilExecucaoDemandPlan.setNumeroPeriodosHorizontePlanejamento(null);
         // O horizonte fixo pertence ao Pro/Enterprise; Community sempre persiste edicao aberta.
         perfilExecucaoDemandPlan.setRestringePeriodosEdicaoPlano(false);
         perfilExecucaoDemandPlan.setPeriodoInicialEdicaoPlano(null);

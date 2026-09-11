@@ -4,7 +4,7 @@ import com.opsfactor.community.platform.rinstance.InstanciaRCaller;
 import com.opsfactor.community.platform.rinstance.model.ResultadoForecastEstatistico;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjection;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import com.opsfactor.community.platform.utility.MetodosUtilidade;
 
@@ -30,7 +30,7 @@ public class ArimaForecastEngine implements DemandForecastStatisticalEngineSpi {
 
     @Override
     public void executaForecast(
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosForecastProjection parametrosForecastProjection,
             DemandPlanForecastProjection demandPlanForecastProjection) {
 

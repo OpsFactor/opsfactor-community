@@ -31,6 +31,9 @@ public class DemandPlanDTO {
      */
     public String executionProfileId;
 
+    /** Identidade da receita na geração desta versão. */
+    public String calendarProfileId;
+
     /**
      * Granularidade temporal do plano.
      */

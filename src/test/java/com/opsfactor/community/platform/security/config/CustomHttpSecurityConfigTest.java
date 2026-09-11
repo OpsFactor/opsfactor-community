@@ -33,10 +33,10 @@ class CustomHttpSecurityConfigTest {
     void customHttpSecurityConfigShouldDeclareCommunitySecurityAnnotations() {
 
         Assertions.assertTrue(CustomHttpSecurityConfig.class.isAnnotationPresent(Configuration.class));
-        Assertions.assertTrue(CustomHttpSecurityConfig.class.isAnnotationPresent(EnableWebSecurity.class));
+        Assertions.assertTrue(SharedHttpSecurityConfiguration.class.isAnnotationPresent(EnableWebSecurity.class));
 
         EnableMethodSecurity enableMethodSecurity =
-                CustomHttpSecurityConfig.class.getAnnotation(EnableMethodSecurity.class);
+                SharedHttpSecurityConfiguration.class.getAnnotation(EnableMethodSecurity.class);
 
         Assertions.assertNotNull(enableMethodSecurity);
         Assertions.assertTrue(enableMethodSecurity.securedEnabled());
@@ -46,9 +46,9 @@ class CustomHttpSecurityConfigTest {
     @Test
     void passwordEncoderShouldUseBCrypt() {
 
-        CustomHttpSecurityConfig customHttpSecurityConfig = new CustomHttpSecurityConfig();
+        SharedHttpSecurityConfiguration sharedHttpSecurityConfiguration = new SharedHttpSecurityConfiguration();
 
-        PasswordEncoder passwordEncoder = customHttpSecurityConfig.passwordEncoder();
+        PasswordEncoder passwordEncoder = sharedHttpSecurityConfiguration.passwordEncoder();
 
         Assertions.assertInstanceOf(BCryptPasswordEncoder.class, passwordEncoder);
 
@@ -196,8 +196,8 @@ class CustomHttpSecurityConfigTest {
     @Test
     void corsConfigurationShouldSupportSeparatedSpaWithoutCookieCredentials() {
 
-        CustomHttpSecurityConfig customHttpSecurityConfig = new CustomHttpSecurityConfig();
-        CorsConfigurationSource corsConfigurationSource = customHttpSecurityConfig.corsConfigurationSource();
+        SharedHttpSecurityConfiguration sharedHttpSecurityConfiguration = new SharedHttpSecurityConfiguration();
+        CorsConfigurationSource corsConfigurationSource = sharedHttpSecurityConfiguration.corsConfigurationSource();
 
         CorsConfiguration apiCorsConfiguration = corsConfigurationSource.getCorsConfiguration(
                 new MockHttpServletRequest("GET", "/api/secured/user"));

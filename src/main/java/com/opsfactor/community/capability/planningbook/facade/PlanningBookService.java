@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Nullable;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -71,7 +70,9 @@ public class PlanningBookService {
                 .viewName(configuredView.getNomeView())
                 .viewType(configuredView.getTipoView())
                 .autoSubmitChanges(configuredView.getSubmissaoAutomaticaAlteracoes())
-                .bucketSize(calendario.getTamanhoBucket().toString())
+                .bucketSize(calendario.getPeriodos().stream()
+                        .map(periodo -> periodo.tamanhoBucketNominal().toString())
+                        .distinct().reduce((primeiro, segundo) -> "MISTO").orElseThrow())
                 .keyFigures(keyFigureProjection.getKeyFiguresApresentadosEOrdenados().stream().map(keyFigure -> keyFigure.getId()).collect(Collectors.toList()))
                 .columnDefs(getColumnDefDTOList(calendario, configuredViewProjection))
                 .groups(getGroupDTOList(keyFigureProjection))
@@ -80,7 +81,8 @@ public class PlanningBookService {
                 .uom(configuredViewProjection.getUnidadeMedidaView(clusterEParametrosProjection.getParametrosGlobais()).getId())
                 .build();
 
-        atualizaPeriodosSemInformacaoComValorZero(planningBookDTO, calendario);
+        atualizaPeriodosSemInformacaoComValorZero(planningBookDTO,
+                calendario);
         atualizaListaErrosParaExibicaoLog(planningBookDTO, configuredViewProjection);
         
         return planningBookDTO;
@@ -97,13 +99,10 @@ public class PlanningBookService {
      * @param configuredViewProjection
      * @return 
      */
-    private List<ColumnDefDTO> getColumnDefDTOList(Calendario calendario,
-                                                   ConfiguredViewProjection configuredViewProjection) {
+    private List<ColumnDefDTO> getColumnDefDTOList(
+            Calendario calendario,
+            ConfiguredViewProjection configuredViewProjection) {
         List<ColumnDefDTO> columnDefs = new ArrayList<>();
-        // Retorna formatter 'yyyy-MM-dd' para buckets diario/semanal
-        // yyyy-MM para buckets mensais
-        // 'yyyy-MM-dd hh:mm:ss' para os demais buckets
-        DateTimeFormatter formatter = calendario.getDateTimeFormatter();
         /*
          * O contrato base do Community e sempre uma linha por
          * material/location. Agrupamentos Enterprise sao aplicados sobre este
@@ -170,10 +169,14 @@ public class PlanningBookService {
         
         // adiciona especificações das colunas com períodos passados
         // cor cinza para diferenciar dos períodos futuros (class = pastPeriods)
-        for (int i=0; i<calendario.getPosicaoPeriodoPresente(); i++) {
+        for (int i = 0; i< calendario.getPosicaoPeriodoPresente(); i++) {
             columnDefs.add(ColumnDefDTO.builder()
                 .name(calendario.getDescricaoPeriodoDePosicaoPeriodo(i))
-                .field(calendario.getUltimaDataPeriodo(i).toString())//.format(formatter))
+                .field(calendario.getUltimaDataPeriodo(i).toString())
+                .periodIndex(i)
+                .bucketSize(calendario.getTamanhoBucket(i).toString())
+                .startDateTime(calendario.getPrimeiraDataHorarioPeriodo(i).toString())
+                .endDateTime(calendario.getUltimaDataHorarioPeriodo(i).toString())
                 .dataColumn(true)
                 .cellClass("pastPeriods")
                 .build());
@@ -181,7 +184,11 @@ public class PlanningBookService {
         for (int i = calendario.getPosicaoPeriodoPresente(); i < calendario.getNumeroPeriodosTotais(); i++) {
             columnDefs.add(ColumnDefDTO.builder()
                     .name(calendario.getDescricaoPeriodoDePosicaoPeriodo(i))
-                    .field(calendario.getUltimaDataPeriodo(i).toString())//.format(formatter))
+                    .field(calendario.getUltimaDataPeriodo(i).toString())
+                    .periodIndex(i)
+                    .bucketSize(calendario.getTamanhoBucket(i).toString())
+                    .startDateTime(calendario.getPrimeiraDataHorarioPeriodo(i).toString())
+                    .endDateTime(calendario.getUltimaDataHorarioPeriodo(i).toString())
                     .dataColumn(true)
                     .enableCellEdit(true)
                     .build());
@@ -439,7 +446,8 @@ public class PlanningBookService {
         
         int horizonteCongeladoPeriodos = dfusConsideradasParaCalculoHorizonteCongelado.parallelStream()
                 .mapToInt(dfu -> clusterEParametrosProjection.getDPHorizonteCongeladoEmPeriodos(
-                        dfu.getLocation(), dfu.getProduto(), calendario).orElse(0))
+                        dfu.getLocation(), dfu.getProduto(),
+                        calendario).orElse(0))
                 .max().orElse(0);
         
         for (int i = calendario.getPosicaoPeriodoPresente(); i < calendario.getPosicaoPeriodoPresente() + horizonteCongeladoPeriodos; i++) {

@@ -1,6 +1,7 @@
 package com.opsfactor.community.capability.masterdata.calendar.temporalsplit.projection;
 
 import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -20,7 +21,8 @@ public class SplitTemporalProjectionCurvaFlat extends SplitTemporalProjectionCur
     public SplitTemporalProjectionCurvaFlat(
             Calendario calendarioOrigem,
             Calendario calendarioTarget) {
-        super(calendarioOrigem, calendarioTarget);
+        super(calendarioOrigem,
+                calendarioTarget);
         inicializaSplitTemporalProjectionCurva();
     }
 
@@ -33,8 +35,8 @@ public class SplitTemporalProjectionCurvaFlat extends SplitTemporalProjectionCur
         LocalDate dataInicialCalendarioTarget = calendarioTarget.getDataHorarioInicial().toLocalDate().plusDays(0);
         LocalDate dataFinalCalendarioTarget = calendarioTarget.getDataHorarioFinal().toLocalDate().plusDays(0);
 
-        LocalDate dataAtual = Calendario.getMinData(dataInicialCalendarioOrigem, dataInicialCalendarioTarget);
-        LocalDate dataFinal = Calendario.getMaxData(dataFinalCalendarioOrigem, dataFinalCalendarioTarget);
+        LocalDate dataAtual = CalendarioSimples.getMinData(dataInicialCalendarioOrigem, dataInicialCalendarioTarget);
+        LocalDate dataFinal = CalendarioSimples.getMaxData(dataFinalCalendarioOrigem, dataFinalCalendarioTarget);
 
         while (dataAtual.isBefore(dataFinal.plusDays(1))) {
 

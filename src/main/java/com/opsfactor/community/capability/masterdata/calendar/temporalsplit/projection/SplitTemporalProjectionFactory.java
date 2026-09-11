@@ -37,7 +37,8 @@ public class SplitTemporalProjectionFactory {
     private ParametrosDemandPlanningProjectionFactory parametrosDemandPlanningProjectionFactory;
 
 
-    public static SplitTemporalProjection geraSplitTemporalProjectionComCurvaFlat(Calendario calendarioOrigem, Calendario calendarioTarget) {
+    public static SplitTemporalProjection geraSplitTemporalProjectionComCurvaFlat(
+            Calendario calendarioOrigem, Calendario calendarioTarget) {
 
         SplitTemporalProjection splitTemporalProjection = new SplitTemporalProjection(
                 calendarioOrigem,

@@ -14,6 +14,7 @@ import com.opsfactor.community.capability.masterdata.production.productionresour
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import com.pivovarit.function.ThrowingFunction;
 import lombok.*;
@@ -218,11 +219,12 @@ public class Location extends LocationAbstract implements Serializable, Comparab
      * @return
      */
     public Optional<LinhaTransporteProduto> getLinhaTransporteProdutoPrioritariaOndeDestinoDentroLeadTime(
-            VersaoMalha versaoMalha, Produto material, Calendario calendario, int posicaoPeriodoReferencia, 
+            VersaoMalha versaoMalha, Produto material, Calendario calendario, int posicaoPeriodoReferencia,
             ParametrosGlobais parametrosGlobais) {
 
         // extrai lista linha transporte produto já ordenada por prioridade
-        List<LinhaTransporteProduto> linhasTransporteProduto = getLinhasTransporteProdutoInboundParaMaterialDentroLeadTime(versaoMalha, material, calendario, posicaoPeriodoReferencia, parametrosGlobais);
+        List<LinhaTransporteProduto> linhasTransporteProduto = getLinhasTransporteProdutoInboundParaMaterialDentroLeadTime(versaoMalha, material,
+                calendario, posicaoPeriodoReferencia, parametrosGlobais);
         
         if (linhasTransporteProduto.isEmpty()) return Optional.empty();
         
@@ -420,7 +422,7 @@ public class Location extends LocationAbstract implements Serializable, Comparab
     public double getCapacidadeInboundNoBucketTarget(Constantes.TamanhoBucket tamanhoBucketTarget) {
 
         return getCapacidadeInboundPadrao()
-                * Calendario.getNumeroMedioPeriodosBucketOrigemNoBucketDestino(
+                * CalendarioSimples.getNumeroMedioPeriodosBucketOrigemNoBucketDestino(
                         getPeriodoIncidenciaCapacidadeInboundPadrao(), tamanhoBucketTarget);
 
     }
@@ -428,7 +430,7 @@ public class Location extends LocationAbstract implements Serializable, Comparab
     public double getCapacidadeOutboundNoBucketTarget(Constantes.TamanhoBucket tamanhoBucketTarget) {
 
         return getCapacidadeOutboundPadrao()
-                * Calendario.getNumeroMedioPeriodosBucketOrigemNoBucketDestino(
+                * CalendarioSimples.getNumeroMedioPeriodosBucketOrigemNoBucketDestino(
                         getPeriodoIncidenciaCapacidadeOutboundPadrao(), tamanhoBucketTarget);
 
     }
@@ -525,12 +527,13 @@ public class Location extends LocationAbstract implements Serializable, Comparab
     
     public List<LinhaTransporteProduto> getLinhasTransporteProdutoInboundParaMaterialDentroLeadTime(
             VersaoMalha versaoMalha,
-            Produto material, Calendario calendario, 
+            Produto material, Calendario calendario,
             int posicaoPeriodoReferencia, ParametrosGlobais parametrosGlobais) {
         
         return getLinhasTransporteProdutoInboundParaMaterial(versaoMalha, material, calendario.getDataHorarioInicial(), parametrosGlobais).stream()
                 .filter(x -> x.getVersaoMalha().equals(versaoMalha))
-                .filter(x -> posicaoPeriodoReferencia >= calendario.getPosicaoPeriodoPresente() + x.getLeadTimePeriodos(calendario))
+                .filter(x -> posicaoPeriodoReferencia >= calendario.getPosicaoPeriodoPresente()
+                        + x.getLeadTimePeriodos(calendario, calendario.getPosicaoPeriodoPresente()))
                 .sorted(Comparator.comparing(x -> x.getPrioridade()))
                 .collect(Collectors.toList());
         

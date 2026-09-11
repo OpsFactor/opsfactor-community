@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosAgregacaoForecast;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ public abstract class DemandPlanForecastProjectionFactory {
      * TOP_DOWN/TOP_DOWN: retorna um agregado único para o cluster material/location.
      */
     public static List<? extends DemandPlanForecastProjection> getDemandPlanForecastProjectionsExecucao(
-            Calendario calendario,
+            CalendarioSimples calendario,
             MaterialProjection materialProjection,
             LocationProjection locationProjection,
             boolean somenteDfusAtivos,
@@ -215,7 +215,7 @@ public abstract class DemandPlanForecastProjectionFactory {
      * obrigatorios quando ha agregado real para materializar.
      */
     private static DemandPlanForecastProjectionAgregado criaDemandPlanForecastProjectionAgregado(
-            Calendario calendario,
+            CalendarioSimples calendario,
             UnidadeMedida unidadeMedida,
             boolean preencheHorizonteForecastComDemandaHistorica) {
 

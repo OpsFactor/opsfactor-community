@@ -13,7 +13,7 @@ import com.opsfactor.community.capability.planningbook.domain.AjusteCelulaPlanni
 import com.opsfactor.community.capability.planningbook.domain.PlanningBookDfuScope;
 import com.opsfactor.community.capability.configuration.user.repository.ConfiguredViewRepository;
 import com.opsfactor.community.capability.planningbook.facade.dto.SelectedPlanningBookCellDTO;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes.TamanhoBucket;
 import java.util.Collection;
@@ -145,7 +145,7 @@ public class ConfiguredViewService {
 
             // cria o DetalheSelecao, que traz todas as informações (periodo, quantidade e DFU) da célula modificada
             AjusteCelulaPlanningBook ajusteCelulaPlanningBook = new AjusteCelulaPlanningBook(
-                    Calendario.getUltimaDataHorarioPeriodo(selectedPlanningBookCellDTO.period, tamanhoBucket), 
+                    CalendarioSimples.getUltimaDataHorarioPeriodo(selectedPlanningBookCellDTO.period, tamanhoBucket),
                     selectedPlanningBookCellDTO.keyFigure, 
                     selectedPlanningBookCellDTO.uom,
                     selectedPlanningBookCellDTO.newValue,

@@ -10,7 +10,7 @@ import com.opsfactor.community.capability.demandplanning.engine.DemandPlanning;
 import com.opsfactor.community.capability.demandplanning.forecast.preprocessing.engine.DemandForecastHistoryCleaningProcessor;
 import com.opsfactor.community.capability.demandplanning.forecast.preprocessing.engine.DemandForecastStockoutContext;
 import com.opsfactor.community.capability.demandplanning.forecast.preprocessing.engine.DemandForecastStockoutTreatmentProcessor;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -63,7 +63,7 @@ public class DemandForecastWorkflowService {
      * Executa forecast e desagregacao, mutando a projection recebida.
      */
     public void executaForecastEDesagregacao(
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosForecastProjection parametrosForecastProjection,
             ParametrosAgregacaoForecast parametrosAgregacaoForecast,
             DemandPlanForecastProjection demandPlanForecastProjection,
@@ -87,7 +87,7 @@ public class DemandForecastWorkflowService {
      * estado em bean e sem consultar estoque dentro de cada serie.</p>
      */
     public void executaForecastEDesagregacao(
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosForecastProjection parametrosForecastProjection,
             ParametrosAgregacaoForecast parametrosAgregacaoForecast,
             DemandPlanForecastProjection demandPlanForecastProjection,
@@ -189,7 +189,7 @@ public class DemandForecastWorkflowService {
      * mensagens historicas para payloads completamente vazios.</p>
      */
     protected void validaParametrosBasicosForecastWorkflow(
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosForecastProjection parametrosForecastProjection,
             ParametrosAgregacaoForecast parametrosAgregacaoForecast,
             DemandPlanForecastProjection demandPlanForecastProjection) {
@@ -232,7 +232,7 @@ public class DemandForecastWorkflowService {
      * guardar estado entre clusters paralelos.</p>
      */
     protected void processaHistoricoForecast(
-            Calendario calendario,
+            CalendarioSimples calendario,
             DemandPlanForecastProjection demandPlanForecastProjection,
             ParametrosForecastProjection parametrosForecastProjection) {
 
@@ -248,7 +248,7 @@ public class DemandForecastWorkflowService {
      * Materializa series historicas usando o contexto opcional da rodada.
      */
     protected void processaHistoricoForecast(
-            Calendario calendario,
+            CalendarioSimples calendario,
             DemandPlanForecastProjection demandPlanForecastProjection,
             ParametrosForecastProjection parametrosForecastProjection,
             DemandForecastStockoutContext demandForecastStockoutContext) {
@@ -277,7 +277,7 @@ public class DemandForecastWorkflowService {
      * contrato agregado + split Historical Sales.</p>
      */
     protected void desagregaForecastSeNecessario(
-            Calendario calendario,
+            CalendarioSimples calendario,
             ParametrosForecastProjection parametrosForecastProjection,
             ParametrosAgregacaoForecast parametrosAgregacaoForecast,
             DemandPlanForecastProjection demandPlanForecastProjection,

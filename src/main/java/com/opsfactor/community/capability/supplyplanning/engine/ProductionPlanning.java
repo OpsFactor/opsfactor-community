@@ -31,11 +31,12 @@ public class ProductionPlanning {
      * Retorna a capacidade total em horas de um recurso para um certo período
      * @return
      */
-    public static double getCapacidadeRecursoHoras(Calendario calendario,
+    public static double getCapacidadeRecursoHoras(
+            Calendario calendario,
             RecursoProdutivo recursoProdutivo, int posicaoPeriodo) {
 
         double horasDisponiveis = recursoProdutivo.getDisponibilidadeHorasPeriodo(
-                calendario.getPrimeiraDataPeriodo(posicaoPeriodo), 
+                calendario.getPrimeiraDataPeriodo(posicaoPeriodo),
                 calendario.getUltimaDataPeriodo(posicaoPeriodo));
         
         return horasDisponiveis;
@@ -201,8 +202,8 @@ public class ProductionPlanning {
             
             mapaCapacidadeEmHorasPorRecurso.put(recursoProdutivo, new ArrayList<>());
             
-            for (int i=calendario.getPosicaoPeriodoInicialFuturo(); 
-                    i<calendario.getNumeroPeriodosTotais(); i++) {
+            for (int i = calendario.getPosicaoPeriodoInicialFuturo();
+                 i< calendario.getNumeroPeriodosTotais(); i++) {
                 
                 LocalDate dataInicialPeriodo = calendario.getPrimeiraDataPeriodo(i);
                 LocalDate dataFinalPeriodo = calendario.getUltimaDataPeriodo(i);

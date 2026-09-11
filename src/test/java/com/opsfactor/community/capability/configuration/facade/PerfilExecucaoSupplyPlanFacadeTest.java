@@ -1,5 +1,10 @@
 package com.opsfactor.community.capability.configuration.facade;
 
+import java.util.Optional;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.mockito.Mockito;
+import com.opsfactor.community.capability.masterdata.calendar.profile.domain.PerfilCalendarioSimples;
+import com.opsfactor.community.capability.masterdata.calendar.profile.facade.PerfilCalendarioFacade;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opsfactor.community.capability.supplyplanning.configuration.facade.dto.PerfilExecucaoSupplyPlanDTO;
@@ -36,6 +41,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     private static final Set<String> COMMUNITY_ACCEPTED_FIELD_NAMES = Set.of(
             "id",
             "description",
+            "calendarProfileId",
             "generatePlannedInboundOrders",
             "generatePlannedProductionOrders",
             "generatePlannedInboundOrdersWhenProductionIsViable",
@@ -87,7 +93,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     public void savePerfilExecucaoSupplyPlanDTOShouldRejectMissingPayloadBeforeRepositories() {
 
         PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService =
-                new PerfilExecucaoSupplyPlanFacade();
+                createCalendarConfiguredFacade();
 
         IllegalArgumentException missingPayloadException = Assertions.assertThrows(
                 IllegalArgumentException.class,
@@ -96,7 +102,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
                 "Supply Planning execution profile DTO is required.",
                 missingPayloadException.getMessage());
 
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setId("");
 
         IllegalArgumentException missingIdException = Assertions.assertThrows(
@@ -299,8 +305,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void savePerfilExecucaoSupplyPlanDTOShouldRejectEnterprisePayloadBeforeRepositories() {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setId("supply-profile");
         perfilExecucaoSupplyPlanDTO.setExecutionModel(PerfilExecucaoSupplyPlan.ModoExecucao.OTIMIZADOR);
 
@@ -319,8 +325,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     public void savePerfilExecucaoSupplyPlanDTOShouldRejectNullInventoryPolicySetBeforeRepositories() {
 
         PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService =
-                new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+                createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setId("supply-profile");
         perfilExecucaoSupplyPlanDTO.setInventoryPolicyIdSet(null);
 
@@ -344,11 +350,11 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     public void savePerfilExecucaoSupplyPlanDTOShouldRejectMissingInventoryPolicyBeforeMapper() throws Exception {
 
         PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService =
-                new PerfilExecucaoSupplyPlanFacade();
+                createCalendarConfiguredFacade();
         AtomicInteger findAllCallCount = new AtomicInteger(0);
         PoliticaEstoquesRepository politicaEstoquesRepository =
                 createPoliticaEstoquesRepositoryProxy(findAllCallCount);
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setId("supply-profile");
         perfilExecucaoSupplyPlanDTO.setInventoryPolicyIdSet(Set.of("missing-policy"));
 
@@ -381,11 +387,11 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     public void savePerfilExecucaoSupplyPlanDTOShouldRejectBlankInventoryPolicyBeforeMapper() throws Exception {
 
         PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService =
-                new PerfilExecucaoSupplyPlanFacade();
+                createCalendarConfiguredFacade();
         AtomicInteger findAllCallCount = new AtomicInteger(0);
         PoliticaEstoquesRepository politicaEstoquesRepository =
                 createPoliticaEstoquesRepositoryProxy(findAllCallCount);
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setId("supply-profile");
         perfilExecucaoSupplyPlanDTO.setInventoryPolicyIdSet(Set.of(" "));
 
@@ -420,7 +426,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
                 criaPerfilExecucaoSupplyPlanDTOCommunityMinimoParaTeste();
 
         PerfilExecucaoSupplyPlanFacade serviceComListaNula =
-                new PerfilExecucaoSupplyPlanFacade();
+                createCalendarConfiguredFacade();
         setPrivateField(
                 serviceComListaNula,
                 "politicaEstoquesRepository",
@@ -437,7 +443,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
         List<PoliticaEstoques> politicaEstoquesListComItemNulo = new ArrayList<>();
         politicaEstoquesListComItemNulo.add(null);
         PerfilExecucaoSupplyPlanFacade serviceComItemNulo =
-                new PerfilExecucaoSupplyPlanFacade();
+                createCalendarConfiguredFacade();
         setPrivateField(
                 serviceComItemNulo,
                 "politicaEstoquesRepository",
@@ -454,7 +460,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
                 itemNuloException.getMessage());
 
         PerfilExecucaoSupplyPlanFacade serviceComPolicySemId =
-                new PerfilExecucaoSupplyPlanFacade();
+                createCalendarConfiguredFacade();
         setPrivateField(
                 serviceComPolicySemId,
                 "politicaEstoquesRepository",
@@ -475,7 +481,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
         PoliticaEstoques politicaEstoquesDois = new PoliticaEstoques();
         politicaEstoquesDois.setId("INV_POLICY_01");
         PerfilExecucaoSupplyPlanFacade serviceComPolicyDuplicada =
-                new PerfilExecucaoSupplyPlanFacade();
+                createCalendarConfiguredFacade();
         setPrivateField(
                 serviceComPolicyDuplicada,
                 "politicaEstoquesRepository",
@@ -587,8 +593,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
                     "Campo sem valor de teste Enterprise configurado: " + field.getName());
 
             PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService =
-                    new PerfilExecucaoSupplyPlanFacade();
-            PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+                    createCalendarConfiguredFacade();
+            PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
             perfilExecucaoSupplyPlanDTO.setId("supply-profile");
             field.setAccessible(true);
             field.set(perfilExecucaoSupplyPlanDTO, enterpriseFieldValue);
@@ -615,7 +621,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
          * Community usa o valor fixo definido pelo mapper/runtime.
          */
         PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService =
-                new PerfilExecucaoSupplyPlanFacade();
+                createCalendarConfiguredFacade();
         PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO =
                 criaPerfilExecucaoSupplyPlanDTOCommunityMinimoParaTeste();
         perfilExecucaoSupplyPlanDTO.setHeuristicUnconstrainedPlanCapacityLeveling(true);
@@ -630,8 +636,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaModoExecucaoCommunityShouldAcceptHeuristicExecution() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setExecutionModel(PerfilExecucaoSupplyPlan.ModoExecucao.HEURISTICO);
 
         invokeValidation(
@@ -644,8 +650,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaModoExecucaoCommunityShouldRejectOptimizerExecution() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setExecutionModel(PerfilExecucaoSupplyPlan.ModoExecucao.OTIMIZADOR);
 
         assertRequiresEnterpriseVersionException(
@@ -658,8 +664,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaModoExecucaoCommunityShouldRejectProcessChainExecution() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setExecutionModel(PerfilExecucaoSupplyPlan.ModoExecucao.PROCESS_CHAIN);
 
         assertRequiresEnterpriseVersionException(
@@ -672,8 +678,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaPedidosTransacionaisCommunityShouldAcceptDemandPlanOnlySource() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setCustomerOrdersAndForecastReconciliationModelForProjectedInventory(
                 PerfilExecucaoSupplyPlan.ModeloMajoracaoDemandaDireta.SOMENTE_FORECAST);
         perfilExecucaoSupplyPlanDTO.setCustomerOrdersAndForecastReconciliationModelForSafetyStock(
@@ -689,8 +695,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaPedidosTransacionaisCommunityShouldRejectClientOrdersSource() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setCustomerOrdersAndForecastReconciliationModelForProjectedInventory(
                 PerfilExecucaoSupplyPlan.ModeloMajoracaoDemandaDireta.PLANO_DEMANDA_MAIS_CARTEIRA);
 
@@ -704,8 +710,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaPedidosTransacionaisCommunityShouldRejectDemandCatchUp() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setEnableDemandCatchUpFromPastSellout(true);
 
         assertRequiresEnterpriseVersionException(
@@ -718,8 +724,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaPedidosTransacionaisCommunityShouldRejectSellInOrders() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setConsiderSellinOrdersBacklog(true);
 
         assertRequiresEnterpriseVersionException(
@@ -765,8 +771,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaFrotasEOtimizadorInteligenciaArtificialCommunityShouldRejectFleetAllocation() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setAllocateTransfersInFleets(true);
 
         assertRequiresEnterpriseVersionException(
@@ -779,8 +785,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaFrotasEOtimizadorInteligenciaArtificialCommunityShouldRejectAiOptimizer() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setAiOptimizer(PerfilExecucaoSupplyPlan.OtimizadorInteligenciaArtificial.SNP);
 
         assertRequiresEnterpriseVersionException(
@@ -793,8 +799,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaParametrosModeloOtimizadoCommunityShouldRejectLineSequencing() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setEnableLineSequencing(true);
 
         assertRequiresEnterpriseVersionException(
@@ -807,8 +813,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaParametrosModeloOtimizadoCommunityShouldRejectGreenfieldBrownfield() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setEnableGreenfieldBrownfield(true);
 
         assertRequiresEnterpriseVersionException(
@@ -821,8 +827,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaCurvasSplitTemporalCommunityShouldRejectConfiguredCurves() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setTemporalSplitCurveIdSet(Set.of("temporal-split-curve"));
 
         assertRequiresEnterpriseVersionException(
@@ -835,8 +841,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaGreenfieldCommunityShouldRejectLocationActivationBudget() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setConsiderBudgetForGreenfieldLocationActivation(true);
 
         assertRequiresEnterpriseVersionException(
@@ -858,8 +864,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaFiltroMateriaisCommunityShouldRejectMaterialFilter() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setMaterialFilterId("material-filter");
 
         assertRequiresEnterpriseVersionException(
@@ -921,8 +927,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaCapacidadesEConstraintsCommunityShouldAcceptTotalHoursPerDay() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setProductiveCapacityType(PerfilExecucaoSupplyPlan.TipoCapacidadeProdutiva.HORAS_POR_DIA);
 
         invokeValidation(
@@ -935,8 +941,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaCapacidadesEConstraintsCommunityShouldRejectShiftAllocation() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setProductiveCapacityType(PerfilExecucaoSupplyPlan.TipoCapacidadeProdutiva.ALOCACAO_TURNOS);
 
         assertRequiresEnterpriseVersionException(
@@ -949,8 +955,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaCapacidadesEConstraintsCommunityShouldRejectLogisticsCapacityLevel() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setLogisticsCapacityLevel(PerfilExecucaoSupplyPlan.TipoCapacidadeLogistica.NIVEL_LOCATION_DATA);
 
         assertRequiresEnterpriseVersionException(
@@ -963,8 +969,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaCapacidadesEConstraintsCommunityShouldRejectStockAtClients() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setAllowStockAtClients(true);
 
         assertRequiresEnterpriseVersionException(
@@ -977,8 +983,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaCapacidadesEConstraintsCommunityShouldRejectStorageConstraints() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setConsiderStorageConstraints(true);
 
         assertRequiresEnterpriseVersionException(
@@ -991,8 +997,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaCapacidadesEConstraintsCommunityShouldRejectInboundConstraints() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setConsiderInboundConstraints(true);
 
         assertRequiresEnterpriseVersionException(
@@ -1005,8 +1011,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaCapacidadesEConstraintsCommunityShouldRejectOutboundConstraints() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setConsiderOutboundConstraints(true);
 
         assertRequiresEnterpriseVersionException(
@@ -1019,8 +1025,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaCapacidadesEConstraintsCommunityShouldRejectStockAtTransshipmentPoints() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setAllowStockAtTransshipmentPoints(true);
 
         assertRequiresEnterpriseVersionException(
@@ -1033,8 +1039,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaCapacidadesEConstraintsCommunityShouldRejectProductionScheduling() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setGenerateProductionScheduling(true);
 
         assertRequiresEnterpriseVersionException(
@@ -1061,8 +1067,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaParametrosModeloOtimizadoCommunityShouldRejectProfitAndLossGeneration() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setGeneratePL(true);
 
         assertRequiresEnterpriseVersionException(
@@ -1075,8 +1081,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaParametrosModeloOtimizadoCommunityShouldRejectTaxApportionment() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setTaxApportionmentModel(
                 PerfilExecucaoSupplyPlan.ModoApuracaoImpostos.APURACAO_ICMS);
 
@@ -1090,8 +1096,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaParametrosModeloOtimizadoCommunityShouldRejectCostModel() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setConsiderSupplierPrices(true);
 
         assertRequiresEnterpriseVersionException(
@@ -1126,8 +1132,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaCurvasCustoLogisticoCommunityShouldRejectConfiguredCurves() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setLogisticsCostCurvesId(10L);
 
         assertRequiresEnterpriseVersionException(
@@ -1149,8 +1155,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaCurvasCustoLogisticoCommunityShouldRejectFreightCostCurveApplication() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setApplyFreightCostCurves(true);
 
         assertRequiresEnterpriseVersionException(
@@ -1163,8 +1169,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaParametrosModeloOtimizadoCommunityShouldRejectLineScheduling() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setGenerateDetailedPlan(true);
 
         assertRequiresEnterpriseVersionException(
@@ -1177,8 +1183,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaParametrosModeloOtimizadoCommunityShouldRejectObjectiveFunctionParameters() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setDemandPlanMetDemandImpactCoefficient(1.0d);
 
         assertRequiresEnterpriseVersionException(
@@ -1206,8 +1212,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaParametrosModeloOtimizadoCommunityShouldRejectLeadTimeOptimization() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setIgnoreLeadTimeConstraintsForUnconstrainedPlan(true);
 
         assertRequiresEnterpriseVersionException(
@@ -1220,8 +1226,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaParametrosModeloOtimizadoCommunityShouldRejectSafetyStockFairShare() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setSafetyStockFairShare(true);
 
         assertRequiresEnterpriseVersionException(
@@ -1249,7 +1255,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void normalizaFairShareCommunityShouldForceDirectDemandFairShare() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
         PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan = new PerfilExecucaoSupplyPlan();
         perfilExecucaoSupplyPlan.setAplicaFairShareDemandaDireta(false);
 
@@ -1265,8 +1271,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
     @Test
     public void validaPerfilLocationLevelCommunityShouldRejectPartialLocationExecution() throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setExecuteSupplyPlanForAllLocations(false);
 
         assertRequiresEnterpriseVersionException(
@@ -1280,8 +1286,8 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
             String methodName,
             Consumer<PerfilExecucaoSupplyPlanDTO> perfilExecucaoSupplyPlanDTOConsumer) throws Exception {
 
-        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = new PerfilExecucaoSupplyPlanFacade();
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService = createCalendarConfiguredFacade();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTOConsumer.accept(perfilExecucaoSupplyPlanDTO);
 
         assertRequiresEnterpriseVersionException(
@@ -1391,7 +1397,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
             PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlanSalvo) throws Exception {
 
         PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService =
-                new PerfilExecucaoSupplyPlanFacade();
+                createCalendarConfiguredFacade();
         AtomicInteger findAllCallCount = new AtomicInteger(0);
 
         setPrivateField(
@@ -1415,7 +1421,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
             List<PerfilExecucaoSupplyPlan> perfilExecucaoSupplyPlanList) throws Exception {
 
         PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService =
-                new PerfilExecucaoSupplyPlanFacade();
+                createCalendarConfiguredFacade();
         setPrivateField(
                 perfilExecucaoSupplyPlanFrontService,
                 "perfilExecucaoSupplyPlanRepository",
@@ -1548,7 +1554,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
 
     private static PerfilExecucaoSupplyPlanDTO criaPerfilExecucaoSupplyPlanDTOCommunityMinimoParaTeste() {
 
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setId("supply-profile");
         perfilExecucaoSupplyPlanDTO.setInventoryPolicyIdSet(Set.of());
         return perfilExecucaoSupplyPlanDTO;
@@ -1560,7 +1566,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
             String expectedMessage) {
 
         PerfilExecucaoSupplyPlanFacade perfilExecucaoSupplyPlanFrontService =
-                new PerfilExecucaoSupplyPlanFacade();
+                createCalendarConfiguredFacade();
         PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO =
                 criaPerfilExecucaoSupplyPlanDTOCommunityMinimoParaTeste();
         perfilExecucaoSupplyPlanDTOConsumer.accept(perfilExecucaoSupplyPlanDTO);
@@ -1583,7 +1589,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
 
     private static PerfilExecucaoSupplyPlanDTO criaPerfilExecucaoSupplyPlanDTOListagemParaTeste(String id) {
 
-        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = new PerfilExecucaoSupplyPlanDTO();
+        PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO = createCalendarConfiguredDto();
         perfilExecucaoSupplyPlanDTO.setId(id);
         perfilExecucaoSupplyPlanDTO.setExecutionModel(PerfilExecucaoSupplyPlan.ModoExecucao.HEURISTICO);
         perfilExecucaoSupplyPlanDTO.setInventoryPolicyIdSet(Set.of());
@@ -1644,6 +1650,27 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
             case "detailedPlanBucketSize" -> Constantes.TamanhoBucket.HORARIO;
             default -> null;
         };
+
+    }
+
+    /** Fixture explicita da receita; os campos legados de bucket/horizonte nao configuram mais a execucao. */
+    private static PerfilExecucaoSupplyPlanDTO createCalendarConfiguredDto() {
+
+        PerfilExecucaoSupplyPlanDTO dto = new PerfilExecucaoSupplyPlanDTO();
+        dto.setCalendarProfileId("CALENDAR_TEST");
+        return dto;
+
+    }
+
+    /** Injeta somente o catalogo de calendarios; cada teste continua dono dos outros colaboradores. */
+    private static PerfilExecucaoSupplyPlanFacade createCalendarConfiguredFacade() {
+
+        PerfilExecucaoSupplyPlanFacade facade = new PerfilExecucaoSupplyPlanFacade();
+        PerfilCalendarioFacade calendarFacade = Mockito.mock(PerfilCalendarioFacade.class);
+        Mockito.when(calendarFacade.obterPerfilCompleto(Mockito.anyString())).thenReturn(
+                new PerfilCalendarioSimples("CALENDAR_TEST", Constantes.TamanhoBucket.MENSAL, 12));
+        ReflectionTestUtils.setField(facade, "perfilCalendarioFacade", calendarFacade);
+        return facade;
 
     }
 

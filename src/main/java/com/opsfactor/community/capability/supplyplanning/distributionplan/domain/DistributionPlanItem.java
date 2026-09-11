@@ -178,7 +178,8 @@ public class DistributionPlanItem {
                 LocalDateTime.now(), LocalDateTime.now());
         
         Pair<LocalDateTime,LocalDateTime> datasExpedicaoERecebimento = getDatasExpedicaoERecebimentoDeReferencia(
-                referenciaPeriodo, calendario, posicaoPeriodoReferencia, getVersaoMalha(), material, 
+                referenciaPeriodo,
+                calendario, posicaoPeriodoReferencia, getVersaoMalha(), material,
                 locationOrigem, locationDestino, supplyNetworkProjection);
         
         this.key.dataExpedicao = datasExpedicaoERecebimento.getValue0();
@@ -718,7 +719,7 @@ public class DistributionPlanItem {
      * @return Pair com 0:PosicaoPeriodoExpedicao e 1:PosicaoPeriodoRecebimento
      */
     public static Pair<Integer,Integer> getPosicaoPeriodosExpedicaoERecebimentoDeReferencia (
-            ReferenciaPeriodo referenciaPeriodo, Calendario calendario, int posicaoPeriodoReferencia, 
+            ReferenciaPeriodo referenciaPeriodo, Calendario calendario, int posicaoPeriodoReferencia,
             VersaoMalha versaoMalha,
             Produto material, Location locationOrigem, Location locationDestino,
             SupplyNetworkProjection supplyNetworkProjection) {
@@ -758,13 +759,14 @@ public class DistributionPlanItem {
      * @return Pair com 0:data expedicao, apontando para o início do período e 1:data Recebimento, apontando para o final do período
      */
     public static Pair<LocalDateTime,LocalDateTime> getDatasExpedicaoERecebimentoDeReferencia (
-            ReferenciaPeriodo referenciaPeriodo, Calendario calendario, int posicaoPeriodoReferencia, 
+            ReferenciaPeriodo referenciaPeriodo, Calendario calendario, int posicaoPeriodoReferencia,
             VersaoMalha versaoMalha,
             Produto material, Location locationOrigem, Location locationDestino,
             SupplyNetworkProjection supplyNetworkProjection) {
         
         Pair<Integer,Integer> periodosExpedicaoERecebimento = getPosicaoPeriodosExpedicaoERecebimentoDeReferencia(
-                referenciaPeriodo, calendario, posicaoPeriodoReferencia, versaoMalha, material, locationOrigem, locationDestino, supplyNetworkProjection);
+                referenciaPeriodo,
+                calendario, posicaoPeriodoReferencia, versaoMalha, material, locationOrigem, locationDestino, supplyNetworkProjection);
         
         int posicaoPeriodoExpedicao = periodosExpedicaoERecebimento.getValue0();
         int posicaoPeriodoRecebimento = periodosExpedicaoERecebimento.getValue1();

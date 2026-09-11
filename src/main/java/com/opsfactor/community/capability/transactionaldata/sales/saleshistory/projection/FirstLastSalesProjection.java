@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.transactionaldata.sales.saleshistory.
 
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.FuncoesMap;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -28,7 +28,7 @@ public class FirstLastSalesProjection {
      * de periodo quando o caller pede recorte por bucket.
      */
     @Getter
-    private Calendario calendario;
+    private CalendarioSimples calendario;
 
     /**
      * Primeira/ultima venda por DFU.
@@ -48,7 +48,7 @@ public class FirstLastSalesProjection {
     @Getter(AccessLevel.NONE)
     private Map<Location, FirstLastByLocation> mapaPrimeiraEUltimaVendaPorLocation = new ConcurrentHashMap<>();
 
-    public FirstLastSalesProjection(Calendario calendario) {
+    public FirstLastSalesProjection(CalendarioSimples calendario) {
 
         if (calendario == null) {
             throw new IllegalArgumentException("First/last sales projection calendar is required.");
@@ -164,8 +164,8 @@ public class FirstLastSalesProjection {
         return getFirstLastByMaterialLocation(location, material)
                 .map(firstLastByMaterialLocation -> (restritoAoCalendario) ?
                         Pair.with(
-                                Calendario.getMaxData(firstLastByMaterialLocation.getFirstDateTime().toLocalDate(), calendario.getDataHorarioInicial().toLocalDate()),
-                                Calendario.getMinData(firstLastByMaterialLocation.getLastDateTime().toLocalDate(), calendario.getDataHorarioFinalPassada().toLocalDate()))
+                                CalendarioSimples.getMaxData(firstLastByMaterialLocation.getFirstDateTime().toLocalDate(), calendario.getDataHorarioInicial().toLocalDate()),
+                                CalendarioSimples.getMinData(firstLastByMaterialLocation.getLastDateTime().toLocalDate(), calendario.getDataHorarioFinalPassada().toLocalDate()))
                         : Pair.with(
                                 firstLastByMaterialLocation.getFirstDateTime().toLocalDate(),
                                 firstLastByMaterialLocation.getLastDateTime().toLocalDate()));
@@ -177,8 +177,8 @@ public class FirstLastSalesProjection {
         return getFirstLastByLocation(location)
                 .map(firstLastByMaterialLocation -> (restritoAoCalendario) ?
                         Pair.with(
-                                Calendario.getMaxData(firstLastByMaterialLocation.getFirstDateTime().toLocalDate(), calendario.getDataHorarioInicial().toLocalDate()),
-                                Calendario.getMinData(firstLastByMaterialLocation.getLastDateTime().toLocalDate(), calendario.getDataHorarioFinalPassada().toLocalDate()))
+                                CalendarioSimples.getMaxData(firstLastByMaterialLocation.getFirstDateTime().toLocalDate(), calendario.getDataHorarioInicial().toLocalDate()),
+                                CalendarioSimples.getMinData(firstLastByMaterialLocation.getLastDateTime().toLocalDate(), calendario.getDataHorarioFinalPassada().toLocalDate()))
                         : Pair.with(
                                 firstLastByMaterialLocation.getFirstDateTime().toLocalDate(),
                                 firstLastByMaterialLocation.getLastDateTime().toLocalDate()));
@@ -190,8 +190,8 @@ public class FirstLastSalesProjection {
         return getFirstLastByMaterial(material)
                 .map(firstLastByMaterialLocation -> (restritoAoCalendario) ?
                         Pair.with(
-                                Calendario.getMaxData(firstLastByMaterialLocation.getFirstDateTime().toLocalDate(), calendario.getDataHorarioInicial().toLocalDate()),
-                                Calendario.getMinData(firstLastByMaterialLocation.getLastDateTime().toLocalDate(), calendario.getDataHorarioFinalPassada().toLocalDate()))
+                                CalendarioSimples.getMaxData(firstLastByMaterialLocation.getFirstDateTime().toLocalDate(), calendario.getDataHorarioInicial().toLocalDate()),
+                                CalendarioSimples.getMinData(firstLastByMaterialLocation.getLastDateTime().toLocalDate(), calendario.getDataHorarioFinalPassada().toLocalDate()))
                         : Pair.with(
                                 firstLastByMaterialLocation.getFirstDateTime().toLocalDate(),
                                 firstLastByMaterialLocation.getLastDateTime().toLocalDate()));

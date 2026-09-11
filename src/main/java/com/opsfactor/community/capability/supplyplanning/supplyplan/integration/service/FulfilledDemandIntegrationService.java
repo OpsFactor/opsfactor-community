@@ -7,6 +7,7 @@ import com.opsfactor.community.capability.supplyplanning.supplyplan.integration.
 import com.opsfactor.community.capability.supplyplanning.supplyplan.repository.DemandaDiretaConsideradaLinhaRepository;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.repository.SupplyPlanRepository;
 import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.exception.DataUploadException;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,10 +74,10 @@ public class FulfilledDemandIntegrationService {
         Constantes.TamanhoBucket bucketSize = supplyPlan.getTamanhoBucket() == null
                 ? Constantes.TamanhoBucket.MENSAL
                 : supplyPlan.getTamanhoBucket();
-        LocalDateTime initialDateTime = Calendario.getPrimeiraDataHorarioPeriodo(
+        LocalDateTime initialDateTime = CalendarioSimples.getPrimeiraDataHorarioPeriodo(
                 validatedReferenceDate.atStartOfDay(),
                 bucketSize);
-        LocalDateTime finalDateTime = Calendario.getUltimaDataHorarioPeriodo(
+        LocalDateTime finalDateTime = CalendarioSimples.getUltimaDataHorarioPeriodo(
                 validatedReferenceDate.atStartOfDay(),
                 bucketSize);
 

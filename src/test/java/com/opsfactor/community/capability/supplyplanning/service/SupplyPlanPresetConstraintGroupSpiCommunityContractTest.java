@@ -84,10 +84,12 @@ class SupplyPlanPresetConstraintGroupSpiCommunityContractTest {
         supplyPlan.setVersaoMalha(supplyNetworkVersion);
         supplyPlan.setTamanhoBucket(Constantes.TamanhoBucket.MENSAL);
         supplyPlan.setHorarioGeracao(LocalDateTime.now());
+        supplyPlan.setDataInicioPlano(LocalDateTime.of(2026, 7, 15, 0, 0));
 
         VersaoSupplyPlanDTO result = new VersaoSupplyPlanDTO(supplyPlan);
 
         assertEquals("GROUP-1", result.getPresetConstraintGroupId());
+        assertEquals(LocalDateTime.of(2026, 7, 15, 0, 0), result.getDataInicioPlano());
 
     }
 
@@ -110,6 +112,7 @@ class SupplyPlanPresetConstraintGroupSpiCommunityContractTest {
         dto.setPresetConstraintGroupId("GROUP-1");
         dto.setTamanhoBucket(Constantes.TamanhoBucket.MENSAL);
         dto.setPeriodoReferencia("202607");
+        dto.setDataInicioPlano(LocalDateTime.of(2026, 7, 15, 0, 0));
         dto.setDescricaoSupplyPlan("Supply");
 
         task.executaTask(dto, service);
@@ -122,7 +125,7 @@ class SupplyPlanPresetConstraintGroupSpiCommunityContractTest {
                 Mockito.eq("NETWORK"),
                 Mockito.eq("GROUP-1"),
                 Mockito.eq(Constantes.TamanhoBucket.MENSAL),
-                Mockito.any(LocalDateTime.class),
+                Mockito.eq(LocalDateTime.of(2026, 7, 15, 0, 0)),
                 Mockito.eq("Supply"),
                 Mockito.eq("user-1"));
 

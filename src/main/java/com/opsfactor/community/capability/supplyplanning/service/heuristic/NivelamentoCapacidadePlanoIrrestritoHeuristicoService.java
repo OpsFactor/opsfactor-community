@@ -492,7 +492,8 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
         ClusterEParametrosProjection clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
         UnidadeMedidaProjection unidadeMedidaProjection = supplyNetworkProjection.getConversaoUnidadeMedidaProjection();
         List<NecessidadeProducao> necessidades = criaNecessidadesPlanejadas(
-                productionPlanLinhas, calendario, supplyNetworkProjection, clusterEParametrosProjection,
+                productionPlanLinhas,
+                calendario, supplyNetworkProjection, clusterEParametrosProjection,
                 unidadeMedidaProjection, perfilExecucaoSupplyPlan, quantidadeNivelavelPorLinha, tipoPlano);
         if (necessidades.isEmpty()) {
             return false;
@@ -508,7 +509,8 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
         reservaCapacidadeParaLinhasFixas(
                 productionPlanLinhas,
                 quantidadeEfetivamenteNivelavelPorLinha,
-                capacidadeResidualPorRecursoEPeriodo, calendario, supplyNetworkProjection,
+                capacidadeResidualPorRecursoEPeriodo,
+                calendario, supplyNetworkProjection,
                 biProjectionCapacidadeProdutiva, perfilExecucaoSupplyPlan, tipoPlano);
         List<AlocacaoProducao> alocacoes = new ArrayList<>();
         necessidades.sort(Comparator.comparingInt(NecessidadeProducao::posicaoPeriodoNecessidade)
@@ -518,15 +520,18 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
         Map<Integer, List<NecessidadeProducao>> necessidadesPorPeriodo = necessidades.stream().collect(Collectors.groupingBy(
                 NecessidadeProducao::posicaoPeriodoNecessidade, LinkedHashMap::new, Collectors.toList()));
         for (List<NecessidadeProducao> necessidadesMesmoPeriodo : necessidadesPorPeriodo.values()) {
-            tentaAlocarNecessidadesDoPeriodo(necessidadesMesmoPeriodo, calendario, supplyNetworkProjection,
+            tentaAlocarNecessidadesDoPeriodo(necessidadesMesmoPeriodo,
+                    calendario, supplyNetworkProjection,
                     biProjectionCapacidadeProdutiva, perfilExecucaoSupplyPlan,
                     capacidadeResidualPorRecursoEPeriodo, alocacoes);
         }
-        tentaAlocarEmOrigensAlternativas(necessidades, calendario, supplyNetworkProjection,
+        tentaAlocarEmOrigensAlternativas(necessidades,
+                calendario, supplyNetworkProjection,
                 biProjectionCapacidadeProdutiva, perfilExecucaoSupplyPlan,
                 capacidadeResidualPorRecursoEPeriodo,
                 alocacoes, supplyPlanningBiProjection, lowLevelCode, posicaoLowLevelCodeAtual);
-        materializaAlocacoesNoPlano(productionPlanLinhas, necessidades, alocacoes, calendario,
+        materializaAlocacoesNoPlano(productionPlanLinhas, necessidades, alocacoes,
+                calendario,
                 clusterEParametrosProjection, unidadeMedidaProjection, supplyPlanningBiProjection,
                 tipoPlano, mantemResidualNaOrigemPrimaria);
         atualizaEstoques(perfilExecucaoSupplyPlan, supplyPlanningBiProjection, tipoPlano);
@@ -855,7 +860,8 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
                     .collect(Collectors.toCollection(ArrayList::new));
             if (versoesProducao.isEmpty()) continue;
             Pair<Integer, Integer> periodos = DistributionPlanItem.getPosicaoPeriodosExpedicaoERecebimentoDeReferencia(
-                    Constantes.ReferenciaPeriodo.DISPONIBILIZACAO_MATERIAL, calendario,
+                    Constantes.ReferenciaPeriodo.DISPONIBILIZACAO_MATERIAL,
+                    calendario,
                     necessidade.posicaoPeriodoNecessidade(), linhaOriginal.getSupplyPlan().getVersaoMalha(), material,
                     locationOrigem, locationDestino, supplyNetworkProjection);
             if (periodos.getValue0() < calendario.getPosicaoPeriodoPresente()) continue;
@@ -975,10 +981,10 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
     }
 
     private void materializaAlocacoesNoPlano(Collection<ProductionPlanLinha> productionPlanLinhas,
-            Collection<NecessidadeProducao> necessidades, Collection<AlocacaoProducao> alocacoes,
-            Calendario calendario, ClusterEParametrosProjection parametros, UnidadeMedidaProjection uomProjection,
-            SupplyPlanningBiProjection snapshot, Constantes.TipoPlano tipoPlano,
-            boolean mantemResidualNaOrigemPrimaria) {
+                                             Collection<NecessidadeProducao> necessidades, Collection<AlocacaoProducao> alocacoes,
+                                             Calendario calendario, ClusterEParametrosProjection parametros, UnidadeMedidaProjection uomProjection,
+                                             SupplyPlanningBiProjection snapshot, Constantes.TipoPlano tipoPlano,
+                                             boolean mantemResidualNaOrigemPrimaria) {
 
         Map<ProductionPlanLinhaCompositeKey, ProductionPlanLinha> linhasPorChave = new LinkedHashMap<>();
         productionPlanLinhas.forEach(linha -> linhasPorChave.put(linha.getProductionPlanLinhaCompositeKey(), linha));
@@ -1008,7 +1014,8 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
                     alocacao.posicaoPeriodoProducao(), alocacao.quantidade(), alocacao.necessidade().unidadeMedidaPadrao(),
                     calendario, parametros, uomProjection, snapshot, tipoPlano);
             if (alocacao.alternativaOrigem() != null) adicionaTransferenciaPlanejada(distribuicoesPorChave,
-                    alocacao.necessidade(), alocacao.alternativaOrigem(), alocacao.quantidade(), calendario,
+                    alocacao.necessidade(), alocacao.alternativaOrigem(), alocacao.quantidade(),
+                    calendario,
                     parametros, uomProjection, snapshot, tipoPlano);
         }
         for (NecessidadeProducao necessidade : necessidades) {

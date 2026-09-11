@@ -22,6 +22,7 @@ public interface SupplyPlanAutoMapper {
     @Mapping(source = "id", target = "supplyPlanId")
     @Mapping(source = "versaoMalha.id", target = "supplyNetworkVersionId")
     @Mapping(source = "perfilExecucaoSupplyPlan.id", target = "executionProfileId")
+    @Mapping(source = "perfilCalendarioSupplyPlan.perfilCalendarioOrigemId", target = "calendarProfileId")
     @Mapping(source = "descricao", target = "description")
     @Mapping(source = "horarioGeracao", target = "timeOfExecution")
     @Mapping(source = "tamanhoBucket", target = "bucketSize")

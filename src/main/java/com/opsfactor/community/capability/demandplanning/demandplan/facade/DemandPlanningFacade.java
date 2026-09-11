@@ -53,7 +53,7 @@ import com.opsfactor.community.capability.demandplanning.web.spi.DemandPlanningC
 import com.opsfactor.community.capability.planningbook.facade.PlanningBookService;
 import com.opsfactor.community.capability.planningbook.keyfigure.projection.KeyFigureProjection;
 import com.opsfactor.community.capability.planningbook.keyfigure.projection.KeyFigureProjectionFactory;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.exception.IncompatibleCalendarException;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
@@ -281,14 +281,14 @@ public class DemandPlanningFacade {
      *
      * @return
      */
-    public Calendario getCalendarioDemandPlanExibicaoFront(DemandPlan demandPlan) {
+    public CalendarioSimples getCalendarioDemandPlanExibicaoFront(DemandPlan demandPlan) {
         if (demandPlan == null) {
             throw new DemandPlanException("Demand Plan is required for Demand Planning calendar display.");
         }
 
         ParametrosGlobais parametrosGlobais = parametrosGlobaisService.getParametrosGlobais();
         
-        return Calendario.criaCalendarioDeOffsetsPeriodos(
+        return CalendarioSimples.criaCalendarioDeOffsetsPeriodos(
                 demandPlan.getTamanhoBucket(), 
                 demandPlan.getDataInicioPlano(),
                 0, 
@@ -475,7 +475,7 @@ public class DemandPlanningFacade {
         Constantes.TamanhoBucket bucketSize = demandPlan.getTamanhoBucketCadastrado();
         validaCabecalhoCalendarioDemandPlan(demandPlanId, startDateTime, endDateTime, bucketSize);
 
-        Calendario calendario = Calendario.criaCalendarioDeDatas(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeDatas(
                 bucketSize,
                 startDateTime,
                 startDateTime,
@@ -517,11 +517,11 @@ public class DemandPlanningFacade {
             throw new DemandPlanException("Demand Plan " + demandPlanId
                     + " has end date before start date for Demand Planning period list.");
         }
-        if (!startDateTime.equals(Calendario.getPrimeiraDataHorarioPeriodo(startDateTime, bucketSize))) {
+        if (!startDateTime.equals(CalendarioSimples.getPrimeiraDataHorarioPeriodo(startDateTime, bucketSize))) {
             throw new DemandPlanException("Demand Plan " + demandPlanId
                     + " has start date outside the bucket boundary for Demand Planning period list.");
         }
-        if (!endDateTime.equals(Calendario.getUltimaDataHorarioPeriodo(endDateTime, bucketSize))) {
+        if (!endDateTime.equals(CalendarioSimples.getUltimaDataHorarioPeriodo(endDateTime, bucketSize))) {
             throw new DemandPlanException("Demand Plan " + demandPlanId
                     + " has end date outside the bucket boundary for Demand Planning period list.");
         }
@@ -1246,7 +1246,7 @@ public class DemandPlanningFacade {
                 adjustmentContext);
         
         // checa se ajuste foi feito dentro do horizonte congelado
-        Calendario calendarioDemandPlan = demandPlanningProjection.getCalendario();
+        CalendarioSimples calendarioDemandPlan = demandPlanningProjection.getCalendario();
         if (!permiteAlteracaoHorizonteCongelado && !DemandPlanning.verificaSeAjusteDentroHorizonteCongelado(
                 ajusteCelulaPlanningBook.getDataHorarioReferencia().toLocalDate(),
                 planningBookDfuScope.getLocations(),
@@ -2048,14 +2048,14 @@ public class DemandPlanningFacade {
             ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
             PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = demandPlan.getPerfilExecucaoDemandPlan();
             
-            Calendario calendarioHistoricoVendas = Calendario.criaCalendarioDeOffsetsPeriodos(
+            CalendarioSimples calendarioHistoricoVendas = CalendarioSimples.criaCalendarioDeOffsetsPeriodos(
                     demandPlan.getTamanhoBucket(), demandPlan.getDataInicioPlano(), 
                     0, configuredView.getNumeroPeriodosHistoricosDemandPlanningBook(), 0, 0);
             
             UnidadeMedida unidadeMedidaVisao = configuredView.getUnidadeMedidaView(parametrosGlobais);
             SalesProjectionLocationMaterial salesProjectionMaterialLocation = salesProjectionFactory.getSalesProjectionMaterialLocation(
                     perfilExecucaoDemandPlan.getTipoDocumentoVenda(parametrosGlobais),
-                    calendarioHistoricoVendas, 
+                    calendarioHistoricoVendas,
                     locationsFiltradas,
                     materiaisFiltrados,
                     unidadeMedidaProjection, 

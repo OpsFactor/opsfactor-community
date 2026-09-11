@@ -11,7 +11,7 @@ import com.opsfactor.community.capability.demandplanning.demandplan.projection.D
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionMaterialLocation;
 import com.opsfactor.community.capability.demandplanning.facade.dto.SimulatedDemandPlanDTO;
 import com.opsfactor.community.capability.demandplanning.facade.dto.SimulatedDemandPlanMaterialLocationDTO;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ public class DemandAnalysisMapperCommunityContractTest {
     @Test
     public void demandPlanProjectionToDemandModelSetupDTOShouldMapCommunityMaterialLocationSeries() {
 
-        Calendario calendario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -114,7 +114,7 @@ public class DemandAnalysisMapperCommunityContractTest {
     @Test
     public void demandPlanProjectionToDemandModelSetupDTOShouldRejectBrokenMaterialLocationSeriesBeforeMapping() {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
 
         DemandPlanForecastProjectionMaterialLocation projectionComLocationSemId =
                 getDemandPlanForecastProjectionMaterialLocationValida(
@@ -152,7 +152,7 @@ public class DemandAnalysisMapperCommunityContractTest {
             DemandPlanForecastProjection demandPlanForecastProjection,
             String expectedMessageFragment) {
 
-        Calendario calendario = getCalendarioTeste();
+        CalendarioSimples calendario = getCalendarioTeste();
         assertMappingFails(
                 () -> new DemandAnalysisMapper().demandPlanProjectionToDemandModelSetupDTO(
                         getDemandPlanningClusterLevelConfigurationDTO(),
@@ -181,9 +181,9 @@ public class DemandAnalysisMapperCommunityContractTest {
 
     }
 
-    private static Calendario getCalendarioTeste() {
+    private static CalendarioSimples getCalendarioTeste() {
 
-        return Calendario.criaCalendarioDeOffsetsDias(
+        return CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 10, 0, 0),
                 0,
@@ -205,7 +205,7 @@ public class DemandAnalysisMapperCommunityContractTest {
     }
 
     private static DemandPlanForecastProjectionMaterialLocation getDemandPlanForecastProjectionMaterialLocationValida(
-            Calendario calendario) {
+            CalendarioSimples calendario) {
 
         return getDemandPlanForecastProjectionMaterialLocationValida(
                 calendario,
@@ -215,7 +215,7 @@ public class DemandAnalysisMapperCommunityContractTest {
     }
 
     private static DemandPlanForecastProjectionMaterialLocation getDemandPlanForecastProjectionMaterialLocationValida(
-            Calendario calendario,
+            CalendarioSimples calendario,
             Location location,
             Produto material) {
 
@@ -238,7 +238,7 @@ public class DemandAnalysisMapperCommunityContractTest {
     }
 
     private static SalesProjectionLocationMaterialData getSalesProjectionLocationMaterialData(
-            Calendario calendario,
+            CalendarioSimples calendario,
             UnidadeMedida unidadeMedida,
             Location location,
             Produto material) {

@@ -40,6 +40,9 @@ public class PerfilExecucaoSupplyPlanDTO {
 
     /** Descricao exibida no cadastro do perfil. */
     private String description;
+
+    /** Receita temporal do cabeçalho; o catálogo é carregado separadamente em lote. */
+    private String calendarProfileId;
     
     /**
      * Campo Enterprise: filtros persistidos de material nao existem no

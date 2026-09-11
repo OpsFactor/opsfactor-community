@@ -18,6 +18,7 @@ import com.opsfactor.community.platform.exception.UnitOfMeasureConversionExcepti
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import com.opsfactor.community.platform.utility.FuncoesMap;
 import lombok.Builder;
@@ -93,8 +94,24 @@ public class SupplyNetworkProjection {
         protected UnidadeMedida unidadeMedidaLoteMinimoMultiploTransporte;
         protected Double loteMinimoTransporte;
         protected OptionalDouble multiploTransporte;
-        public Integer getLeadTimeEmPeriodos(Calendario calendario) {
+        /** Contrato legado, válido somente quando todas as posições têm o mesmo bucket. */
+        public Integer getLeadTimeEmPeriodos(CalendarioSimples calendario) {
+
             return (int) Math.floor(calendario.converteDiasParaPeriodosCalendario(leadTimeDias));
+
+        }
+
+        /** Lead time ancorado na expedição para calendários com posições de durações diferentes. */
+        public Integer getLeadTimeEmPeriodos(Calendario calendario, int posicaoPeriodoOrigem) {
+
+            // Preserva a conversão média histórica no uniforme. Na grade mista
+            // a mesma quantidade de dias deve ser resolvida a partir da expedição.
+            if (calendario instanceof CalendarioSimples uniforme) {
+                return (int) Math.floor(uniforme.converteDiasParaPeriodosCalendario(leadTimeDias));
+            }
+            return calendario.getPosicaoPeriodoAposOffsetDoInicioPeriodoReferencia(
+                    posicaoPeriodoOrigem, leadTimeDias, Constantes.TamanhoBucket.DIARIO) - posicaoPeriodoOrigem;
+
         }
 
         /**
@@ -646,7 +663,7 @@ public class SupplyNetworkProjection {
             VersaoMalha versaoMalha, 
             Location locationDestino, 
             Produto material, 
-            Calendario calendario, 
+            Calendario calendario,
             LocalDateTime dataReferenciaParaStatusProduto,
             @Nullable Collection<Location> possiveisLocationsOrigem) {
         
@@ -655,7 +672,8 @@ public class SupplyNetworkProjection {
         
         Integer leadTimeMaximoPeriodos = null;
         for (LinhaTransporte linhaTransporte : linhaTransporteSet) {
-            Optional<Integer> leadTimeEmPeriodos = getLeadTimePeriodosEntreOrigemDestinoParaMaterial(versaoMalha, linhaTransporte.getLocationOrigem(), locationDestino, material, calendario, dataReferenciaParaStatusProduto);
+            Optional<Integer> leadTimeEmPeriodos = getLeadTimePeriodosEntreOrigemDestinoParaMaterial(versaoMalha, linhaTransporte.getLocationOrigem(), locationDestino, material,
+                    calendario, dataReferenciaParaStatusProduto);
             if (leadTimeEmPeriodos.isPresent()) {
                 int leadTimeEmPeriodosAtual = leadTimeEmPeriodos.orElseThrow(() -> new IllegalStateException(
                         "Lead time em períodos presente não pode desaparecer durante soma de lead time máximo"));
@@ -699,7 +717,7 @@ public class SupplyNetworkProjection {
             VersaoMalha versaoMalha, 
             Location locationDestino, 
             Produto material, 
-            Calendario calendario, 
+            Calendario calendario,
             LocalDateTime dataReferenciaParaStatusProduto,
             @Nullable Collection<Location> possiveisLocationsOrigem) {
         
@@ -711,7 +729,7 @@ public class SupplyNetworkProjection {
         } else {
             return optionalLeadTimeDias
                     .map(leadTimeDias -> (int) Math.floor(calendario.converteDiasParaPeriodosCalendario(
-                            leadTimeDias)));
+                            leadTimeDias, calendario.getPosicaoPeriodo(dataReferenciaParaStatusProduto))));
         }
                 
     }
@@ -1693,7 +1711,27 @@ public class SupplyNetworkProjection {
             Roteiro roteiro,
             ListaTecnica listaTecnica) {
 
-        return getMateriaisOutput(versaoProducao).stream()
+        Set<Produto> materiaisOutput;
+        if (versaoProducao == null || versaoProducao.isVersaoProducaoInexistente()) {
+            // A execução pode combinar roteiro/BOM sem versão cadastrada. Ao
+            // persistir a linha, a versão temporária vira ausência/sentinela,
+            // mas os dois mestres efetivamente usados permanecem na chave.
+            // A sentinela não possui BOM. Resolver pelos índices estes mestres
+            // preserva o plano salvo sem buscar uma versão prioritária atual,
+            // persistir versão virtual ou navegar associações JPA sob demanda.
+            Roteiro roteiroProjetado = getRoteiroProjetado(roteiro);
+            ListaTecnica listaTecnicaProjetada = getListaTecnicaProjetada(listaTecnica);
+            if (!Objects.equals(roteiroProjetado.getLocation(), listaTecnicaProjetada.getLocation())) {
+                throw getIncompatibleRoutingAndBomLocationException(roteiroProjetado, listaTecnicaProjetada);
+            }
+            materiaisOutput = getMateriaisOutput(listaTecnicaProjetada);
+            if (!roteiroProjetado.getMateriaisOutput().equals(materiaisOutput)) {
+                throw getIncompatibleRoutingAndBomMaterialOutputException(roteiroProjetado, listaTecnicaProjetada);
+            }
+        } else {
+            materiaisOutput = getMateriaisOutput(versaoProducao);
+        }
+        return materiaisOutput.stream()
                 .min(Comparator.comparing(Produto::getId))
                 .orElseThrow(() -> new IllegalStateException(
                         "Production version has no projected output material"));
@@ -1878,14 +1916,14 @@ public class SupplyNetworkProjection {
             Location locationOrigem, 
             Location locationDestino, 
             Produto material, 
-            Calendario calendario, 
+            Calendario calendario,
             LocalDateTime dataReferenciaParaStatusProduto) {
         
         Optional<Integer> optionalLeadTimeDias = getLeadTimeDiasEntreOrigemDestinoParaMaterial(versaoMalha, locationOrigem, locationDestino, material, dataReferenciaParaStatusProduto);
         
         return optionalLeadTimeDias
                 .map(leadTimeDias -> (int) Math.floor(calendario.converteDiasParaPeriodosCalendario(
-                        leadTimeDias)));
+                        leadTimeDias, calendario.getPosicaoPeriodo(dataReferenciaParaStatusProduto))));
         
     }
 

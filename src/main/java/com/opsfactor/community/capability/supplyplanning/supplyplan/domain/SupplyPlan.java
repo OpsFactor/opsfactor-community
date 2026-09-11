@@ -1,6 +1,7 @@
 package com.opsfactor.community.capability.supplyplanning.supplyplan.domain;
 
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
+import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.calendar.PerfilCalendarioSupplyPlan;
 import com.opsfactor.community.capability.supplyplanning.distributionplan.domain.DistributionPlanItem;
 import com.opsfactor.community.capability.supplyplanning.inventoryplan.domain.InventoryPlanLinha;
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
@@ -10,6 +11,7 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.utility.Constantes;
 import lombok.Data;
@@ -78,6 +80,10 @@ public class SupplyPlan implements Comparable<SupplyPlan> {
     @ManyToOne
     private PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan;
 
+    /** Cópia da receita usada na primeira execução; nunca é renovada ao reexecutar. */
+    @OneToOne(mappedBy = "supplyPlan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private PerfilCalendarioSupplyPlan perfilCalendarioSupplyPlan;
+
     /**
      * Grupo compartilhado associado ao plano para preset constraints.
      *
@@ -141,46 +147,48 @@ public class SupplyPlan implements Comparable<SupplyPlan> {
      * @return
      */
     public Calendario getCalendarioDoSupplyPlan(ParametrosGlobais parametrosGlobais) {
+
+        // A receita pertence à execução. Nunca reconstruir resultados históricos
+        // usando o perfil mestre, que pode ter sido alterado depois da execução.
+        if (getPerfilCalendarioSupplyPlan() != null) {
+            return getPerfilCalendarioSupplyPlan().criarCalendario(getDataInicioPlano());
+        }
         
         Constantes.TamanhoBucket tamanhoBucketConsiderado = (getTamanhoBucket() == null) ? Constantes.TamanhoBucket.MENSAL : getTamanhoBucket();
-        LocalDateTime dataInicial = (getDataInicioPlano() == null) ? Calendario.getPrimeiraDataHorarioPeriodo(LocalDateTime.now(), tamanhoBucketConsiderado) : getDataInicioPlano();
+        LocalDateTime dataInicial = (getDataInicioPlano() == null) ? CalendarioSimples.getPrimeiraDataHorarioPeriodo(LocalDateTime.now(), tamanhoBucketConsiderado) : getDataInicioPlano();
         // data final não-efetiva : deveria ser a última data do último período
         // no entanto, como se exporta o calendário e não a data este deixa de ser um problema
         LocalDateTime dataFinal = (getDataFimPlano() == null) ?
                 dataInicial.plusDays(getPerfilExecucaoSupplyPlan().getHorizontePlanoDiasMaximo(parametrosGlobais) - 1) 
                 : getDataFimPlano();
         
-        Calendario calendario = Calendario.criaCalendarioPeriodosFuturosDeDatas(tamanhoBucketConsiderado, dataInicial, dataFinal);
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(tamanhoBucketConsiderado, dataInicial, dataFinal);
         
         return calendario;
         
     }
     
     public Calendario getCalendarioDoSupplyPlanComPeriodoPassadoParaEstoqueInicial(ParametrosGlobais parametrosGlobais) {
-        
-        Calendario calendarioSomentePeriodosFuturos = getCalendarioDoSupplyPlan(parametrosGlobais);
-        
-        return Calendario.criaCalendarioDeOffsetsPeriodos(
-                calendarioSomentePeriodosFuturos.getTamanhoBucket(), 
-                calendarioSomentePeriodosFuturos.getDataHorarioInicialPresente(), 
-                0, 
-                1, 
-                calendarioSomentePeriodosFuturos.getNumeroPeriodosFuturos(), 
-                calendarioSomentePeriodosFuturos.getNumeroPeriodosFuturosAdicional());
+
+        return getCalendarioDoSupplyPlan(parametrosGlobais).comPeriodoPassado();
                 
     }
 
     public Calendario getCalendarioDoSupplyPlanParaLocationComPeriodoPassadoParaEstoqueInicial(ClusterEParametrosProjection clusterEParametrosProjection, Location location) {
 
+        if (getPerfilCalendarioSupplyPlan() != null) {
+            return getCalendarioDoSupplyPlanParaLocation(clusterEParametrosProjection, location).comPeriodoPassado();
+        }
+
         Constantes.TamanhoBucket tamanhoBucketConsiderado = (getTamanhoBucket() == null) ? Constantes.TamanhoBucket.MENSAL : getTamanhoBucket();
-        LocalDateTime dataInicial = (getDataInicioPlano() == null) ? Calendario.getPrimeiraDataHorarioPeriodo(LocalDateTime.now(), tamanhoBucketConsiderado) : getDataInicioPlano();
+        LocalDateTime dataInicial = (getDataInicioPlano() == null) ? CalendarioSimples.getPrimeiraDataHorarioPeriodo(LocalDateTime.now(), tamanhoBucketConsiderado) : getDataInicioPlano();
         // data final não-efetiva : deveria ser a última data do último período
         // no entanto, como se exporta o calendário e não a data este deixa de ser um problema
         LocalDateTime dataFinal = (getDataFimPlano() == null) ?
                 dataInicial.plusDays(getPerfilExecucaoSupplyPlan().getHorizontePlanoDias(clusterEParametrosProjection, location) - 1)
                 : getDataFimPlano();
 
-        return Calendario.criaCalendarioDeDatas(
+        return CalendarioSimples.criaCalendarioDeDatas(
                 tamanhoBucketConsiderado,
                 dataInicial.minusSeconds(1), // para acomodar período do estoque inicial
                 dataInicial,
@@ -193,16 +201,23 @@ public class SupplyPlan implements Comparable<SupplyPlan> {
      * @return
      */
     public Calendario getCalendarioDoSupplyPlanParaLocation(ClusterEParametrosProjection clusterEParametrosProjection, Location location) {
+
+        if (getPerfilCalendarioSupplyPlan() != null) {
+            Calendario calendario = getCalendarioDoSupplyPlan(clusterEParametrosProjection.getParametrosGlobais());
+            int ultimaPosicao = getPerfilExecucaoSupplyPlan().getUltimoPeriodoFuturoHorizonteAPartirPeriodoPresente(
+                    location, calendario, clusterEParametrosProjection);
+            return calendario.comHorizonteFuturo(ultimaPosicao - calendario.getPosicaoPeriodoPresente() + 1);
+        }
         
         Constantes.TamanhoBucket tamanhoBucketConsiderado = (getTamanhoBucket() == null) ? Constantes.TamanhoBucket.MENSAL : getTamanhoBucket();
-        LocalDateTime dataInicial = (getDataInicioPlano() == null) ? Calendario.getPrimeiraDataHorarioPeriodo(LocalDateTime.now(), tamanhoBucketConsiderado) : getDataInicioPlano();
+        LocalDateTime dataInicial = (getDataInicioPlano() == null) ? CalendarioSimples.getPrimeiraDataHorarioPeriodo(LocalDateTime.now(), tamanhoBucketConsiderado) : getDataInicioPlano();
         // data final não-efetiva : deveria ser a última data do último período
         // no entanto, como se exporta o calendário e não a data este deixa de ser um problema
         LocalDateTime dataFinal = (getDataFimPlano() == null) ? 
                 dataInicial.plusDays(getPerfilExecucaoSupplyPlan().getHorizontePlanoDias(clusterEParametrosProjection, location) - 1) 
                 : getDataFimPlano();
         
-        Calendario calendario = Calendario.criaCalendarioPeriodosFuturosDeDatas(tamanhoBucketConsiderado, dataInicial, dataFinal);
+        CalendarioSimples calendario = CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(tamanhoBucketConsiderado, dataInicial, dataFinal);
         
         return calendario;
         

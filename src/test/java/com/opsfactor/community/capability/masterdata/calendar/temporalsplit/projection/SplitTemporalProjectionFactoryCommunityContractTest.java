@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.masterdata.calendar.temporalsplit.pro
 
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
 import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -22,11 +22,11 @@ public class SplitTemporalProjectionFactoryCommunityContractTest {
     @Test
     public void communitySplitTemporalShouldAggregateDailyValuesIntoWeekBySummingDays() {
 
-        Calendario calendarioDiario = Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        CalendarioSimples calendarioDiario = CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 5, 0, 0),
                 LocalDateTime.of(2026, 1, 11, 0, 0));
-        Calendario calendarioSemanal = Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        CalendarioSimples calendarioSemanal = CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                 Constantes.TamanhoBucket.SEMANAL,
                 LocalDateTime.of(2026, 1, 5, 0, 0),
                 LocalDateTime.of(2026, 1, 5, 0, 0));
@@ -49,11 +49,11 @@ public class SplitTemporalProjectionFactoryCommunityContractTest {
     @Test
     public void communitySplitTemporalShouldDisaggregateWeekIntoDailyFlatValues() {
 
-        Calendario calendarioSemanal = Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        CalendarioSimples calendarioSemanal = CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                 Constantes.TamanhoBucket.SEMANAL,
                 LocalDateTime.of(2026, 1, 5, 0, 0),
                 LocalDateTime.of(2026, 1, 5, 0, 0));
-        Calendario calendarioDiario = Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        CalendarioSimples calendarioDiario = CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 5, 0, 0),
                 LocalDateTime.of(2026, 1, 11, 0, 0));

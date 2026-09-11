@@ -21,7 +21,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.s
 import com.opsfactor.community.platform.bi.facade.dto.CommunityDemandSalesOverviewDTO;
 import com.opsfactor.community.platform.bi.facade.dto.CommunityDemandSalesOverviewSelectionDTO;
 import com.opsfactor.community.capability.demandplanning.service.DemandPlanningService;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -86,7 +86,7 @@ class CommunityDemandSalesOverviewServiceTest {
         Mockito.when(locationCharacteristic.findValorCaracteristicaDeLocation(location))
                 .thenReturn(Optional.of("South"));
 
-        Calendario demandPlanCalendar = Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        CalendarioSimples demandPlanCalendar = CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                 com.opsfactor.community.platform.utility.Constantes.TamanhoBucket.MENSAL,
                 LocalDateTime.of(2026, 1, 1, 0, 0),
                 LocalDateTime.of(2027, 1, 31, 23, 59));
@@ -112,7 +112,7 @@ class CommunityDemandSalesOverviewServiceTest {
         Mockito.when(aggregatedSales.getMaterial()).thenReturn(material);
         Mockito.when(aggregatedSales.getReferenceDate()).thenReturn(salesReferenceDate);
         Mockito.when(salesProjection.getSetSalesConsolidado()).thenReturn(Set.of(aggregatedSales));
-        Calendario salesCalendar = Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        CalendarioSimples salesCalendar = CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                 com.opsfactor.community.platform.utility.Constantes.TamanhoBucket.MENSAL,
                 LocalDateTime.of(2025, 12, 1, 0, 0),
                 LocalDateTime.of(2027, 1, 31, 23, 59));
@@ -126,7 +126,7 @@ class CommunityDemandSalesOverviewServiceTest {
         Mockito.when(unitOfMeasureProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache())
                 .thenReturn(unitOfMeasureProjection);
         Mockito.when(demandPlan.getCalendarioDoDemandPlanSemHistorico(clusterProjection))
-                .thenReturn(Calendario.criaCalendarioDeDatas(
+                .thenReturn(CalendarioSimples.criaCalendarioDeDatas(
                         Constantes.TamanhoBucket.MENSAL,
                         LocalDateTime.of(2026, 1, 1, 0, 0),
                         LocalDateTime.of(2026, 1, 1, 0, 0),
@@ -209,7 +209,7 @@ class CommunityDemandSalesOverviewServiceTest {
         Mockito.when(salesProjection.getSetSalesConsolidado()).thenReturn(Set.of());
         LocalDateTime currentDateTime = LocalDateTime.now();
         Mockito.when(salesProjection.getCalendario()).thenReturn(
-                Calendario.criaCalendarioPeriodosFuturosDeDatas(
+                CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                         Constantes.TamanhoBucket.MENSAL,
                         currentDateTime.minusMonths(1),
                         currentDateTime));

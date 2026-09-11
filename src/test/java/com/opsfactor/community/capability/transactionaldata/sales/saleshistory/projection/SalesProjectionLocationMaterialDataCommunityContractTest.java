@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByLocationMaterialUOMDateImpl;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByLocationMaterialUOMImpl;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByMaterialUOMDateImpl;
-import com.opsfactor.community.platform.calendar.Calendario;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -198,14 +198,14 @@ class SalesProjectionLocationMaterialDataCommunityContractTest {
     @Test
     void getQuantidadeSalesShouldRejectQueryCalendarWithDifferentBucketBeforeReadingData() {
 
-        Calendario calendarioDiario = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendarioDiario = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 6, 24, 0, 0),
                 0,
                 0,
                 1,
                 0);
-        Calendario calendarioSemanal = Calendario.criaCalendarioDeOffsetsDias(
+        CalendarioSimples calendarioSemanal = CalendarioSimples.criaCalendarioDeOffsetsDias(
                 Constantes.TamanhoBucket.SEMANAL,
                 LocalDateTime.of(2026, 6, 24, 0, 0),
                 0,

@@ -22,6 +22,11 @@ public class ColumnDefDTO {
     // Nome de exibicao quando diferente do identificador tecnico.
     public String name;
     public Boolean dataColumn;
+    /** Posição e janela reais; não pressupõem granularidade única da grade. */
+    public Integer periodIndex;
+    public String bucketSize;
+    public String startDateTime;
+    public String endDateTime;
     // Classe visual opcional calculada pelo backend/front para celulas especiais.
     public String cellClass;
     // material ou location, para o back-end diferenciar inputs de dados.

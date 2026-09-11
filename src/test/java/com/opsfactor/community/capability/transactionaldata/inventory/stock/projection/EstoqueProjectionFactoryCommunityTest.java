@@ -7,6 +7,7 @@ import com.opsfactor.community.capability.configuration.projection.parametros.Cl
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedDataInterface;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.transactionaldata.inventory.stock.repository.EstoqueRepository;
+import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.utility.Constantes;
 import jakarta.annotation.Nullable;
@@ -47,7 +48,7 @@ class EstoqueProjectionFactoryCommunityTest {
                 .thenReturn(List.of());
         setPrivateField(estoqueProjectionFactory, "estoqueRepository", estoqueRepository);
 
-        Calendario calendario = Mockito.mock(Calendario.class);
+        CalendarioSimples calendario = Mockito.mock(CalendarioSimples.class);
         Mockito.when(calendario.getPosicaoPeriodoPresente()).thenReturn(3);
         Mockito.when(calendario.getUltimaDataPeriodo(0)).thenReturn(LocalDate.of(2026, 1, 7));
         Mockito.when(calendario.getUltimaDataPeriodo(1)).thenReturn(LocalDate.of(2026, 1, 14));
@@ -226,9 +227,9 @@ class EstoqueProjectionFactoryCommunityTest {
 
     }
 
-    private Calendario getCalendarioTeste() {
+    private CalendarioSimples getCalendarioTeste() {
 
-        return Calendario.criaCalendarioPeriodosFuturosDeDatas(
+        return CalendarioSimples.criaCalendarioPeriodosFuturosDeDatas(
                 Constantes.TamanhoBucket.DIARIO,
                 LocalDateTime.of(2026, 1, 1, 0, 0),
                 LocalDateTime.of(2026, 1, 3, 0, 0));
