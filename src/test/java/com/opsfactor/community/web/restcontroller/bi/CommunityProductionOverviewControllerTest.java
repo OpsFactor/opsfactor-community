@@ -21,6 +21,8 @@ class CommunityProductionOverviewControllerTest {
 
     private static final String PRODUCTION_OVERVIEW_PATH =
             "api/secured/bi/planning/supply/productionoverview";
+    private static final String PRODUCTION_OVERVIEW_ALIAS_PATH =
+            "api/secured/bi/planning/supply/volumesandcapacities";
     @Test
     void shouldExposeOnlyCanonicalPostRouteWithoutInventingMethodRbac() throws Exception {
 
@@ -32,7 +34,7 @@ class CommunityProductionOverviewControllerTest {
 
         Assertions.assertNotNull(postMapping);
         Assertions.assertArrayEquals(
-                new String[]{PRODUCTION_OVERVIEW_PATH},
+                new String[]{PRODUCTION_OVERVIEW_PATH, PRODUCTION_OVERVIEW_ALIAS_PATH},
                 postMapping.value());
         Assertions.assertNull(method.getAnnotation(Secured.class));
 

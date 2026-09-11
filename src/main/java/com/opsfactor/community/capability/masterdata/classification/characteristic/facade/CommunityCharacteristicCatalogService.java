@@ -19,9 +19,11 @@ import java.util.List;
 @Service
 public class CommunityCharacteristicCatalogService implements CharacteristicCatalogService {
 
+    /** Repository das caracteristicas de material publicadas no catalogo. */
     @Autowired
     private CaracteristicaMaterialRepository caracteristicaMaterialRepository;
 
+    /** Repository das caracteristicas de location publicadas no catalogo. */
     @Autowired
     private CaracteristicaLocationRepository caracteristicaLocationRepository;
 

@@ -25,6 +25,9 @@ class CommunityProductionOverviewResourceDetailControllerTest {
     private static final String PRODUCTION_OVERVIEW_PATH =
             "api/secured/bi/planning/supply/productionoverview/"
                     + "{supplyPlanId}/{productionResourceId}/{periodIndex}/details";
+    private static final String PRODUCTION_OVERVIEW_ALIAS_PATH =
+            "api/secured/bi/planning/supply/volumesandcapacities/"
+                    + "{supplyPlanId}/{productionResourceId}/{periodIndex}/details";
 
     @Test
     void shouldExposeOnlyCanonicalGetRouteWithoutChangingExistingRbac() throws Exception {
@@ -40,7 +43,7 @@ class CommunityProductionOverviewResourceDetailControllerTest {
 
         Assertions.assertNotNull(getMapping);
         Assertions.assertArrayEquals(
-                new String[]{PRODUCTION_OVERVIEW_PATH},
+                new String[]{PRODUCTION_OVERVIEW_PATH, PRODUCTION_OVERVIEW_ALIAS_PATH},
                 getMapping.value());
         Assertions.assertNull(method.getAnnotation(Secured.class),
                 "A rota canônica não declara @Secured local; a política global permanece responsável.");
@@ -76,7 +79,7 @@ class CommunityProductionOverviewResourceDetailControllerTest {
 
         Assertions.assertNotNull(postMapping);
         Assertions.assertArrayEquals(
-                new String[]{PRODUCTION_OVERVIEW_PATH},
+                new String[]{PRODUCTION_OVERVIEW_PATH, PRODUCTION_OVERVIEW_ALIAS_PATH},
                 postMapping.value());
         Assertions.assertNull(method.getAnnotation(Secured.class));
 

@@ -51,6 +51,7 @@ public class CustomHttpSecurityConfig {
     @Value("${enforce.https:false}")
     private Boolean enforceHttps;
 
+    /** Habilita a superficie OpenAPI somente quando configurada explicitamente. */
     @Value("${opsfactor.openapi.enabled:false}")
     private Boolean openApiEnabled;
 

@@ -15,9 +15,11 @@ import java.util.List;
 @RestController
 public class CharacteristicCatalogRestController {
 
+    /** Service de consulta ao catalogo de caracteristicas Community. */
     @Autowired
     private CharacteristicCatalogService characteristicCatalogService;
 
+    /** Lista as caracteristicas de material disponiveis aos seletores. */
     @GetMapping("api/secured/material/characteristics")
     @Secured("ROLE_ADMIN")
     public ResponseEntity<List<CaracteristicaProdutoDTO>> getMaterialCharacteristics() {
@@ -26,6 +28,7 @@ public class CharacteristicCatalogRestController {
 
     }
 
+    /** Lista as caracteristicas de location disponiveis aos seletores. */
     @GetMapping("api/secured/location/characteristics")
     @Secured("ROLE_ADMIN")
     public ResponseEntity<List<CaracteristicaLocationDTO>> getLocationCharacteristics() {

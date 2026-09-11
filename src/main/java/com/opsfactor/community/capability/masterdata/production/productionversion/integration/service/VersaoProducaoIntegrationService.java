@@ -5,7 +5,9 @@ import com.opsfactor.community.capability.masterdata.production.productionversio
 import com.opsfactor.community.capability.masterdata.production.productionversion.integration.mapper.VersaoProducaoIntegrationSupportData;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.repository.ListaTecnicaRepository;
+import com.opsfactor.community.capability.masterdata.production.billofmaterials.repository.ListaTecnicaMultiploRepository;
 import com.opsfactor.community.capability.masterdata.production.routing.repository.RoteiroRepository;
+import com.opsfactor.community.capability.masterdata.production.routing.repository.RoteiroMultiploRepository;
 import com.opsfactor.community.capability.masterdata.production.productionversion.repository.VersaoProducaoRepository;
 import com.opsfactor.community.capability.masterdata.network.location.service.LocationService;
 import com.opsfactor.community.platform.integration.service.EmptyIntegrationDataFilter;
@@ -20,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.opsfactor.community.platform.integration.service.IntegrationSupportDataValidation.getMapaPorIdObrigatorio;
 
@@ -51,6 +54,14 @@ public class VersaoProducaoIntegrationService implements IntegrationServiceInter
     @Autowired
     private ListaTecnicaRepository listaTecnicaRepository;
 
+    /** Loads complete multiple-output routing snapshots in one query. */
+    @Autowired
+    private RoteiroMultiploRepository roteiroMultiploRepository;
+
+    /** Loads complete multiple-output BOM snapshots in one query. */
+    @Autowired
+    private ListaTecnicaMultiploRepository listaTecnicaMultiploRepository;
+
     /**
      * Repository da relacao Community location/material/roteiro/BOM.
      */
@@ -70,6 +81,19 @@ public class VersaoProducaoIntegrationService implements IntegrationServiceInter
     public VersaoProducaoIntegrationMapper getMapper() {
 
         return versaoProducaoIntegrationMapper;
+
+    }
+
+    /**
+     * Version validation navigates JPA routing/BOM/output references. Keep it
+     * on the session-owning thread even if an unexpected proxy reaches the
+     * mapper; the generic services retain their existing concurrency policy.
+     */
+    @Override
+    public Stream<VersaoProducaoIntegrationDataDto> getDtoConversionStream(
+            Collection<VersaoProducaoIntegrationDataDto> dtos) {
+
+        return dtos.stream();
 
     }
 
@@ -135,13 +159,29 @@ public class VersaoProducaoIntegrationService implements IntegrationServiceInter
                 location -> location.getId(),
                 "Location snapshot");
         supportData.mapaRoteiroPorId = getMapaPorIdObrigatorio(
-                roteiroRepository.findAll(),
+                roteiroRepository.customFindAllForFront(),
                 roteiro -> roteiro.getId(),
                 "Routing snapshot");
         supportData.mapaListaTecnicaPorId = getMapaPorIdObrigatorio(
-                listaTecnicaRepository.findAll(),
+                listaTecnicaRepository.customFindAllWithLocationMaterialOutputAndUnidadeMedidaMaterialOutput(),
                 listaTecnica -> listaTecnica.getId(),
                 "Bill of Materials snapshot");
+        // Materialize subtype output collections before conversion. Separate
+        // fetches avoid a cartesian product and keep round-trips independent
+        // of the number of uploaded versions. Replace subtype roots as well,
+        // so the contract does not depend on an open-session-in-view identity map.
+        if (!supportData.mapaLocationPorId.isEmpty()) {
+            getMapaPorIdObrigatorio(
+                    roteiroMultiploRepository.customFindAllByLocationInFetchMateriaisOutput(
+                            supportData.mapaLocationPorId.values()),
+                    roteiro -> roteiro.getId(), "Multiple-output Routing snapshot")
+                    .forEach(supportData.mapaRoteiroPorId::put);
+            getMapaPorIdObrigatorio(
+                    listaTecnicaMultiploRepository.customFindAllByLocationInFetchOutputs(
+                            supportData.mapaLocationPorId.values()),
+                    listaTecnica -> listaTecnica.getId(), "Multiple-output Bill of Materials snapshot")
+                    .forEach(supportData.mapaListaTecnicaPorId::put);
+        }
         return supportData;
 
     }

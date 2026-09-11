@@ -109,6 +109,7 @@ public class ConfiguredViewFacade {
     @Autowired
     private ProdutoRepository produtoRepository;
 
+    /** Repository de locations usado na validacao batch dos filtros por ID. */
     @Autowired
     private LocationRepository locationRepository;
 

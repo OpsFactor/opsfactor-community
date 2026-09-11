@@ -101,6 +101,7 @@ class CommunityArchitectureBoundaryTest {
             "api/secured/alerts/uomconversiongaps/dp/",
             "api/secured/alerts/uomconversiongaps/deployment/",
             "api/secured/bi/planning/supply/materialflows/",
+            "api/secured/bi/planning/supply/volumesandcapacities",
             "api/secured/supplynetwork/dependencies"
     );
 
@@ -116,6 +117,17 @@ class CommunityArchitectureBoundaryTest {
                     + "\\}",
             Pattern.DOTALL);
 
+    private static final Pattern COMMUNITY_INTEGRATION_DISABLED_POST_ROLE_PATTERN = Pattern.compile(
+            "protected\\s+List<UserRoleType>\\s+getUserRoleTypesPost\\s*\\(\\s*\\)\\s*\\{\\s*"
+                    + "return\\s+List\\.of\\s*\\(\\s*\\)\\s*;\\s*"
+                    + "\\}",
+            Pattern.DOTALL);
+
+    private static final List<String> COMMUNITY_ALLOWED_READ_ONLY_DATA_UPLOAD_CONTROLLER_FILES = List.of(
+            "DistributionPlanIntegrationController.java",
+            "ProductionPlanOccupationIntegrationController.java",
+            "ProductionPlanVolumeIntegrationController.java");
+
     private static final Pattern SPRING_SECURITY_ROLE_PATTERN = Pattern.compile("ROLE_[A-Z0-9_]+");
 
     private static final Pattern COMMUNITY_FORBIDDEN_RUNNER_PATTERN = Pattern.compile(
@@ -127,8 +139,8 @@ class CommunityArchitectureBoundaryTest {
             ".*\"[^\"]*/(pricing|distribution|visibility|agent|gis|map|ai|autofit|auto-fit|"
                     + "finance|warehouse|fleet|vehicle|campaign|event|sellin|sell-in|salesorders|sales-orders|"
                     + "selloutorder|salesordersdeliveries|order|ordersdeliveries|loadingorders|productionorder|"
-                    + "budget|presetconstraint|directdemand|productionplan|workingday|icms|releaseddemand|"
-                    + "temporalsplitcurve|distributionplan|consolidatedloadingorders|writeoffprojection|greenfield|"
+                    + "budget|presetconstraint|directdemand|workingday|icms|releaseddemand|"
+                    + "temporalsplitcurve|consolidatedloadingorders|writeoffprojection|greenfield|"
                     + "productionresource/availableshiftsbyproductionresource|"
                     + "productionresource/weekdaysandholidaysbyshift|"
                     + "costtoserve|cost-to-serve|optimizer|optimization|line-scheduling|linescheduling|"
@@ -398,7 +410,9 @@ class CommunityArchitectureBoundaryTest {
     private static final List<String> COMMUNITY_ALLOWED_DATA_UPLOAD_CONTROLLER_FILES = List.of(
             "ConversaoUnidadeIntegrationController.java",
             "ConversaoUnidadeProdutoIntegrationController.java",
+            "DemandPlanDetailedExportController.java",
             "DisponibilidadeRecursoProdutivoIntegrationController.java",
+            "DistributionPlanIntegrationController.java",
             "EstoqueIntegrationController.java",
             "FulfilledDemandIntegrationController.java",
             "IntegrationControllerAbstract.java",
@@ -409,10 +423,16 @@ class CommunityArchitectureBoundaryTest {
             "LinhaTransporteMaterialIntegrationController.java",
             "ListaTecnicaComponenteIntegrationController.java",
             "ListaTecnicaIntegrationController.java",
+            "LocationCharacteristicIntegrationController.java",
+            "LocationCharacteristicValueIntegrationController.java",
             "LocationIntegrationController.java",
             "MaterialIntegrationController.java",
+            "MaterialCharacteristicIntegrationController.java",
+            "MaterialCharacteristicValueIntegrationController.java",
             "OperacaoRoteiroIntegrationController.java",
             "ParametrosMaterialLocationIntegrationController.java",
+            "ProductionPlanOccupationIntegrationController.java",
+            "ProductionPlanVolumeIntegrationController.java",
             "RecursoProdutivoIntegrationController.java",
             "RoteiroIntegrationController.java",
             "SelloutIntegrationController.java",
@@ -422,6 +442,7 @@ class CommunityArchitectureBoundaryTest {
     );
 
     private static final List<String> COMMUNITY_ALLOWED_MASTERDATA_CONTROLLER_FILES = List.of(
+            "CharacteristicCatalogRestController.java",
             "ClusteringRestController.java",
             "LinhaTransporteController.java",
             "LocationRestController.java",
@@ -470,6 +491,7 @@ class CommunityArchitectureBoundaryTest {
             "ConversaoUnidadeIntegrationService.java",
             "ConversaoUnidadeProdutoIntegrationService.java",
             "DisponibilidadeRecursoProdutivoIntegrationService.java",
+            "DistributionPlanIntegrationService.java",
             "EstoqueIntegrationService.java",
             "FulfilledDemandIntegrationService.java",
             "InventoryPlanIntegrationService.java",
@@ -477,11 +499,17 @@ class CommunityArchitectureBoundaryTest {
             "LinhaTransporteProdutoIntegrationService.java",
             "ListaTecnicaComponenteIntegrationService.java",
             "ListaTecnicaIntegrationService.java",
+            "LocationCharacteristicIntegrationService.java",
+            "LocationCharacteristicValueIntegrationService.java",
             "LocationIntegrationService.java",
+            "MaterialCharacteristicIntegrationService.java",
+            "MaterialCharacteristicValueIntegrationService.java",
             "OperacaoRoteiroIntegrationService.java",
             "ParametrosMaterialLocationIntegrationService.java",
             "PoliticaEstoquesIntegrationService.java",
             "PoliticaEstoquesMaterialLocationIntegrationService.java",
+            "ProductionPlanOccupationIntegrationService.java",
+            "ProductionPlanVolumeIntegrationService.java",
             "ProdutoIntegrationService.java",
             "RecursoProdutivoIntegrationService.java",
             "RoteiroIntegrationService.java",
@@ -495,16 +523,23 @@ class CommunityArchitectureBoundaryTest {
             "ConversaoUnidadeIntegrationMapper.java",
             "ConversaoUnidadeProdutoIntegrationMapper.java",
             "DisponibilidadeRecursoProdutivoIntegrationMapper.java",
+            "DistributionPlanIntegrationMapper.java",
             "EstoqueIntegrationMapper.java",
             "InventoryPlanIntegrationMapper.java",
             "LinhaTransporteIntegrationMapper.java",
             "LinhaTransporteProdutoIntegrationMapper.java",
             "ListaTecnicaComponenteIntegrationMapper.java",
             "ListaTecnicaIntegrationMapper.java",
+            "LocationCharacteristicIntegrationMapper.java",
+            "LocationCharacteristicValueIntegrationMapper.java",
             "LocationIntegrationMapper.java",
+            "MaterialCharacteristicIntegrationMapper.java",
+            "MaterialCharacteristicValueIntegrationMapper.java",
             "ParametrosMaterialLocationIntegrationMapper.java",
             "PoliticaEstoquesIntegrationMapper.java",
             "PoliticaEstoquesMaterialLocationIntegrationMapper.java",
+            "ProductionPlanOccupationIntegrationMapper.java",
+            "ProductionPlanVolumeIntegrationMapper.java",
             "ProdutoIntegrationMapper.java",
             "RecursoProdutivoIntegrationMapper.java",
             "RoteiroIntegrationMapper.java",
@@ -517,6 +552,7 @@ class CommunityArchitectureBoundaryTest {
             "ConversaoUnidadeIntegrationDataDto.java",
             "ConversaoUnidadeProdutoIntegrationDataDto.java",
             "DisponibilidadeRecursoProdutivoIntegrationDataDto.java",
+            "DistributionPlanIntegrationDataDto.java",
             "EstoqueIntegrationDataDto.java",
             "EstoqueIntegrationFiltroDto.java",
             "FulfilledDemandIntegrationDataDto.java",
@@ -531,11 +567,17 @@ class CommunityArchitectureBoundaryTest {
             "LinhaTransporteProdutoIntegrationOptionsDto.java",
             "ListaTecnicaComponenteIntegrationDataDto.java",
             "ListaTecnicaIntegrationDataDto.java",
+            "LocationCharacteristicIntegrationDataDto.java",
+            "LocationCharacteristicValueIntegrationDataDto.java",
             "LocationIntegrationDataDto.java",
             "LocationIntegrationFiltroDto.java",
+            "MaterialCharacteristicIntegrationDataDto.java",
+            "MaterialCharacteristicValueIntegrationDataDto.java",
             "ParametrosMaterialLocationIntegrationDataDto.java",
             "PoliticaEstoquesIntegrationDataDto.java",
             "PoliticaEstoquesMaterialLocationIntegrationDataDto.java",
+            "ProductionPlanOccupationIntegrationDataDto.java",
+            "ProductionPlanVolumeIntegrationDataDto.java",
             "ProdutoIntegrationDataDto.java",
             "RecursoProdutivoIntegrationDataDto.java",
             "RoteiroIntegrationDataDto.java",
@@ -655,6 +697,7 @@ class CommunityArchitectureBoundaryTest {
             "masterdata/calendar/profile/repository/PerfilCalendarioSimplesRepository.java",
             "supplyplanning/supplyplan/repository/calendar/PerfilCalendarioSupplyPlanRepository.java",
             "cluster/location/ClusterLocationsRepository.java",
+            "cluster/material/ClusterMateriaisRepository.java",
             "cluster/material/ClusterProdutosDemandPlanningRepository.java",
             "cluster/material/ClusterProdutosRepository.java",
             "configuration/cluster/location/ParametrosClusterLocationsRepository.java",
@@ -662,6 +705,7 @@ class CommunityArchitectureBoundaryTest {
             "configuration/cluster/location/RegraAlocacaoClusterLocationsRepository.java",
             "configuration/cluster/location/RegraAlocacaoClusterLocationsTipoLocationRepository.java",
             "configuration/cluster/produto/RegraAlocacaoClusterProdutosRepository.java",
+            "configuration/cluster/produto/RegraAlocacaoClusterProdutosCaracteristicaRepository.java",
             "configuration/cluster/produto/RegraAlocacaoClusterProdutosStatusRepository.java",
             "configuration/inventorypolicy/PoliticaEstoquesMaterialLocationRepository.java",
             "configuration/inventorypolicy/PoliticaEstoquesRepository.java",
@@ -677,6 +721,10 @@ class CommunityArchitectureBoundaryTest {
             "historicaldata/EstoqueRepository.java",
             "historicaldata/SelloutRepository.java",
             "masterdata/LocationRepository.java",
+            "masterdata/classification/characteristic/repository/CaracteristicaLocationRepository.java",
+            "masterdata/classification/characteristic/repository/CaracteristicaMaterialRepository.java",
+            "masterdata/classification/characteristic/repository/EnterpriseValorCaracteristicaLocationRepository.java",
+            "masterdata/classification/characteristic/repository/EnterpriseValorCaracteristicaMaterialRepository.java",
             "masterdata/economicgroup/EconomicGroupRepository.java",
             "masterdata/malha/LinhaTransporteProdutoRepository.java",
             "masterdata/malha/LinhaTransporteRepository.java",
@@ -684,9 +732,11 @@ class CommunityArchitectureBoundaryTest {
             "masterdata/producao/DisponibilidadeRecursoProdutivoRepository.java",
             "masterdata/producao/ListaTecnicaComponenteRepository.java",
             "masterdata/producao/ListaTecnicaRepository.java",
+            "masterdata/production/billofmaterials/repository/ListaTecnicaMultiploRepository.java",
             "masterdata/producao/OperacaoRoteiroRepository.java",
             "masterdata/producao/RecursoProdutivoRepository.java",
             "masterdata/producao/RoteiroRepository.java",
+            "masterdata/production/routing/repository/RoteiroMultiploRepository.java",
             "masterdata/producao/VersaoProducaoRepository.java",
             "masterdata/ProdutoRepository.java",
             "masterdata/unidadeconversao/ConversaoUnidadeProdutoRepository.java",
@@ -704,6 +754,8 @@ class CommunityArchitectureBoundaryTest {
             "planningdata/supplyplanning/InventoryPlanLinhaRepository.java",
             "planningdata/supplyplanning/ProductionPlanLegacyBaselineRequirement.java",
             "planningdata/supplyplanning/ProductionPlanLinhaRepository.java",
+            "supplyplanning/productionplan/repository/ProductionPlanLinhaDAO.java",
+            "supplyplanning/productionplan/repository/SetupPlanLinhaRepository.java",
             "planningdata/supplyplanning/SupplyPlanRepository.java"
     );
 
@@ -716,9 +768,11 @@ class CommunityArchitectureBoundaryTest {
             "cluster/location/RegraAlocacaoClusterLocations.java",
             "cluster/location/RegraAlocacaoClusterLocationsPaisEstado.java",
             "cluster/location/RegraAlocacaoClusterLocationsTipoLocation.java",
+            "cluster/produto/ClusterMateriais.java",
             "cluster/produto/ClusterProdutos.java",
             "cluster/produto/ClusterProdutosDemandPlanning.java",
             "cluster/produto/RegraAlocacaoClusterProdutos.java",
+            "cluster/produto/RegraAlocacaoClusterProdutosCaracteristica.java",
             "cluster/produto/RegraAlocacaoClusterProdutosStatus.java",
             "configuration/cluster/location/ParametrosClusterLocations.java",
             "configuration/ParametrosGlobais.java",
@@ -731,6 +785,7 @@ class CommunityArchitectureBoundaryTest {
             "configuration/planning/supply/optimizer/presetconstraint/RestricaoPredefinidaGrupo.java",
             "configuration/user/ConfiguracaoUsuario.java",
             "configuration/user/ConfiguredView.java",
+            "configuration/user/ConfiguredViewCharacteristicFilter.java",
             "configuration/user/ConfiguredViewKeyFigure.java",
             "historicaldata/Estoque.java",
             "historicaldata/Sellout.java",
@@ -741,6 +796,11 @@ class CommunityArchitectureBoundaryTest {
             "masterdata/caracteristica/location/CaracteristicaLocationInterface.java",
             "masterdata/caracteristica/material/CaracteristicaProdutoId.java",
             "masterdata/caracteristica/material/CaracteristicaProdutoInterface.java",
+            "masterdata/classification/characteristic/domain/Caracteristica.java",
+            "masterdata/classification/characteristic/domain/CaracteristicaLocation.java",
+            "masterdata/classification/characteristic/domain/CaracteristicaProduto.java",
+            "masterdata/classification/characteristic/domain/ValorCaracteristicaLocation.java",
+            "masterdata/classification/characteristic/domain/ValorCaracteristicaProduto.java",
             "masterdata/economicgroup/EconomicGroup.java",
             "masterdata/location/Location.java",
             "masterdata/location/LocationAbstract.java",
@@ -750,11 +810,15 @@ class CommunityArchitectureBoundaryTest {
             "masterdata/production/DisponibilidadeRecursoProdutivo.java",
             "masterdata/production/ListaTecnica.java",
             "masterdata/production/ListaTecnicaComponente.java",
+            "masterdata/production/billofmaterials/domain/ListaTecnicaMultiplo.java",
+            "masterdata/production/billofmaterials/domain/ListaTecnicaMultiploOutput.java",
             "masterdata/production/OperacaoAbstract.java",
             "masterdata/production/OperacaoRoteiro.java",
             "masterdata/production/UnidadeTempoOperacao.java",
             "masterdata/production/RecursoProdutivo.java",
             "masterdata/production/Roteiro.java",
+            "masterdata/production/routing/domain/RoteiroMultiplo.java",
+            "masterdata/production/routing/domain/RoteiroMultiploMaterial.java",
             "masterdata/production/VersaoProducao.java",
             "masterdata/produto/Produto.java",
             "masterdata/unidadeconversao/ConversaoUnidade.java",
@@ -782,7 +846,9 @@ class CommunityArchitectureBoundaryTest {
             "planningbook/keyfigure/domain/KeyFigureStandard.java",
             "planningbook/keyfigure/domain/KeyFigureStandardEnum.java",
             "planningbook/keyfigure/domain/KeyFigureStandardMonetariaDemandPlanning.java",
+            "planningbook/keyfigure/domain/KeyFigureStandardPrecoMedioDemandPlanning.java",
             "planningbook/keyfigure/domain/KeyFigureStandardSupplyPlanning.java",
+            "supplyplanning/productionplan/domain/SetupPlanLinha.java",
             "supplyplanning/domain/SupplyPlanningDataContract.java",
             "supplyplanning/planningbook/domain/SupplyPlanningPlanningBookCatalog.java"
     );
@@ -802,6 +868,8 @@ class CommunityArchitectureBoundaryTest {
             "configuration/front/PerfilExecucaoDemandPlanFrontService.java",
             "configuration/front/PerfilExecucaoSupplyPlanFrontService.java",
             "configuration/front/PoliticaEstoquesFrontService.java",
+            "demandplanning/export/CommunityDemandPlanDetailedExportService.java",
+            "demandplanning/export/DemandPlanDetailedExportService.java",
             "historicaldata/EstoqueService.java",
             "historicaldata/front/SelloutFrontService.java",
             "historicaldata/SalesService.java",
@@ -823,6 +891,12 @@ class CommunityArchitectureBoundaryTest {
             "integration/masterdata/producao/RecursoProdutivoIntegrationService.java",
             "integration/masterdata/producao/RoteiroIntegrationService.java",
             "integration/masterdata/producao/VersaoProducaoIntegrationService.java",
+            "masterdata/classification/characteristic/facade/CharacteristicCatalogService.java",
+            "masterdata/classification/characteristic/facade/CommunityCharacteristicCatalogService.java",
+            "masterdata/classification/characteristic/integration/LocationCharacteristicIntegrationService.java",
+            "masterdata/classification/characteristic/integration/LocationCharacteristicValueIntegrationService.java",
+            "masterdata/classification/characteristic/integration/MaterialCharacteristicIntegrationService.java",
+            "masterdata/classification/characteristic/integration/MaterialCharacteristicValueIntegrationService.java",
             "integration/masterdata/ProdutoIntegrationService.java",
             "integration/masterdata/unidademedida/ConversaoUnidadeIntegrationService.java",
             "integration/masterdata/unidademedida/ConversaoUnidadeProdutoIntegrationService.java",
@@ -849,6 +923,9 @@ class CommunityArchitectureBoundaryTest {
             "planning/supply/persistence/CapacidadeEfetivaSupplyPlanService.java",
             "planning/supply/persistence/SupplyPlanningModificacoesService.java",
             "planning/supply/SupplyPlanService.java",
+            "supplyplanning/distributionplan/integration/DistributionPlanIntegrationService.java",
+            "supplyplanning/productionplan/integration/ProductionPlanOccupationIntegrationService.java",
+            "supplyplanning/productionplan/integration/ProductionPlanVolumeIntegrationService.java",
             "runtime/CommunityRuntimeInfoService.java",
             "runtime/RuntimeInfoService.java",
             "supplynetwork/SupplyNetworkDependencyExplorerService.java",
@@ -994,6 +1071,8 @@ class CommunityArchitectureBoundaryTest {
             "demandplanning/configuration/web/mapper/DemandPlanningConfigurationMapper.java",
             "demandplanning/configuration/web/mapper/PerfilExecucaoDemandPlanAutoMapper.java",
             "historicaldata/web/mapper/SelloutReportMapper.java",
+            "masterdata/classification/characteristic/facade/mapper/FiltroLocationDeCombinacaoCaracteristicasMapper.java",
+            "masterdata/classification/characteristic/facade/mapper/FiltroMaterialDeCombinacaoCaracteristicasMapper.java",
             "masterdata/integration/mapper/unidademedida/UnidadeMedidaIntegrationAutoMapper.java",
             "masterdata/web/mapper/LocationMapper.java",
             "masterdata/web/mapper/MaterialMapper.java",
@@ -1442,15 +1521,9 @@ class CommunityArchitectureBoundaryTest {
             "ParametrosNivelServicoEstoque.java",
             "ParametrosNivelServicoEstoqueRepository.java",
             "PossibilidadeAbastecimentoMalhaService.java",
-            "Caracteristica.java",
-            "CaracteristicaLocation.java",
-            "CaracteristicaLocationRepository.java",
-            "CaracteristicaProduto.java",
             "CaracteristicaProdutoRepository.java",
             "LogModificacaoDemandPlanItem.java",
             "LogModificacaoDemandPlanItemRepository.java",
-            "ValorCaracteristicaLocation.java",
-            "ValorCaracteristicaProduto.java",
             "ValorCaracteristicaLocationRepository.java",
             "ValorCaracteristicaProdutoRepository.java",
             "GrupoProdutos.java",
@@ -1491,11 +1564,8 @@ class CommunityArchitectureBoundaryTest {
             "VersaoProducaoDTO.java",
             "VersaoProducaoFrontService.java",
             "VersaoProducaoIntegrationDTO.java",
-            "VersaoProducaoIntegrationMapper.java",
             "VersaoProducaoIntegrationMapperCommunityTest.java",
-            "VersaoProducaoIntegrationService.java",
-            "VendaRepository.java",
-            "VersaoProducaoRepository.java"
+            "VendaRepository.java"
     );
 
     private static final List<String> COMMUNITY_FORBIDDEN_REMOVED_ORPHAN_PATHS = List.of();
@@ -2404,11 +2474,11 @@ class CommunityArchitectureBoundaryTest {
                     "VersaoProducaoRepository deve usar SELECT DISTINCT nos fetch joins."));
         }
         if (!repositorySource.contains("customFindAllForIntegrationExport()")
-                || !repositorySource.contains("LEFT JOIN FETCH vp.location")
-                || !repositorySource.contains("LEFT JOIN FETCH vp.roteiro rt")
-                || !repositorySource.contains("LEFT JOIN FETCH rt.materialOutput")
-                || !repositorySource.contains("LEFT JOIN FETCH vp.listaTecnica lt")
-                || !repositorySource.contains("LEFT JOIN FETCH lt.materialOutput")) {
+                || !repositorySource.contains("JOIN FETCH vp.location")
+                || !repositorySource.contains("JOIN FETCH vp.roteiro rt")
+                || !repositorySource.contains("JOIN FETCH rt.materialOutput")
+                || !repositorySource.contains("JOIN FETCH vp.listaTecnica lt")
+                || !repositorySource.contains("JOIN FETCH lt.materialOutput")) {
             violations.add(formatViolation(
                     communityWorkspaceDirectory,
                     versaoProducaoRepositoryPath,
@@ -3002,6 +3072,12 @@ class CommunityArchitectureBoundaryTest {
             if (source.contains("extends IntegrationControllerAbstract")
                     && (source.contains("getUserRoleTypesGet")
                     || source.contains("getUserRoleTypesPost"))) {
+                String fileName = javaSourcePath.getFileName().toString();
+                if (COMMUNITY_ALLOWED_READ_ONLY_DATA_UPLOAD_CONTROLLER_FILES.contains(fileName)
+                        && COMMUNITY_INTEGRATION_ADMIN_GET_ROLE_PATTERN.matcher(source).find()
+                        && COMMUNITY_INTEGRATION_DISABLED_POST_ROLE_PATTERN.matcher(source).find()) {
+                    continue;
+                }
                 violations.add(communityWorkspaceDirectory.relativize(javaSourcePath).toString());
             }
         }
@@ -4795,10 +4871,17 @@ class CommunityArchitectureBoundaryTest {
         List<String> violations = new ArrayList<>();
 
         /*
-         * O Community nao deve expor entidades nem switches de producao
-         * paralela/multipla. O fluxo aberto trabalha sempre com um unico output;
-         * a especializacao volta no Enterprise por overlay proprio.
+         * A release Community aprova os tipos de producao multipla usados pela
+         * projection de rede. Outros switches ou especializacoes continuam
+         * proibidos ate revisao explicita desta fronteira.
          */
+        List<String> approvedMultipleProductionTypeFiles = List.of(
+                "ListaTecnicaMultiplo.java",
+                "ListaTecnicaMultiploOutput.java",
+                "ListaTecnicaMultiploRepository.java",
+                "RoteiroMultiplo.java",
+                "RoteiroMultiploMaterial.java",
+                "RoteiroMultiploRepository.java");
         for (Path javaSourcePath : findWorkspaceFiles(communityWorkspaceDirectory, ".java")) {
             if (isTestSource(javaSourcePath)) {
                 continue;
@@ -4810,7 +4893,8 @@ class CommunityArchitectureBoundaryTest {
                     || fileName.startsWith("VersaoProducaoParal")
                     || fileName.startsWith("VersaoProducaoMultip")
                     || fileName.startsWith("ProductionPlanLinhaMultip");
-            if (isMultipleProductionType) {
+            if (isMultipleProductionType
+                    && !approvedMultipleProductionTypeFiles.contains(fileName)) {
                 violations.add(communityWorkspaceDirectory.relativize(javaSourcePath).toString());
             }
 

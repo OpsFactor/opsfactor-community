@@ -319,7 +319,7 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
         setPrivateField(clusterEParametrosProjection, "clusterLocationsList", clusterLocationsList);
         setPrivateField(
                 clusterEParametrosProjection,
-                "clusterProdutosDemandPlanningList",
+                "clusterMateriaisList",
                 clusterMateriaisDemandPlanningList);
 
         return clusterEParametrosProjection;

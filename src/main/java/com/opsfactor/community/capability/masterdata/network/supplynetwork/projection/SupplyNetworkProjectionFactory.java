@@ -78,6 +78,7 @@ public class SupplyNetworkProjectionFactory {
     @Autowired
     private RoteiroRepository roteiroRepository;
 
+    /** Repository de roteiros com multiplos materiais de entrada. */
     @Autowired
     private RoteiroMultiploRepository roteiroMultiploRepository;
 
@@ -87,6 +88,7 @@ public class SupplyNetworkProjectionFactory {
     @Autowired
     private ListaTecnicaRepository listaTecnicaRepository;
 
+    /** Repository de listas tecnicas com multiplos materiais de saida. */
     @Autowired
     private ListaTecnicaMultiploRepository listaTecnicaMultiploRepository;
 

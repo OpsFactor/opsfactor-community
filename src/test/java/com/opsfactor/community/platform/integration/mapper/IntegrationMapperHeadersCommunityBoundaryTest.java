@@ -1,6 +1,10 @@
 package com.opsfactor.community.platform.integration.mapper;
 
 import com.opsfactor.community.capability.configuration.integration.mapper.ParametrosMaterialLocationIntegrationMapper;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.integration.LocationCharacteristicIntegrationMapper;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.integration.LocationCharacteristicValueIntegrationMapper;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.integration.MaterialCharacteristicIntegrationMapper;
+import com.opsfactor.community.capability.masterdata.classification.characteristic.integration.MaterialCharacteristicValueIntegrationMapper;
 import com.opsfactor.community.capability.transactionaldata.inventory.stock.integration.mapper.EstoqueIntegrationMapper;
 import com.opsfactor.community.capability.transactionaldata.sales.sellout.integration.mapper.SelloutIntegrationMapper;
 import com.opsfactor.community.capability.masterdata.network.location.integration.mapper.LocationIntegrationMapper;
@@ -19,6 +23,9 @@ import com.opsfactor.community.capability.masterdata.production.productionversio
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.integration.mapper.ConversaoUnidadeIntegrationMapper;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.integration.mapper.ConversaoUnidadeProdutoIntegrationMapper;
 import com.opsfactor.community.capability.supplyplanning.inventoryplan.integration.mapper.InventoryPlanIntegrationMapper;
+import com.opsfactor.community.capability.supplyplanning.distributionplan.integration.DistributionPlanIntegrationMapper;
+import com.opsfactor.community.capability.supplyplanning.productionplan.integration.ProductionPlanOccupationIntegrationMapper;
+import com.opsfactor.community.capability.supplyplanning.productionplan.integration.ProductionPlanVolumeIntegrationMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.stereotype.Component;
@@ -30,6 +37,7 @@ import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -73,6 +81,11 @@ class IntegrationMapperHeadersCommunityBoundaryTest {
             "shift",
             "line scheduling",
             "parallel");
+
+    private static final Map<String, Set<String>> COMMUNITY_ALLOWED_HEADER_TERMS_BY_MAPPER = Map.of(
+            "DistributionPlanIntegrationMapper", Set.of("firm order"),
+            "ProductionPlanOccupationIntegrationMapper", Set.of("firm order"),
+            "ProductionPlanVolumeIntegrationMapper", Set.of("firm order"));
 
     @Test
     void communityIntegrationMapperSourceSurfaceShouldStayExplicitlyEnumerated() throws IOException {
@@ -135,6 +148,10 @@ class IntegrationMapperHeadersCommunityBoundaryTest {
          */
         return List.of(
                 new HeaderMapper("ParametrosMaterialLocationIntegrationMapper", new ParametrosMaterialLocationIntegrationMapper()),
+                new HeaderMapper("LocationCharacteristicIntegrationMapper", new LocationCharacteristicIntegrationMapper()),
+                new HeaderMapper("LocationCharacteristicValueIntegrationMapper", new LocationCharacteristicValueIntegrationMapper()),
+                new HeaderMapper("MaterialCharacteristicIntegrationMapper", new MaterialCharacteristicIntegrationMapper()),
+                new HeaderMapper("MaterialCharacteristicValueIntegrationMapper", new MaterialCharacteristicValueIntegrationMapper()),
                 new HeaderMapper("EstoqueIntegrationMapper", new EstoqueIntegrationMapper()),
                 new HeaderMapper("SelloutIntegrationMapper", new SelloutIntegrationMapper()),
                 new HeaderMapper("LocationIntegrationMapper", new LocationIntegrationMapper()),
@@ -152,7 +169,10 @@ class IntegrationMapperHeadersCommunityBoundaryTest {
                 new HeaderMapper("VersaoProducaoIntegrationMapper", new VersaoProducaoIntegrationMapper()),
                 new HeaderMapper("ConversaoUnidadeIntegrationMapper", new ConversaoUnidadeIntegrationMapper()),
                 new HeaderMapper("ConversaoUnidadeProdutoIntegrationMapper", new ConversaoUnidadeProdutoIntegrationMapper()),
-                new HeaderMapper("InventoryPlanIntegrationMapper", new InventoryPlanIntegrationMapper()));
+                new HeaderMapper("InventoryPlanIntegrationMapper", new InventoryPlanIntegrationMapper()),
+                new HeaderMapper("DistributionPlanIntegrationMapper", new DistributionPlanIntegrationMapper()),
+                new HeaderMapper("ProductionPlanOccupationIntegrationMapper", new ProductionPlanOccupationIntegrationMapper()),
+                new HeaderMapper("ProductionPlanVolumeIntegrationMapper", new ProductionPlanVolumeIntegrationMapper()));
 
     }
 
@@ -186,6 +206,11 @@ class IntegrationMapperHeadersCommunityBoundaryTest {
 
         for (String processedFileHeader : lowerCaseHeaders) {
             for (String enterpriseOnlyHeaderTerm : ENTERPRISE_ONLY_HEADER_TERMS) {
+                if (COMMUNITY_ALLOWED_HEADER_TERMS_BY_MAPPER
+                        .getOrDefault(headerMapper.name(), Set.of())
+                        .contains(enterpriseOnlyHeaderTerm)) {
+                    continue;
+                }
                 Assertions.assertFalse(
                         processedFileHeader.contains(enterpriseOnlyHeaderTerm),
                         headerMapper.name()

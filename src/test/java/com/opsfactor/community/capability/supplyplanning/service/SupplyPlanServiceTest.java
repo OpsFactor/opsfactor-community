@@ -268,18 +268,18 @@ public class SupplyPlanServiceTest {
                 
         // ATUALIZAÇÃO DAS LISTAS TÉCNICAS
         jdbcTemplate.update(
-            "INSERT INTO lista_tecnica (id, material_output_id,descricao, location_id, quantidade) VALUES ('LT100-FAC01','FG100','LT FG100','FAC01',1);\n" +
-            "INSERT INTO lista_tecnica (id, material_output_id,descricao, location_id, quantidade) VALUES ('LT100-FAC03','FG100','LT FG100','FAC03',1);\n" +
-            "INSERT INTO lista_tecnica (id, material_output_id,descricao, location_id, quantidade) VALUES ('LT101-FAC01','FG101','LT FG101','FAC01',1);\n" +
-            "INSERT INTO lista_tecnica (id, material_output_id,descricao, location_id, quantidade) VALUES ('LT101-FAC03','FG101','LT FG101','FAC03',1);\n" +
-            "INSERT INTO lista_tecnica (id, material_output_id,descricao, location_id, quantidade) VALUES ('LT102-FAC02','FG102','LT FG102','FAC02',1);\n" +
-            "INSERT INTO lista_tecnica (id, material_output_id,descricao, location_id, quantidade) VALUES ('LT103-FAC02','FG103','LT FG103','FAC02',1);\n" +
+            "INSERT INTO lista_tecnica (id, tipo_lista_tecnica, material_output_id,descricao, location_id, quantidade) VALUES ('LT100-FAC01','simples','FG100','LT FG100','FAC01',1);\n" +
+            "INSERT INTO lista_tecnica (id, tipo_lista_tecnica, material_output_id,descricao, location_id, quantidade) VALUES ('LT100-FAC03','simples','FG100','LT FG100','FAC03',1);\n" +
+            "INSERT INTO lista_tecnica (id, tipo_lista_tecnica, material_output_id,descricao, location_id, quantidade) VALUES ('LT101-FAC01','simples','FG101','LT FG101','FAC01',1);\n" +
+            "INSERT INTO lista_tecnica (id, tipo_lista_tecnica, material_output_id,descricao, location_id, quantidade) VALUES ('LT101-FAC03','simples','FG101','LT FG101','FAC03',1);\n" +
+            "INSERT INTO lista_tecnica (id, tipo_lista_tecnica, material_output_id,descricao, location_id, quantidade) VALUES ('LT102-FAC02','simples','FG102','LT FG102','FAC02',1);\n" +
+            "INSERT INTO lista_tecnica (id, tipo_lista_tecnica, material_output_id,descricao, location_id, quantidade) VALUES ('LT103-FAC02','simples','FG103','LT FG103','FAC02',1);\n" +
 //            "INSERT INTO lista_tecnica (id, material_output_id,descricao) VALUES ('LT200','WP200','LT WP200');\n" +
-            "INSERT INTO lista_tecnica (id, material_output_id,descricao, location_id, quantidade) VALUES ('LT201-FAC02','WP201','LT WP201','FAC02',1);\n" +
-            "INSERT INTO lista_tecnica (id, material_output_id,descricao, location_id, quantidade) VALUES ('LT202-SUP01','WP202','LT WP202','SUP01',1);\n" +
-            "INSERT INTO lista_tecnica (id, material_output_id,descricao, location_id, quantidade) VALUES ('LT303-FAC02','RM303','LT RM303','FAC02',1);\n" +
-            "INSERT INTO lista_tecnica (id, material_output_id,descricao, location_id, quantidade) VALUES ('LT301-SUP01','RM301','LT RM301 : sem componentes','SUP01',1);\n" +
-            "INSERT INTO lista_tecnica (id, material_output_id,descricao, location_id, quantidade) VALUES ('LT302-SUP01','RM302','LT RM302 : sem componentes','SUP01',1);");
+            "INSERT INTO lista_tecnica (id, tipo_lista_tecnica, material_output_id,descricao, location_id, quantidade) VALUES ('LT201-FAC02','simples','WP201','LT WP201','FAC02',1);\n" +
+            "INSERT INTO lista_tecnica (id, tipo_lista_tecnica, material_output_id,descricao, location_id, quantidade) VALUES ('LT202-SUP01','simples','WP202','LT WP202','SUP01',1);\n" +
+            "INSERT INTO lista_tecnica (id, tipo_lista_tecnica, material_output_id,descricao, location_id, quantidade) VALUES ('LT303-FAC02','simples','RM303','LT RM303','FAC02',1);\n" +
+            "INSERT INTO lista_tecnica (id, tipo_lista_tecnica, material_output_id,descricao, location_id, quantidade) VALUES ('LT301-SUP01','simples','RM301','LT RM301 : sem componentes','SUP01',1);\n" +
+            "INSERT INTO lista_tecnica (id, tipo_lista_tecnica, material_output_id,descricao, location_id, quantidade) VALUES ('LT302-SUP01','simples','RM302','LT RM302 : sem componentes','SUP01',1);");
         jdbcTemplate.update(
             "INSERT INTO lista_tecnica_componente (lista_tecnica_id, material_componente_id,quantidade) VALUES ('LT100-FAC01','WP200','2');\n" +
             "INSERT INTO lista_tecnica_componente (lista_tecnica_id, material_componente_id,quantidade) VALUES ('LT100-FAC03','WP200','2');\n" +
@@ -304,36 +304,49 @@ public class SupplyPlanServiceTest {
         
         // ATUALIZAÇÃO DAS RECEITAS DE PRODUÇÃO
         jdbcTemplate.update(
-            "INSERT INTO roteiro (id, descricao, prioridade, location_id, material_output_id) VALUES ('1','FG100 - FAC01 - Recurso 1','1','FAC01','FG100');\n" +
-            "INSERT INTO roteiro (id, descricao, prioridade, location_id, material_output_id) VALUES ('2','FG100 - FAC01 - Recurso 2','2','FAC01','FG100');\n" +
-            "INSERT INTO roteiro (id, descricao, prioridade, location_id, material_output_id) VALUES ('3','FG100 - FAC03 - Recurso 1','1','FAC03','FG100');\n" +
-            "INSERT INTO roteiro (id, descricao, prioridade, location_id, material_output_id) VALUES ('4','FG101 - FAC01 - Recurso 1','1','FAC01','FG101');\n" +
-            "INSERT INTO roteiro (id, descricao, prioridade, location_id, material_output_id) VALUES ('5','FG101 - FAC03 - Recurso 1','1','FAC03','FG101');\n" +
-            "INSERT INTO roteiro (id, descricao, prioridade, location_id, material_output_id) VALUES ('6','FG102 - FAC02 - Recurso1','1','FAC02','FG102');\n" +
-            "INSERT INTO roteiro (id, descricao, prioridade, location_id, material_output_id) VALUES ('7','FG103 - FAC02 - Recurso1','1','FAC02','FG103');\n" +
-            "INSERT INTO roteiro (id, descricao, prioridade, location_id, material_output_id) VALUES ('8','RM301 - SUP01 - Recurso 1','1','SUP01','RM301');\n" +
-            "INSERT INTO roteiro (id, descricao, prioridade, location_id, material_output_id) VALUES ('9','RM302 - SUP01 - Recurso 1','1','SUP01','RM302');\n" +
-            "INSERT INTO roteiro (id, descricao, prioridade, location_id, material_output_id) VALUES ('10','RM303 - FAC02 - Recurso 1','1','FAC02','RM303');\n" +
-            "INSERT INTO roteiro (id, descricao, prioridade, location_id, material_output_id) VALUES ('11','WP202 - SUP01 - Recurso 1','1','SUP01','WP202');\n" +
-            "INSERT INTO roteiro (id, descricao, prioridade, location_id, material_output_id) VALUES ('12','WP201 - FAC02 - Recurso 1','1','FAC02','WP201');");
+            "INSERT INTO roteiro (id, tipo_roteiro, descricao, prioridade, location_id, material_output_id) VALUES ('1','simples','FG100 - FAC01 - Recurso 1','1','FAC01','FG100');\n" +
+            "INSERT INTO roteiro (id, tipo_roteiro, descricao, prioridade, location_id, material_output_id) VALUES ('2','simples','FG100 - FAC01 - Recurso 2','2','FAC01','FG100');\n" +
+            "INSERT INTO roteiro (id, tipo_roteiro, descricao, prioridade, location_id, material_output_id) VALUES ('3','simples','FG100 - FAC03 - Recurso 1','1','FAC03','FG100');\n" +
+            "INSERT INTO roteiro (id, tipo_roteiro, descricao, prioridade, location_id, material_output_id) VALUES ('4','simples','FG101 - FAC01 - Recurso 1','1','FAC01','FG101');\n" +
+            "INSERT INTO roteiro (id, tipo_roteiro, descricao, prioridade, location_id, material_output_id) VALUES ('5','simples','FG101 - FAC03 - Recurso 1','1','FAC03','FG101');\n" +
+            "INSERT INTO roteiro (id, tipo_roteiro, descricao, prioridade, location_id, material_output_id) VALUES ('6','simples','FG102 - FAC02 - Recurso1','1','FAC02','FG102');\n" +
+            "INSERT INTO roteiro (id, tipo_roteiro, descricao, prioridade, location_id, material_output_id) VALUES ('7','simples','FG103 - FAC02 - Recurso1','1','FAC02','FG103');\n" +
+            "INSERT INTO roteiro (id, tipo_roteiro, descricao, prioridade, location_id, material_output_id) VALUES ('8','simples','RM301 - SUP01 - Recurso 1','1','SUP01','RM301');\n" +
+            "INSERT INTO roteiro (id, tipo_roteiro, descricao, prioridade, location_id, material_output_id) VALUES ('9','simples','RM302 - SUP01 - Recurso 1','1','SUP01','RM302');\n" +
+            "INSERT INTO roteiro (id, tipo_roteiro, descricao, prioridade, location_id, material_output_id) VALUES ('10','simples','RM303 - FAC02 - Recurso 1','1','FAC02','RM303');\n" +
+            "INSERT INTO roteiro (id, tipo_roteiro, descricao, prioridade, location_id, material_output_id) VALUES ('11','simples','WP202 - SUP01 - Recurso 1','1','SUP01','WP202');\n" +
+            "INSERT INTO roteiro (id, tipo_roteiro, descricao, prioridade, location_id, material_output_id) VALUES ('12','simples','WP201 - FAC02 - Recurso 1','1','FAC02','WP201');");
         jdbcTemplate.update(
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('3','1','RP001','3','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('3','2','RP002','2','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('3','3','RP004','3','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('3','4','RP001','3','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('3','5','RP004','3','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('1','6','RP003','2','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('1','7','RP003','2','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('1','1','RP002','2','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('1','2','RP002','2','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('1','3','RP004','2','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('2','4','RP002','2','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('2','5','RP004','2','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('1','8','RP005','2','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('1','9','RP005','2','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('1','10','RP003','2','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('1','11','RP005','2','36');\n" +
-            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,quantidade_base,horas_por_quantidade_base) VALUES ('1','12','RP003','2','36');");
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('3','1','RP001','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('3','2','RP002','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('3','3','RP004','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('3','4','RP001','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('3','5','RP004','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('1','6','RP003','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('1','7','RP003','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('1','1','RP002','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('1','2','RP002','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('1','3','RP004','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('2','4','RP002','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('2','5','RP004','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('1','8','RP005','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('1','9','RP005','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('1','10','RP003','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('1','11','RP005','36','H');\n" +
+            "INSERT INTO operacao_roteiro (posicao,roteiro_id,recurso_produtivo_id,tempo_por_quantidade_base,unidade_tempo_operacao) VALUES ('1','12','RP003','36','H');");
+        jdbcTemplate.update(
+            "INSERT INTO versao_producao (id,location_id,roteiro_id,lista_tecnica_id,prioridade,ativo) VALUES ('VP-1','FAC01','1','LT100-FAC01','1',true);\n" +
+            "INSERT INTO versao_producao (id,location_id,roteiro_id,lista_tecnica_id,prioridade,ativo) VALUES ('VP-2','FAC01','2','LT100-FAC01','2',true);\n" +
+            "INSERT INTO versao_producao (id,location_id,roteiro_id,lista_tecnica_id,prioridade,ativo) VALUES ('VP-3','FAC03','3','LT100-FAC03','1',true);\n" +
+            "INSERT INTO versao_producao (id,location_id,roteiro_id,lista_tecnica_id,prioridade,ativo) VALUES ('VP-4','FAC01','4','LT101-FAC01','1',true);\n" +
+            "INSERT INTO versao_producao (id,location_id,roteiro_id,lista_tecnica_id,prioridade,ativo) VALUES ('VP-5','FAC03','5','LT101-FAC03','1',true);\n" +
+            "INSERT INTO versao_producao (id,location_id,roteiro_id,lista_tecnica_id,prioridade,ativo) VALUES ('VP-6','FAC02','6','LT102-FAC02','1',true);\n" +
+            "INSERT INTO versao_producao (id,location_id,roteiro_id,lista_tecnica_id,prioridade,ativo) VALUES ('VP-7','FAC02','7','LT103-FAC02','1',true);\n" +
+            "INSERT INTO versao_producao (id,location_id,roteiro_id,lista_tecnica_id,prioridade,ativo) VALUES ('VP-8','SUP01','8','LT301-SUP01','1',true);\n" +
+            "INSERT INTO versao_producao (id,location_id,roteiro_id,lista_tecnica_id,prioridade,ativo) VALUES ('VP-9','SUP01','9','LT302-SUP01','1',true);\n" +
+            "INSERT INTO versao_producao (id,location_id,roteiro_id,lista_tecnica_id,prioridade,ativo) VALUES ('VP-10','FAC02','10','LT303-FAC02','1',true);\n" +
+            "INSERT INTO versao_producao (id,location_id,roteiro_id,lista_tecnica_id,prioridade,ativo) VALUES ('VP-11','SUP01','11','LT202-SUP01','1',true);\n" +
+            "INSERT INTO versao_producao (id,location_id,roteiro_id,lista_tecnica_id,prioridade,ativo) VALUES ('VP-12','FAC02','12','LT201-FAC02','1',true);");
 
         // PERFIL DE EXECUÇÃO SUPPLY PLANNING
         jdbcTemplate.update(
