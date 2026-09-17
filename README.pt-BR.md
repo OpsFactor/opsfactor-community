@@ -2,6 +2,8 @@
 
 [English](README.md)
 
+[Site da OpsFactor](https://www.opsfactor.com/)
+
 OpsFactor Community é o backend source-available para planejamento de demanda
 e supply chain. É uma aplicação Java 21 / Spring Boot que pode ser compilada
 independentemente, sem depender de fontes ou artefatos do OpsFactor Enterprise.
