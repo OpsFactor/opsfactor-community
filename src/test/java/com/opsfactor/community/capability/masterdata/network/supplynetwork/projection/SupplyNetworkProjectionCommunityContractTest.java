@@ -6,8 +6,13 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.domai
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.LinhaTransporteProduto;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
+import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnicaMultiplo;
+import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnicaMultiploOutput;
+import com.opsfactor.community.capability.masterdata.production.operation.domain.OperacaoRoteiro;
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
+import com.opsfactor.community.capability.masterdata.production.routing.domain.RoteiroMultiplo;
+import com.opsfactor.community.capability.masterdata.production.routing.domain.RoteiroMultiploMaterial;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
@@ -27,6 +32,8 @@ import com.opsfactor.community.capability.masterdata.production.productionversio
 import jakarta.annotation.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -553,6 +560,73 @@ class SupplyNetworkProjectionCommunityContractTest {
         Assertions.assertEquals(
                 "Production version repository returned duplicate production version id PV for Supply Network Projection.",
                 illegalStateException.getMessage());
+
+    }
+
+    /**
+     * A produção múltipla com saída inativa precisa permanecer diagnosticável:
+     * remove-se sua viabilidade, nunca o cadastro que explica o bloqueio. A
+     * variante ativa prova que a mudança não desabilita produção válida.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void populateProductionMasterDataShouldRetainMultipleVersionWithInactiveCoOutput(
+            boolean coOutputActive) throws Exception {
+
+        Location location = new Location("PLANT");
+        Produto demandedMaterial = new Produto("DEMANDED_OUTPUT");
+        Produto coOutput = new Produto("CO_OUTPUT");
+        coOutput.setAtivo(coOutputActive);
+        RecursoProdutivo resource = RecursoProdutivo.builder()
+                .id("RESOURCE").location(location).ativo(true).build();
+
+        RoteiroMultiplo routing = new RoteiroMultiplo();
+        routing.setId("MULTIPLE_ROUTING");
+        routing.setLocation(location);
+        routing.setRoteiroMultiploMaterialSet(Set.of(
+                new RoteiroMultiploMaterial(routing, demandedMaterial),
+                new RoteiroMultiploMaterial(routing, coOutput)));
+        OperacaoRoteiro operation = new OperacaoRoteiro(
+                new OperacaoRoteiro.OperacaoRoteiroCompositeKey(1, routing));
+        operation.setRecursoProdutivo(resource);
+        routing.setOperacaoRoteiroSet(Set.of(operation));
+
+        ListaTecnicaMultiplo bom = new ListaTecnicaMultiplo();
+        bom.setId("MULTIPLE_BOM");
+        bom.setLocation(location);
+        ListaTecnicaMultiploOutput demandedOutput = new ListaTecnicaMultiploOutput(bom, demandedMaterial);
+        demandedOutput.setQuantidadeBase(1d);
+        ListaTecnicaMultiploOutput secondaryOutput = new ListaTecnicaMultiploOutput(bom, coOutput);
+        secondaryOutput.setQuantidadeBase(1d);
+        bom.setListaTecnicaMultiploOutputSet(Set.of(demandedOutput, secondaryOutput));
+        VersaoProducao productionVersion = new VersaoProducao(
+                "MULTIPLE_VERSION", location, 1, routing, bom);
+
+        SupplyNetworkProjectionFactory factory = getSupplyNetworkProjectionFactoryComDadosMestresProducao(
+                List.of(resource), List.of(bom), List.of(routing));
+        VersaoProducaoRepository productionVersionRepository = Mockito.mock(VersaoProducaoRepository.class);
+        Mockito.when(productionVersionRepository.customFindAllByLocationIn(Mockito.anyCollection()))
+                .thenReturn(List.of(productionVersion));
+        setPrivateField(factory, "versaoProducaoRepository", productionVersionRepository);
+        SupplyNetworkProjection projection = new SupplyNetworkProjection();
+        projection.clusterEParametrosProjection = new TestClusterEParametrosProjection(
+                Set.of(location), coOutputActive ? Set.of(demandedMaterial, coOutput) : Set.of(demandedMaterial));
+
+        // Invoca a montagem real; somente o acesso aos repositories é substituído.
+        factory.populaSupplyNetworkProjectionComDadosMestresProducao(projection);
+
+        Assertions.assertSame(routing, projection.getRoteiroFromId(routing.getId()).orElseThrow());
+        Assertions.assertSame(bom, projection.getListaTecnicaFromId(bom.getId()).orElseThrow());
+        Assertions.assertSame(productionVersion,
+                projection.getVersaoProducaoFromId(productionVersion.getId(), true).orElseThrow());
+        Assertions.assertEquals(Set.of(productionVersion),
+                projection.getTodasVersoesProducao(location, demandedMaterial, true, null));
+        Assertions.assertEquals(Set.of(productionVersion),
+                projection.getTodasVersoesProducao(location, coOutput, true, null));
+        Assertions.assertEquals(coOutputActive, projection.verificaSeRoteiroEViavel(routing));
+        Assertions.assertEquals(coOutputActive, projection.verificaSeListaTecnicaEViavel(bom));
+        Assertions.assertEquals(coOutputActive ? Set.of(productionVersion) : Set.of(),
+                projection.getVersoesProducaoViaveis(location, true));
 
     }
 

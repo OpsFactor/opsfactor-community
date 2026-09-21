@@ -292,7 +292,8 @@ public class SupplyNetworkProjectionFactory {
                     ListaTecnicaMultiplo listaTecnicaMultiplo = listaTecnicaMultiploPorId.get(listaTecnica.getId());
                     return listaTecnicaMultiplo == null ? listaTecnica : listaTecnicaMultiplo;
                 })
-                .filter(listaTecnica -> materiaisAtivosSet.containsAll(listaTecnica.getMateriaisOutput()))
+                // Preserva co-outputs inativos para diagnóstico; a viabilidade continua exigindo todos ativos.
+                .filter(listaTecnica -> listaTecnica.getMateriaisOutput().stream().anyMatch(materiaisAtivosSet::contains))
                 .toList();
         validaEntidadesComId(
                 listaTecnicaList,
@@ -342,7 +343,8 @@ public class SupplyNetworkProjectionFactory {
                     RoteiroMultiplo roteiroMultiplo = roteiroMultiploPorId.get(roteiro.getId());
                     return roteiroMultiplo == null ? roteiro : roteiroMultiplo;
                 })
-                .filter(roteiro -> materiaisAtivosSet.containsAll(roteiro.getMateriaisOutput()))
+                // Um output ativo mantém o mestre completo no snapshot, inclusive seus bloqueios.
+                .filter(roteiro -> roteiro.getMateriaisOutput().stream().anyMatch(materiaisAtivosSet::contains))
                 .toList();
         validaEntidadesComId(
                 roteiroList,
@@ -385,7 +387,8 @@ public class SupplyNetworkProjectionFactory {
         List<VersaoProducao> versaoProducaoList = versaoProducaoRepository
                 .customFindAllByLocationIn(locationsFiltradasCopia)
                 .stream()
-                .filter(versaoProducao -> materiaisAtivosSet.containsAll(versaoProducao.getMateriaisOutput()))
+                // Não confundir versão com co-output inativo com ausência de cadastro produtivo.
+                .filter(versaoProducao -> versaoProducao.getMateriaisOutput().stream().anyMatch(materiaisAtivosSet::contains))
                 .toList();
         validaEntidadesComId(
                 versaoProducaoList,
