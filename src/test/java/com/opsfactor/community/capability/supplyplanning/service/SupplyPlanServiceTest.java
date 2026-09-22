@@ -350,7 +350,8 @@ public class SupplyPlanServiceTest {
 
         // PERFIL DE EXECUÇÃO SUPPLY PLANNING
         jdbcTemplate.update(
-            "INSERT INTO perfil_execucao_supply_plan (id,modo_execucao,salva_inventory_plan) VALUES ('Perfil Heuristico','0','1');");
+            "INSERT INTO perfil_calendario (id,tipo_perfil_calendario,tamanho_bucket_base,numero_periodos_bucket_base) VALUES ('CALENDARIO_MENSAL_TESTE','SIMPLES','MENSAL','12');\n" +
+            "INSERT INTO perfil_execucao_supply_plan (id,modo_execucao,salva_inventory_plan,perfil_calendario_id) VALUES ('Perfil Heuristico','0','1','CALENDARIO_MENSAL_TESTE');");
         
         // POLITICA OPERACIONAL DE ESTOQUES / SAFETY STOCK
         jdbcTemplate.update(
