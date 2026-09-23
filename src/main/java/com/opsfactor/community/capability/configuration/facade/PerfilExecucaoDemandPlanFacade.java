@@ -327,6 +327,8 @@ public class PerfilExecucaoDemandPlanFacade {
      */
     private void validaConfiguracoesEnterpriseCommunity(PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO) {
 
+        validaParametroEnterpriseCommunity(perfilExecucaoDemandPlanDTO.ignoreCircularProductSuccessions,
+                "Demand Planning circular product succession policy");
         if (Boolean.TRUE.equals(perfilExecucaoDemandPlanDTO.constrainPlanEditPeriods)) {
             throw new RequiresEnterpriseVersionException("Demand Planning fixed edit horizon");
         }

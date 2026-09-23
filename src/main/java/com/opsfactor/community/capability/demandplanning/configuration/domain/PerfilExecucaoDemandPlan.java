@@ -41,6 +41,13 @@ public class PerfilExecucaoDemandPlan {
     @Enumerated(EnumType.ORDINAL)
     private Constantes.TipoDocumentoVenda tipoDocumentoVenda;
 
+    /**
+     * Ignora vínculos circulares de sucessão no cálculo de demanda.
+     * Null representa true para perfis novos e bases anteriores ao parâmetro.
+     * No modelo compartilhado, a configuração é consumida apenas pelo Enterprise.
+     */
+    private Boolean ignorarSucessoesProdutoCirculares;
+
     private Boolean restringePeriodosEdicaoPlano;
     private @Nullable Integer periodoInicialEdicaoPlano;
     private @Nullable Integer periodoFinalEdicaoPlano;
@@ -83,6 +90,13 @@ public class PerfilExecucaoDemandPlan {
 
     public Constantes.TipoDocumentoVenda getTipoDocumentoVenda(ParametrosGlobais parametrosGlobais) {
         return (tipoDocumentoVenda == null) ? parametrosGlobais.getTipoDocumentoVenda() : tipoDocumentoVenda;
+    }
+
+    /** Default funcional explícito; false preserva a rejeição de circularidades. */
+    public boolean getIgnorarSucessoesProdutoCirculares() {
+
+        return !Boolean.FALSE.equals(ignorarSucessoesProdutoCirculares);
+
     }
 
     public boolean getRestringePeriodosEdicaoPlano() {

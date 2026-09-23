@@ -408,14 +408,18 @@ public class ParametrosDemandPlanningProjectionFactory {
         parametrosForecastProjection.setNivelAgregacaoLocationMapeId(
                 perfilExecucaoDemandPlan.getNivelAgregacaoLocationMapeId());
 
+        ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection =
+                new ParametrosGeraisDemandPlanningProjection(
+                        parametrosDemandPlanNivelCluster, parametrosGlobais, false);
+        // Snapshot the profile once: Enterprise history and AutoFit receive these parameters.
+        parametrosGeraisDemandPlanningProjection.setIgnorarSucessoesProdutoCirculares(
+                perfilExecucaoDemandPlan.getIgnorarSucessoesProdutoCirculares());
+
         return new ParametrosDemandPlanNivelClusterProjectionSimples(
                 perfilExecucaoDemandPlan,
                 clusterLocations,
                 clusterMateriaisDemandPlanning,
-                new ParametrosGeraisDemandPlanningProjection(
-                        parametrosDemandPlanNivelCluster,
-                        parametrosGlobais,
-                        false),
+                parametrosGeraisDemandPlanningProjection,
                 parametrosForecastProjection);
 
     }

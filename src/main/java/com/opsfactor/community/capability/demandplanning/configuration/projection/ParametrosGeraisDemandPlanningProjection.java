@@ -15,6 +15,16 @@ public class ParametrosGeraisDemandPlanningProjection {
 
     public boolean executaPlanoDemanda;
 
+    /** Carries the execution-profile policy for Enterprise succession without enabling it in Community. */
+    private Boolean ignorarSucessoesProdutoCirculares;
+
+    /** Unset snapshots preserve the profile default: ignore only circular relations. */
+    public boolean getIgnorarSucessoesProdutoCirculares() {
+
+        return ignorarSucessoesProdutoCirculares == null || ignorarSucessoesProdutoCirculares;
+
+    }
+
     public UnidadeMedida unidadeMedidaDP;
     public boolean arredondaParaUnidadeVenda;
 

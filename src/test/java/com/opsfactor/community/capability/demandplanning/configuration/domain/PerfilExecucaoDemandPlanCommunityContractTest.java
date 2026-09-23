@@ -17,6 +17,20 @@ import java.time.LocalDateTime;
 public class PerfilExecucaoDemandPlanCommunityContractTest {
 
     @Test
+    void circularSuccessionPolicyDefaultsTrueForNewAndLegacyNullProfiles() {
+
+        PerfilExecucaoDemandPlan profile = new PerfilExecucaoDemandPlan("POLICY");
+        Assertions.assertTrue(profile.getIgnorarSucessoesProdutoCirculares());
+        profile.setIgnorarSucessoesProdutoCirculares(false);
+        Assertions.assertFalse(profile.getIgnorarSucessoesProdutoCirculares());
+        profile.setIgnorarSucessoesProdutoCirculares(true);
+        Assertions.assertTrue(profile.getIgnorarSucessoesProdutoCirculares());
+        profile.setIgnorarSucessoesProdutoCirculares(null);
+        Assertions.assertTrue(profile.getIgnorarSucessoesProdutoCirculares());
+
+    }
+
+    @Test
     public void planningHorizonShouldDefaultToOnePeriodWhenUnset() {
 
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan =

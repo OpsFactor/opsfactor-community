@@ -81,6 +81,8 @@ public class PerfilExecucaoDemandPlanAutoMapperCommunityTest {
 
     private static void assertEnterpriseFieldsHidden(PerfilExecucaoDemandPlanDTO perfilExecucaoDemandPlanDTO) {
 
+        Assertions.assertNull(perfilExecucaoDemandPlanDTO.ignoreCircularProductSuccessions);
+
         Assertions.assertNull(perfilExecucaoDemandPlanDTO.mapeMaterialAggregationLevelId);
         Assertions.assertNull(perfilExecucaoDemandPlanDTO.mapeLocationAggregationLevelId);
         Assertions.assertNull(perfilExecucaoDemandPlanDTO.defaultAutoTunedDemandPlanConfigurationId);

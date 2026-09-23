@@ -60,6 +60,12 @@ public class PerfilExecucaoDemandPlanDTO {
     public Boolean constrainPlanEditPeriods;
 
     /**
+     * Ignora sucessões circulares na execução (default true). Omissão preserva
+     * a configuração existente. Capability de sucessão disponível no legado/Enterprise.
+     */
+    public Boolean ignoreCircularProductSuccessions;
+
+    /**
      * Primeiro periodo relativo editavel quando a janela de edicao esta ativa.
      */
     public @Nullable Integer initialPlanEditPeriod;

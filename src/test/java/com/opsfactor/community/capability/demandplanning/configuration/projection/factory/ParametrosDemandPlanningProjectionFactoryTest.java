@@ -29,6 +29,28 @@ import java.util.List;
 public class ParametrosDemandPlanningProjectionFactoryTest {
 
     @Test
+    public void circularSuccessionPolicyIsCopiedToGeneralSnapshotIncludingExplicitFalse() throws Exception {
+
+        ClusterLocations locations = getClusterLocations(10L);
+        ClusterMateriais materials = getClusterMateriaisDemandPlanning(20L);
+        var factory = getParametrosDemandPlanningProjectionFactory(
+                getClusterEParametrosProjection(List.of(locations), List.of(materials)), List.of());
+        PerfilExecucaoDemandPlan profile = new PerfilExecucaoDemandPlan("DP_POLICY");
+        var defaults = factory.getParametrosDemandPlanProjection(profile)
+                .getParametrosDemandPlanNivelClusterProjection(locations, materials)
+                .getParametrosGeraisDemandPlanningProjection();
+        Assertions.assertTrue(defaults.getIgnorarSucessoesProdutoCirculares());
+        profile.setIgnorarSucessoesProdutoCirculares(false);
+        var strict = factory.getParametrosDemandPlanProjection(profile)
+                .getParametrosDemandPlanNivelClusterProjection(locations, materials)
+                .getParametrosGeraisDemandPlanningProjection();
+        Assertions.assertFalse(strict.getIgnorarSucessoesProdutoCirculares());
+        Assertions.assertTrue(defaults.getIgnorarSucessoesProdutoCirculares(),
+                "The previous calculation snapshot must retain its own policy.");
+
+    }
+
+    @Test
     public void getParametrosDemandPlanProjectionShouldCreateDefaultProjectionWhenRepositoryIsEmpty() throws Exception {
 
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = new PerfilExecucaoDemandPlan("DP_PROFILE");

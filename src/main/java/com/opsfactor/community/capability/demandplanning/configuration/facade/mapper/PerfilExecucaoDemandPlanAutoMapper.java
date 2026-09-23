@@ -27,6 +27,7 @@ public interface PerfilExecucaoDemandPlanAutoMapper {
     @Mapping(source = "perfilExecucaoDemandPlan.perfilCalendario.id", target = "calendarProfileId")
     @Mapping(source = "perfilExecucaoDemandPlan.tamanhoBucket", target = "bucketSize")
     @Mapping(source = "perfilExecucaoDemandPlan.numeroPeriodosHorizontePlanejamento", target = "planningHorizonInPeriods")
+    @Mapping(target = "ignoreCircularProductSuccessions", ignore = true)
     @Mapping(expression = "java(false)", target = "constrainPlanEditPeriods")
     @Mapping(target = "initialPlanEditPeriod", ignore = true)
     @Mapping(target = "finalPlanEditPeriod", ignore = true)
