@@ -54,6 +54,10 @@ public class HeuristicoService {
     @Autowired
     private NivelamentoCapacidadePlanoIrrestritoHeuristicoService nivelamentoCapacidadePlanoIrrestritoHeuristicoService;
 
+    /** Fecha transferências, consumo de insumos e atendimento após o nivelamento. */
+    @Autowired
+    private ReconciliacaoFisicaPlanoRestritoHeuristicoService reconciliacaoFisicaPlanoRestritoHeuristicoService;
+
     /**
      * Constrói uma fotografia única por rodada para que LLC/location usem
      * views locais, em vez de repetir consultas de linhas persistidas.
@@ -158,9 +162,9 @@ public class HeuristicoService {
                         supplyPlanningBiProjection);
 
         /*
-         * O irrestrito parte da solução restrita e preserva a demanda original.
-         * Uma única passada LLC, sem capacidade, joga somente o residual nas
-         * origens primárias e propaga seus insumos até a compra.
+         * O irrestrito precisa nascer antes de reduzir a demanda atendida no
+         * restrito. Assim, a passada LLC sem capacidade ainda enxerga a
+         * necessidade completa e materializa o residual nas origens primarias.
          */
         supplyPlanningBiProjection.atualizaPlanoIrrestritoComPlanoRestritoSemSobrescreverDemanda();
         executaPlanoPorLowLevelCode(
@@ -174,6 +178,27 @@ public class HeuristicoService {
                 supplyPlanningBiProjection,
                 Constantes.TipoPlano.PLANO_IRRESTRITO,
                 true);
+
+        /*
+         * O nivelamento limita a producao, mas demanda e transferencias do
+         * restrito ainda representam a necessidade completa. A reconciliacao
+         * fisica reduz apenas o restrito; preserva o irrestrito ja calculado
+         * para a comparacao de cenarios.
+         */
+        reconciliacaoFisicaPlanoRestritoHeuristicoService.reconcilia(
+                supplyPlan,
+                perfilExecucaoSupplyPlan,
+                supplyNetworkProjection,
+                lowLevelCode,
+                supplyPlanningBiProjection);
+        nivelamentoCapacidadePlanoIrrestritoHeuristicoService.atualizaEstoquesDoPlano(
+                perfilExecucaoSupplyPlan,
+                supplyPlanningBiProjection,
+                Constantes.TipoPlano.PLANO_RESTRITO);
+        nivelamentoCapacidadePlanoIrrestritoHeuristicoService
+                .reconciliaComprasPlanejadasDeFornecedoresComPlanoRestrito(
+                        perfilExecucaoSupplyPlan,
+                        supplyPlanningBiProjection);
         salvaCheckpointSupplyPlanningBiProjection(supplyPlanningBiProjection, true);
 
         // atualiza o plano de trabalho (working plan)

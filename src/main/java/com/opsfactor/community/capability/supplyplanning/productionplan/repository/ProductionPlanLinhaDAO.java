@@ -16,7 +16,7 @@ import java.util.Collection;
 /**
  * Persiste o snapshot de producao do Supply Plan em batch JDBC.
  *
- * <p>A entidade possui uma chave composta formada por seis dimensoes JPA. O
+ * <p>A entidade possui uma chave composta formada por sete dimensoes JPA. O
  * {@code saveAll} trata essas linhas como entidades destacadas e executa
  * {@code merge} individual, carregando todo o grafo associado antes de cada
  * escrita. Alem de multiplicar round-trips, esse select ultrapassa o limite de
@@ -64,7 +64,8 @@ public class ProductionPlanLinhaDAO {
     }
 
     /**
-     * Remove em lote as linhas zeradas calculadas no checkpoint atual.
+     * Remove em lote as linhas zeradas calculadas no checkpoint atual, sem
+     * remover outros outputs da mesma versão de produção no mesmo período.
      */
     public void deleteInBatch(Collection<ProductionPlanLinha> productionPlanLinhas) {
 
@@ -82,6 +83,7 @@ public class ProductionPlanLinhaDAO {
                   AND roteiro_id = ?
                   AND supply_plan_id = ?
                   AND versao_producao_id = ?
+                  AND material_output_id = ?
                 """,
                 productionPlanLinhas,
                 batchSize,
@@ -163,7 +165,9 @@ public class ProductionPlanLinhaDAO {
     }
 
     /**
-     * Monta o upsert PostgreSQL da fotografia de produção.
+     * Monta o upsert PostgreSQL da fotografia de produção. A chave inclui o
+     * output para preservar coprodutos da mesma versão, local e período;
+     * apenas medidas e unidade de medida podem mudar em um conflito.
      */
     private String getSqlUpsertProductionPlanLinhaPostgreSql() {
 
@@ -174,7 +178,8 @@ public class ProductionPlanLinhaDAO {
                     location_id,
                     roteiro_id,
                     supply_plan_id,
-                    versao_producao_id
+                    versao_producao_id,
+                    material_output_id
                 ) DO UPDATE SET
                     quantidade_ordem_firme_producao_irrestrita = excluded.quantidade_ordem_firme_producao_irrestrita,
                     quantidade_ordem_firme_producao_restrita = excluded.quantidade_ordem_firme_producao_restrita,
@@ -186,7 +191,6 @@ public class ProductionPlanLinhaDAO {
                     quantidade_ordem_producao_baseline_atendida = NULL,
                     quantidade_sugestao_producao_baseline = NULL,
                     quantidade_sugestao_producao_baseline_atendida = NULL,
-                    material_output_id = excluded.material_output_id,
                     unidade_medida_id = excluded.unidade_medida_id
                 """;
 
@@ -266,6 +270,7 @@ public class ProductionPlanLinhaDAO {
         preparedStatement.setObject(4, productionPlanLinha.getRoteiro().getId(), Types.VARCHAR);
         preparedStatement.setObject(5, productionPlanLinha.getSupplyPlan().getId(), Types.BIGINT);
         preparedStatement.setObject(6, productionPlanLinha.getVersaoProducao().getId(), Types.VARCHAR);
+        preparedStatement.setObject(7, productionPlanLinha.getMaterialOutput().getId(), Types.VARCHAR);
 
     }
 }

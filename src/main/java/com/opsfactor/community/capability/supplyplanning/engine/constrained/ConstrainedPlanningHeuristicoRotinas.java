@@ -207,7 +207,7 @@ public class ConstrainedPlanningHeuristicoRotinas {
                                     Constantes.FirmePlanejado.PLANEJADO,
                                     Constantes.TipoPlano.PLANO_RESTRITO),
                             (x, valorAtualizacao) -> x.setQuantidade(
-                                    valorAtualizacao,
+                                    limitaResiduoNumericoNegativo(valorAtualizacao),
                                     Constantes.FirmePlanejado.PLANEJADO,
                                     Constantes.TipoPlano.PLANO_RESTRITO));
                     MetodosUtilidade.modificaValorProporcional(
@@ -217,7 +217,7 @@ public class ConstrainedPlanningHeuristicoRotinas {
                                     Constantes.FirmePlanejado.ORDEM,
                                     Constantes.TipoPlano.PLANO_RESTRITO),
                             (x, valorAtualizacao) -> x.setQuantidade(
-                                    valorAtualizacao,
+                                    limitaResiduoNumericoNegativo(valorAtualizacao),
                                     Constantes.FirmePlanejado.ORDEM,
                                     Constantes.TipoPlano.PLANO_RESTRITO));
                     
@@ -251,7 +251,7 @@ public class ConstrainedPlanningHeuristicoRotinas {
                                     Constantes.FirmePlanejado.PLANEJADO,
                                     Constantes.TipoPlano.PLANO_RESTRITO),
                             (x, valorAtualizacao) -> x.setQuantidade(
-                                    valorAtualizacao,
+                                    limitaResiduoNumericoNegativo(valorAtualizacao),
                                     Constantes.FirmePlanejado.PLANEJADO,
                                     Constantes.TipoPlano.PLANO_RESTRITO));
 
@@ -289,13 +289,13 @@ public class ConstrainedPlanningHeuristicoRotinas {
                             distributionPlanItemsOutboundMalhaInterna, // aplica a modificação em múltiplos distribution plan linha
                             funcaoReferenciaRequisicoesInternas,
                             x -> x.getQuantidade(Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO),
-                            (x, valorAtualizacao) -> x.setQuantidade(valorAtualizacao, Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO));
+                            (x, valorAtualizacao) -> x.setQuantidade(limitaResiduoNumericoNegativo(valorAtualizacao), Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO));
                     MetodosUtilidade.modificaValorProporcional(
                             -modificacaoParcelaOrdensFirmesTransferenciaOutboundAtendimentoDemandaDireta,
                             distributionPlanItemsOutboundMalhaInterna, // aplica a modificação em múltiplos distribution plan linha
                             funcaoReferenciaPedidosInternos,
                             x -> x.getQuantidade(Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO),
-                            (x, valorAtualizacao) -> x.setQuantidade(valorAtualizacao, Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO));
+                            (x, valorAtualizacao) -> x.setQuantidade(limitaResiduoNumericoNegativo(valorAtualizacao), Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO));
                     MetodosUtilidade.modificaValorProporcional(
                             -modificacaoOrdensFirmesOutboundAtendimentoClientes,
                             distributionPlanItemsOutboundClientesFinais, // aplica a modificação em múltiplos distribution plan linha
@@ -420,10 +420,92 @@ public class ConstrainedPlanningHeuristicoRotinas {
                     }
                 }
             }
+            reconciliaDemandaDiretaComSaldoFisico(
+                    supplyPlanningProjection,
+                    posicaoPeriodo,
+                    material,
+                    unidadeMedidaPadrao);
             SupplyPlanning.atualizaEstoqueProjetadoSemLimitarAZero(
                     supplyPlanningProjection, posicaoPeriodo, material, Constantes.TipoPlano.PLANO_RESTRITO);
         }
         return houveRestricaoPlano;
+    }
+
+    /** Conserva a validação estrita para falta real e remove apenas erro de ponto flutuante. */
+    private static double limitaResiduoNumericoNegativo(double quantidade) {
+
+        if (quantidade < 0 && quantidade >= -0.000000001) {
+            return 0;
+        }
+        return quantidade;
+
+    }
+
+    /**
+     * Reduz a demanda direta restrita que ainda excede o suprimento físico após
+     * restringir os outbounds. A demanda irrestrita continua representando a
+     * necessidade original; somente o segmento atendido é modificado.
+     *
+     * <p>O cálculo do saldo deve ser feito antes do limite visual de estoque a
+     * zero. A linha da demanda pode usar outra unidade de medida, então a
+     * redução é convertida de volta para a unidade em que ela foi gravada.</p>
+     */
+    static void reconciliaDemandaDiretaComSaldoFisico(
+            SupplyPlanningProjection supplyPlanningProjection,
+            int posicaoPeriodo,
+            Produto material,
+            UnidadeMedida unidadeMedidaPadrao) {
+
+        double saldoFisico = SupplyPlanning.getEstoqueProjetado(
+                supplyPlanningProjection,
+                posicaoPeriodo - 1,
+                posicaoPeriodo,
+                material,
+                Constantes.TipoPlano.PLANO_RESTRITO,
+                unidadeMedidaPadrao,
+                true, true, false, true);
+        if (saldoFisico >= -0.000000001) {
+            return;
+        }
+
+        DemandaDiretaConsideradaLinha demandaDiretaConsideradaLinha = supplyPlanningProjection
+                .getDemandaDiretaConsideradaProjection()
+                .getDemandaDiretaConsideradaLinha(
+                        supplyPlanningProjection.getLocation(), material, posicaoPeriodo)
+                .orElse(null);
+        if (demandaDiretaConsideradaLinha == null) {
+            return;
+        }
+
+        UnidadeMedidaProjection unidadeMedidaProjection =
+                supplyPlanningProjection.getConversaoUnidadeMedidaProjection();
+        UnidadeMedida unidadeMedidaLinha = demandaDiretaConsideradaLinha.getUnidadeMedida(
+                unidadeMedidaProjection.getParametrosGlobais());
+        double fatorParaUnidadePadrao = unidadeMedidaProjection.getConversaoParaUnidadeDestino(
+                material,
+                unidadeMedidaLinha,
+                unidadeMedidaPadrao);
+        if (!Double.isFinite(fatorParaUnidadePadrao) || fatorParaUnidadePadrao <= 0) {
+            throw new IllegalStateException("Invalid direct demand unit conversion for material "
+                    + material.getId() + ".");
+        }
+
+        double faltaNaUnidadeDaLinha = -saldoFisico / fatorParaUnidadePadrao;
+        double planoDemandaRestrito = demandaDiretaConsideradaLinha
+                .getQuantidadeDemandaDiretaPlanoDemandaRestrita();
+        double reducaoPlanoDemanda = Math.min(planoDemandaRestrito, faltaNaUnidadeDaLinha);
+        demandaDiretaConsideradaLinha.setQuantidadeDemandaDiretaPlanoDemandaRestrita(
+                planoDemandaRestrito - reducaoPlanoDemanda);
+        faltaNaUnidadeDaLinha -= reducaoPlanoDemanda;
+
+        if (faltaNaUnidadeDaLinha > 0) {
+            double carteiraRestrita = demandaDiretaConsideradaLinha
+                    .getQuantidadeDemandaDiretaCarteiraRestrita();
+            double reducaoCarteira = Math.min(carteiraRestrita, faltaNaUnidadeDaLinha);
+            demandaDiretaConsideradaLinha.setQuantidadeDemandaDiretaCarteiraRestrita(
+                    carteiraRestrita - reducaoCarteira);
+        }
+
     }
 
     /**
