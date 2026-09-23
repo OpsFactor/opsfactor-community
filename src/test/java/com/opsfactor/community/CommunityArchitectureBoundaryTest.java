@@ -920,6 +920,7 @@ class CommunityArchitectureBoundaryTest {
             "planning/supply/heuristic/ConstrainedPlanService.java",
             "planning/supply/heuristic/HeuristicoService.java",
             "planning/supply/heuristic/NivelamentoCapacidadePlanoIrrestritoHeuristicoService.java",
+            "planning/supply/heuristic/ReconciliacaoFisicaPlanoRestritoHeuristicoService.java",
             "planning/supply/persistence/CapacidadeEfetivaSupplyPlanService.java",
             "planning/supply/persistence/SupplyPlanningModificacoesService.java",
             "planning/supply/SupplyPlanService.java",
