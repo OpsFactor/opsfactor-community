@@ -76,13 +76,26 @@ public class SafetyStockProjection {
      * continuar sendo declarada para fins de debug estrutural do modelo.
      */
     public boolean deveDeclararGapEstoqueSeguranca(int periodo, Produto material) {
-        if (!verificaSeHaPoliticaEstoquesMaterialLocationCadastrada()) {
+
+        return deveDeclararGapEstoqueSeguranca(politicaEstoquesProjection, location, periodo, material);
+
+    }
+
+    /**
+     * Gate estrutural compartilhado com a pré-validação antes da etapa de safety stock.
+     * Consulta somente a política cadastrada e não inventa target físico resolvido.
+     */
+    public static boolean deveDeclararGapEstoqueSeguranca(
+            PoliticaEstoquesProjection politicaEstoquesProjection, Location location, int periodo, Produto material) {
+
+        if (politicaEstoquesProjection == null
+                || !politicaEstoquesProjection.verificaSeHaPoliticaEstoquesMaterialLocationCadastrada()) {
             return false;
         }
-
         return politicaEstoquesProjection.getSNPModeloOperacional(periodo, material, location)
                 .equals(Constantes.SNPModeloOperacional.MTS)
                 && politicaEstoquesProjection.getSNPEstoqueSegurancaDrpOuTargetKanban(periodo, material, location) > 0.0d;
+
     }
 
     /**

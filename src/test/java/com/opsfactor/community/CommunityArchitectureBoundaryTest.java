@@ -1491,6 +1491,8 @@ class CommunityArchitectureBoundaryTest {
     );
 
     private static final List<String> COMMUNITY_ALLOWED_OPTIONAL_AUTOWIRED_FIELD_KEYS = List.of(
+            // Read-only edition diagnostics: the SPI keeps private economic sources outside Community.
+            "src/main/java/com/opsfactor/community/capability/masterdata/measurement/unitofmeasure/facade/UnidadeMedidaFacade.java#supplyConversionDiagnosticContributors",
             "src/main/java/com/opsfactor/community/capability/supplyplanning/service/SupplyPlanService.java#supplyPlanOptimizationService",
             "src/main/java/com/opsfactor/community/capability/supplyplanning/service/SupplyPlanService.java#supplyPlanProcessChainService",
             "src/main/java/com/opsfactor/community/capability/supplyplanning/service/SupplyPlanService.java#supplyPlanPresetConstraintGroupSpi",

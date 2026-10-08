@@ -187,6 +187,11 @@ public class UnidadeMedidaProjection {
     public OptionalDouble getOptionalConversaoParaUnidadeDestino(Produto material, UnidadeMedida unidadeMedidaOrigem,
             UnidadeMedida unidadeMedidaTarget) {
         
+        if (material == null || unidadeMedidaOrigem == null || unidadeMedidaTarget == null) {
+            throw new UnitOfMeasureConversionException(
+                    "Material and origin/target UOM are required for unit conversion.",
+                    material, unidadeMedidaOrigem, unidadeMedidaTarget);
+        }
         String idUnidadeMedidaOrigem = unidadeMedidaOrigem.getId();
         String idUnidadeMedidaTarget = unidadeMedidaTarget.getId();
         
@@ -297,7 +302,7 @@ public class UnidadeMedidaProjection {
             UnidadeMedida unidadeMedidaTarget) {
         
         OptionalDouble conversao = getOptionalConversaoParaUnidadeDestino(material, unidadeMedidaOrigem, unidadeMedidaTarget);
-        if (!conversao.isPresent()) throw new UnitOfMeasureConversionException("No conversion available from " + unidadeMedidaOrigem.getId() + " to " + unidadeMedidaTarget.getId() + " for material " + material.getId());
+        if (!conversao.isPresent()) throw new UnitOfMeasureConversionException("No conversion available from " + unidadeMedidaOrigem.getId() + " to " + unidadeMedidaTarget.getId() + " for material " + material.getId(), material, unidadeMedidaOrigem, unidadeMedidaTarget);
 
         return conversao.getAsDouble();
         
@@ -437,7 +442,7 @@ public class UnidadeMedidaProjection {
             UnidadeMedida unidadeMedidaTarget) {
 
         OptionalDouble conversao = getOptionalConversaoPadraoParaUnidadeDestino(unidadeMedidaOrigem, unidadeMedidaTarget);
-        if (!conversao.isPresent()) throw new UnitOfMeasureConversionException("No default conversion available from " + unidadeMedidaOrigem.getId() + " to " + unidadeMedidaTarget.getId());
+        if (!conversao.isPresent()) throw new UnitOfMeasureConversionException("No default conversion available from " + unidadeMedidaOrigem.getId() + " to " + unidadeMedidaTarget.getId(), null, unidadeMedidaOrigem, unidadeMedidaTarget);
 
         return conversao.getAsDouble();
 

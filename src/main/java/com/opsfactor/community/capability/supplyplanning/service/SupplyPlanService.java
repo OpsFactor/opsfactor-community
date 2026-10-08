@@ -3202,6 +3202,37 @@ public class SupplyPlanService {
             SupplyNetworkProjection supplyNetworkProjection,
             UnidadeMedidaProjection unidadeMedidaProjection) {
 
+        if (supplyPlan != null && supplyPlan.getId() == null) {
+            throw new IllegalArgumentException(
+                    "Supply Plan id is required for Community direct demand considered update.");
+        }
+        DemandaDiretaConsideradaProjection demandaDiretaConsideradaProjection =
+                preparaDemandaDiretaConsiderada(
+                        supplyPlan, perfilExecucaoSupplyPlan, demandPlanningProjection,
+                        splitTemporalProjectionPorDfu, politicaEstoquesProjection,
+                        supplyNetworkProjection, unidadeMedidaProjection);
+        // A persistência continua atravessando o hook da edição em uma única escrita batch.
+        saveDemandaDiretaConsideradaLinhaCollection(
+                demandaDiretaConsideradaProjection.getAllDemandaDiretaConsideradaLinha(), false);
+
+    }
+
+    /**
+     * Prepara a demanda direta em memória pelo mesmo caminho da execução, sem escrita.
+     *
+     * <p>O header pode ser transitório no diagnóstico. Calendário, propagação, split,
+     * lead time, recorte de materiais e hook das key figures continuam pertencendo
+     * ao fluxo canônico. O chamador que persiste exige o ID antes desta montagem.</p>
+     */
+    public DemandaDiretaConsideradaProjection preparaDemandaDiretaConsiderada(
+            SupplyPlan supplyPlan,
+            PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
+            DemandPlanningProjection demandPlanningProjection,
+            SplitTemporalProjectionPorDfu splitTemporalProjectionPorDfu,
+            PoliticaEstoquesProjection politicaEstoquesProjection, // usado para tratar modelo de majoração considerando MTS/MTO (cadastro da política)
+            SupplyNetworkProjection supplyNetworkProjection,
+            UnidadeMedidaProjection unidadeMedidaProjection) {
+
         ClusterEParametrosProjection clusterEParametrosProjection =
                 validaEntradasDemandaDiretaConsideradaCommunity(
                         supplyPlan,
@@ -3353,15 +3384,7 @@ public class SupplyPlanService {
         // ATUALIZA A DEMANDA DIRETA CONSIDERADA (APENAS DEMAND PLAN) PARA A PROJEÇÃO DE ESTOQUES E PARA O CÁLCULO DO SAFETY STOCK
         demandaDiretaConsideradaProjection.atualizaPlanoIrrestritoCommunityComDemandPlan(politicaEstoquesProjection, perfilExecucaoSupplyPlan);
 
-        /*
-         * A projection recem-montada tambem passa pela mesma borda final usada
-         * pelos demais saves de demanda direta considerada. Isso evita que o
-         * caminho principal Demand Plan -> Supply Plan contorne a neutralizacao
-         * de carteira/valores Enterprise ou a validacao de snapshot quebrado.
-         */
-        saveDemandaDiretaConsideradaLinhaCollection(
-                demandaDiretaConsideradaProjection.getAllDemandaDiretaConsideradaLinha(),
-                false);
+        return demandaDiretaConsideradaProjection;
 
     }
 
@@ -3387,10 +3410,6 @@ public class SupplyPlanService {
         if (supplyPlan == null) {
             throw new IllegalArgumentException(
                     "Supply Plan is required for Community direct demand considered update.");
-        }
-        if (supplyPlan.getId() == null) {
-            throw new IllegalArgumentException(
-                    "Supply Plan id is required for Community direct demand considered update.");
         }
         if (perfilExecucaoSupplyPlan == null) {
             throw new IllegalStateException(

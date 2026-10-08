@@ -1,6 +1,8 @@
 package com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade;
 
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade.dto.ConversaoUnidadeMedidaDTO;
+import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade.spi.SupplyConversionDiagnosticContext;
+import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade.spi.SupplyConversionDiagnosticContributor;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
@@ -39,7 +41,6 @@ import com.opsfactor.community.capability.supplyplanning.supplyplan.repository.S
 import com.opsfactor.community.capability.configuration.service.ParametrosGlobaisService;
 import com.opsfactor.community.capability.masterdata.product.material.service.MaterialService;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.service.UnidadeMedidaService;
-import com.opsfactor.community.capability.supplyplanning.engine.SupplyPlanning;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade.dto.UnidadeConversaoFaltanteDTO;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade.dto.UnidadeConversaoFaltanteDTO.NecessidadeConversao;
 import com.opsfactor.community.platform.calendar.Calendario;
@@ -58,6 +59,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -171,6 +173,10 @@ public class UnidadeMedidaFacade {
     @Autowired
     private PerfilExecucaoSupplyPlanRepository perfilExecucaoSupplyPlanRepository;
 
+    /** Optional edition contributors reuse the quantitative snapshots without changing their scope. */
+    @Autowired(required = false)
+    private List<SupplyConversionDiagnosticContributor> supplyConversionDiagnosticContributors = List.of();
+
     /**
      * Retorna conversões faltantes que serão necessárias para a execução do SNP
      * Por ora considera apenas gaps relativos a dados mestres, sem considerar
@@ -196,7 +202,10 @@ public class UnidadeMedidaFacade {
         UnidadeMedidaProjection unidadeMedidaProjection = unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
         ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
         
-        Calendario calendarioSNP = SupplyPlanning.getCalendarioDeDataReferencia(dataReferenciaSNP, tamanhoBucket, perfilExecucaoSupplyPlan, parametrosGlobais);
+        // The request bucket parses the reference only; the profile owns the complete planning calendar.
+        Calendario calendarioSNP = Objects.requireNonNull(
+                perfilExecucaoSupplyPlan.getPerfilCalendario(), "Supply execution profile requires a calendar")
+                .criarCalendario(dataReferenciaSNP);
         
         SupplyNetworkProjection supplyNetworkProjection = supplyNetworkProjectionFactory.getSupplyNetworkProjectionCompletoDeCache();
         
@@ -317,7 +326,7 @@ public class UnidadeMedidaFacade {
                 
                 // DEMANDA DIRETA (DP) : tenta converter cada linha do plano de demanda para unid. padrao SNP
                 Calendario calendario = demandPlanningProjection.getCalendario();
-                for (int i = calendario.getPosicaoPeriodoPresente(); i< calendario.getPosicaoPeriodoFinalFuturo(); i++) {
+                for (int i = calendario.getPosicaoPeriodoPresente(); i <= calendario.getPosicaoPeriodoFinalFuturo(); i++) {
                 
                     DemandPlanItem demandPlanItem = demandPlanningProjection.getDemandPlanItem(location, material, i);
                     if (demandPlanItem != null) {
@@ -325,7 +334,7 @@ public class UnidadeMedidaFacade {
                         if (!unidadeMedidaProjection.contemConversaoParaUnidadeDestino(
                                 material, demandPlanItem.getUnidadeMedida(parametrosGlobais), unidadeMedidaPadrao)) {
                             unidadeConversaoFaltanteDTOSet.add(UnidadeConversaoFaltanteDTO.builder()
-                                    .locationId((clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null) ? location.getId() : null)
+                                    .locationId(location.getId())
                                     .materialId(material.getId())
                                     .originTask(Constantes.TaskTipo.DP)
                                     .originConversionRequirementType(NecessidadeConversao.PLANO_DEMANDA)
@@ -441,6 +450,15 @@ public class UnidadeMedidaFacade {
          * Por isso, conversoes faltantes desses objetos Enterprise nao entram no
          * relatorio Community.
          */
+
+        // Community has no private economic sources. Installed edition contributors
+        // add their diagnostics here, and any unexpected failure remains explicit.
+        SupplyConversionDiagnosticContext context = new SupplyConversionDiagnosticContext(
+                versaoMalha, perfilExecucaoSupplyPlan, calendarioSNP, demandPlanningProjection,
+                supplyNetworkProjection, clusterEParametrosProjection, unidadeMedidaProjection);
+        for (SupplyConversionDiagnosticContributor contributor : supplyConversionDiagnosticContributors) {
+            unidadeConversaoFaltanteDTOSet.addAll(contributor.findGaps(context));
+        }
 
         return unidadeConversaoFaltanteDTOSet;
     }
