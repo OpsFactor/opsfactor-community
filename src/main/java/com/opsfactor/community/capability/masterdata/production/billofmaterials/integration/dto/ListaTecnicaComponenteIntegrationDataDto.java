@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.production.billofmaterials.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,13 +30,17 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ListaTecnicaComponenteIntegrationDataDto extends IntegrationDataDtoAbstract<ListaTecnicaComponenteIntegrationDataDto, ListaTecnicaComponenteIntegrationDataDto.ListaTecnicaComponentePrimaryKeyIntegrationDTO, ListaTecnicaComponente> {
 
+    @IntegrationFileColumn(2)
     public String componentMaterialQuantityUomId;
+    @IntegrationFileColumn(3)
     public Double componentMaterialQuantity;
 
     @EqualsAndHashCode
     public static class ListaTecnicaComponentePrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<ListaTecnicaComponentePrimaryKeyIntegrationDTO, ListaTecnicaComponente> {
 
+        @IntegrationFileColumn(0)
         public String bomId;
+        @IntegrationFileColumn(1)
         public String componentMaterialId;
 
         @JsonCreator

@@ -7,9 +7,7 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.domai
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.LinhaTransporte.LinhaTransporteCompositeKey;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
-import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.springframework.stereotype.Component;
 
@@ -103,20 +101,11 @@ public class LinhaTransporteIntegrationMapper implements IntegrationMapperInterf
             LinhaTransporteIntegrationDataDto.LinhaTransportePrimaryKeyIntegrationDTO dto,
             LinhaTransporteIntegrationSupportData supportData) {
         
-        VersaoMalha versaoMalha = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(supportData.mapaVersaoMalhaPorId, 
-                dto.supplyNetworkVersionId, 
-                false, 
-                new MissingDependencyDataUploadException("Supply Network Version " + dto.supplyNetworkVersionId + " not found", dto));
+        VersaoMalha versaoMalha = resolveReference(supportData.mapaVersaoMalhaPorId, dto, "supplyNetworkVersionId", false);
         
-        Location locationOrigem = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(supportData.mapaLocationOrigemPorId, 
-                dto.originLocationId, 
-                false, 
-                new MissingDependencyDataUploadException("Origin Location " + dto.originLocationId + " not found", dto));
+        Location locationOrigem = resolveReference(supportData.mapaLocationOrigemPorId, dto, "originLocationId", false);
         
-        Location locationDestino = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(supportData.mapaLocationDestinoPorId, 
-                dto.destinationLocationId, 
-                false, 
-                new MissingDependencyDataUploadException("Destination Location " + dto.destinationLocationId + " not found", dto));
+        Location locationDestino = resolveReference(supportData.mapaLocationDestinoPorId, dto, "destinationLocationId", false);
         
         LinhaTransporteCompositeKey linhaTransporteCompositeKey = new LinhaTransporte.LinhaTransporteCompositeKey(versaoMalha, locationOrigem, locationDestino);
         LinhaTransporte linhaTransporte = new LinhaTransporte(linhaTransporteCompositeKey);
@@ -155,10 +144,7 @@ public class LinhaTransporteIntegrationMapper implements IntegrationMapperInterf
                 dto.multipleMinimumTransferLotSizeUomId = null;
             }
         }
-        UnidadeMedida unidadeMedidaLoteMinimoMultiploTransporte = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(supportData.mapaUomLoteMinimoMultiploTransportePorId, 
-                dto.multipleMinimumTransferLotSizeUomId, 
-                false, 
-                new MissingDependencyDataUploadException("Multiple Minimum Transfer Lot Size UoM " + dto.multipleMinimumTransferLotSizeUomId + " not found", dto));
+        UnidadeMedida unidadeMedidaLoteMinimoMultiploTransporte = resolveReference(supportData.mapaUomLoteMinimoMultiploTransportePorId, dto, "multipleMinimumTransferLotSizeUomId", false);
         entity.setUnidadeMedidaLoteMinimoMultiploTransporte(unidadeMedidaLoteMinimoMultiploTransporte);
         
         entity.setLoteMinimoTransporte(dto.minimumTransferLotSize);

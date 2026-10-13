@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.classification.characteristic.integration;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,6 +29,7 @@ public class LocationCharacteristicValueIntegrationDataDto extends IntegrationDa
         LocationCharacteristicValueIntegrationDataDto.LocationCharacteristicValuePrimaryKeyIntegrationDTO,
         ValorCaracteristicaLocation> {
 
+    @IntegrationFileColumn(2)
     public String characteristicValue;
 
     @EqualsAndHashCode(callSuper = false)
@@ -34,7 +37,9 @@ public class LocationCharacteristicValueIntegrationDataDto extends IntegrationDa
             LocationCharacteristicValuePrimaryKeyIntegrationDTO,
             ValorCaracteristicaLocation> {
 
+        @IntegrationFileColumn(0)
         public String locationId;
+        @IntegrationFileColumn(1)
         public String locationCharacteristicId;
 
         @JsonCreator

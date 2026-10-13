@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.transactionaldata.sales.sellout.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -30,15 +32,21 @@ import java.time.LocalDateTime;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SelloutIntegrationDataDto extends IntegrationDataDtoAbstract<SelloutIntegrationDataDto, SelloutIntegrationDataDto.SelloutPrimaryKeyIntegrationDTO, Sellout> {
     
+    @IntegrationFileColumn(1)
     public LocalDateTime referenceDate;
+    @IntegrationFileColumn(2)
     public String originLocationId;
+    @IntegrationFileColumn(3)
     public String materialId;
+    @IntegrationFileColumn(4)
     public String uomId;
+    @IntegrationFileColumn(5)
     public Double quantity;
 
     @EqualsAndHashCode
     public static class SelloutPrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<SelloutPrimaryKeyIntegrationDTO, Sellout> {
 
+        @IntegrationFileColumn(0)
         public String documentId;
 
         @JsonCreator

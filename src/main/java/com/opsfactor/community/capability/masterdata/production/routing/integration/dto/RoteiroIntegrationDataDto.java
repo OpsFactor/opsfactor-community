@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.production.routing.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,9 +31,13 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RoteiroIntegrationDataDto extends IntegrationDataDtoAbstract<RoteiroIntegrationDataDto, RoteiroIntegrationDataDto.RoteiroPrimaryKeyIntegrationDTO, Roteiro> {
 
+    @IntegrationFileColumn(2)
     public String locationId;
+    @IntegrationFileColumn(1)
     public String description;
+    @IntegrationFileColumn(8)
     public Boolean active;
+    @IntegrationFileColumn(3)
     public String outputMaterialId;
     /**
      * Identificador do cluster de roteiros Enterprise.
@@ -42,14 +48,19 @@ public class RoteiroIntegrationDataDto extends IntegrationDataDtoAbstract<Roteir
      * scheduling nao e uma capability Community.</p>
      */
     public String routingClusterId;
+    @IntegrationFileColumn(6)
     public Boolean canBeUsedWithoutProductionVersion;
+    @IntegrationFileColumn(7)
     public Integer priority;
+    @IntegrationFileColumn(4)
     public Double baseQuantity;
+    @IntegrationFileColumn(5)
     public String baseQuantityUomId;
 
     @EqualsAndHashCode
     public static class RoteiroPrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<RoteiroPrimaryKeyIntegrationDTO, Roteiro> {
 
+        @IntegrationFileColumn(0)
         public String id;
 
         @JsonCreator

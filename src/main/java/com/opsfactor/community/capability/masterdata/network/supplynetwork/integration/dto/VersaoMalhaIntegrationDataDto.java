@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.network.supplynetwork.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -33,9 +35,13 @@ public class VersaoMalhaIntegrationDataDto extends IntegrationDataDtoAbstract<
         VersaoMalhaIntegrationDataDto.VersaoMalhaPrimaryKeyIntegrationDTO,
         VersaoMalha> {
 
+    @IntegrationFileColumn(1)
     public String description;
+    @IntegrationFileColumn(2)
     public String defaultClientOriginLocationId;
+    @IntegrationFileColumn(3)
     public String defaultRawMaterialOriginLocationId;
+    @IntegrationFileColumn(4)
     public Double defaultRawMaterialOriginLeadTimeDays;
 
     /**
@@ -46,6 +52,7 @@ public class VersaoMalhaIntegrationDataDto extends IntegrationDataDtoAbstract<
             VersaoMalhaPrimaryKeyIntegrationDTO,
             VersaoMalha> {
 
+        @IntegrationFileColumn(0)
         public String supplyNetworkVersionId;
 
         @JsonCreator

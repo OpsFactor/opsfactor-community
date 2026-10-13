@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.opsfactor.community.platform.integration.dto.IntegrationDataDtoAbstract;
@@ -32,26 +34,31 @@ public class PoliticaEstoquesMaterialLocationIntegrationDataDto extends Integrat
      * Modelo operacional especifico da combinacao material/location. Valor nulo
      * preserva o default resolvido via projection.
      */
+    @IntegrationFileColumn(3)
     public Constantes.SNPModeloOperacional operationalModel;
 
     /**
      * Modelo de reposicao operacional. Valor nulo significa DRP.
      */
+    @IntegrationFileColumn(4)
     public Constantes.SNPModeloReabastecimento reorderModel;
 
     /**
      * Forma de interpretacao do safety stock. Valor nulo significa DAYS.
      */
+    @IntegrationFileColumn(5)
     public Constantes.SNPCalculoSafetyStock safetyStockType;
 
     /**
      * Valor de safety stock DRP ou target stock de Kanban.
      */
+    @IntegrationFileColumn(6)
     public Double drpSafetyStockOrKanbanTargetStockValue;
 
     /**
      * Estoque maximo operacional de DRP.
      */
+    @IntegrationFileColumn(7)
     public Double drpMaximumStockValue;
 
     /**
@@ -73,16 +80,19 @@ public class PoliticaEstoquesMaterialLocationIntegrationDataDto extends Integrat
         /**
          * Politica que define vigencia e prioridade.
          */
+        @IntegrationFileColumn(0)
         public String inventoryPolicyId;
 
         /**
          * Material da DFU operacional.
          */
+        @IntegrationFileColumn(1)
         public String materialId;
 
         /**
          * Location da DFU operacional.
          */
+        @IntegrationFileColumn(2)
         public String locationId;
 
         @Override

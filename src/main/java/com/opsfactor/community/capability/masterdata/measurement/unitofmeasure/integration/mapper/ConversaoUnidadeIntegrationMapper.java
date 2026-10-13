@@ -4,8 +4,6 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.i
 import com.opsfactor.community.platform.integration.mapper.IntegrationMapperInterface;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.ConversaoUnidade;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
-import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.springframework.stereotype.Component;
 
@@ -63,16 +61,8 @@ public class ConversaoUnidadeIntegrationMapper implements IntegrationMapperInter
             ConversaoUnidadeIntegrationDataDto.ConversaoUnidadePrimaryKeyIntegrationDTO dto,
             ConversaoUnidadeIntegrationSupportData supportData) {
 
-        UnidadeMedida unidadeMedidaOrigem = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                supportData.uomPorId,
-                dto.originUomId,
-                true, // uom é obrigatória
-                new MissingDependencyDataUploadException("Origin UOM " + dto.originUomId + " not found", dto));
-        UnidadeMedida unidadeMedidaDestino = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                supportData.uomPorId,
-                dto.targetUomId,
-                true, // uom é obrigatória
-                new MissingDependencyDataUploadException("Target UOM " + dto.targetUomId + " not found", dto));
+        UnidadeMedida unidadeMedidaOrigem = resolveReference(supportData.uomPorId, dto, "originUomId", true);
+        UnidadeMedida unidadeMedidaDestino = resolveReference(supportData.uomPorId, dto, "targetUomId", true);
 
         return new ConversaoUnidade(
                 new ConversaoUnidade.ConversaoUnidadeCompositeKey(

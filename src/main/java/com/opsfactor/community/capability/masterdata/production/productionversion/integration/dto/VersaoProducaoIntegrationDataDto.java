@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.production.productionversion.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,16 +30,23 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class VersaoProducaoIntegrationDataDto extends IntegrationDataDtoAbstract<VersaoProducaoIntegrationDataDto, VersaoProducaoIntegrationDataDto.VersaoProducaoPrimaryKeyIntegrationDTO, VersaoProducao> {
 
+    @IntegrationFileColumn(1)
     public String locationId;
+    @IntegrationFileColumn(2)
     public Integer priority;
+    @IntegrationFileColumn(3)
     public String outputMaterialId;
+    @IntegrationFileColumn(4)
     public String routingId;
+    @IntegrationFileColumn(5)
     public String billOfMaterialsId;
+    @IntegrationFileColumn(6)
     public Boolean active;
 
     @EqualsAndHashCode
     public static class VersaoProducaoPrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<VersaoProducaoPrimaryKeyIntegrationDTO, VersaoProducao> {
 
+        @IntegrationFileColumn(0)
         public String id;
 
         @JsonCreator

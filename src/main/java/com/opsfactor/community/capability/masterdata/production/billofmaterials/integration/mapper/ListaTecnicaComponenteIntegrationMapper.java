@@ -4,8 +4,6 @@ import com.opsfactor.community.capability.masterdata.production.billofmaterials.
 import com.opsfactor.community.platform.integration.mapper.IntegrationMapperInterface;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnicaComponente;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnicaComponente.ListaTecnicaComponenteCompositeKey;
-import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
-import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.springframework.stereotype.Component;
 
@@ -70,16 +68,8 @@ public class ListaTecnicaComponenteIntegrationMapper implements IntegrationMappe
         
         ListaTecnicaComponente entity = new ListaTecnicaComponente();
         entity.setListaTecnicaComponenteCompositeKey(new ListaTecnicaComponenteCompositeKey(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaListaTecnicaPorId, 
-                        dto.bomId, 
-                        true, // bom é obrigatória
-                        new MissingDependencyDataUploadException("Bill of Materials " + dto.bomId + " not found", dto)),
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaMaterialPorId, 
-                        dto.componentMaterialId, 
-                        true, // material é obrigatório
-                        new MissingDependencyDataUploadException("Material " + dto.componentMaterialId + " not found", dto))
+                resolveReference(supportData.mapaListaTecnicaPorId, dto, "bomId", true),
+                resolveReference(supportData.mapaMaterialPorId, dto, "componentMaterialId", true)
         ));
         
         return entity;
@@ -97,11 +87,7 @@ public class ListaTecnicaComponenteIntegrationMapper implements IntegrationMappe
         entity.setQuantidade(dto.componentMaterialQuantity);
         
         entity.setUnidadeMedidaMaterialComponente(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaUnidadeMedidaPorId, 
-                        dto.componentMaterialQuantityUomId, 
-                        false, // unidade de medida não é obrigatória
-                        new MissingDependencyDataUploadException("Unit of Measure " + dto.componentMaterialQuantityUomId + " not found", dto)));
+                resolveReference(supportData.mapaUnidadeMedidaPorId, dto, "componentMaterialQuantityUomId", false));
                 
     }
 

@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.configuration.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.opsfactor.community.platform.integration.dto.IntegrationDataDtoAbstract;
@@ -31,9 +33,12 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ParametrosMaterialLocationIntegrationDataDto extends IntegrationDataDtoAbstract<ParametrosMaterialLocationIntegrationDataDto, ParametrosMaterialLocationIntegrationDataDto.ParametrosMaterialLocationPrimaryKeyIntegrationDTO, ParametrosProdutoLocation> {
 
+    @IntegrationFileColumn(2)
     public Boolean active;
     
+    @IntegrationFileColumn(3)
     public LocalDateTime introductionDate;
+    @IntegrationFileColumn(4)
     public LocalDateTime discontinuationDate;
 
     /*
@@ -43,12 +48,17 @@ public class ParametrosMaterialLocationIntegrationDataDto extends IntegrationDat
      */
     public Double reorderFrequencyDays;
     
+    @IntegrationFileColumn(5)
     public String productionMinimumMultipleUomId;
+    @IntegrationFileColumn(6)
     public Double productionMinimumQuantity;
+    @IntegrationFileColumn(7)
     public Double productionMultipleQuantity;
     
+    @IntegrationFileColumn(8)
     public String defaultUomId;
     
+    @IntegrationFileColumn(9)
     public Integer frozenHorizonDpInDays;
     
     /*
@@ -62,7 +72,9 @@ public class ParametrosMaterialLocationIntegrationDataDto extends IntegrationDat
     @EqualsAndHashCode
     public static class ParametrosMaterialLocationPrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<ParametrosMaterialLocationPrimaryKeyIntegrationDTO, ParametrosProdutoLocation> {
 
+        @IntegrationFileColumn(0)
         public String locationId;
+        @IntegrationFileColumn(1)
         public String materialId;
 
         @Override

@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationInputAware;
+import com.opsfactor.community.platform.integration.validation.IntegrationInputContext;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,7 +73,7 @@ public class ProcessedFile {
 
 
     public void addNewRow(){
-        fileRows.add(new ProcessedFileRow());
+        fileRows.add(new ProcessedFileRow().sourceRowNumber(fileRows.size() + 1));
     }
 
     public void addRows(List<ProcessedFileRow> processedFileRowList) {
@@ -81,6 +83,7 @@ public class ProcessedFile {
     }
 
     public void addRow(ProcessedFileRow processedFileRow){
+        if (processedFileRow.sourceRowNumber() == null) processedFileRow.sourceRowNumber(fileRows.size() + 1);
         fileRows.add(processedFileRow);
     }
 
@@ -133,17 +136,24 @@ public class ProcessedFile {
         for (int i=linhaInicialConsiderada; i < fileRows.size(); i++) {
 
             ProcessedFileRow linhaAtual = fileRows.get(i);
+            // Programmatic/CSV rows use list positions; XLSX keeps POI's physical row.
+            if (linhaAtual.sourceRowNumber() == null) linhaAtual.sourceRowNumber(i + 1);
+            int sourceRowNumber = linhaAtual.sourceRowNumber();
 
             // se todos os valores da linha estiverem em branco, não tentar converter para DTO (pular)
             if (linhaAtual.isEmpty()) continue;
 
             // se número de colunas preenchidas para esta linha superar o número máximo de colunas, gerar exceção
             if (linhaAtual.getRowSize() > numeroColunasConsiderado) {
-                throw new ArrayIndexOutOfBoundsException("Number of columns is greater than " + numeroColunasConsiderado + " at line " + (i+1));
+                throw new ArrayIndexOutOfBoundsException("Number of columns is greater than " + numeroColunasConsiderado + " at line " + sourceRowNumber);
             }
 
             try {
                 T dto = funcaoConversaoLinhaArquivoParaDTO.apply(linhaAtual);
+                if (dto instanceof IntegrationInputAware aware && aware.getIntegrationInputContext() == null) {
+                    List<String> headers = fileRows.get(linhaInicialConsiderada - 1).getRowAsStringListWithEmptyFieldsAsNull();
+                    aware.setIntegrationInputContext(new IntegrationInputContext(true, sourceRowNumber, headers));
+                }
                 listaDTOs.add(dto);
             } catch (RuntimeException runtimeException) {
                 /*
@@ -152,8 +162,8 @@ public class ProcessedFile {
                  * borda apenas acrescenta o numero da linha ao erro funcional
                  * de data upload sem descartar a causa tecnica original.
                  */
-                log.error("Erro ao converter linha {} do arquivo processado {}", i, name, runtimeException);
-                throw new DataUploadException(runtimeException.getMessage() + " at line " + i, runtimeException);
+                log.error("Erro ao converter linha {} do arquivo processado {}", sourceRowNumber, name, runtimeException);
+                throw new DataUploadException(runtimeException.getMessage() + " at line " + sourceRowNumber, runtimeException);
             }
 
         }

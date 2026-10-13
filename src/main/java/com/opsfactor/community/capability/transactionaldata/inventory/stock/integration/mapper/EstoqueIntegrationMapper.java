@@ -7,8 +7,6 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.platform.exception.DataUploadException;
-import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
-import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.springframework.stereotype.Component;
 
@@ -78,16 +76,8 @@ public class EstoqueIntegrationMapper implements IntegrationMapperInterface<Esto
             EstoqueIntegrationDataDto.EstoquePrimaryKeyIntegrationDTO primaryKeyDto,
             EstoqueIntegrationSupportData supportData) {
 
-        Location location = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                supportData.mapaLocationPorId,
-                primaryKeyDto.locationId,
-                true,
-                new MissingDependencyDataUploadException("No Location found with id = " + primaryKeyDto.locationId, primaryKeyDto));
-        Produto material = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                supportData.mapaProdutoPorId,
-                primaryKeyDto.materialId,
-                true,
-                new MissingDependencyDataUploadException("No Material found with id = " + primaryKeyDto.materialId, primaryKeyDto));
+        Location location = resolveReference(supportData.mapaLocationPorId, primaryKeyDto, "locationId", true);
+        Produto material = resolveReference(supportData.mapaProdutoPorId, primaryKeyDto, "materialId", true);
         if (primaryKeyDto.referenceDate == null) throw new DataUploadException("Reference date is empty");
 
         return new Estoque(
@@ -109,11 +99,7 @@ public class EstoqueIntegrationMapper implements IntegrationMapperInterface<Esto
             EstoqueIntegrationSupportData supportData,
             @Nullable Map<String,MetodoAtualizacaoCampo> camposASobrecrever) {
 
-        UnidadeMedida unidadeMedida = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                supportData.mapaUomPorId,
-                dto.uomId,
-                false,
-                new MissingDependencyDataUploadException("No Unit of Measure found with id = " + dto.uomId, dto));
+        UnidadeMedida unidadeMedida = resolveReference(supportData.mapaUomPorId, dto, "uomId", false);
 
         entity.setUnidadeMedida(unidadeMedida);
         entity.setQuantidade(dto.quantity);

@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.opsfactor.community.platform.integration.dto.IntegrationDataDtoAbstract;
@@ -32,16 +34,19 @@ public class PoliticaEstoquesIntegrationDataDto extends IntegrationDataDtoAbstra
     /**
      * Prioridade operacional usada para desempatar politicas vigentes.
      */
+    @IntegrationFileColumn(1)
     public Integer priority;
 
     /**
      * Inicio da vigencia da politica.
      */
+    @IntegrationFileColumn(2)
     public LocalDateTime startDateTime;
 
     /**
      * Fim da vigencia da politica.
      */
+    @IntegrationFileColumn(3)
     public LocalDateTime endDateTime;
 
     /**
@@ -54,6 +59,7 @@ public class PoliticaEstoquesIntegrationDataDto extends IntegrationDataDtoAbstra
         /**
          * Identificador funcional da politica.
          */
+        @IntegrationFileColumn(0)
         public String id;
 
         @Override

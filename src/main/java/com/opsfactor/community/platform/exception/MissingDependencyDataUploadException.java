@@ -48,6 +48,21 @@ public class MissingDependencyDataUploadException extends DataUploadException {
      * payload problematico a excecao.
      */
     @Nullable
+    /** Adds input position without losing dependency type, DTO or original cause. */
+    public MissingDependencyDataUploadException withLocation(String location) {
+
+        return new MissingDependencyDataUploadException(this, location);
+
+    }
+
+    private MissingDependencyDataUploadException(MissingDependencyDataUploadException original, String location) {
+
+        super(original.getMessage() + location, original);
+        this.dto = original.dto;
+        this.dtoContent = original.dtoContent;
+
+    }
+
     public Object getDto() {
         return dto;
     }

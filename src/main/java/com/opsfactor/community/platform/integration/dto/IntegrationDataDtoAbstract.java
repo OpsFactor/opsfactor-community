@@ -1,7 +1,9 @@
 package com.opsfactor.community.platform.integration.dto;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.opsfactor.community.platform.integration.validation.IntegrationInputAware;
+import com.opsfactor.community.platform.integration.validation.IntegrationInputContext;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
@@ -17,9 +19,45 @@ import java.lang.reflect.Field;
  */
 @SuperBuilder
 @NoArgsConstructor
-@AllArgsConstructor
-public abstract class IntegrationDataDtoAbstract<DTO extends IntegrationDataDtoAbstract, PRIMARYKEYDTO extends IntegrationPrimaryKeyDTOAbstract, ENTITY> {
+public abstract class IntegrationDataDtoAbstract<DTO extends IntegrationDataDtoAbstract, PRIMARYKEYDTO extends IntegrationPrimaryKeyDTOAbstract, ENTITY> implements IntegrationInputAware {
+
+    /** Input provenance is private and excluded from JSON and business equality. */
+    @JsonIgnore
+    private transient IntegrationInputContext integrationInputContext;
+
+    @Override
+    @JsonIgnore
+    public IntegrationInputContext getIntegrationInputContext() {
+
+        return integrationInputContext;
+
+    }
+
+    @Override
+    @JsonIgnore
+    public void setIntegrationInputContext(IntegrationInputContext integrationInputContext) {
+
+        this.integrationInputContext = integrationInputContext;
+
+    }
+
+    @Override
+    @JsonIgnore
+    public boolean isIntegrationPrimaryKey() {
+
+        return false;
+
+    }
+
     
+    /** Retains the pre-existing constructor without including transport metadata. */
+    public IntegrationDataDtoAbstract(String delete, PRIMARYKEYDTO primaryKeyDto) {
+
+        this.delete = delete;
+        this.primaryKeyDto = primaryKeyDto;
+
+    }
+
     public String delete;
 
     @JsonUnwrapped

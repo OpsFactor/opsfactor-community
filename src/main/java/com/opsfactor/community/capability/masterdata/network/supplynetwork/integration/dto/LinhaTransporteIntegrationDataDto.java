@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.network.supplynetwork.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,7 +31,9 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LinhaTransporteIntegrationDataDto extends IntegrationDataDtoAbstract<LinhaTransporteIntegrationDataDto, LinhaTransporteIntegrationDataDto.LinhaTransportePrimaryKeyIntegrationDTO, LinhaTransporte> {
  
+    @IntegrationFileColumn(3)
     public Integer priority;
+    @IntegrationFileColumn(4)
     public Double leadTimeDays;
 
     /**
@@ -40,21 +44,31 @@ public class LinhaTransporteIntegrationDataDto extends IntegrationDataDtoAbstrac
      */
     public Double distanceKm;
     
+    @IntegrationFileColumn(5)
     public Boolean enableDiscontinuedMaterials;
+    @IntegrationFileColumn(6)
     public Boolean enablePresalesMaterials;
+    @IntegrationFileColumn(7)
     public Boolean enableAllMaterials;
     
+    @IntegrationFileColumn(8)
     public String multipleMinimumTransferLotSizeUomId;
+    @IntegrationFileColumn(9)
     public Double minimumTransferLotSize;
+    @IntegrationFileColumn(10)
     public Double multipleTransfer;
     
+    @IntegrationFileColumn(11)
     public Boolean active;
 
     @EqualsAndHashCode
     public static class LinhaTransportePrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<LinhaTransportePrimaryKeyIntegrationDTO, LinhaTransporte> {
 
+        @IntegrationFileColumn(0)
         public String supplyNetworkVersionId;
+        @IntegrationFileColumn(1)
         public String originLocationId;
+        @IntegrationFileColumn(2)
         public String destinationLocationId;
 
         @JsonCreator

@@ -7,10 +7,8 @@ import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.d
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.domain.PoliticaEstoquesMaterialLocation.PoliticaEstoquesMaterialLocationCompositeKey;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
-import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.opsfactor.community.platform.utility.MetodosUtilidade;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import jakarta.annotation.Nullable;
@@ -95,27 +93,9 @@ public class PoliticaEstoquesMaterialLocationIntegrationMapper implements Integr
             PoliticaEstoquesMaterialLocationIntegrationDataDto.PoliticaEstoquesMaterialLocationPrimaryKeyIntegrationDTO primaryKeyDto,
             PoliticaEstoquesMaterialLocationIntegrationSupportData supportData) {
 
-        PoliticaEstoques politicaEstoques = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                supportData.mapaPoliticaEstoquesPorId,
-                primaryKeyDto.inventoryPolicyId,
-                true,
-                new MissingDependencyDataUploadException(
-                        "Inventory Policy " + primaryKeyDto.inventoryPolicyId + " not found",
-                        primaryKeyDto));
-        Produto material = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                supportData.mapaMaterialPorId,
-                primaryKeyDto.materialId,
-                true,
-                new MissingDependencyDataUploadException(
-                        "Material " + primaryKeyDto.materialId + " not found",
-                        primaryKeyDto));
-        Location location = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                supportData.mapaLocationPorId,
-                primaryKeyDto.locationId,
-                true,
-                new MissingDependencyDataUploadException(
-                        "Location " + primaryKeyDto.locationId + " not found",
-                        primaryKeyDto));
+        PoliticaEstoques politicaEstoques = resolveReference(supportData.mapaPoliticaEstoquesPorId, primaryKeyDto, "inventoryPolicyId", true);
+        Produto material = resolveReference(supportData.mapaMaterialPorId, primaryKeyDto, "materialId", true);
+        Location location = resolveReference(supportData.mapaLocationPorId, primaryKeyDto, "locationId", true);
 
         return new PoliticaEstoquesMaterialLocation(
                 new PoliticaEstoquesMaterialLocationCompositeKey(

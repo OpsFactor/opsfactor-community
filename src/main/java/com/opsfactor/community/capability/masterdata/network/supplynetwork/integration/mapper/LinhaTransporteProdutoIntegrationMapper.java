@@ -10,9 +10,7 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.domai
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
-import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.springframework.stereotype.Component;
 
@@ -97,28 +95,16 @@ public class LinhaTransporteProdutoIntegrationMapper implements IntegrationMappe
     public LinhaTransporteProduto createNewEntityWithPrimaryKeyFromPrimaryKeyDTO(
             LinhaTransporteProdutoIntegrationDataDto.LinhaTransporteProdutoPrimaryKeyIntegrationDTO dto, LinhaTransporteProdutoIntegrationSupportData supportData) {
         
-        VersaoMalha versaoMalha = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(supportData.mapaVersaoMalhaPorId, 
-                dto.supplyNetworkVersionId, 
-                false, 
-                new MissingDependencyDataUploadException("Supply Network Version " + dto.supplyNetworkVersionId + " not found", dto));
+        VersaoMalha versaoMalha = resolveReference(supportData.mapaVersaoMalhaPorId, dto, "supplyNetworkVersionId", false);
         
-        Location locationOrigem = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(supportData.mapaLocationOrigemPorId, 
-                dto.originLocationId, 
-                false, 
-                new MissingDependencyDataUploadException("Origin Location " + dto.originLocationId + " not found", dto));
+        Location locationOrigem = resolveReference(supportData.mapaLocationOrigemPorId, dto, "originLocationId", false);
         
-        Location locationDestino = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(supportData.mapaLocationDestinoPorId, 
-                dto.destinationLocationId, 
-                false, 
-                new MissingDependencyDataUploadException("Destination Location " + dto.destinationLocationId + " not found", dto));
+        Location locationDestino = resolveReference(supportData.mapaLocationDestinoPorId, dto, "destinationLocationId", false);
         
         LinhaTransporteCompositeKey linhaTransporteCompositeKey = new LinhaTransporte.LinhaTransporteCompositeKey(versaoMalha, locationOrigem, locationDestino);
         LinhaTransporte linhaTransporte = new LinhaTransporte(linhaTransporteCompositeKey);
         
-        Produto produto = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(supportData.mapaProdutoPorId, 
-                dto.materialId, 
-                false, 
-                new MissingDependencyDataUploadException("Material " + dto.materialId + " not found", dto));
+        Produto produto = resolveReference(supportData.mapaProdutoPorId, dto, "materialId", false);
         
         LinhaTransporteProdutoCompositeKey linhaTransporteProdutoCompositeKey = new LinhaTransporteProduto.LinhaTransporteProdutoCompositeKey(linhaTransporte, produto);
         LinhaTransporteProduto linhaTransporteProduto = new LinhaTransporteProduto(linhaTransporteProdutoCompositeKey);
@@ -153,10 +139,7 @@ public class LinhaTransporteProdutoIntegrationMapper implements IntegrationMappe
                 dto.multipleMinimumTransferLotSizeUomId = null;
             }
         }
-        UnidadeMedida unidadeMedidaLoteMinimoMultiploTransporte = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(supportData.mapaUomLoteMinimoMultiploTransportePorId, 
-                dto.multipleMinimumTransferLotSizeUomId, 
-                false, 
-                new MissingDependencyDataUploadException("Multiple Minimum Transfer Lot Size UoM " + dto.multipleMinimumTransferLotSizeUomId + " not found", dto));
+        UnidadeMedida unidadeMedidaLoteMinimoMultiploTransporte = resolveReference(supportData.mapaUomLoteMinimoMultiploTransportePorId, dto, "multipleMinimumTransferLotSizeUomId", false);
         entity.setUnidadeMedidaLoteMinimoMultiploTransporte(unidadeMedidaLoteMinimoMultiploTransporte);
         
         entity.setLoteMinimoTransporte(dto.minimumTransferLotSize);

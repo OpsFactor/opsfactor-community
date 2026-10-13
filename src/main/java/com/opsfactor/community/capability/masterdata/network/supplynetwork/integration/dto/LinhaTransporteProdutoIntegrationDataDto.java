@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.network.supplynetwork.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,7 +33,9 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LinhaTransporteProdutoIntegrationDataDto extends IntegrationDataDtoAbstract<LinhaTransporteProdutoIntegrationDataDto, LinhaTransporteProdutoIntegrationDataDto.LinhaTransporteProdutoPrimaryKeyIntegrationDTO, LinhaTransporteProduto> {
  
+    @IntegrationFileColumn(4)
     public Integer priority;
+    @IntegrationFileColumn(5)
     public Integer leadTimeDays;
 
     /**
@@ -40,18 +44,26 @@ public class LinhaTransporteProdutoIntegrationDataDto extends IntegrationDataDto
      * mapper.
      */
     public Double distanceKm;
+    @IntegrationFileColumn(6)
     public String multipleMinimumTransferLotSizeUomId;
+    @IntegrationFileColumn(7)
     public Double minimumTransferLotSize;
+    @IntegrationFileColumn(8)
     public Double multipleTransfer;
     
+    @IntegrationFileColumn(9)
     public Boolean active;
 
     @EqualsAndHashCode
     public static class LinhaTransporteProdutoPrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<LinhaTransporteProdutoPrimaryKeyIntegrationDTO, LinhaTransporteProduto> {
 
+        @IntegrationFileColumn(0)
         public String supplyNetworkVersionId;
+        @IntegrationFileColumn(1)
         public String originLocationId;
+        @IntegrationFileColumn(2)
         public String destinationLocationId;
+        @IntegrationFileColumn(3)
         public String materialId;
 
         @JsonCreator

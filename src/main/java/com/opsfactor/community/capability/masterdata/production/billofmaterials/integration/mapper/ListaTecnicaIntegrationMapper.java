@@ -3,8 +3,6 @@ package com.opsfactor.community.capability.masterdata.production.billofmaterials
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.integration.dto.ListaTecnicaIntegrationDataDto;
 import com.opsfactor.community.platform.integration.mapper.IntegrationMapperInterface;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
-import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
-import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.springframework.stereotype.Component;
 
@@ -97,23 +95,11 @@ public class ListaTecnicaIntegrationMapper implements IntegrationMapperInterface
         entity.setHabilitadoParaUsoSemVersaoProducao(dto.canBeUsedWithoutProductionVersion);
         
         entity.setLocation(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaLocationPorId, 
-                        dto.locationId, 
-                        true, // location é obrigatória
-                        new MissingDependencyDataUploadException("Location " + dto.locationId + " not found", dto)));
+                resolveReference(supportData.mapaLocationPorId, dto, "locationId", true));
         entity.setMaterialOutput(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaMaterialPorId, 
-                        dto.outputMaterialId, 
-                        true, // material output é obrigatório
-                        new MissingDependencyDataUploadException("Material " + dto.outputMaterialId + " not found", dto)));
+                resolveReference(supportData.mapaMaterialPorId, dto, "outputMaterialId", true));
         entity.setUnidadeMedidaMaterialOutput(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaUnidadeMedidaPorId, 
-                        dto.outputUomId, 
-                        false, // unidade de medida não é obrigatória
-                        new MissingDependencyDataUploadException("Unit of Measure " + dto.outputUomId + " not found", dto)));
+                resolveReference(supportData.mapaUnidadeMedidaPorId, dto, "outputUomId", false));
                 
     }
 

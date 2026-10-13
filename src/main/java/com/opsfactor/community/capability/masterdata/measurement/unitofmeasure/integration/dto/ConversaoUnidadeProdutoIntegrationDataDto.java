@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,13 +27,18 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ConversaoUnidadeProdutoIntegrationDataDto extends IntegrationDataDtoAbstract<ConversaoUnidadeProdutoIntegrationDataDto, ConversaoUnidadeProdutoIntegrationDataDto.ConversaoUnidadeProdutoPrimaryKeyIntegrationDTO, ConversaoUnidadeProduto> {
 
+    @IntegrationFileColumn(3)
     public Double originQuantity;
+    @IntegrationFileColumn(4)
     public Double targetQuantity;
     @EqualsAndHashCode
     public static class ConversaoUnidadeProdutoPrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<ConversaoUnidadeProdutoPrimaryKeyIntegrationDTO, ConversaoUnidadeProduto> {
 
+        @IntegrationFileColumn(0)
         public String materialId;
+        @IntegrationFileColumn(1)
         public String originUomId;
+        @IntegrationFileColumn(2)
         public String targetUomId;
 
         @JsonCreator

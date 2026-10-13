@@ -3,6 +3,7 @@ package com.opsfactor.community.platform.utility.fileprocessing;
 import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.exception.DataUploadException;
 import com.opsfactor.community.platform.utility.MetodosUtilidade;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -37,6 +38,11 @@ public class ProcessedFileRow {
      * vazio.</p>
      */
     private List<Object> row = new ArrayList<>();
+
+    /** Physical one-based row; independent of sparse worksheet iteration. */
+    @JsonIgnore
+    private Integer sourceRowNumber;
+
     
     public ProcessedFileRow(List<Object> rowContent) {
         for (Object content : rowContent) {

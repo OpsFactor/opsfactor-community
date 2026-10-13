@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.production.productionresource.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,9 +31,13 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RecursoProdutivoIntegrationDataDto extends IntegrationDataDtoAbstract<RecursoProdutivoIntegrationDataDto, RecursoProdutivoIntegrationDataDto.RecursoProdutivoPrimaryKeyIntegrationDTO, RecursoProdutivo> {
 
+    @IntegrationFileColumn(2)
     public String locationId;
+    @IntegrationFileColumn(1)
     public String description;
+    @IntegrationFileColumn(4)
     public Boolean active;
+    @IntegrationFileColumn(3)
     public Float efficiency;
 
     /**
@@ -45,6 +51,7 @@ public class RecursoProdutivoIntegrationDataDto extends IntegrationDataDtoAbstra
     @EqualsAndHashCode
     public static class RecursoProdutivoPrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<RecursoProdutivoPrimaryKeyIntegrationDTO, RecursoProdutivo> {
 
+        @IntegrationFileColumn(0)
         public String id;
 
         @JsonCreator

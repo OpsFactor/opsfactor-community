@@ -8,7 +8,6 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
-import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.springframework.stereotype.Component;
 
@@ -132,17 +131,9 @@ public class ParametrosMaterialLocationIntegrationMapper implements IntegrationM
         // se valor DTO = nulo, seta nulo. caso contrário, ou busca o valor no mapa em supportData
         // ou retorna exceção caso não encontre o id
         entity.setUnidadeMedidaLoteMinimoMultiploProducao(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaUnidadeMedidaPorId, 
-                        dto.productionMinimumMultipleUomId,
-                        false, // campo não obrigatório. pode ser nulo
-                        new MissingDependencyDataUploadException("Unit of Measure " + dto.productionMinimumMultipleUomId + " not found", dto)));
+                resolveReference(supportData.mapaUnidadeMedidaPorId, dto, "productionMinimumMultipleUomId", false));
         entity.setUnidadeMedidaPadrao(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaUnidadeMedidaPorId, 
-                        dto.defaultUomId,
-                        false, // campo não obrigatório. pode ser nulo
-                        new MissingDependencyDataUploadException("Unit of Measure " + dto.defaultUomId + " not found", dto)));
+                resolveReference(supportData.mapaUnidadeMedidaPorId, dto, "defaultUomId", false));
         
     }
 

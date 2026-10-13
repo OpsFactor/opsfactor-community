@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.supplyplanning.distributionplan.integration;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -37,26 +39,31 @@ public class DistributionPlanIntegrationDataDto extends IntegrationDataDtoAbstra
      * Unidade de medida em que as quantidades da transferencia/compra foram
      * persistidas.
      */
+    @IntegrationFileColumn(5)
     public String unitOfMeasureId;
 
     /**
      * Quantidade planejada no plano irrestrito.
      */
+    @IntegrationFileColumn(6)
     public Double unconstrainedPlannedOrderQuantity;
 
     /**
      * Quantidade firme no plano irrestrito.
      */
+    @IntegrationFileColumn(7)
     public Double unconstrainedFirmOrderQuantity;
 
     /**
      * Quantidade planejada no plano restrito.
      */
+    @IntegrationFileColumn(8)
     public Double constrainedPlannedOrderQuantity;
 
     /**
      * Quantidade firme no plano restrito.
      */
+    @IntegrationFileColumn(9)
     public Double constrainedFirmOrderQuantity;
 
     /**
@@ -76,26 +83,31 @@ public class DistributionPlanIntegrationDataDto extends IntegrationDataDtoAbstra
         /**
          * Location de origem do abastecimento.
          */
+        @IntegrationFileColumn(0)
         public String originLocationId;
 
         /**
          * Location de destino do abastecimento.
          */
+        @IntegrationFileColumn(1)
         public String destinationLocationId;
 
         /**
          * Material transferido ou comprado.
          */
+        @IntegrationFileColumn(2)
         public String materialId;
 
         /**
          * Data planejada de entrega/recebimento.
          */
+        @IntegrationFileColumn(3)
         public LocalDateTime plannedDeliveryDate;
 
         /**
          * Data sugerida para emissao da ordem.
          */
+        @IntegrationFileColumn(4)
         public LocalDateTime suggestedOrderEmissionDate;
 
         @JsonCreator

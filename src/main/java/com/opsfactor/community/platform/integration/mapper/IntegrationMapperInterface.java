@@ -2,6 +2,8 @@ package com.opsfactor.community.platform.integration.mapper;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.opsfactor.community.platform.integration.validation.IntegrationFieldValidation;
+import com.opsfactor.community.platform.integration.validation.IntegrationInputContext;
 import com.opsfactor.community.platform.integration.dto.IntegrationDataDtoAbstract;
 import com.opsfactor.community.platform.integration.dto.IntegrationPrimaryKeyDTOAbstract;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFile;
@@ -53,7 +55,37 @@ public interface IntegrationMapperInterface<DTO extends IntegrationDataDtoAbstra
         DTO dto = getDtoWithoutPrimaryKeyFromProcessedFileRow(processedFileRow, supportData);
         dto.primaryKeyDto = getPrimaryKeyDtoFromProcessedFileRow(processedFileRow, supportData);
         dto.delete = processedFileRow.getColumnValueAsString(getDeleteProcessedFileRowPosition(supportData));
+        if (processedFileRow.sourceRowNumber() != null) {
+            List<ProcessedFileRow> headerRows = getFileHeaderRows(supportData);
+            List<String> headers = headerRows.get(headerRows.size() - 1).getRowAsStringListWithEmptyFieldsAsNull();
+            IntegrationInputContext context = new IntegrationInputContext(true, processedFileRow.sourceRowNumber(), headers);
+            dto.setIntegrationInputContext(context);
+            if (dto.primaryKeyDto != null) dto.primaryKeyDto.setIntegrationInputContext(context);
+        }
         return dto;
+    }
+
+    /** Resolves a published column; dynamic layouts may override this association. */
+    public default int getIntegrationFileColumn(Object owner, String fieldName) {
+
+        return IntegrationFieldValidation.fileColumn(owner, fieldName);
+
+    }
+
+    /** Resolves the DTO property against the already loaded dependency snapshot. */
+    public default <V> V resolveReference(Map<?, V> snapshot, Object owner, String fieldName, boolean required) {
+
+        return IntegrationFieldValidation.resolveReference(snapshot, owner, fieldName,
+                IntegrationFieldValidation.value(owner, fieldName), required, getIntegrationFileColumn(owner, fieldName));
+
+    }
+
+    /** Preserves a mapper's explicitly normalized lookup value while retaining field identity. */
+    public default <K, V> V resolveReference(Map<K, V> snapshot, Object owner, String fieldName, K lookupValue, boolean required) {
+
+        return IntegrationFieldValidation.resolveReference(snapshot, owner, fieldName,
+                lookupValue, required, getIntegrationFileColumn(owner, fieldName));
+
     }
 
     public default int getDeleteProcessedFileRowPosition(SUPPORTDATA supportData) {
@@ -115,9 +147,17 @@ public interface IntegrationMapperInterface<DTO extends IntegrationDataDtoAbstra
             @Nullable Map<String,MetodoAtualizacaoCampo> camposASobrecrever) {
 
         PRIMARYKEYDTO primaryKeyDto = dto.primaryKeyDto;
+        if (primaryKeyDto != null) primaryKeyDto.setIntegrationInputContext(dto.getIntegrationInputContext());
+        IntegrationFieldValidation.validateRequiredFields(primaryKeyDto);
         ENTITY entity = Optional.ofNullable(currentlyPersistedEntitiesByPrimaryKey.get(primaryKeyDto))
                 .orElse(createNewEntityWithPrimaryKeyFromPrimaryKeyDTO(primaryKeyDto, supportData));
         
+        // Required scalar declarations apply only to fields consumed by this operation.
+        if (dto.delete == null || !dto.delete.trim().equalsIgnoreCase("D")) {
+            IntegrationFieldValidation.validateRequiredFields(dto,
+                    fieldName -> isUpdateableField(fieldName, camposASobrecrever),
+                    fieldName -> getIntegrationFileColumn(dto, fieldName));
+        }
         updateEntityNonPrimaryFieldsFromDTO(entity, dto, supportData, camposASobrecrever);
         
         return entity;

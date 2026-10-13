@@ -195,7 +195,7 @@ class IntegrationServiceComConfiguracoesInterfaceTest {
                         null));
 
         Assertions.assertEquals(
-                "Integration DTO data list returned duplicated primary key A at index 1.",
+                "Integration DTO data list returned duplicated primary key A at index 1. at JSON record 2",
                 dataUploadException.getMessage());
 
     }
@@ -253,7 +253,7 @@ class IntegrationServiceComConfiguracoesInterfaceTest {
                         0,
                         null));
 
-        Assertions.assertEquals("Invalid dummy value at line 2", dataUploadException.getMessage());
+        Assertions.assertEquals("Invalid dummy value at JSON record 1", dataUploadException.getMessage());
         Assertions.assertSame(originalException, dataUploadException.getCause());
 
     }

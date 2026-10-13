@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.production.productionresource.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,6 +33,7 @@ import java.time.LocalDate;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DisponibilidadeRecursoProdutivoIntegrationDataDto extends IntegrationDataDtoAbstract<DisponibilidadeRecursoProdutivoIntegrationDataDto, DisponibilidadeRecursoProdutivoIntegrationDataDto.DisponibilidadeRecursoProdutivoPrimaryKeyIntegrationDTO, DisponibilidadeRecursoProdutivo> {
 
+    @IntegrationFileColumn(2)
     public Float availableHours;
 
     /**
@@ -48,7 +51,9 @@ public class DisponibilidadeRecursoProdutivoIntegrationDataDto extends Integrati
     @EqualsAndHashCode
     public static class DisponibilidadeRecursoProdutivoPrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<DisponibilidadeRecursoProdutivoPrimaryKeyIntegrationDTO, DisponibilidadeRecursoProdutivo> {
 
+        @IntegrationFileColumn(0)
         public String productionResourceId;
+        @IntegrationFileColumn(1)
         public LocalDate referenceDate;
 
         @JsonCreator

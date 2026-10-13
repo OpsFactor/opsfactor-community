@@ -35,7 +35,7 @@ class ProcessedFileCommunityContractTest {
                             throw originalException;
                         }));
 
-        Assertions.assertEquals("Invalid material at line 1", dataUploadException.getMessage());
+        Assertions.assertEquals("Invalid material at line 2", dataUploadException.getMessage());
         Assertions.assertSame(originalException, dataUploadException.getCause());
 
     }

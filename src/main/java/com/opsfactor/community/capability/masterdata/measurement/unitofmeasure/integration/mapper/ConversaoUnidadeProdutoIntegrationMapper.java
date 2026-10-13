@@ -5,8 +5,6 @@ import com.opsfactor.community.platform.integration.mapper.IntegrationMapperInte
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.ConversaoUnidadeProduto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
-import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.springframework.stereotype.Component;
 
@@ -67,21 +65,9 @@ public class ConversaoUnidadeProdutoIntegrationMapper implements IntegrationMapp
             ConversaoUnidadeProdutoIntegrationDataDto.ConversaoUnidadeProdutoPrimaryKeyIntegrationDTO dto,
             ConversaoUnidadeProdutoIntegrationSupportData supportData) {
 
-        Produto material = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                supportData.materialPorId,
-                dto.materialId,
-                true, // material é obrigatório
-                new MissingDependencyDataUploadException("Material " + dto.materialId + " not found", dto));
-        UnidadeMedida unidadeMedidaOrigem = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                supportData.uomPorId,
-                dto.originUomId,
-                true, // uom é obrigatória
-                new MissingDependencyDataUploadException("Origin UOM " + dto.originUomId + " not found", dto));
-        UnidadeMedida unidadeMedidaDestino = FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                supportData.uomPorId,
-                dto.targetUomId,
-                true, // uom é obrigatória
-                new MissingDependencyDataUploadException("Target UOM " + dto.targetUomId + " not found", dto));
+        Produto material = resolveReference(supportData.materialPorId, dto, "materialId", true);
+        UnidadeMedida unidadeMedidaOrigem = resolveReference(supportData.uomPorId, dto, "originUomId", true);
+        UnidadeMedida unidadeMedidaDestino = resolveReference(supportData.uomPorId, dto, "targetUomId", true);
 
         return new ConversaoUnidadeProduto(
                 new ConversaoUnidadeProduto.ConversaoUnidadeProdutoCompositeKey(

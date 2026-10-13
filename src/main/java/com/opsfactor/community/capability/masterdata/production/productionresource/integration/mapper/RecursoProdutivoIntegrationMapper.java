@@ -3,9 +3,7 @@ package com.opsfactor.community.capability.masterdata.production.productionresou
 import com.opsfactor.community.capability.masterdata.production.productionresource.integration.dto.RecursoProdutivoIntegrationDataDto;
 import com.opsfactor.community.platform.integration.mapper.IntegrationMapperInterface;
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
-import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
-import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.springframework.stereotype.Component;
 
@@ -101,11 +99,7 @@ public class RecursoProdutivoIntegrationMapper implements IntegrationMapperInter
         }
 
         entity.setLocation(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaLocationPorId, 
-                        dto.locationId, 
-                        true, // location é obrigatória
-                        new MissingDependencyDataUploadException("Location " + dto.locationId + " not found", dto)));
+                resolveReference(supportData.mapaLocationPorId, dto, "locationId", true));
         entity.setUnidadeMedidaCapacidadeEmUom(null);
                 
     }

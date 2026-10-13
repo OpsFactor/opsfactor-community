@@ -3,9 +3,7 @@ package com.opsfactor.community.capability.masterdata.production.routing.integra
 import com.opsfactor.community.capability.masterdata.production.routing.integration.dto.RoteiroIntegrationDataDto;
 import com.opsfactor.community.platform.integration.mapper.IntegrationMapperInterface;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
-import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
-import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.springframework.stereotype.Component;
 
@@ -113,25 +111,11 @@ public class RoteiroIntegrationMapper implements IntegrationMapperInterface<Rote
         }
         
         entity.setLocation(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaLocationPorId, 
-                        dto.locationId, 
-                        true, // location é obrigatória
-                        new MissingDependencyDataUploadException("Location " + dto.locationId + " not found", dto)));
+                resolveReference(supportData.mapaLocationPorId, dto, "locationId", true));
         entity.setMaterialOutput(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaMaterialPorId, 
-                        dto.outputMaterialId, 
-                        true, // material output é obrigatório
-                        new MissingDependencyDataUploadException("Material " + dto.outputMaterialId + " not found", dto)));
+                resolveReference(supportData.mapaMaterialPorId, dto, "outputMaterialId", true));
         entity.setUnidadeMedidaQuantidadeBase(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaUnidadeMedidaPorId,
-                        dto.baseQuantityUomId,
-                        false,
-                        new MissingDependencyDataUploadException(
-                                "Unit of Measure " + dto.baseQuantityUomId + " not found",
-                                dto)));
+                resolveReference(supportData.mapaUnidadeMedidaPorId, dto, "baseQuantityUomId", false));
                 
     }
 

@@ -5,8 +5,6 @@ import com.opsfactor.community.platform.integration.mapper.IntegrationMapperInte
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
 import com.opsfactor.community.platform.exception.DataUploadException;
-import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
-import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
@@ -95,13 +93,13 @@ public class VersaoMalhaIntegrationMapper implements IntegrationMapperInterface<
                 getOptionalLocation(
                         normalizeOptionalLocationId(dto.defaultClientOriginLocationId),
                         supportData,
-                        "Default Client Origin Location Id",
+                        "defaultClientOriginLocationId",
                         dto));
         entity.setLocationOrigemPadraoMateriasPrimas(
                 getOptionalLocation(
                         normalizeOptionalLocationId(dto.defaultRawMaterialOriginLocationId),
                         supportData,
-                        "Default Raw Material Origin Location Id",
+                        "defaultRawMaterialOriginLocationId",
                         dto));
         entity.setLeadTimeDiasLocationOrigemPadraoMateriasPrimas(
                 validaLeadTimeDias(dto.defaultRawMaterialOriginLeadTimeDays));
@@ -199,22 +197,16 @@ public class VersaoMalhaIntegrationMapper implements IntegrationMapperInterface<
 
     }
 
-    private static Location getOptionalLocation(
+    private Location getOptionalLocation(
             String locationId,
             VersaoMalhaIntegrationSupportData supportData,
-            String fieldDescription,
+            String fieldName,
             VersaoMalhaIntegrationDataDto dto) {
 
         if (locationId == null) {
             return null;
         }
-        return FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                supportData.mapaLocationPorId,
-                locationId,
-                false,
-                new MissingDependencyDataUploadException(
-                        fieldDescription + " " + locationId + " not found",
-                        dto));
+        return resolveReference(supportData.mapaLocationPorId, dto, fieldName, locationId, false);
 
     }
 

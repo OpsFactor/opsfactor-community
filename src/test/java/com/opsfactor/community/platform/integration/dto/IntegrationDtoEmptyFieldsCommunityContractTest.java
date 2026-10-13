@@ -1,5 +1,7 @@
 package com.opsfactor.community.platform.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationInputContext;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,20 @@ import org.junit.jupiter.api.Test;
  * preenchida.</p>
  */
 class IntegrationDtoEmptyFieldsCommunityContractTest {
+
+    /** Input location cannot turn a business-empty DTO into a record to persist. */
+    @Test
+    void sourceContextDoesNotPopulateEmptyDtoOrPrimaryKey() {
+
+        TestIntegrationDataDto dto = new TestIntegrationDataDto();
+        dto.primaryKeyDto = new TestPrimaryKeyDto();
+        var context = new IntegrationInputContext(true, 181, List.of("Material Id"));
+        dto.setIntegrationInputContext(context);
+        dto.primaryKeyDto.setIntegrationInputContext(context);
+        Assertions.assertTrue(dto.allFieldsAreEmpty());
+        Assertions.assertTrue(dto.primaryKeyDto.allFieldsAreEmpty());
+
+    }
 
     @Test
     void dataDtoShouldTreatEmptyPrimaryKeyDtoAndDeleteFlagAsEmpty() {

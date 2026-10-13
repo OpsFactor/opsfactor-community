@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.network.location.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -32,17 +34,27 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LocationIntegrationDataDto extends IntegrationDataDtoAbstract<LocationIntegrationDataDto, LocationIntegrationDataDto.LocationPrimaryKeyIntegrationDTO, Location> {
 
+    @IntegrationFileColumn(1)
     public String description;
+    @IntegrationFileColumn(2)
     public Boolean active;
+    @IntegrationFileColumn(3)
     public TipoLocation locationType;
+    @IntegrationFileColumn(4)
     public String country;
+    @IntegrationFileColumn(5)
     public String state;
+    @IntegrationFileColumn(6)
     public String city;
     public Double latitude;
     public Double longitude;
+    @IntegrationFileColumn(8)
     public Boolean availableInProductionPlanningBook;
+    @IntegrationFileColumn(9)
     public Boolean availableInSupplyPlanningBook;
+    @IntegrationFileColumn(10)
     public Boolean finiteProductionCapacity;
+    @IntegrationFileColumn(11)
     public String defaultSNPUomId;
     public String expeditionUomId;
     /**
@@ -57,7 +69,9 @@ public class LocationIntegrationDataDto extends IntegrationDataDtoAbstract<Locat
      * Identificador da location usada como referencia para os parametros de
      * material/location desta location.
      */
+    @IntegrationFileColumn(7)
     public String referenceLocationForProductLocationParameters;
+    @IntegrationFileColumn(12)
     public Boolean safetyStockConsiderIndirectDemand;
     public Integer orderFulfillmentTimeDays;
 
@@ -70,6 +84,7 @@ public class LocationIntegrationDataDto extends IntegrationDataDtoAbstract<Locat
     @EqualsAndHashCode
     public static class LocationPrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<LocationPrimaryKeyIntegrationDTO, Location> {
 
+        @IntegrationFileColumn(0)
         public String id;
 
         @JsonCreator

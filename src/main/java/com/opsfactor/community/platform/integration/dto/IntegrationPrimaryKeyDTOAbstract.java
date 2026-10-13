@@ -1,6 +1,8 @@
 package com.opsfactor.community.platform.integration.dto;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.opsfactor.community.platform.integration.validation.IntegrationInputAware;
+import com.opsfactor.community.platform.integration.validation.IntegrationInputContext;
 import lombok.EqualsAndHashCode;
 
 import java.lang.reflect.Field;
@@ -13,9 +15,37 @@ import java.lang.reflect.Field;
  * {@link #hasSameKeyAsEntity(Object)} existe para comparar o DTO com a entidade
  * JPA correspondente durante merges e deletes.
  */
-@AllArgsConstructor
-@EqualsAndHashCode
-public abstract class IntegrationPrimaryKeyDTOAbstract<PRIMARYKEYDTO extends IntegrationPrimaryKeyDTOAbstract, ENTITY> {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+public abstract class IntegrationPrimaryKeyDTOAbstract<PRIMARYKEYDTO extends IntegrationPrimaryKeyDTOAbstract, ENTITY> implements IntegrationInputAware {
+
+    /** Input provenance is private and excluded from JSON and business equality. */
+    @JsonIgnore
+    private transient IntegrationInputContext integrationInputContext;
+
+    @Override
+    @JsonIgnore
+    public IntegrationInputContext getIntegrationInputContext() {
+
+        return integrationInputContext;
+
+    }
+
+    @Override
+    @JsonIgnore
+    public void setIntegrationInputContext(IntegrationInputContext integrationInputContext) {
+
+        this.integrationInputContext = integrationInputContext;
+
+    }
+
+    @Override
+    @JsonIgnore
+    public boolean isIntegrationPrimaryKey() {
+
+        return true;
+
+    }
+
 
     public abstract boolean hasSameKeyAsEntity(ENTITY entity);
 

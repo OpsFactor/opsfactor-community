@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.supplyplanning.productionplan.integration;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.opsfactor.community.platform.integration.dto.IntegrationDataDtoAbstract;
@@ -36,55 +38,65 @@ public class ProductionPlanVolumeIntegrationDataDto extends IntegrationDataDtoAb
      * Unidade de medida operacional em que as quantidades da linha foram
      * persistidas.
      */
+    @IntegrationFileColumn(7)
     public String unitOfMeasureId;
 
     /**
      * Quantidade planejada do plano irrestrito na unidade da linha.
      */
+    @IntegrationFileColumn(8)
     public Double unconstrainedPlannedOrderQuantity;
 
     /**
      * Quantidade firme do plano irrestrito na unidade da linha.
      */
+    @IntegrationFileColumn(9)
     public Double unconstrainedFirmOrderQuantity;
 
     /**
      * Quantidade planejada do plano restrito na unidade da linha.
      */
+    @IntegrationFileColumn(10)
     public Double constrainedPlannedOrderQuantity;
 
     /**
      * Quantidade firme do plano restrito na unidade da linha.
      */
+    @IntegrationFileColumn(11)
     public Double constrainedFirmOrderQuantity;
 
     /**
      * Unidade padrao SNP usada para as colunas derivadas de comparacao.
      */
+    @IntegrationFileColumn(12)
     public String defaultSnpUnitOfMeasureId;
 
     /**
      * Quantidade planejada irrestrita convertida para a unidade padrao SNP, ou
      * mensagem textual quando a conversao nao existir.
      */
+    @IntegrationFileColumn(13)
     public Object unconstrainedPlannedOrderQuantityDefaultSnpUom;
 
     /**
      * Quantidade firme irrestrita convertida para a unidade padrao SNP, ou
      * mensagem textual quando a conversao nao existir.
      */
+    @IntegrationFileColumn(14)
     public Object unconstrainedFirmOrderQuantityDefaultSnpUom;
 
     /**
      * Quantidade planejada restrita convertida para a unidade padrao SNP, ou
      * mensagem textual quando a conversao nao existir.
      */
+    @IntegrationFileColumn(15)
     public Object constrainedPlannedOrderQuantityDefaultSnpUom;
 
     /**
      * Quantidade firme restrita convertida para a unidade padrao SNP, ou
      * mensagem textual quando a conversao nao existir.
      */
+    @IntegrationFileColumn(16)
     public Object constrainedFirmOrderQuantityDefaultSnpUom;
 
     /**
@@ -100,37 +112,44 @@ public class ProductionPlanVolumeIntegrationDataDto extends IntegrationDataDtoAb
         /**
          * Identificador do Supply Plan exportado.
          */
+        @IntegrationFileColumn(0)
         public Long supplyPlanId;
 
         /**
          * Location produtiva da linha.
          */
+        @IntegrationFileColumn(1)
         public String locationId;
 
         /**
          * Material output planejado.
          */
+        @IntegrationFileColumn(2)
         public String outputMaterialId;
 
         /**
          * Data/bucket planejado da producao.
          */
+        @IntegrationFileColumn(3)
         public LocalDateTime plannedDate;
 
         /**
          * Versao de producao usada, nula quando a linha veio da sentinela
          * "sem versao de producao".
          */
+        @IntegrationFileColumn(4)
         public String productionVersionId;
 
         /**
          * Roteiro produtivo associado a linha.
          */
+        @IntegrationFileColumn(5)
         public String routingId;
 
         /**
          * Lista tecnica associada a linha.
          */
+        @IntegrationFileColumn(6)
         public String billOfMaterialsId;
 
         @Override

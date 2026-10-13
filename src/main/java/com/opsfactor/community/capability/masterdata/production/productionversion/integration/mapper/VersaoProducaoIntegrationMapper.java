@@ -4,8 +4,6 @@ import com.opsfactor.community.capability.masterdata.production.productionversio
 import com.opsfactor.community.platform.integration.mapper.IntegrationMapperInterface;
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.platform.exception.DataUploadException;
-import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
-import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.springframework.stereotype.Component;
 
@@ -93,22 +91,11 @@ public class VersaoProducaoIntegrationMapper implements IntegrationMapperInterfa
         // se valor DTO = nulo, seta nulo. caso contrário, ou busca o valor no mapa em supportData
         // ou retorna exceção caso não encontre o id
         entity.setLocation(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(supportData.mapaLocationPorId, 
-                        dto.locationId,
-                        true, // campo obrigatório. não pode ser nulo
-                        new MissingDependencyDataUploadException("Location " + dto.locationId + " not found", dto)));
+                resolveReference(supportData.mapaLocationPorId, dto, "locationId", true));
         entity.setRoteiro(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaRoteiroPorId, 
-                        dto.routingId,
-                        true, // campo obrigatório. não pode ser nulo
-                        new MissingDependencyDataUploadException("Routing " + dto.routingId + " not found", dto)));
+                resolveReference(supportData.mapaRoteiroPorId, dto, "routingId", true));
         entity.setListaTecnica(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaListaTecnicaPorId, 
-                        dto.billOfMaterialsId,
-                        true, // campo obrigatório. não pode ser nulo
-                        new MissingDependencyDataUploadException("Bills of Materials " + dto.billOfMaterialsId + " not found", dto)));
+                resolveReference(supportData.mapaListaTecnicaPorId, dto, "billOfMaterialsId", true));
 
         /*
          * A coluna de material continua no arquivo por compatibilidade, mas

@@ -5,6 +5,9 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
+import com.opsfactor.community.platform.integration.validation.IntegrationInputContext;
+import com.opsfactor.community.platform.exception.DataUploadException;
+import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,62 @@ import java.util.Map;
  * Contrato da flag de uso de BOM fora de uma versao de producao no Community.
  */
 class ListaTecnicaIntegrationMapperCommunityTest {
+
+    @Test
+    void missingOutputMaterialShouldIdentifyExcelColumnAsForeignKey() {
+
+        ListaTecnicaIntegrationMapper mapper = new ListaTecnicaIntegrationMapper();
+        ListaTecnica entity = createListaTecnica();
+        ListaTecnicaIntegrationDataDto dto = ListaTecnicaIntegrationDataDto.builder()
+                .locationId("LOC")
+                .outputQuantity(10.0)
+                .build();
+        dto.setIntegrationInputContext(new IntegrationInputContext(true, 181, mapper.getProcessedFileHeaders()));
+
+        DataUploadException exception = Assertions.assertThrows(DataUploadException.class,
+                () -> mapper.updateEntityNonPrimaryFieldsFromDTO(entity, dto, getSupportData(entity), null));
+
+        Assertions.assertTrue(exception.getMessage().contains("Output Material Id"));
+        Assertions.assertTrue(exception.getMessage().contains("foreign key"));
+        Assertions.assertFalse(exception.getMessage().contains("Primary key"));
+
+    }
+
+    @Test
+    void unknownOutputMaterialShouldIdentifyJsonPropertyAndUnknownValue() {
+
+        ListaTecnicaIntegrationMapper mapper = new ListaTecnicaIntegrationMapper();
+        ListaTecnica entity = createListaTecnica();
+        ListaTecnicaIntegrationDataDto dto = ListaTecnicaIntegrationDataDto.builder()
+                .locationId("LOC")
+                .outputMaterialId("UNKNOWN")
+                .build();
+
+        MissingDependencyDataUploadException exception = Assertions.assertThrows(
+                MissingDependencyDataUploadException.class,
+                () -> mapper.updateEntityNonPrimaryFieldsFromDTO(entity, dto, getSupportData(entity), null));
+
+        Assertions.assertTrue(exception.getMessage().contains("outputMaterialId"));
+        Assertions.assertTrue(exception.getMessage().contains("UNKNOWN"));
+        Assertions.assertTrue(exception.getMessage().contains("Foreign key"));
+
+    }
+
+    @Test
+    void missingBillOfMaterialsIdShouldIdentifyPrimaryKeyAndItsExcelColumn() {
+
+        ListaTecnicaIntegrationMapper mapper = new ListaTecnicaIntegrationMapper();
+        ListaTecnicaIntegrationDataDto dto = ListaTecnicaIntegrationDataDto.builder().build();
+        dto.primaryKeyDto = new ListaTecnicaIntegrationDataDto.ListaTecnicaPrimaryKeyIntegrationDTO(null);
+        dto.setIntegrationInputContext(new IntegrationInputContext(true, 181, mapper.getProcessedFileHeaders()));
+
+        DataUploadException exception = Assertions.assertThrows(DataUploadException.class,
+                () -> mapper.convertDTOToEntity(dto, Map.of(), new ListaTecnicaIntegrationSupportData(), null));
+
+        Assertions.assertTrue(exception.getMessage().contains("Primary key"));
+        Assertions.assertTrue(exception.getMessage().contains("Bill of Materials Id"));
+
+    }
 
     @Test
     void exportShouldKeepConfiguredProductionVersionUsageFlagAfterActiveColumn() {

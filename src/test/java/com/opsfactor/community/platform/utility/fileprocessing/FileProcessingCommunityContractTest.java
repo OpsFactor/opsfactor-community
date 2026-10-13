@@ -24,6 +24,25 @@ import java.util.List;
  */
 class FileProcessingCommunityContractTest {
 
+    /** Missing worksheet rows must not collapse the origin carried by imported data. */
+    @Test
+    void sparseXlsxRetainsPhysicalRowNumber() throws IOException {
+
+        byte[] bytes;
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            var sheet = workbook.createSheet("Data");
+            sheet.createRow(0).createCell(0).setCellValue("Material Id");
+            sheet.createRow(180).createCell(0).setCellValue("MAT");
+            workbook.write(output);
+            bytes = output.toByteArray();
+        }
+        ProcessedFile file = FileProcessing.getProcessedFileFromMultipartFile(new MultipartFileTeste("sparse.xlsx", bytes));
+        Assertions.assertEquals(2, file.getFileRows().size());
+        Assertions.assertEquals(181, file.getFileRows().get(1).sourceRowNumber());
+
+    }
+
     @Test
     void getProcessedFileFromMultipartFileShouldRejectMissingPayload() {
 

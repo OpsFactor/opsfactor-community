@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.supplyplanning.productionplan.integration;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.opsfactor.community.platform.integration.dto.IntegrationDataDtoAbstract;
@@ -38,12 +40,14 @@ public class ProductionPlanOccupationIntegrationDataDto extends IntegrationDataD
      * Roteiro -> ClusterRoteiros ainda pertence ao recorte futuro de line
      * scheduling, portanto a exportacao pode permanecer nula.
      */
+    @IntegrationFileColumn(8)
     public String routingClusterId;
 
     /**
      * Unidade de medida da capacidade do recurso, ou "Hours" quando a
      * capacidade do perfil e baseada em horas.
      */
+    @IntegrationFileColumn(9)
     public String resourceCapacityUnitOfMeasureId;
 
     /**
@@ -51,80 +55,95 @@ public class ProductionPlanOccupationIntegrationDataDto extends IntegrationDataD
      * legado tambem admite mensagens textuais quando uma dimensao Enterprise
      * ainda nao esta materializada.
      */
+    @IntegrationFileColumn(10)
     public Object resourceCapacityPeriod;
 
     /**
      * Unidade operacional das quantidades da linha de Production Plan.
      */
+    @IntegrationFileColumn(11)
     public String unitOfMeasureId;
 
     /**
      * Quantidade planejada do plano irrestrito na unidade da linha.
      */
+    @IntegrationFileColumn(12)
     public Double unconstrainedPlannedOrderQuantity;
 
     /**
      * Quantidade firme do plano irrestrito na unidade da linha.
      */
+    @IntegrationFileColumn(13)
     public Double unconstrainedFirmOrderQuantity;
 
     /**
      * Consumo total de capacidade do recurso no plano irrestrito.
      */
+    @IntegrationFileColumn(14)
     public Double unconstrainedTotalResourceConsumption;
 
     /**
      * Quantidade planejada do plano restrito na unidade da linha.
      */
+    @IntegrationFileColumn(15)
     public Double constrainedPlannedOrderQuantity;
 
     /**
      * Quantidade firme do plano restrito na unidade da linha.
      */
+    @IntegrationFileColumn(16)
     public Double constrainedFirmOrderQuantity;
 
     /**
      * Consumo total de capacidade do recurso no plano restrito.
      */
+    @IntegrationFileColumn(17)
     public Double constrainedTotalResourceConsumption;
 
     /**
      * Unidade padrao SNP usada para as colunas derivadas de comparacao.
      */
+    @IntegrationFileColumn(18)
     public String defaultSnpUnitOfMeasureId;
 
     /**
      * Quantidade planejada irrestrita convertida para a unidade padrao SNP, ou
      * mensagem textual quando a conversao nao existir.
      */
+    @IntegrationFileColumn(19)
     public Object unconstrainedPlannedOrderQuantityDefaultSnpUom;
 
     /**
      * Quantidade firme irrestrita convertida para a unidade padrao SNP, ou
      * mensagem textual quando a conversao nao existir.
      */
+    @IntegrationFileColumn(20)
     public Object unconstrainedFirmOrderQuantityDefaultSnpUom;
 
     /**
      * Quantidade planejada restrita convertida para a unidade padrao SNP, ou
      * mensagem textual quando a conversao nao existir.
      */
+    @IntegrationFileColumn(21)
     public Object constrainedPlannedOrderQuantityDefaultSnpUom;
 
     /**
      * Quantidade firme restrita convertida para a unidade padrao SNP, ou
      * mensagem textual quando a conversao nao existir.
      */
+    @IntegrationFileColumn(22)
     public Object constrainedFirmOrderQuantityDefaultSnpUom;
 
     /**
      * Horas de setup do snapshot Enterprise quando aplicavel.
      */
+    @IntegrationFileColumn(23)
     public Object setupTimeHours;
 
     /**
      * Sequencia do setup no periodo quando aplicavel.
      */
+    @IntegrationFileColumn(24)
     public Object setupSequence;
 
     /**
@@ -140,42 +159,50 @@ public class ProductionPlanOccupationIntegrationDataDto extends IntegrationDataD
         /**
          * Identificador do Supply Plan exportado.
          */
+        @IntegrationFileColumn(0)
         public Long supplyPlanId;
 
         /**
          * Location produtiva da linha.
          */
+        @IntegrationFileColumn(1)
         public String locationId;
 
         /**
          * Material output planejado.
          */
+        @IntegrationFileColumn(2)
         public String outputMaterialId;
 
         /**
          * Data/bucket planejado da producao ou setup.
          */
+        @IntegrationFileColumn(3)
         public LocalDateTime plannedDate;
 
         /**
          * Versao de producao usada, nula quando a linha veio da sentinela
          * "sem versao de producao".
          */
+        @IntegrationFileColumn(4)
         public String productionVersionId;
 
         /**
          * Roteiro produtivo associado a ocupacao.
          */
+        @IntegrationFileColumn(5)
         public String routingId;
 
         /**
          * Lista tecnica associada a ocupacao.
          */
+        @IntegrationFileColumn(6)
         public String billOfMaterialsId;
 
         /**
          * Recurso produtivo ocupado pelo volume ou setup.
          */
+        @IntegrationFileColumn(7)
         public String resourceId;
 
         @Override

@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.product.material.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,8 +37,10 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ProdutoIntegrationDataDto extends IntegrationDataDtoAbstract<ProdutoIntegrationDataDto, ProdutoIntegrationDataDto.ProdutoPrimaryKeyIntegrationDTO, Produto> {
 
+    @IntegrationFileColumn(1)
     public String description;
     public Boolean active;
+    @IntegrationFileColumn(3)
     public Constantes.StatusProduto lifecycleStage;
     /**
      * Modelo operacional do material para Supply Planning: MTS ou MTO.
@@ -45,11 +49,15 @@ public class ProdutoIntegrationDataDto extends IntegrationDataDtoAbstract<Produt
      * MTS. O campo e compartilhado porque e consumido pela politica de
      * estoques Community, sem exigir capability ou tabela Enterprise.</p>
      */
+    @IntegrationFileColumn(9)
     public Constantes.SNPModeloOperacional operationalModel;
+    @IntegrationFileColumn(4)
     public LocalDateTime introductionDate;
     public LocalDateTime discontinuationDate;
+    @IntegrationFileColumn(6)
     public String defaultUomId;
     public String salesUomId;
+    @IntegrationFileColumn(8)
     public String transferUomId;
 
     /**
@@ -73,6 +81,7 @@ public class ProdutoIntegrationDataDto extends IntegrationDataDtoAbstract<Produt
     @EqualsAndHashCode
     public static class ProdutoPrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<ProdutoPrimaryKeyIntegrationDTO, Produto> {
 
+        @IntegrationFileColumn(0)
         public String id;
 
         @JsonCreator

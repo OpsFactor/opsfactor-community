@@ -167,8 +167,9 @@ class VersaoMalhaIntegrationMapperCommunityTest {
 
         Assertions.assertTrue(
                 missingDependencyDataUploadException.getMessage()
-                        .startsWith("Default Client Origin Location Id UNKNOWN not found"),
+                        .contains("defaultClientOriginLocationId"),
                 missingDependencyDataUploadException.getMessage());
+        Assertions.assertTrue(missingDependencyDataUploadException.getMessage().contains("UNKNOWN"));
 
     }
 

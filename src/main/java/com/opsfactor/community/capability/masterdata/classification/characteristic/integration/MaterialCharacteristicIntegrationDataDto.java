@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.classification.characteristic.integration;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -32,7 +34,9 @@ public class MaterialCharacteristicIntegrationDataDto extends IntegrationDataDto
         MaterialCharacteristicIntegrationDataDto.MaterialCharacteristicPrimaryKeyIntegrationDTO,
         CaracteristicaProduto> {
 
+    @IntegrationFileColumn(1)
     public String description;
+    @IntegrationFileColumn(2)
     public Caracteristica.TipoCaracteristica characteristicType;
 
     @EqualsAndHashCode(callSuper = false)
@@ -40,6 +44,7 @@ public class MaterialCharacteristicIntegrationDataDto extends IntegrationDataDto
             MaterialCharacteristicPrimaryKeyIntegrationDTO,
             CaracteristicaProduto> {
 
+        @IntegrationFileColumn(0)
         public String materialCharacteristicId;
 
         @JsonCreator

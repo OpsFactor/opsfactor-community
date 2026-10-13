@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.transactionaldata.inventory.stock.integration.dto;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFileColumn;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -32,15 +34,20 @@ import java.time.LocalDateTime;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EstoqueIntegrationDataDto extends IntegrationDataDtoAbstract<EstoqueIntegrationDataDto, EstoqueIntegrationDataDto.EstoquePrimaryKeyIntegrationDTO, Estoque> {
 
+    @IntegrationFileColumn(3)
     public String uomId;
+    @IntegrationFileColumn(4)
     public Double quantity;
     public String delete;
 
     @EqualsAndHashCode
     public static class EstoquePrimaryKeyIntegrationDTO extends IntegrationPrimaryKeyDTOAbstract<EstoquePrimaryKeyIntegrationDTO, Estoque> {
 
+        @IntegrationFileColumn(0)
         public String locationId;
+        @IntegrationFileColumn(1)
         public String materialId;
+        @IntegrationFileColumn(2)
         public LocalDateTime referenceDate;
 
         @JsonCreator

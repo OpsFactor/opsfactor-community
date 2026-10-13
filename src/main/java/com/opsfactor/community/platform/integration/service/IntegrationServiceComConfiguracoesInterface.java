@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.annotation.Nullable;
+import com.opsfactor.community.platform.integration.validation.IntegrationFieldValidation;
+import com.opsfactor.community.platform.integration.validation.IntegrationInputContext;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -221,7 +223,21 @@ public interface IntegrationServiceComConfiguracoesInterface<
 
         MAPPER mapper = getMapper();
 
-        integrationDto.data.forEach(IntegrationDataDtoAbstract::normalizaCamposTextoEntradaIntegracao);
+        // Preserve each original position before filtering, equality comparisons or batch removal.
+        for (int inputIndex = 0; inputIndex < integrationDto.data.size(); inputIndex++) {
+            DTO dto = integrationDto.data.get(inputIndex);
+            if (dto == null) throw new DataUploadException("Null integration record at JSON record " + (inputIndex + 1));
+            if (dto.getIntegrationInputContext() == null) {
+                dto.setIntegrationInputContext(new IntegrationInputContext(false, inputIndex + 1, List.of()));
+            }
+            if (dto.primaryKeyDto != null) dto.primaryKeyDto.setIntegrationInputContext(dto.getIntegrationInputContext());
+            dto.normalizaCamposTextoEntradaIntegracao();
+            try {
+                if (!dto.allFieldsAreEmpty()) IntegrationFieldValidation.validateRequiredFields(dto.primaryKeyDto);
+            } catch (DataUploadException exception) {
+                throw new DataUploadException(exception.getMessage() + IntegrationFieldValidation.location(dto), exception);
+            }
+        }
 
         Set<PRIMARYKEYDTO> primaryKeyDtoSet =
                 getPrimaryKeyDtoSetObrigatorioParaPayload(
@@ -471,16 +487,16 @@ public interface IntegrationServiceComConfiguracoesInterface<
         for (int indice = 0; indice < dtoList.size(); indice++) {
             DTO dto = dtoList.get(indice);
             if (dto == null) {
-                throw new DataUploadException("Integration DTO data list returned null item at index " + indice + ".");
+                throw new DataUploadException("Integration DTO data list returned null item at index " + indice + "." + IntegrationFieldValidation.location(dto));
             }
             if (dto.allFieldsAreEmpty()) {
                 continue;
             }
             if (dto.primaryKeyDto == null) {
-                throw new DataUploadException("Integration DTO data list returned item without primary key at index " + indice + ".");
+                throw new DataUploadException("Integration DTO data list returned item without primary key at index " + indice + "." + IntegrationFieldValidation.location(dto));
             }
             if (dto.primaryKeyDto.allFieldsAreEmpty()) {
-                throw new DataUploadException("Integration DTO data list returned item with empty primary key at index " + indice + ".");
+                throw new DataUploadException("Integration DTO data list returned item with empty primary key at index " + indice + "." + IntegrationFieldValidation.location(dto));
             }
             if (!primaryKeyDtoSet.add(dto.primaryKeyDto)) {
                 throw new DataUploadException(
@@ -488,11 +504,34 @@ public interface IntegrationServiceComConfiguracoesInterface<
                                 + dto.primaryKeyDto
                                 + " at index "
                                 + indice
-                                + ".");
+                                + "." + IntegrationFieldValidation.location(dto));
             }
         }
 
         return primaryKeyDtoSet;
+
+    }
+
+    /**
+     * Preserves the physical file row/JSON record across filtering and batches.
+     * Direct batch callers use object identity, never business-key equality.
+     */
+    public default int integrationRecordPosition(DTO dto, List<DTO> dtoBatchList, int initialBatchPosition) {
+
+        if (dto.getIntegrationInputContext() != null) return dto.getIntegrationInputContext().rowNumber();
+        for (int recordIndex = 0; recordIndex < dtoBatchList.size(); recordIndex++) {
+            if (dtoBatchList.get(recordIndex) == dto) return initialBatchPosition + recordIndex + 1;
+        }
+        throw new IllegalStateException("Failed integration record does not belong to its batch");
+
+    }
+
+    /** Formats the source consistently for failures and ignored dependencies. */
+    public default String integrationErrorLocation(DTO dto, List<DTO> dtoBatchList, int initialBatchPosition) {
+
+        return dto.getIntegrationInputContext() != null
+                ? dto.getIntegrationInputContext().location()
+                : " at JSON record " + integrationRecordPosition(dto, dtoBatchList, initialBatchPosition);
 
     }
 
@@ -530,15 +569,14 @@ public interface IntegrationServiceComConfiguracoesInterface<
             // Se skipRecordsWithUnresolvedDependencies estiver ativo, o DTO problemático é descartado e contabilizado no contexto da request.
             if (options != null && options.skipRecordsWithUnresolvedDependencies != null && options.skipRecordsWithUnresolvedDependencies) {
                 if (integrationLoggingContext != null) {
-                    int posicaoDTONoBatchAtual = dtoBatchList.indexOf(dto);
                     integrationLoggingContext.recordIgnoredError(
-                            initialBatchPosition + posicaoDTONoBatchAtual + 1 + 1,
+                            integrationRecordPosition(dto, dtoBatchList, initialBatchPosition),
                             missingDependencyDataUploadException,
                             dto);
                 }
                 return null; // para que saia do filtro na stream
             }
-            throw missingDependencyDataUploadException;
+            throw missingDependencyDataUploadException.withLocation(integrationErrorLocation(dto, dtoBatchList, initialBatchPosition));
         } catch (RuntimeException runtimeException) {
             /*
              * Os mappers de integracao nao declaram excecoes checked. Esta
@@ -546,12 +584,9 @@ public interface IntegrationServiceComConfiguracoesInterface<
              * com numero de linha, mantendo a causa tecnica original para
              * diagnostico sem alterar o contrato publico do upload.
              */
-            int posicaoDTONoBatchAtual = dtoBatchList.indexOf(dto);
-            log.error("Erro ao converter DTO de integracao na linha {}", initialBatchPosition + posicaoDTONoBatchAtual + 2, runtimeException);
-            // + 1 para transformar de escala com inicio em 0 para escala com inicio em 1
-            // outro +1 para considerar cabeçalho
+            log.error("Erro ao converter DTO de integracao{}", integrationErrorLocation(dto, dtoBatchList, initialBatchPosition), runtimeException);
             throw new DataUploadException(
-                    runtimeException.getMessage() + " at line " + (initialBatchPosition + posicaoDTONoBatchAtual + 1 + 1),
+                    runtimeException.getMessage() + integrationErrorLocation(dto, dtoBatchList, initialBatchPosition),
                     runtimeException);
         }
 

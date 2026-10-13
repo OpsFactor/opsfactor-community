@@ -3,8 +3,6 @@ package com.opsfactor.community.capability.transactionaldata.sales.sellout.integ
 import com.opsfactor.community.capability.transactionaldata.sales.sellout.integration.dto.SelloutIntegrationDataDto;
 import com.opsfactor.community.platform.integration.mapper.IntegrationMapperInterface;
 import com.opsfactor.community.capability.transactionaldata.sales.sellout.domain.Sellout;
-import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
-import com.opsfactor.community.platform.utility.FuncoesMap;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.springframework.stereotype.Component;
 
@@ -107,23 +105,11 @@ public class SelloutIntegrationMapper implements IntegrationMapperInterface<Sell
          * dependencia ausente contendo o proprio DTO.
          */
         entity.setLocationOrigem(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaLocationPorId, 
-                        dto.originLocationId,
-                        true, // campo obrigatório. não pode ser nulo
-                        new MissingDependencyDataUploadException("Location " + dto.originLocationId + " not found", dto)));
+                resolveReference(supportData.mapaLocationPorId, dto, "originLocationId", true));
         entity.setProduto(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaMaterialPorId, 
-                        dto.materialId,
-                        true, // campo obrigatório. não pode ser nulo
-                        new MissingDependencyDataUploadException("Material " + dto.materialId + " not found", dto)));
+                resolveReference(supportData.mapaMaterialPorId, dto, "materialId", true));
         entity.setUnidadeMedida(
-                FuncoesMap.getFromMapOrThrowExceptionIfNotFound(
-                        supportData.mapaUnidadeMedidaPorId, 
-                        dto.uomId,
-                        false, // campo não obrigatório. pode ser nulo
-                        new MissingDependencyDataUploadException("Unit of Measure " + dto.uomId + " not found", dto)));
+                resolveReference(supportData.mapaUnidadeMedidaPorId, dto, "uomId", false));
                         
     }
 

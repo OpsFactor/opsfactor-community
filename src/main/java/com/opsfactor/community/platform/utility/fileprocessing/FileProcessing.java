@@ -92,6 +92,7 @@ public abstract class FileProcessing {
 
             for (Row row : sheet) {
                 processedFile.addNewRow();
+                processedFile.getFileRows().get(processedFile.getFileRows().size() - 1).sourceRowNumber(row.getRowNum() + 1);
                 for (int col = 0; col < row.getLastCellNum(); col++) {
                     Cell cell = row.getCell(col);
                     Object valorCelula = "";
