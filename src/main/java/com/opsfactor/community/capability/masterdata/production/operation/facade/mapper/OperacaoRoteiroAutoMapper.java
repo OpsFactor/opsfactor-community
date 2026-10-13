@@ -17,7 +17,7 @@ public interface OperacaoRoteiroAutoMapper {
     @Mapping(source = "operacaoRoteiroCompositeKey.roteiro.id", target = "routingId")
     @Mapping(source = "operacaoRoteiroCompositeKey.posicao", target = "operationPosition")
     @Mapping(source = "recursoProdutivo.id", target = "productionResourceId")
-    @Mapping(source = "tempoPorQuantidadeBase", target = "operationDuration")
+    @Mapping(source = "tempoPorQuantidadeBaseCadastrado", target = "operationDuration")
     @Mapping(expression = "java(operacaoRoteiro.getUnidadeTempoOperacao().getCodigo())", target = "timeUnit")
     public OperacaoRoteiroDTO converte(OperacaoRoteiro operacaoRoteiro);
     

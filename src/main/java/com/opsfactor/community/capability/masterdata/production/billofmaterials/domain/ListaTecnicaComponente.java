@@ -74,10 +74,28 @@ public class ListaTecnicaComponente {
         return (unidadeMedidaMaterialComponente == null) ? parametrosGlobais.getUnidadeMedidaPadraoSNP() : unidadeMedidaMaterialComponente;
     }
     
+    /** Effective component consumption; absence retains the historical unitary default. */
     public Double getQuantidade() {
-        return (quantidade == null) ? 1d : quantidade;
+
+        if (quantidade == null) {
+            return 1d;
+        }
+        if (!Double.isFinite(quantidade) || quantidade <= 0d) {
+            throw new IllegalStateException("BOM component " + getListaTecnica().getId()
+                    + "/" + getMaterialComponente().getId()
+                    + " quantity must be finite and positive; received " + quantidade);
+        }
+        return quantidade;
+
     }
     
+    /** Returns the persisted quantity without applying the calculation default. */
+    public Double getQuantidadeCadastrada() {
+
+        return quantidade;
+
+    }
+
     public Produto getMaterial() {
         return getListaTecnicaComponenteCompositeKey().getMaterialComponente();
     }

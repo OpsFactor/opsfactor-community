@@ -79,6 +79,13 @@ public class OperacaoRoteiro extends OperacaoAbstract {
 
     }
 
+    /** Returns the recorded duration for exports, including invalid values awaiting correction. */
+    public Double getTempoPorQuantidadeBaseCadastrado() {
+
+        return tempoPorQuantidadeBase;
+
+    }
+
     public UnidadeTempoOperacao getUnidadeTempoOperacao() {
 
         return unidadeTempoOperacao == null ? UnidadeTempoOperacao.PADRAO : unidadeTempoOperacao;

@@ -20,7 +20,7 @@ public interface ListaTecnicaComponenteAutoMapper {
     @Mapping(source = "listaTecnicaComponente.listaTecnicaComponenteCompositeKey.listaTecnica.id", target = "billOfMaterialsId")
     @Mapping(source = "listaTecnicaComponente.listaTecnicaComponenteCompositeKey.materialComponente.id", target = "componentMaterialId")
     @Mapping(expression = "java(listaTecnicaComponente.getUnidadeMedidaMaterialComponente(parametrosGlobais).getId())", target = "componentMaterialUnitOfMeasureId")
-    @Mapping(source = "listaTecnicaComponente.quantidade", target = "quantity")
+    @Mapping(source = "listaTecnicaComponente.quantidadeCadastrada", target = "quantity")
     public ListaTecnicaComponenteDTO converte(ListaTecnicaComponente listaTecnicaComponente, ParametrosGlobais parametrosGlobais);
         
     default public List<ListaTecnicaComponenteDTO> converteListaEntidadeParaListaDTO(List<ListaTecnicaComponente> listaTecnicaComponenteList, ParametrosGlobais parametrosGlobais) {

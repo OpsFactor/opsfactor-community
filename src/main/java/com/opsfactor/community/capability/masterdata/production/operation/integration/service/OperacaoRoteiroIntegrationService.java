@@ -77,16 +77,16 @@ public class OperacaoRoteiroIntegrationService {
 
         linhasArquivo.add(linhaHeader);
 
-        for (Roteiro roteiro : roteiroRepository.findAll()) {
-            for (OperacaoRoteiro operacaoRoteiro : roteiro.getOperacaoRoteiroListOrdenadaPorPosicaoAsc()) {
-                List<Object> linhaDados = new ArrayList<>();
-                linhaDados.add(roteiro.getId());
-                linhaDados.add(operacaoRoteiro.getPosicao());
-                linhaDados.add(operacaoRoteiro.getRecursoProdutivo().getId());
-                linhaDados.add(operacaoRoteiro.getTempoPorQuantidadeBase());
-                linhaDados.add(operacaoRoteiro.getUnidadeTempoOperacao().getCodigo());
-                linhasArquivo.add(linhaDados);
-            }
+        // The administrative snapshot fetches routing and resource in one query, avoiding lazy N+1 reads.
+        for (OperacaoRoteiro operacaoRoteiro : operacaoRoteiroRepository.customFindAllForFront()) {
+            Roteiro roteiro = operacaoRoteiro.getRoteiro();
+            List<Object> linhaDados = new ArrayList<>();
+            linhaDados.add(roteiro.getId());
+            linhaDados.add(operacaoRoteiro.getPosicao());
+            linhaDados.add(operacaoRoteiro.getRecursoProdutivo().getId());
+            linhaDados.add(operacaoRoteiro.getTempoPorQuantidadeBaseCadastrado());
+            linhaDados.add(operacaoRoteiro.getUnidadeTempoOperacao().getCodigo());
+            linhasArquivo.add(linhaDados);
         }
         return linhasArquivo;
 
@@ -162,6 +162,18 @@ public class OperacaoRoteiroIntegrationService {
                 Roteiro optionalRoteiro = Optional.ofNullable(mapaRoteiros.get(routingId))
                         .orElseThrow(() -> new DataUploadException("Routing Id not found at line " + posicaoLinha));
 
+                // Deletion resolves only the existing operation key; duration/resource may be invalid.
+                if (delete.trim().equalsIgnoreCase("D")) {
+                    Map<String, OperacaoRoteiro> operacoesPorRoteiro = mapaOperacoesRoteiro.get(posicaoOperacao.toString());
+                    OperacaoRoteiro operacaoExistente = operacoesPorRoteiro == null
+                            ? null : operacoesPorRoteiro.get(routingId);
+                    if (operacaoExistente == null) {
+                        throw new DataUploadException("Routing operation not found for deletion at line " + posicaoLinha);
+                    }
+                    listaObjetosADeletar.add(operacaoExistente);
+                    continue;
+                }
+
                 // recurso produtivo é obrigatório
                 RecursoProdutivo optionalRecursoProdutivo = Optional.ofNullable(mapaRecursoProdutivo.get(productionResourceId))
                         .orElseThrow(() -> new DataUploadException("Production Resource Id not found at line " + posicaoLinha));
@@ -172,7 +184,7 @@ public class OperacaoRoteiroIntegrationService {
                         OperacaoRoteiro.class,
                         () -> new OperacaoRoteiro(new OperacaoRoteiro.OperacaoRoteiroCompositeKey(
                                 posicaoOperacao, optionalRoteiro)),
-                        posicaoOperacao, routingId);
+                        posicaoOperacao.toString(), routingId);
 
                 operacaoRoteiro.setRecursoProdutivo(optionalRecursoProdutivo);
 
@@ -208,11 +220,7 @@ public class OperacaoRoteiroIntegrationService {
                             illegalStateException);
                 }
 
-                if (delete.equals("D")) {
-                    listaObjetosADeletar.add(operacaoRoteiro);
-                } else {
-                    listaObjetosASalvar.add(operacaoRoteiro);
-                }
+                listaObjetosASalvar.add(operacaoRoteiro);
             }
         }
 

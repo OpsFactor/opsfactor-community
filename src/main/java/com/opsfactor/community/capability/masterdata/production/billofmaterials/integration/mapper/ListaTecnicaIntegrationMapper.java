@@ -5,6 +5,8 @@ import com.opsfactor.community.platform.integration.mapper.IntegrationMapperInte
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.springframework.stereotype.Component;
+import com.opsfactor.community.platform.exception.DataUploadException;
+import com.opsfactor.community.platform.integration.validation.IntegrationFieldValidation;
 
 import jakarta.annotation.Nullable;
 import java.util.List;
@@ -54,7 +56,7 @@ public class ListaTecnicaIntegrationMapper implements IntegrationMapperInterface
                 .locationId(entity.getLocation().getId())
                 .outputMaterialId(entity.getMaterialOutput().getId())
                 .outputUomId((entity.getUnidadeMedidaMaterialOutputCadastrada() == null) ? null : entity.getUnidadeMedidaMaterialOutputCadastrada().getId())
-                .outputQuantity(entity.getQuantidade())
+                .outputQuantity(entity.getQuantidadeCadastrdo())
                 .priority(entity.getPrioridadeCadastrada())
                 .active(entity.getAtivoCadastrado())
                 .canBeUsedWithoutProductionVersion(entity.getHabilitadoParaUsoSemVersaoProducaoCadastrado())
@@ -87,10 +89,29 @@ public class ListaTecnicaIntegrationMapper implements IntegrationMapperInterface
             ListaTecnicaIntegrationSupportData supportData,
             @Nullable Map<String,MetodoAtualizacaoCampo> camposASobrecrever) {
         
+        // Deletion consumes only the key and must permit removing invalid historical records.
+        if (dto.delete != null && dto.delete.trim().equalsIgnoreCase("D")) {
+            return;
+        }
+
+        // An omitted quantity keeps the unitary calculation default; a supplied value must be valid.
+        if (isUpdateableField("outputQuantity", camposASobrecrever)
+                && dto.outputQuantity != null
+                && (!Double.isFinite(dto.outputQuantity) || dto.outputQuantity <= 0d)) {
+            throw new DataUploadException(
+                    "BOM " + entity.getId()
+                            + " field '" + IntegrationFieldValidation.label(dto, "outputQuantity",
+                                    getIntegrationFileColumn(dto, "outputQuantity"))
+                            + "' must be finite and positive; received " + dto.outputQuantity
+                            + IntegrationFieldValidation.location(dto));
+        }
+
         // seta campos simples
         entity.setDescricao(dto.description);
         entity.setAtivo(dto.active);
-        entity.setQuantidade(dto.outputQuantity);
+        if (isUpdateableField("outputQuantity", camposASobrecrever)) {
+            entity.setQuantidade(dto.outputQuantity);
+        }
         entity.setPrioridade(dto.priority);
         entity.setHabilitadoParaUsoSemVersaoProducao(dto.canBeUsedWithoutProductionVersion);
         
@@ -111,7 +132,7 @@ public class ListaTecnicaIntegrationMapper implements IntegrationMapperInterface
         linhaArquivo.addContent(entity.getDescricao());
         linhaArquivo.addContent(entity.getLocation().getId());
         linhaArquivo.addContent(entity.getMaterialOutput().getId());
-        linhaArquivo.addContent(entity.getQuantidade());
+        linhaArquivo.addContent(entity.getQuantidadeCadastrdo());
         linhaArquivo.addContent((entity.getUnidadeMedidaMaterialOutputCadastrada() == null) ? null : entity.getUnidadeMedidaMaterialOutputCadastrada().getId());
         linhaArquivo.addContent(entity.getPrioridadeCadastrada());
         linhaArquivo.addContent(entity.getAtivoCadastrado());

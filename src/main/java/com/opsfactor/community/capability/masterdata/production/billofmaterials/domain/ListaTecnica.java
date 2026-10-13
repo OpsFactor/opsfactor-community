@@ -166,8 +166,18 @@ public class ListaTecnica implements Comparable<ListaTecnica> {
         return (unidadeMedidaMaterialOutput == null) ? parametrosGlobais.getUnidadeMedidaPadraoSNP() : unidadeMedidaMaterialOutput;
     }
     
+    /** Effective output quantity; invalid recorded values must fail before any calculation. */
     public double getQuantidade() {
-        return (quantidade == null) ? 1 : quantidade;
+
+        if (quantidade == null) {
+            return 1d;
+        }
+        if (!Double.isFinite(quantidade) || quantidade <= 0d) {
+            throw new IllegalStateException("BOM " + getId()
+                    + " output quantity must be finite and positive; received " + quantidade);
+        }
+        return quantidade;
+
     }
     public Double getQuantidadeCadastrdo() {
         return quantidade;

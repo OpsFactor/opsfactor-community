@@ -6,6 +6,8 @@ import com.opsfactor.community.capability.masterdata.production.routing.domain.R
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.springframework.stereotype.Component;
+import com.opsfactor.community.platform.exception.DataUploadException;
+import com.opsfactor.community.platform.integration.validation.IntegrationFieldValidation;
 
 import jakarta.annotation.Nullable;
 import java.util.List;
@@ -91,12 +93,31 @@ public class RoteiroIntegrationMapper implements IntegrationMapperInterface<Rote
             RoteiroIntegrationSupportData supportData,
             @Nullable Map<String,MetodoAtualizacaoCampo> camposASobrecrever) {
         
+        // Deletion consumes only the key and must permit removing invalid historical records.
+        if (dto.delete != null && dto.delete.trim().equalsIgnoreCase("D")) {
+            return;
+        }
+
+        // An omitted quantity keeps the unitary calculation default; a supplied value must be valid.
+        if (isUpdateableField("baseQuantity", camposASobrecrever)
+                && dto.baseQuantity != null
+                && (!Double.isFinite(dto.baseQuantity) || dto.baseQuantity <= 0d)) {
+            throw new DataUploadException(
+                    "Routing " + entity.getId()
+                            + " field '" + IntegrationFieldValidation.label(dto, "baseQuantity",
+                                    getIntegrationFileColumn(dto, "baseQuantity"))
+                            + "' must be finite and positive; received " + dto.baseQuantity
+                            + IntegrationFieldValidation.location(dto));
+        }
+
         // seta campos simples
         entity.setDescricao(dto.description);
         entity.setAtivo(dto.active);
         entity.setHabilitadoParaUsoSemVersaoProducao(dto.canBeUsedWithoutProductionVersion);
         entity.setPrioridade(dto.priority);
-        entity.setQuantidadeBase(dto.baseQuantity);
+        if (isUpdateableField("baseQuantity", camposASobrecrever)) {
+            entity.setQuantidadeBase(dto.baseQuantity);
+        }
 
         /*
          * O identificador e compartilhado apenas para o overlay Enterprise

@@ -6,6 +6,8 @@ import com.opsfactor.community.capability.masterdata.production.billofmaterials.
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnicaComponente.ListaTecnicaComponenteCompositeKey;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
 import org.springframework.stereotype.Component;
+import com.opsfactor.community.platform.exception.DataUploadException;
+import com.opsfactor.community.platform.integration.validation.IntegrationFieldValidation;
 
 import jakarta.annotation.Nullable;
 import java.util.List;
@@ -48,7 +50,7 @@ public class ListaTecnicaComponenteIntegrationMapper implements IntegrationMappe
         
         return ListaTecnicaComponenteIntegrationDataDto.builder()
                 .componentMaterialQuantityUomId((entity.getUnidadeMedidaMaterialComponenteCadastrada() == null) ? null : entity.getUnidadeMedidaMaterialComponenteCadastrada().getId())
-                .componentMaterialQuantity(entity.getQuantidade())
+                .componentMaterialQuantity(entity.getQuantidadeCadastrada())
                 .build();
         
     }
@@ -83,8 +85,27 @@ public class ListaTecnicaComponenteIntegrationMapper implements IntegrationMappe
             ListaTecnicaComponenteIntegrationSupportData supportData,
             @Nullable Map<String,MetodoAtualizacaoCampo> camposASobrecrever) {
         
+        // Deletion consumes only the key and must permit removing invalid historical records.
+        if (dto.delete != null && dto.delete.trim().equalsIgnoreCase("D")) {
+            return;
+        }
+
+        // An omitted quantity keeps the unitary calculation default; a supplied value must be valid.
+        if (isUpdateableField("componentMaterialQuantity", camposASobrecrever)
+                && dto.componentMaterialQuantity != null
+                && (!Double.isFinite(dto.componentMaterialQuantity) || dto.componentMaterialQuantity <= 0d)) {
+            throw new DataUploadException(
+                    "BOM component " + entity.getListaTecnica().getId() + "/" + entity.getMaterialComponente().getId()
+                            + " field '" + IntegrationFieldValidation.label(dto, "componentMaterialQuantity",
+                                    getIntegrationFileColumn(dto, "componentMaterialQuantity"))
+                            + "' must be finite and positive; received " + dto.componentMaterialQuantity
+                            + IntegrationFieldValidation.location(dto));
+        }
+
         // seta campos simples
-        entity.setQuantidade(dto.componentMaterialQuantity);
+        if (isUpdateableField("componentMaterialQuantity", camposASobrecrever)) {
+            entity.setQuantidade(dto.componentMaterialQuantity);
+        }
         
         entity.setUnidadeMedidaMaterialComponente(
                 resolveReference(supportData.mapaUnidadeMedidaPorId, dto, "componentMaterialQuantityUomId", false));
@@ -98,7 +119,7 @@ public class ListaTecnicaComponenteIntegrationMapper implements IntegrationMappe
         linhaArquivo.addContent(entity.getListaTecnica().getId());
         linhaArquivo.addContent(entity.getMaterialComponente().getId());
         linhaArquivo.addContent((entity.getUnidadeMedidaMaterialComponenteCadastrada() == null) ? null : entity.getUnidadeMedidaMaterialComponenteCadastrada().getId());
-        linhaArquivo.addContent(entity.getQuantidade());
+        linhaArquivo.addContent(entity.getQuantidadeCadastrada());
                 
         return linhaArquivo;
 

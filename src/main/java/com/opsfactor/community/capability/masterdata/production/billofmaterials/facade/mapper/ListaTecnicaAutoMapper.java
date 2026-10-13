@@ -20,7 +20,7 @@ public interface ListaTecnicaAutoMapper {
     @Mapping(source = "listaTecnica.descricao", target = "description")
     @Mapping(source = "listaTecnica.materialOutput.id", target = "outputMaterialId")
     @Mapping(expression = "java(listaTecnica.getUnidadeMedidaMaterialOutput(parametrosGlobais).getId())", target = "outputUnitOfMeasureId")
-    @Mapping(source = "listaTecnica.quantidade", target = "outputQuantity")
+    @Mapping(source = "listaTecnica.quantidadeCadastrdo", target = "outputQuantity")
     @Mapping(source = "listaTecnica.ativo", target = "active")
     public ListaTecnicaDTO converte(ListaTecnica listaTecnica, ParametrosGlobais parametrosGlobais);
         
