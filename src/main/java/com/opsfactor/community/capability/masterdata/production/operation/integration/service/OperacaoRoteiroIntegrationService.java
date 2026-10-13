@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.production.operation.integration.service;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFieldValidation;
+
 import com.opsfactor.community.capability.masterdata.production.operation.domain.OperacaoRoteiro;
 import com.opsfactor.community.capability.masterdata.production.operation.domain.UnidadeTempoOperacao;
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
@@ -135,6 +137,8 @@ public class OperacaoRoteiroIntegrationService {
                 }
 
                 String routingId = (linhaAtual.size() >= 1) ? linhaAtual.get(0) : "";
+                // Validate the uploaded key before looking it up or creating a record.
+                IntegrationFieldValidation.validateInputIdentifier(routingId, "Routing Id at line " + (i + 1));
                 String sequence = (linhaAtual.size() >= 2) ? linhaAtual.get(1) : "";
                 String productionResourceId = (linhaAtual.size() >= 3) ? linhaAtual.get(2) : "";
                 String operationDuration = (linhaAtual.size() >= 4) ? linhaAtual.get(3) : "";

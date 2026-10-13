@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.integration.service;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFieldValidation;
+
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.integration.dto.UnidadeMedidaDataUploadDTO;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.integration.mapper.UnidadeMedidaIntegrationAutoMapper;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
@@ -169,6 +171,9 @@ public class UnidadeMedidaIntegrationService {
             if (unidadeMedidaDataUploadDTO == null) {
                 throw new DataUploadException("Unit of Measure DTO is null at line " + lineNumber);
             }
+            // Validate the received key without inspecting identifiers already in the database.
+            IntegrationFieldValidation.validateInputIdentifier(
+                    unidadeMedidaDataUploadDTO.id, "Unit of Measure Id at line " + lineNumber);
             if (unidadeMedidaDataUploadDTO.id == null
                     || unidadeMedidaDataUploadDTO.id.isBlank()) {
                 throw new DataUploadException("ID is empty at line " + lineNumber);

@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
+import java.util.regex.Pattern;
 
 /**
  * Builds field diagnostics from input provenance and declarative column links.
@@ -21,6 +22,9 @@ import java.util.function.ToIntFunction;
  * snapshot, preserving its existing optional/gated behavior and round trips.</p>
  */
 public final class IntegrationFieldValidation {
+
+    /** Includes CR/LF, CRLF and Unicode line separators pasted from spreadsheets. */
+    private static final Pattern LINE_BREAK_PATTERN = Pattern.compile("\\R");
 
     private static final ClassValue<Map<String, Field>> FIELD_CACHE = new ClassValue<>() {
 
@@ -128,6 +132,50 @@ public final class IntegrationFieldValidation {
                 throw new DataUploadException(role + " field '"
                         + label(owner, field.getName(), columnResolver.applyAsInt(field.getName())) + "' is missing");
             }
+        }
+
+    }
+
+    /**
+     * Rejects malformed textual keys only at the upload boundary, before text
+     * normalization can remove trailing Enter characters. Never apply this to
+     * keys extracted from persisted entities, exports or calculation snapshots.
+     * All textual components of a composite primary key follow the same rule;
+     * descriptions and other non-key text remain outside this validation.
+     */
+    public static void validateInputPrimaryKeyText(Object owner) {
+
+        if (owner == null) return; // Missing keys retain the existing required-field diagnostic.
+        for (Field field : FIELD_CACHE.get(owner.getClass()).values()) {
+            if (!String.class.equals(field.getType())) continue;
+            String text = (String) value(owner, field.getName());
+            if (text == null || text.isEmpty()) continue;
+            String label = label(owner, field.getName(), fileColumn(owner, field.getName()));
+            validateInputIdentifier(text, label);
+        }
+
+    }
+
+    /** Validates a raw identifier in importers that do not use the generic key DTO. */
+    public static void validateInputIdentifier(String text, String label) {
+
+        if (text == null || text.isEmpty()) return;
+        // A formula marker is invalid in an uploaded key; never silently strip or evaluate it.
+        if (text.startsWith("=")) {
+            throw new DataUploadException("Primary key field '" + label
+                    + "': Excel formulas are not accepted");
+        }
+        // Check line breaks first so a trailing Enter is reported explicitly.
+        if (LINE_BREAK_PATTERN.matcher(text).find()) {
+            throw new DataUploadException("Primary key field '" + label
+                    + "' contains a line break (Enter); remove it before uploading");
+        }
+        int firstCharacter = text.codePointAt(0);
+        int lastCharacter = text.codePointBefore(text.length());
+        if (Character.isWhitespace(firstCharacter) || Character.isSpaceChar(firstCharacter)
+                || Character.isWhitespace(lastCharacter) || Character.isSpaceChar(lastCharacter)) {
+            throw new DataUploadException("Primary key field '" + label
+                    + "' has leading or trailing whitespace; remove it before uploading");
         }
 
     }

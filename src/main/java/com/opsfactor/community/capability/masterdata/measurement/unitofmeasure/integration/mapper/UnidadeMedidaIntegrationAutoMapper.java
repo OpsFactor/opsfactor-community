@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.integration.mapper;
 
+import com.opsfactor.community.platform.integration.validation.IntegrationFieldValidation;
+
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.integration.dto.UnidadeMedidaDataUploadDTO;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import java.util.ArrayList;
@@ -27,6 +29,9 @@ public interface UnidadeMedidaIntegrationAutoMapper {
      * @return 
      */
     public default UnidadeMedidaDataUploadDTO converteLinhaArquivoParaDTO(List<String> linhaArquivo) {
+
+        // Preserve the raw cell until the upload key has been checked.
+        IntegrationFieldValidation.validateInputIdentifier(linhaArquivo.get(0), "Unit of Measure Id");
         String optionalDescription = null;
         String optionalDelete = null;
         

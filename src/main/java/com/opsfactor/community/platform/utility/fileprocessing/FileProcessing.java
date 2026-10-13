@@ -115,6 +115,9 @@ public abstract class FileProcessing {
                                     valorCelula = ((Double) valorCelula).longValue();
                                 }
                             }
+                        } else if (cellType == CellType.FORMULA) {
+                            // Preserve the marker so identifier upload validation can reject formulas.
+                            valorCelula = "=" + cell.getCellFormula();
                         } else {
                             // campo nao-numerico
                             valorCelula = cell.toString();

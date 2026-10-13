@@ -210,6 +210,35 @@ public interface IntegrationServiceComConfiguracoesInterface<
         }
     }
 
+    /**
+     * Prepares only incoming records before key lookup or persistence.
+     * Preserves file/JSON provenance and rejects malformed raw keys before
+     * normalization. Payload-specific loaders may invoke this before loading
+     * support data; persisted entities and exported DTOs never pass here.
+     */
+    public default void prepareInputDTOList(List<DTO> dtoList) {
+
+        if (dtoList == null) throw new DataUploadException("Integration DTO data list is required.");
+        // Preserve each original position before filtering, equality comparisons or batch removal.
+        for (int inputIndex = 0; inputIndex < dtoList.size(); inputIndex++) {
+            DTO dto = dtoList.get(inputIndex);
+            if (dto == null) throw new DataUploadException("Null integration record at JSON record " + (inputIndex + 1));
+            if (dto.getIntegrationInputContext() == null) {
+                dto.setIntegrationInputContext(new IntegrationInputContext(false, inputIndex + 1, List.of()));
+            }
+            if (dto.primaryKeyDto != null) dto.primaryKeyDto.setIntegrationInputContext(dto.getIntegrationInputContext());
+            try {
+                // Validate only received keys, before normalization erases a trailing Enter.
+                IntegrationFieldValidation.validateInputPrimaryKeyText(dto.primaryKeyDto);
+                dto.normalizaCamposTextoEntradaIntegracao();
+                if (!dto.allFieldsAreEmpty()) IntegrationFieldValidation.validateRequiredFields(dto.primaryKeyDto);
+            } catch (DataUploadException exception) {
+                throw new DataUploadException(exception.getMessage() + IntegrationFieldValidation.location(dto), exception);
+            }
+        }
+
+    }
+
     public default void persistDTOList(
             IntegrationDto<DTO,PRIMARYKEYDTO,DATAFILTER,OPTIONS> integrationDto,
             SUPPORTDATA supportData) {
@@ -223,21 +252,7 @@ public interface IntegrationServiceComConfiguracoesInterface<
 
         MAPPER mapper = getMapper();
 
-        // Preserve each original position before filtering, equality comparisons or batch removal.
-        for (int inputIndex = 0; inputIndex < integrationDto.data.size(); inputIndex++) {
-            DTO dto = integrationDto.data.get(inputIndex);
-            if (dto == null) throw new DataUploadException("Null integration record at JSON record " + (inputIndex + 1));
-            if (dto.getIntegrationInputContext() == null) {
-                dto.setIntegrationInputContext(new IntegrationInputContext(false, inputIndex + 1, List.of()));
-            }
-            if (dto.primaryKeyDto != null) dto.primaryKeyDto.setIntegrationInputContext(dto.getIntegrationInputContext());
-            dto.normalizaCamposTextoEntradaIntegracao();
-            try {
-                if (!dto.allFieldsAreEmpty()) IntegrationFieldValidation.validateRequiredFields(dto.primaryKeyDto);
-            } catch (DataUploadException exception) {
-                throw new DataUploadException(exception.getMessage() + IntegrationFieldValidation.location(dto), exception);
-            }
-        }
+        prepareInputDTOList(integrationDto.data);
 
         Set<PRIMARYKEYDTO> primaryKeyDtoSet =
                 getPrimaryKeyDtoSetObrigatorioParaPayload(
