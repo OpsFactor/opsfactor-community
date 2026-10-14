@@ -236,9 +236,6 @@ public class UnidadeMedidaFacade {
                 String identificadorUnidadeMedidaPadrao = (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null)
                         ?  "Location " + location.getId() + " / Material " + material.getId() : "Material " + material.getId();
                 // determina se a unidade target do SNP é do material ou material/location
-                UnidadeConversaoFaltanteDTO.NecessidadeConversao parametroUnidadeMedidaPadrao = 
-                        (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null)
-                        ?  UnidadeConversaoFaltanteDTO.NecessidadeConversao.PADRAO_MATERIAL_LOCATION : UnidadeConversaoFaltanteDTO.NecessidadeConversao.PADRAO_MATERIAL;
                 
                 Set<Roteiro> roteiroSet = supplyNetworkProjection.getRoteirosViaveis(location, material);
                 Set<ListaTecnica> listaTecnicaSet = supplyNetworkProjection.getListasTecnicasViaveis(location, material, null);
@@ -251,18 +248,12 @@ public class UnidadeMedidaFacade {
                                 material, roteiro.getUnidadeMedidaQuantidadeBase(clusterEParametrosProjection.getParametrosGlobais()),
                                 unidadeMedidaPadrao)) {
                             unidadeConversaoFaltanteDTOSet.add(UnidadeConversaoFaltanteDTO.builder()
-                                    // só salva location se a unidade de medida padrão deriva do parametro material-location. se foi usada unidade padrao nivel material, se omite a location
-                                    .locationId((clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null) ? location.getId() : null)
                                     .materialId(roteiro.getMaterialOutput().getId())
-                                    .originTask(Constantes.TaskTipo.SNP)
-                                    .originConversionRequirementType(NecessidadeConversao.ROTEIRO_OPERACAO)
-                                    .originConversionRequirementId("Routing " + roteiro.getId() + " / Operation " + operacaoRoteiro.getPosicao())
                                     .originUnitOfMeasure(roteiro.getUnidadeMedidaQuantidadeBase(
                                             clusterEParametrosProjection.getParametrosGlobais()).getId())
-                                    .targetTask(Constantes.TaskTipo.SNP)
-                                    .targetConversionRequirementType(parametroUnidadeMedidaPadrao)
-                                    .targetConversionRequirementId(identificadorUnidadeMedidaPadrao)
                                     .targetUnitOfMeasure(unidadeMedidaPadrao.getId())
+                                    .reason(NecessidadeConversao.ROTEIRO_OPERACAO.getDescription())
+                                    .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation("Routing " + roteiro.getId() + " / Operation " + operacaoRoteiro.getPosicao(), identificadorUnidadeMedidaPadrao, ((clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null) ? location.getId() : null) == null ? null : "Location " + ((clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null) ? location.getId() : null)))
                                     .build());
                         }
                     }
@@ -277,16 +268,11 @@ public class UnidadeMedidaFacade {
                             unidadeMedidaPadrao)) {
                             
                         unidadeConversaoFaltanteDTOSet.add(UnidadeConversaoFaltanteDTO.builder()
-                                // não traz a location pois se trata de conversão lista tecnica -> roteiro e não unidade padrao material/location
                                 .materialId(material.getId())
-                                .originTask(Constantes.TaskTipo.SNP)
-                                .originConversionRequirementType(NecessidadeConversao.LISTA_TECNICA_OUTPUT)
-                                .originConversionRequirementId("Bill of Materials " + listaTecnica.getId())
                                 .originUnitOfMeasure(listaTecnica.getUnidadeMedidaMaterialOutput(clusterEParametrosProjection.getParametrosGlobais()).getId())
-                                .targetTask(Constantes.TaskTipo.SNP)
-                                .targetConversionRequirementType(parametroUnidadeMedidaPadrao)
-                                .targetConversionRequirementId(identificadorUnidadeMedidaPadrao)
                                 .targetUnitOfMeasure(unidadeMedidaPadrao.getId())
+                                .reason(NecessidadeConversao.LISTA_TECNICA_OUTPUT.getDescription())
+                                .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation("Bill of Materials " + listaTecnica.getId(), identificadorUnidadeMedidaPadrao))
                                 .build());
                     }
 
@@ -294,9 +280,6 @@ public class UnidadeMedidaFacade {
                     for (ListaTecnicaComponente listaTecnicaComponente : listaTecnica.getListaTecnicaComponenteSet()) {
                         Produto materialInput = listaTecnicaComponente.getMaterialComponente();
                         // CONVERSÃO DE UNIDADE DE INPUT DA LISTA TÉCNICA PARA UNIDADE PADRÃO NA LOCATION
-                        UnidadeConversaoFaltanteDTO.NecessidadeConversao parametroUnidadeMedidaPadraoInput = 
-                                (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(materialInput, location) != null) 
-                                ?  UnidadeConversaoFaltanteDTO.NecessidadeConversao.PADRAO_MATERIAL_LOCATION : UnidadeConversaoFaltanteDTO.NecessidadeConversao.PADRAO_MATERIAL;
                         String identificadorUnidadeMedidaPadraoInput = (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(materialInput, location) != null) 
                                 ?  "Location " + location.getId() + " / Material " + materialInput.getId() : "Material " + materialInput.getId();
                         UnidadeMedida unidadeMedidaPadraoInput = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(materialInput, location);
@@ -306,16 +289,11 @@ public class UnidadeMedidaFacade {
                                 listaTecnicaComponente.getUnidadeMedidaMaterialComponente(clusterEParametrosProjection.getParametrosGlobais()), 
                                 unidadeMedidaPadraoInput)) {
                             unidadeConversaoFaltanteDTOSet.add(UnidadeConversaoFaltanteDTO.builder()
-                                    .locationId((clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(materialInput, location) != null) ? location.getId() : null)
                                     .materialId(materialInput.getId())
-                                    .originTask(Constantes.TaskTipo.SNP)
-                                    .originConversionRequirementType(NecessidadeConversao.LISTA_TECNICA_COMPONENTE)
-                                    .originConversionRequirementId("Bill of Materials " + listaTecnica.getId() + " component " + materialInput.getId())
                                     .originUnitOfMeasure(listaTecnicaComponente.getUnidadeMedidaMaterialComponente(clusterEParametrosProjection.getParametrosGlobais()).getId())
-                                    .targetTask(Constantes.TaskTipo.SNP)
-                                    .targetConversionRequirementType(parametroUnidadeMedidaPadraoInput)
-                                    .targetConversionRequirementId(identificadorUnidadeMedidaPadraoInput)
                                     .targetUnitOfMeasure(unidadeMedidaPadraoInput.getId())
+                                    .reason(NecessidadeConversao.LISTA_TECNICA_COMPONENTE.getDescription())
+                                    .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation("Bill of Materials " + listaTecnica.getId() + " component " + materialInput.getId(), identificadorUnidadeMedidaPadraoInput, (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(materialInput, location) != null) ? "Location " + location.getId() : null))
                                     .build());
                         }
                     }
@@ -334,16 +312,11 @@ public class UnidadeMedidaFacade {
                         if (!unidadeMedidaProjection.contemConversaoParaUnidadeDestino(
                                 material, demandPlanItem.getUnidadeMedida(parametrosGlobais), unidadeMedidaPadrao)) {
                             unidadeConversaoFaltanteDTOSet.add(UnidadeConversaoFaltanteDTO.builder()
-                                    .locationId(location.getId())
                                     .materialId(material.getId())
-                                    .originTask(Constantes.TaskTipo.DP)
-                                    .originConversionRequirementType(NecessidadeConversao.PLANO_DEMANDA)
-                                    .originConversionRequirementId("Location " + location.getId() + " / Material " + material.getId())
                                     .originUnitOfMeasure(demandPlanItem.getUnidadeMedida(parametrosGlobais).getId())
-                                    .targetTask(Constantes.TaskTipo.SNP)
-                                    .targetConversionRequirementType(parametroUnidadeMedidaPadrao)
-                                    .targetConversionRequirementId(identificadorUnidadeMedidaPadrao)
                                     .targetUnitOfMeasure(unidadeMedidaPadrao.getId())
+                                    .reason(NecessidadeConversao.PLANO_DEMANDA.getDescription())
+                                    .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation("Location " + location.getId() + " / Material " + material.getId(), identificadorUnidadeMedidaPadrao, "Location " + location.getId()))
                                     .build());
                         }
                     }
@@ -358,9 +331,6 @@ public class UnidadeMedidaFacade {
                         null)) {
                     
                     // determina se a unidade target do SNP é do material ou material/location
-                    UnidadeConversaoFaltanteDTO.NecessidadeConversao parametroUnidadeMedidaPadraoLocationDestino = 
-                            (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, locationDestino) != null) 
-                            ?  UnidadeConversaoFaltanteDTO.NecessidadeConversao.PADRAO_MATERIAL_LOCATION : UnidadeConversaoFaltanteDTO.NecessidadeConversao.PADRAO_MATERIAL;
                     String identificadorUnidadeMedidaPadraoLocationDestino = (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, locationDestino) != null) 
                             ?  "Location " + locationDestino.getId() + " / Material " + material.getId() : "Material " + material.getId();
                     UnidadeMedida unidadeMedidaPadraoLocationDestino = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(material, locationDestino);
@@ -369,16 +339,11 @@ public class UnidadeMedidaFacade {
                     if (!unidadeMedidaProjection.contemConversaoParaUnidadeDestino(
                             material, unidadeMedidaPadraoLocationDestino, unidadeMedidaPadrao)) {
                         unidadeConversaoFaltanteDTOSet.add(UnidadeConversaoFaltanteDTO.builder()
-                                .locationId((clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, locationDestino) != null) ? location.getId() : null)
                                 .materialId(material.getId())
-                                .originTask(Constantes.TaskTipo.SNP)
-                                .originConversionRequirementType(NecessidadeConversao.REQUISICAO_OUTBOUND)
-                                .originConversionRequirementId(identificadorUnidadeMedidaPadraoLocationDestino)
                                 .originUnitOfMeasure(unidadeMedidaPadraoLocationDestino.getId())
-                                .targetTask(Constantes.TaskTipo.SNP)
-                                .targetConversionRequirementType(parametroUnidadeMedidaPadraoLocationDestino)
-                                .targetConversionRequirementId(identificadorUnidadeMedidaPadrao)
                                 .targetUnitOfMeasure(unidadeMedidaPadrao.getId())
+                                .reason(NecessidadeConversao.REQUISICAO_OUTBOUND.getDescription())
+                                .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation(identificadorUnidadeMedidaPadraoLocationDestino, identificadorUnidadeMedidaPadrao, (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, locationDestino) != null) ? "Location " + location.getId() : null))
                                 .build());
                     }
                     
@@ -393,16 +358,11 @@ public class UnidadeMedidaFacade {
                     if (!unidadeMedidaProjection.contemConversaoParaUnidadeDestino(
                             material, unidadeMedidaPadraoLocationDestino, unidadeMedidaLoteMultiploLinhaTransporte)) {
                         unidadeConversaoFaltanteDTOSet.add(UnidadeConversaoFaltanteDTO.builder()
-                                .locationId(locationDestino.getId())
                                 .materialId(material.getId())
-                                .originTask(Constantes.TaskTipo.SNP)
-                                .originConversionRequirementType(parametroUnidadeMedidaPadraoLocationDestino)
-                                .originConversionRequirementId(identificadorUnidadeMedidaPadraoLocationDestino)
                                 .originUnitOfMeasure(unidadeMedidaPadraoLocationDestino.getId())
-                                .targetTask(Constantes.TaskTipo.SNP)
-                                .targetConversionRequirementType(NecessidadeConversao.MINIMO_MULTIPLO_TRANSFERENCIA)
-                                .targetConversionRequirementId(identificadorUnidadeMedidaLoteMultiploLinhaTransporte)
                                 .targetUnitOfMeasure(unidadeMedidaLoteMultiploLinhaTransporte.getId())
+                                .reason(NecessidadeConversao.MINIMO_MULTIPLO_TRANSFERENCIA.getDescription())
+                                .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation(identificadorUnidadeMedidaPadraoLocationDestino, identificadorUnidadeMedidaLoteMultiploLinhaTransporte, "Location " + locationDestino.getId()))
                                 .build());
                     }
                     
@@ -411,10 +371,6 @@ public class UnidadeMedidaFacade {
             
             // AVALIA BASE DE ESTOQUE NA DATA REFERENCIA            
             for (Produto material : estoqueProjection.getMateriaisComEstoqueNaLocation(location)) {
-
-                UnidadeConversaoFaltanteDTO.NecessidadeConversao parametroUnidadeMedidaPadrao = 
-                        (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null) 
-                        ?  UnidadeConversaoFaltanteDTO.NecessidadeConversao.PADRAO_MATERIAL_LOCATION : UnidadeConversaoFaltanteDTO.NecessidadeConversao.PADRAO_MATERIAL;
                 String identificadorUnidadeMedidaPadrao = (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null) 
                         ?  "Location " + location.getId() + " / Material " + material.getId() : "Material " + material.getId();
                 UnidadeMedida unidadeMedidaPadrao = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(material, location);
@@ -428,16 +384,11 @@ public class UnidadeMedidaFacade {
                     if (!unidadeMedidaProjection.contemConversaoParaUnidadeDestino(
                             material, unidadeMedidaEstoque, unidadeMedidaPadrao)) {
                         unidadeConversaoFaltanteDTOSet.add(UnidadeConversaoFaltanteDTO.builder()
-                                .locationId(location.getId())
                                 .materialId(material.getId())
-                                .originTask(Constantes.TaskTipo.SNP)
-                                .originConversionRequirementType(NecessidadeConversao.ESTOQUE)
-                                .originConversionRequirementId("Location " + location.getId() + " / Material " + material.getId() + " on " + dataEstoque)
                                 .originUnitOfMeasure(unidadeMedidaEstoque.getId())
-                                .targetTask(Constantes.TaskTipo.SNP)
-                                .targetConversionRequirementType(parametroUnidadeMedidaPadrao)
-                                .targetConversionRequirementId(identificadorUnidadeMedidaPadrao)
                                 .targetUnitOfMeasure(unidadeMedidaPadrao.getId())
+                                .reason(NecessidadeConversao.ESTOQUE.getDescription())
+                                .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation("Location " + location.getId() + " / Material " + material.getId() + " on " + dataEstoque, identificadorUnidadeMedidaPadrao, "Location " + location.getId()))
                                 .build());
                     }
                 }
@@ -650,36 +601,26 @@ public class UnidadeMedidaFacade {
             if (!unidadeMedidaProjection.contemConversaoParaUnidadeDestino(
                     material, unidadeMedidaPlano, unidadeMedidaExpedicao)) {
                 unidadeConversaoFaltanteDTOSet.add(UnidadeConversaoFaltanteDTO.builder()
-                        .locationId(locationOrigem.getId())
                         .materialId(material.getId())
-                        .originTask(Constantes.TaskTipo.SNP)
-                        .originConversionRequirementType(NecessidadeConversao.PADRAO_MATERIAL_LOCATION)
-                        .originConversionRequirementId("Location " + locationOrigem.getId()
-                                + " / Material " + material.getId())
                         .originUnitOfMeasure(unidadeMedidaPlano.getId())
-                        .targetTask(Constantes.TaskTipo.DEPLOY)
-                        .targetConversionRequirementType(NecessidadeConversao.EXPEDICAO)
-                        .targetConversionRequirementId("Origin Location " + locationOrigem.getId())
                         .targetUnitOfMeasure(unidadeMedidaExpedicao.getId())
+                        .reason(NecessidadeConversao.EXPEDICAO.getDescription())
+                        .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation("Location " + locationOrigem.getId()
+                                + " / Material " + material.getId(), "Origin Location " + locationOrigem.getId(), "Location " + locationOrigem.getId()))
                         .build());
             }
 
             if (!unidadeMedidaProjection.contemConversaoParaUnidadeDestino(
                     material, unidadeMedidaPlano, unidadeMedidaTransferencia)) {
                 unidadeConversaoFaltanteDTOSet.add(UnidadeConversaoFaltanteDTO.builder()
-                        .locationId(locationOrigem.getId())
                         .materialId(material.getId())
-                        .originTask(Constantes.TaskTipo.SNP)
-                        .originConversionRequirementType(NecessidadeConversao.PADRAO_MATERIAL_LOCATION)
-                        .originConversionRequirementId("Location " + locationOrigem.getId()
-                                + " / Material " + material.getId())
                         .originUnitOfMeasure(unidadeMedidaPlano.getId())
-                        .targetTask(Constantes.TaskTipo.DEPLOY)
-                        .targetConversionRequirementType(NecessidadeConversao.TRANSFERENCIA)
-                        .targetConversionRequirementId("Origin Location " + locationOrigem.getId()
-                                + " / Destination Location " + locationDestino.getId()
-                                + " / Material " + material.getId())
                         .targetUnitOfMeasure(unidadeMedidaTransferencia.getId())
+                        .reason(NecessidadeConversao.TRANSFERENCIA.getDescription())
+                        .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation("Location " + locationOrigem.getId()
+                                + " / Material " + material.getId(), "Origin Location " + locationOrigem.getId()
+                                + " / Destination Location " + locationDestino.getId()
+                                + " / Material " + material.getId(), "Location " + locationOrigem.getId()))
                         .build());
             }
         }
@@ -740,16 +681,11 @@ public class UnidadeMedidaFacade {
 
             if (!conversaoUnidadeMedidaProjection.contemConversaoParaUnidadeDestino(material, unidadeMedidaVenda, unidadeMedidaDP)) {
                 unidadeConversaoFaltanteDTOSet.add(UnidadeConversaoFaltanteDTO.builder()
-                        .locationId(location.getId())
                         .materialId(material.getId())
-                        .originTask(Constantes.TaskTipo.DP)
-                        .originConversionRequirementType(NecessidadeConversao.VENDAS)
-                        .originConversionRequirementId("Location " + location.getId() + " / Material " + material.getId())
                         .originUnitOfMeasure(unidadeMedidaVenda.getId())
-                        .targetTask(Constantes.TaskTipo.DP)
-                        .targetConversionRequirementType(NecessidadeConversao.PLANO_DEMANDA)
-                        .targetConversionRequirementId("Location " + location.getId() + " / Material " + material.getId())
                         .targetUnitOfMeasure(unidadeMedidaDP.getId())
+                        .reason(NecessidadeConversao.VENDAS.getDescription())
+                        .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation("Location " + location.getId() + " / Material " + material.getId(), "Location " + location.getId()))
                         .build());
             }
         }

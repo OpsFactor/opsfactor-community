@@ -132,7 +132,7 @@ public abstract class Task<DTOPARAMETROS,SERVICE> implements Runnable {
             log.info("Task " + scheduledTaskAbstract.getId() + " executed with Success");
         } catch (JsonProcessingException | RuntimeException | Error e) {
             log.error("Task {} ran into an error", scheduledTaskAbstract.getId(), e);
-            scheduledTaskExecution.setMensagemErroResumida(ExceptionUtils.getMessage(e));
+            scheduledTaskExecution.setMensagemErroResumida(getMensagemErroResumidaComCausaRaiz(e));
             scheduledTaskExecution.setMensagemErroStackTrace(ExceptionUtils.getStackTrace(e));
         }
         
@@ -171,6 +171,31 @@ public abstract class Task<DTOPARAMETROS,SERVICE> implements Runnable {
     
     private void executaTask(DTOPARAMETROS dtoParametros) {
         executaTask(dtoParametros, service);
+    }
+
+    /**
+     * Produz a mensagem operacional persistida para uma falha da task.
+     *
+     * <p>A exceção externa identifica a etapa que falhou, enquanto a causa
+     * raiz contém o desvio funcional ou técnico que deve orientar a tratativa.
+     * Ambas são necessárias na listagem de execuções, que não exibe o stack
+     * trace completo.</p>
+     */
+    private static String getMensagemErroResumidaComCausaRaiz(Throwable throwable) {
+
+        String mensagemPrincipal = ExceptionUtils.getMessage(throwable);
+        Throwable causaRaiz = ExceptionUtils.getRootCause(throwable);
+        if (causaRaiz == null) {
+            return mensagemPrincipal;
+        }
+
+        String mensagemCausaRaiz = ExceptionUtils.getMessage(causaRaiz);
+        if (mensagemPrincipal.contains(mensagemCausaRaiz)) {
+            return mensagemPrincipal;
+        }
+
+        return mensagemPrincipal + " Root cause: " + mensagemCausaRaiz;
+
     }
 
     public String getUserId() {

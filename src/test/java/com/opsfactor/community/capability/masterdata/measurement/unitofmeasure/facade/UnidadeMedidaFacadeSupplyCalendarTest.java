@@ -64,6 +64,8 @@ class UnidadeMedidaFacadeSupplyCalendarTest {
                 Constantes.TamanhoBucket.ANUAL, reference, 0, 0, numberOfPeriods, 0);
         ParametrosGlobais parameters = new ParametrosGlobais();
         Location location = mock(Location.class);
+        Location transferDestination = new Location("TARGET_SITE");
+        UnidadeMedida transferLotUnit = new UnidadeMedida("LOT");
         Produto material = mock(Produto.class);
         UnidadeMedida origin = new UnidadeMedida("BOX");
         UnidadeMedida target = new UnidadeMedida("KG");
@@ -93,8 +95,13 @@ class UnidadeMedidaFacadeSupplyCalendarTest {
         when(cluster.getSNPUnidadeMedidaPadrao(material, location)).thenReturn(target);
         when(network.getRoteirosViaveis(location, material)).thenReturn(Collections.emptySet());
         when(network.getListasTecnicasViaveis(location, material, null)).thenReturn(Collections.emptySet());
+        // Transfer multiples are expressed in their own lane UOM; the report must name that need.
         when(network.getLocationDestinoViavelSet(networkVersion, location, material, reference, null))
-                .thenReturn(Collections.emptySet());
+                .thenReturn(Set.of(transferDestination));
+        when(cluster.getSNPUnidadeMedidaPadrao(material, transferDestination)).thenReturn(target);
+        when(network.getUnidadeMedidaLoteMinimoMultiploTransporte(networkVersion, location, transferDestination, material, reference))
+                .thenReturn(transferLotUnit);
+        when(units.contemConversaoParaUnidadeDestino(material, target, target)).thenReturn(true);
         when(stock.getMateriaisComEstoqueNaLocation(location)).thenReturn(Collections.emptySet());
         when(demand.getCalendario()).thenReturn(calendar);
         when(demand.getDemandPlanItem(location, material, calendar.getPosicaoPeriodoFinalFuturo()))
@@ -138,13 +145,20 @@ class UnidadeMedidaFacadeSupplyCalendarTest {
         Set<UnidadeConversaoFaltanteDTO> gaps = service.getUnidadeConversaoFaltanteSNPListDTO(
                 reference, Constantes.TamanhoBucket.ANUAL, "NETWORK", "PROFILE", 1L);
 
-        assertEquals(1, gaps.size());
-        UnidadeConversaoFaltanteDTO gap = gaps.iterator().next();
+        assertEquals(2, gaps.size());
+        UnidadeConversaoFaltanteDTO gap = gaps.stream().filter(row -> "Demand Plan UOM".equals(row.getReason())).findFirst().orElseThrow();
         assertEquals("BOX", gap.getOriginUnitOfMeasure());
         assertEquals("KG", gap.getTargetUnitOfMeasure());
-        assertEquals("SITE", gap.getLocationId());
-        assertEquals(UnidadeConversaoFaltanteDTO.NecessidadeConversao.PLANO_DEMANDA,
-                gap.getOriginConversionRequirementType());
+        org.junit.jupiter.api.Assertions.assertTrue(gap.getAdditionalInformation().contains("Location SITE"));
+        assertEquals("Demand Plan UOM", gap.getReason());
+        UnidadeConversaoFaltanteDTO transferLotGap = gaps.stream()
+                .filter(row -> "LOT".equals(row.getTargetUnitOfMeasure())).findFirst().orElseThrow();
+        assertEquals("Transfer lot size / multiple", transferLotGap.getReason());
+        assertEquals("MATERIAL", transferLotGap.getMaterialId());
+        assertEquals("KG", transferLotGap.getOriginUnitOfMeasure());
+        org.junit.jupiter.api.Assertions.assertTrue(transferLotGap.getAdditionalInformation().contains("Transportation Line"));
+        org.junit.jupiter.api.Assertions.assertTrue(transferLotGap.getAdditionalInformation().contains("TARGET_SITE"));
+
 
     }
 

@@ -1,5 +1,8 @@
 package com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade.dto;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +20,28 @@ import java.nio.file.Paths;
  * Community atual e nao manter alternativas antigas comentadas no enum.</p>
  */
 class UnidadeConversaoFaltanteDTOCommunityContractTest {
+
+
+    @Test
+    void reportSerializesExactlyFiveColumnsAndPreservesDifferentOperations() {
+
+        var first = UnidadeConversaoFaltanteDTO.builder().materialId("ITEM")
+                .originUnitOfMeasure("BOX").targetUnitOfMeasure("TON")
+                .reason("Production Routing Operation UOM").additionalInformation("Routing ROUTING / Operation 10").build();
+        var second = UnidadeConversaoFaltanteDTO.builder().materialId("ITEM")
+                .originUnitOfMeasure("BOX").targetUnitOfMeasure("TON")
+                .reason("Production Routing Operation UOM").additionalInformation("Routing ROUTING / Operation 20").build();
+        var serialized = new ObjectMapper().valueToTree(first);
+        Set<String> fields = new HashSet<>();
+        serialized.fieldNames().forEachRemaining(fields::add);
+        Assertions.assertEquals(Set.of("materialId", "originUnitOfMeasure", "targetUnitOfMeasure", "reason", "additionalInformation"), fields);
+        Assertions.assertEquals(2, Set.of(first, second).size());
+        Assertions.assertEquals("Production routing base quantity for operation time and cost",
+                UnidadeConversaoFaltanteDTO.economicReason("Run cost", "Tempo operacional do roteiro ROUTING"));
+        Assertions.assertEquals("Routing ROUTING; Location SITE",
+                UnidadeConversaoFaltanteDTO.economicInformation("Tempo operacional do roteiro ROUTING", "SITE", "SITE"));
+
+    }
 
     @Test
     void missingConversionRequirementEnumShouldNotKeepInboundRequisitionCommented() throws IOException {

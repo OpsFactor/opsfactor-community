@@ -376,14 +376,13 @@ public class UnidadeMedidaFacadeCommunityContractTest {
 
         Assertions.assertEquals(2, result.size());
         Assertions.assertTrue(result.stream().anyMatch(gap ->
-                gap.getTargetConversionRequirementType() == UnidadeConversaoFaltanteDTO.NecessidadeConversao.EXPEDICAO
+                "Expedition UOM".equals(gap.getReason())
                         && "EXPEDITION_UOM".equals(gap.getTargetUnitOfMeasure())
-                        && "Origin Location ORIGIN".equals(gap.getTargetConversionRequirementId())));
+                        && gap.getAdditionalInformation().contains("Origin Location ORIGIN")));
         Assertions.assertTrue(result.stream().anyMatch(gap ->
-                gap.getTargetConversionRequirementType() == UnidadeConversaoFaltanteDTO.NecessidadeConversao.TRANSFERENCIA
+                "Transfer UOM".equals(gap.getReason())
                         && "TRANSFER_UOM".equals(gap.getTargetUnitOfMeasure())
-                        && "Origin Location ORIGIN / Destination Location DESTINATION / Material MATERIAL"
-                                .equals(gap.getTargetConversionRequirementId())));
+                        && gap.getAdditionalInformation().contains("Origin Location ORIGIN / Destination Location DESTINATION / Material MATERIAL")));
         Mockito.verify(supplyPlanRepository).customFindById(73L);
         Mockito.verify(distributionPlanItemRepository).customFindBySupplyPlan(supplyPlan);
 
