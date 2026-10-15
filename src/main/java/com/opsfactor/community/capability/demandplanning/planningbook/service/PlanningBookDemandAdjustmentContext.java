@@ -1,6 +1,9 @@
 package com.opsfactor.community.capability.demandplanning.planningbook.service;
 
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigureInterface;
+import com.opsfactor.community.capability.planningbook.domain.PlanningBookDfuScope;
+import com.opsfactor.community.capability.masterdata.demand.dfu.projection.FiltroDFUProjection;
+import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanningProjection;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -18,6 +21,17 @@ public class PlanningBookDemandAdjustmentContext {
 
     private final Map<String, KeyFigureInterface> keyFiguresById = new LinkedHashMap<>();
     private String planningBookViewName;
+    private final Map<PlanningBookDfuScope, FiltroDFUProjection> dfuFiltersByScope = new LinkedHashMap<>();
+
+    /** Reutiliza a interseção de uma linha entre períodos, validação e aplicação do mesmo lote. */
+    public FiltroDFUProjection getOrCreateDfuFilter(
+            PlanningBookDfuScope scope, DemandPlanningProjection projection) {
+
+        return dfuFiltersByScope.computeIfAbsent(scope, key -> key.getNovoDFUProjectionInterseccaoComProjectionFiltro(
+                projection.getFiltroDfuProjection(), projection.getClusterEParametrosProjection()));
+
+    }
+
 
     /**
      * Registra a fotografia de key figures ja resolvidas para o lote atual.

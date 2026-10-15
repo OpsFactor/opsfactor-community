@@ -842,10 +842,8 @@ public class DemandPlanningFacade {
     public PlanningBookDTO atualizaDemandPlan(List<SelectedPlanningBookCellDTO> selectedPlanningBookCellDTOs, String userId)
             throws UnitOfMeasureConversionException, IncompatibleCalendarException {
 
-        return atualizaDemandPlanInterno(
-                selectedPlanningBookCellDTOs,
-                userId,
-                false);
+        return reconstroiPlanningBookAposAtualizacao(aplicaAjustesDemandPlanInterno(
+                selectedPlanningBookCellDTOs, userId, false));
 
     }
 
@@ -870,12 +868,26 @@ public class DemandPlanningFacade {
             List<SelectedPlanningBookCellDTO> selectedPlanningBookCellDTOs,
             String userId) throws UnitOfMeasureConversionException, IncompatibleCalendarException {
 
-        return atualizaDemandPlanInterno(
-                selectedPlanningBookCellDTOs,
-                userId,
-                true);
+        return reconstroiPlanningBookAposAtualizacao(aplicaAjustesDemandPlanInterno(
+                selectedPlanningBookCellDTOs, userId, true));
 
     }
+
+    /** Aplica a mesma transação estrita sem reconstruir a resposta descartada pelo upload XLSX. */
+    @Transactional(rollbackFor = Exception.class)
+    public void atualizaDemandPlanEmLoteEstritoSemReconstruirPlanningBook(
+            List<SelectedPlanningBookCellDTO> selectedPlanningBookCellDTOs,
+            String userId) throws UnitOfMeasureConversionException, IncompatibleCalendarException {
+
+        aplicaAjustesDemandPlanInterno(selectedPlanningBookCellDTOs, userId, true);
+
+    }
+
+    /** Mantém o resultado funcional separado da montagem opcional da resposta. */
+    private record ResultadoAtualizacaoPlanningBook(
+            DemandPlan demandPlan,
+            ConfiguredViewProjection configuredViewProjection,
+            List<SelectedPlanningBookCellDTO> selectedCells) { }
 
     /**
      * Implementacao compartilhada pelos contratos tolerante da UI e estrito
@@ -886,7 +898,7 @@ public class DemandPlanningFacade {
      * seus gates antes de delegar para o metodo estrito sem criar um endpoint
      * Community adicional.</p>
      */
-    private PlanningBookDTO atualizaDemandPlanInterno(
+    private ResultadoAtualizacaoPlanningBook aplicaAjustesDemandPlanInterno(
             List<SelectedPlanningBookCellDTO> selectedPlanningBookCellDTOs,
             String userId,
             boolean processamentoEstrito)
@@ -1004,10 +1016,17 @@ public class DemandPlanningFacade {
         // antes de qualquer persistência, então não há pós-processamento adicional.
 
 
-        // gera o key figure projection após as alterações no plano e retorna DTOs
-        // Recria a projection apos a persistencia para devolver ao Planning Book uma visao consistente
-        // com o estado salvo. A reutilizacao da projection de entrada pode ser avaliada depois, mas nao
-        // deve alterar o contrato funcional Community.
+        return new ResultadoAtualizacaoPlanningBook(demandPlan,
+                configuredViewProjectionComSelecaoAAtualizar, selectedPlanningBookCellDTOs);
+
+    }
+
+    /** Só consumidores de DTO pagam a releitura e a agregação de toda a resposta. */
+    private PlanningBookDTO reconstroiPlanningBookAposAtualizacao(ResultadoAtualizacaoPlanningBook resultado) {
+
+        DemandPlan demandPlan = resultado.demandPlan();
+        ConfiguredViewProjection configuredViewProjectionComSelecaoAAtualizar = resultado.configuredViewProjection();
+        List<SelectedPlanningBookCellDTO> selectedPlanningBookCellDTOs = resultado.selectedCells();
         KeyFigureProjection keyFigureProjection = keyFigureProjectionFactory.getKeyFigureProjectionDeDemandPlan(
                 demandPlan,
                 configuredViewProjectionComSelecaoAAtualizar,
@@ -1257,9 +1276,7 @@ public class DemandPlanningFacade {
         // Permissão por key figure configurada na User View é Enterprise.
         // O Community usa apenas o modo padrão de edição de cada KF standard.
         validaFiltroDFUProjectionPlanningBookDemand(
-                planningBookDfuScope.getNovoDFUProjectionInterseccaoComProjectionFiltro(
-                        demandPlanningProjection.getFiltroDfuProjection(),
-                        clusterEParametrosProjection));
+                adjustmentContext.getOrCreateDfuFilter(planningBookDfuScope, demandPlanningProjection));
 
         return keyFigureAjustada;
 
@@ -1499,9 +1516,11 @@ public class DemandPlanningFacade {
                 .getUnidadeMedidaFromId(ajusteCelulaPlanningBook.getUomId());
 
         PlanningBookDfuScope planningBookDfuScope = ajusteCelulaPlanningBook.getPlanningBookDfuScope();
-        FiltroDFUProjection filtroDFUProjection = planningBookDfuScope.getNovoDFUProjectionInterseccaoComProjectionFiltro(
-                demandPlanningProjection.getFiltroDfuProjection(),
-                clusterEParametrosProjection);
+        // Chamadas internas isoladas podem não possuir contexto; lotes reutilizam o mesmo filtro da validação.
+        FiltroDFUProjection filtroDFUProjection = adjustmentContext == null
+                ? planningBookDfuScope.getNovoDFUProjectionInterseccaoComProjectionFiltro(
+                        demandPlanningProjection.getFiltroDfuProjection(), clusterEParametrosProjection)
+                : adjustmentContext.getOrCreateDfuFilter(planningBookDfuScope, demandPlanningProjection);
 
         if (!(keyFigureInputAjuste instanceof KeyFigureStandard)) {
             throw new RequiresEnterpriseVersionException("Demand Planning custom key figure adjustment");
