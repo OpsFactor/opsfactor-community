@@ -791,7 +791,8 @@ public class DemandPlanningFacade {
             ConfiguredViewProjection configuredViewProjection,
             ConfiguredViewSelectionDTO configuredViewSelectionDTO) {
 
-        return planningBookService.getPlanningBookDTO(keyFigureProjection);
+        return adicionaFamiliaAjusteDemandaDireta(
+                planningBookService.getPlanningBookDTO(keyFigureProjection), configuredViewProjection);
 
     }
 
@@ -805,7 +806,35 @@ public class DemandPlanningFacade {
             ConfiguredViewProjection configuredViewProjection,
             List<SelectedPlanningBookCellDTO> selectedPlanningBookCellDTOs) {
 
-        return planningBookService.getPlanningBookDTO(keyFigureProjection);
+        return adicionaFamiliaAjusteDemandaDireta(
+                planningBookService.getPlanningBookDTO(keyFigureProjection), configuredViewProjection);
+
+    }
+
+    /** Publica a mesma composicao oficial do total para a confirmacao de ajustes na SPA. */
+    private PlanningBookDTO adicionaFamiliaAjusteDemandaDireta(
+            PlanningBookDTO planningBookDTO,
+            ConfiguredViewProjection configuredViewProjection) {
+
+        Map<String, String> additionalParameters = planningBookDTO.additionalParameters == null
+                ? new LinkedHashMap<>() : new LinkedHashMap<>(planningBookDTO.additionalParameters);
+        additionalParameters.put("directDemandAdjustmentKeyFigures", String.join("|",
+                getIdsKeyFiguresFamiliaAjusteDemandaDireta(configuredViewProjection)));
+        planningBookDTO.additionalParameters = additionalParameters;
+        return planningBookDTO;
+
+    }
+
+    /** Community limita a familia editavel a Baseline, Demand Adjustment e seu total. */
+    protected Set<String> getIdsKeyFiguresFamiliaAjusteDemandaDireta(
+            ConfiguredViewProjection configuredViewProjection) {
+
+        Set<String> keyFigureIds = keyFigureService.getKeyFiguresQueCompoemDemandaDireta(
+                configuredViewProjection).stream()
+                .map(KeyFigureInterface::getId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        keyFigureIds.add(new KeyFigureStandard(KeyFigureStandardEnum.DEMANDA_DIRETA_TOTAL_DP).getId());
+        return keyFigureIds;
 
     }
 
