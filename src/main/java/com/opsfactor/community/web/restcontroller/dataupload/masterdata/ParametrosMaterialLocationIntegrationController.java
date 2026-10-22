@@ -59,7 +59,7 @@ public class ParametrosMaterialLocationIntegrationController extends Integration
      * dataupload/productlocationparameters.
      */
     @Override
-    public List<String> getRootJsonPaths() {
+    public List<String> getRootDataPaths() {
 
         return List.of("api/secured/data/");
 

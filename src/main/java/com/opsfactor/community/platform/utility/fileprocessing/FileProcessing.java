@@ -57,25 +57,7 @@ public abstract class FileProcessing {
     }
 
     private static ProcessedFile getProcessedFileFromCSVFile(MultipartFile multipartFile) throws IOException {
-
-        ProcessedFile processedFile = new ProcessedFile();
-        try (InputStream inputStream = multipartFile.getInputStream();
-             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream))) {
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                processedFile.addNewRow();
-
-                line = line.replaceAll("\"", "");
-                List<String> linhaAtual = Arrays.asList(line.split(";"));
-
-                for (String valorColuna : linhaAtual) {
-                    processedFile.addToLastRow(valorColuna);
-                }
-            }
-        }
-        processedFile.setName(multipartFile.getOriginalFilename());
-        return processedFile;
-
+        return CsvFileReader.read(multipartFile);
     }
 
     private static ProcessedFile getProcessedFileFromXLSXFile(MultipartFile multipartFile) throws IOException {

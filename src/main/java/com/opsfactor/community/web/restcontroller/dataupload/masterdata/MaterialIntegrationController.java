@@ -57,7 +57,7 @@ public class MaterialIntegrationController extends IntegrationControllerAbstract
      * data upload para materiais.
      */
     @Override
-    public List<String> getRootJsonPaths() {
+    public List<String> getRootDataPaths() {
 
         return List.of("api/secured/data/");
 

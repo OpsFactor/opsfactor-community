@@ -59,7 +59,7 @@ public class SelloutIntegrationController extends IntegrationControllerAbstract<
      * que o registro dinamico publique o alias historico de data upload.
      */
     @Override
-    public List<String> getRootJsonPaths() {
+    public List<String> getRootDataPaths() {
 
         return List.of("api/secured/data/");
 

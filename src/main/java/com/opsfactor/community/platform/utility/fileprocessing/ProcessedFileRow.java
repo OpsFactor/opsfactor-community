@@ -186,7 +186,7 @@ public class ProcessedFileRow {
             return ((Number) columnValue).floatValue();
         } else {
             try {
-                return Float.valueOf(columnValue.toString());
+                return Float.valueOf(decimalValue(columnValue));
             } catch (NumberFormatException numberFormatException) {
                 throw new DataUploadException(
                         "Incompatible type for column " + (columnPosition + 1) + " : should be a decimal number (with . decimal separator) but found " + columnValue,
@@ -236,6 +236,14 @@ public class ProcessedFileRow {
                         
     }
     
+    /** CSV cells stay textual until a numeric mapper asks for their value. */
+    private static String decimalValue(Object value) {
+        String decimal = value.toString();
+        // Mixed separators and grouping are deliberately not inferred.
+        return decimal.indexOf('.') < 0 && decimal.indexOf(',') >= 0
+                ? decimal.replace(',', '.') : decimal;
+    }
+
     public Double getColumnValueAsDouble(int columnPosition) {
         
         Object columnValue = getColumnValue(columnPosition);
@@ -246,7 +254,7 @@ public class ProcessedFileRow {
             return ((Number) columnValue).doubleValue();
         } else {
             try {
-                return Double.valueOf(columnValue.toString());
+                return Double.valueOf(decimalValue(columnValue));
             } catch (NumberFormatException numberFormatException) {
                 throw new DataUploadException(
                         "Incompatible type for column " + (columnPosition + 1) + " : should be a decimal number (with . decimal separator) but found " + columnValue,

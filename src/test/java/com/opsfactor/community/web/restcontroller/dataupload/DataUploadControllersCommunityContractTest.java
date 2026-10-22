@@ -153,7 +153,7 @@ public class DataUploadControllersCommunityContractTest {
                             + " must not register a historical FILE dataupload alias.");
             Assertions.assertEquals(
                     List.of("api/secured/data/"),
-                    integrationController.getRootJsonPaths(),
+                    integrationController.getRootDataPaths(),
                     integrationController.getClass().getSimpleName()
                             + " must not register a historical JSON dataupload alias.");
         }

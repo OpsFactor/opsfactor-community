@@ -31,6 +31,14 @@
     </properties>
 
     <dependencies>
+        <!-- Native negotiated columnar formats. Keep DTO contracts independent of representation. -->
+        <dependency><groupId>org.apache.arrow</groupId><artifactId>arrow-vector</artifactId><version>18.3.0</version></dependency>
+        <dependency><groupId>org.apache.arrow</groupId><artifactId>arrow-memory-netty</artifactId><version>18.3.0</version></dependency>
+        <dependency><groupId>org.apache.parquet</groupId><artifactId>parquet-hadoop</artifactId><version>1.16.0</version></dependency>
+        <dependency><groupId>org.apache.parquet</groupId><artifactId>parquet-column</artifactId><version>1.16.0</version></dependency>
+        <!-- Parquet's public builders reference Hadoop API types; no Hadoop filesystem is used. -->
+        <dependency><groupId>org.apache.hadoop</groupId><artifactId>hadoop-client-api</artifactId><version>3.4.1</version></dependency>
+        <dependency><groupId>org.apache.hadoop</groupId><artifactId>hadoop-client-runtime</artifactId><version>3.4.1</version><scope>runtime</scope><exclusions><exclusion><groupId>commons-logging</groupId><artifactId>commons-logging</artifactId></exclusion></exclusions></dependency>
         <!-- Spring runtime aberto da edicao Community. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -235,6 +243,16 @@
 
     <build>
         <plugins>
+            <!-- The executable JAR declares Arrow's narrow Java 21 NIO access requirement. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifestEntries><Add-Opens>java.base/java.nio</Add-Opens></manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
             <!-- Mantem stacktrace completo nos testes de fronteira arquitetural. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -242,6 +260,7 @@
                 <version>3.5.4</version>
                 <configuration>
                     <trimStackTrace>false</trimStackTrace>
+                    <argLine>--add-opens=java.base/java.nio=ALL-UNNAMED</argLine>
                 </configuration>
             </plugin>
             <!-- Lombok e MapStruct precisam dos processors na mesma cadeia. -->

@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 
 /**
  * Framework usado para criação de endpoints de integração de dados por
- * controllers concretos: GET/POST nos formatos FILE/JSON.
+     * controllers concretos: formatos negociados e aliases de arquivo existentes.
  *
  * <p>No Community esta abstracao publica somente os controllers concretos que
  * existem no modulo aberto: master data operacional, producao operacional
@@ -151,14 +151,14 @@ public abstract class IntegrationControllerAbstract<ENTITY, DATARECORDDTO extend
     }
 
     /**
-     * Paths JSON publicados pela abstracao. Planning data nao possui subclass
+     * Paths de dados negociados publicados pela abstracao. Planning data nao possui subclass
      * Community e, portanto, nao e carregavel por estes prefixos.
      *
      * <p>O runtime Community/Enterprise publica exclusivamente o namespace
      * canônico `api/secured/data/`; aliases históricos não podem voltar a ser
      * herdados por controllers concretos.</p>
      */
-    public List<String> getRootJsonPaths() {
+    public List<String> getRootDataPaths() {
 
         return List.of("api/secured/data/");
 
@@ -260,18 +260,29 @@ public abstract class IntegrationControllerAbstract<ENTITY, DATARECORDDTO extend
                     this, metodoSaveFile);
         }
 
-        for (String rootJsonPath : getRootJsonPaths()) {
-            // Get Json
+        for (String rootDataPath : getRootDataPaths()) {
+            // O handler padrao conserva DTOs tipados. Os conversores HTTP centrais
+            // escolhem JSON (padrao), Arrow ou Parquet sem mudar os services.
             handlerMapping.registerMapping(
-                    RequestMappingInfo.paths(rootJsonPath + getSubPath()).methods(RequestMethod.GET).build(),
+                    RequestMappingInfo.paths(rootDataPath + getSubPath()).methods(RequestMethod.GET).build(),
                     this, metodoGetDTOList);
-            // Save Json
+            // Templates existentes definem cabecalhos e colunas dinamicas. Estes
+            // mappings mais especificos reutilizam o layout na URL canonica de dados.
+            for (String spreadsheetFormat : List.of("xlsx", "csv")) {
+                handlerMapping.registerMapping(
+                        RequestMappingInfo.paths(rootDataPath + getSubPath())
+                                .methods(RequestMethod.GET)
+                                .params("format=" + spreadsheetFormat)
+                                .build(),
+                        this, metodoGetFile);
+            }
+            // Content-Type seleciona o leitor para os formatos de entrada suportados.
             handlerMapping.registerMapping(
-                    RequestMappingInfo.paths(rootJsonPath + getSubPath()).methods(RequestMethod.POST).build(),
+                    RequestMappingInfo.paths(rootDataPath + getSubPath()).methods(RequestMethod.POST).build(),
                     this, metodoSaveDTOList);
             // Delete
             handlerMapping.registerMapping(
-                    RequestMappingInfo.paths(rootJsonPath + getSubPath() + "/delete").methods(RequestMethod.POST, RequestMethod.DELETE).build(),
+                    RequestMappingInfo.paths(rootDataPath + getSubPath() + "/delete").methods(RequestMethod.POST, RequestMethod.DELETE).build(),
                     this, metodoDeleteComDtosOuFiltro);
 
         }
@@ -366,7 +377,7 @@ public abstract class IntegrationControllerAbstract<ENTITY, DATARECORDDTO extend
 
         Supplier<String> loggedSupplier = buildLoggedSupplier(
                 () -> integrationService.saveDTOList(integrationDto),
-                "SAVE_JSON",
+                "SAVE_DATA",
                 integrationDto.data == null ? null : integrationDto.data.size(),
                 getJsonRequestContent(integrationDto));
 

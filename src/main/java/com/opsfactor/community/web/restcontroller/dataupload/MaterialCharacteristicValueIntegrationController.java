@@ -43,7 +43,7 @@ public class MaterialCharacteristicValueIntegrationController extends Integratio
     }
 
     @Override
-    public List<String> getRootJsonPaths() {
+    public List<String> getRootDataPaths() {
 
         return List.of("api/secured/data/");
 

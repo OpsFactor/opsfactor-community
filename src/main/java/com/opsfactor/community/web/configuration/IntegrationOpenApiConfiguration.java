@@ -21,6 +21,7 @@ import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.parameters.RequestBody;
 import io.swagger.v3.oas.models.responses.ApiResponse;
@@ -562,7 +563,8 @@ public class IntegrationOpenApiConfiguration {
      */
     private boolean isDynamicIntegrationEndpoint(Map.Entry<RequestMappingInfo, HandlerMethod> handlerMethodEntry) {
         HandlerMethod handlerMethod = handlerMethodEntry.getValue();
-        return IntegrationControllerAbstract.class.isAssignableFrom(handlerMethod.getBeanType())
+        return handlerMethodEntry.getKey().getParamsCondition().isEmpty()
+                && IntegrationControllerAbstract.class.isAssignableFrom(handlerMethod.getBeanType())
                 && handlerMethod.getMethod().getDeclaringClass().equals(IntegrationControllerAbstract.class);
     }
 
@@ -613,6 +615,9 @@ public class IntegrationOpenApiConfiguration {
         }
 
         List<Parameter> parameters = buildQueryParameters(openApi, controllerMethod, controllerBeanType);
+        if (requestMethod == RequestMethod.GET && controllerMethod.getName().equals("getDataRecordDtoList")) {
+            parameters.addAll(buildDataFormatQueryParameters());
+        }
         if (!parameters.isEmpty()) {
             operation.setParameters(parameters);
         }
@@ -687,11 +692,51 @@ public class IntegrationOpenApiConfiguration {
                 Schema<?> requestBodySchema = resolveSchema(openApi, requestBodyJavaType);
                 return new RequestBody()
                         .required(true)
-                        .content(new Content().addMediaType("application/json", new MediaType().schema(requestBodySchema)));
+                        .content(buildDataRequestContent(requestBodySchema));
             }
         }
 
         return null;
+    }
+
+    /**
+     * Documenta os leitores registrados centralmente; o envelope Java continua
+     * sendo o mesmo nos formatos JSON, Arrow e Parquet.
+     */
+    private Content buildDataRequestContent(Schema<?> requestBodySchema) {
+
+        return new Content()
+                .addMediaType("application/json", new MediaType().schema(requestBodySchema))
+                .addMediaType("application/vnd.apache.arrow.stream", new MediaType().schema(new BinarySchema()))
+                .addMediaType("application/vnd.apache.parquet", new MediaType().schema(new BinarySchema()));
+
+    }
+
+    /**
+     * Publica a escolha de formato sem criar rotas por extensao. Os separadores
+     * sao opcoes de CSV; nao alteram o schema nem os demais formatos.
+     */
+    private List<Parameter> buildDataFormatQueryParameters() {
+
+        StringSchema formatSchema = new StringSchema();
+        formatSchema.setEnum(List.of("json", "arrow", "parquet", "xlsx", "csv"));
+        formatSchema.setDefault("json");
+
+        StringSchema decimalSeparatorSchema = new StringSchema();
+        decimalSeparatorSchema.setEnum(List.of("dot", "comma"));
+        decimalSeparatorSchema.setDefault("dot");
+
+        return List.of(
+                new Parameter().in("query").name("format").required(false)
+                        .description("Response representation. Omit for the existing JSON contract.")
+                        .schema(formatSchema),
+                new Parameter().in("query").name("fieldSeparator").required(false)
+                        .description("CSV field separator; defaults to the configured application separator (comma by default).")
+                        .schema(new StringSchema()),
+                new Parameter().in("query").name("decimalSeparator").required(false)
+                        .description("CSV decimal separator: dot or comma; defaults to dot.")
+                        .schema(decimalSeparatorSchema));
+
     }
 
     /**
@@ -703,7 +748,14 @@ public class IntegrationOpenApiConfiguration {
 
         Schema<?> responseSchema = resolveResponseSchema(openApi, controllerMethod, controllerBeanType);
         if (responseSchema != null) {
-            successResponse.setContent(new Content().addMediaType("application/json", new MediaType().schema(responseSchema)));
+            Content content = new Content().addMediaType("application/json", new MediaType().schema(responseSchema));
+            if (requestMethod == RequestMethod.GET && controllerMethod.getName().equals("getDataRecordDtoList")) {
+                content.addMediaType("application/vnd.apache.arrow.stream", new MediaType().schema(new BinarySchema()));
+                content.addMediaType("application/vnd.apache.parquet", new MediaType().schema(new BinarySchema()));
+                content.addMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", new MediaType().schema(new BinarySchema()));
+                content.addMediaType("text/csv", new MediaType().schema(new BinarySchema()));
+            }
+            successResponse.setContent(content);
         }
 
         apiResponses.addApiResponse("200", successResponse);
