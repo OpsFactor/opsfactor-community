@@ -164,6 +164,7 @@ public class PlanningBookService {
                 .field("Average Historical Sales")
                 .dataColumn(true)
                 .cellClass("pastPeriods")
+                .enableCellEdit(false)
                 .build());
         }
         
@@ -179,6 +180,7 @@ public class PlanningBookService {
                 .endDateTime(calendario.getUltimaDataHorarioPeriodo(i).toString())
                 .dataColumn(true)
                 .cellClass("pastPeriods")
+                .enableCellEdit(false)
                 .build());
         }
         for (int i = calendario.getPosicaoPeriodoPresente(); i < calendario.getNumeroPeriodosTotais(); i++) {

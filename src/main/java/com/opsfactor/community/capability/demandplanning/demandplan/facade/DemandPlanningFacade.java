@@ -53,6 +53,7 @@ import com.opsfactor.community.capability.demandplanning.web.spi.DemandPlanningC
 import com.opsfactor.community.capability.planningbook.facade.PlanningBookService;
 import com.opsfactor.community.capability.planningbook.keyfigure.projection.KeyFigureProjection;
 import com.opsfactor.community.capability.planningbook.keyfigure.projection.KeyFigureProjectionFactory;
+import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.exception.IncompatibleCalendarException;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
@@ -912,6 +913,30 @@ public class DemandPlanningFacade {
 
     }
 
+    /**
+     * Mantém históricos e médias fora do contrato de escrita do Planning Book.
+     * O limite vem do calendário do plano, não do relógio atual nem da permissão
+     * de horizonte congelado. Todo o lote é validado antes da primeira mutação,
+     * inclusive em chamadas REST/MCP e nos consumidores de atualização estrita.
+     */
+    void validaPeriodosEditaveisPlanningBook(
+            Collection<SelectedPlanningBookCellDTO> selectedPlanningBookCellDTOs,
+            Calendario calendario) {
+
+        LocalDate primeiraDataPrevisao = calendario.getPrimeiraDataHorarioPeriodo(
+                calendario.getPosicaoPeriodoPresente()).toLocalDate();
+        for (SelectedPlanningBookCellDTO selectedPlanningBookCellDTO : selectedPlanningBookCellDTOs) {
+            if (selectedPlanningBookCellDTO.period == null) {
+                throw new IllegalArgumentException("Planning Book selected cell period is required.");
+            }
+            if (selectedPlanningBookCellDTO.period.isBefore(primeiraDataPrevisao)) {
+                throw new IllegalArgumentException(
+                        "Historical sales periods are read-only in the Demand Planning Book.");
+            }
+        }
+
+    }
+
     /** Mantém o resultado funcional separado da montagem opcional da resposta. */
     private record ResultadoAtualizacaoPlanningBook(
             DemandPlan demandPlan,
@@ -987,6 +1012,9 @@ public class DemandPlanningFacade {
                 clusterEParametrosProjection,
                 parametrosDemandPlanProjection,
                 false);
+
+        // A permissão de ajustar forecast nunca autoriza reescrever o histórico exibido.
+        validaPeriodosEditaveisPlanningBook(selectedPlanningBookCellDTOs, demandPlanningProjection.getCalendario());
 
         PlanningBookDemandAdjustmentContext adjustmentContext = preparaContextoAjustePlanningBookDemand(
                 configuredViewProjectionComSelecaoAAtualizar,
