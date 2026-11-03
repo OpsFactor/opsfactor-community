@@ -11,8 +11,9 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlanItem;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosGeraisDemandPlanningProjection;
@@ -85,7 +86,7 @@ public class DemandPlanningServiceCommunityContractTest {
                 SalesProjectionLocationMaterialData.class,
                 ParametrosGeraisDemandPlanningProjection.class,
                 ParametrosForecastProjection.class,
-                ClusterEParametrosProjection.class,
+                CadastroEParametrosProjection.class,
                 boolean.class);
         Method stockoutContextHook = DemandPlanningService.class.getDeclaredMethod(
                 "geraDemandPlanForecastProjectionsExecucaoComForecastEContextoStockout",
@@ -95,7 +96,7 @@ public class DemandPlanningServiceCommunityContractTest {
                 LocationProjection.class,
                 ParametrosGeraisDemandPlanningProjection.class,
                 ParametrosForecastProjection.class,
-                ClusterEParametrosProjection.class,
+                CadastroEParametrosProjection.class,
                 boolean.class,
                 DemandForecastStockoutContext.class);
 
@@ -120,7 +121,7 @@ public class DemandPlanningServiceCommunityContractTest {
                 "perfilExecucaoDemandPlanRepository",
                 "salesProjectionFactory",
                 "demandPlanProjectionFactory",
-                "clusterEParametrosProjectionFactory",
+                "cadastroEParametrosProjectionFactory",
                 "unidadeMedidaProjectionFactory",
                 "parametrosDemandPlanningProjectionFactory",
                 "jdbcTemplate");
@@ -403,8 +404,8 @@ public class DemandPlanningServiceCommunityContractTest {
         DemandPlanningService demandPlanningService = new DemandPlanningService();
         ParametrosGlobais parametrosGlobais = new ParametrosGlobais();
         parametrosGlobais.setTipoDocumentoVenda(Constantes.TipoDocumentoVenda.SELLOUT);
-        ClusterEParametrosProjectionStub clusterEParametrosProjectionStub =
-                new ClusterEParametrosProjectionStub(parametrosGlobais);
+        CadastroEParametrosProjectionStub cadastroEParametrosProjectionStub =
+                new CadastroEParametrosProjectionStub(parametrosGlobais);
         UnidadeMedidaProjectionFactoryStub unidadeMedidaProjectionFactoryStub =
                 new UnidadeMedidaProjectionFactoryStub();
         SalesProjectionFactoryFailingStub salesProjectionFactoryFailingStub =
@@ -412,8 +413,8 @@ public class DemandPlanningServiceCommunityContractTest {
 
         setField(
                 demandPlanningService,
-                "clusterEParametrosProjectionFactory",
-                new ClusterEParametrosProjectionFactoryStub(clusterEParametrosProjectionStub));
+                "cadastroEParametrosProjectionFactory",
+                new CadastroEParametrosProjectionFactoryStub(cadastroEParametrosProjectionStub));
         setField(
                 demandPlanningService,
                 "unidadeMedidaProjectionFactory",
@@ -601,8 +602,8 @@ public class DemandPlanningServiceCommunityContractTest {
         CalendarioSimples calendario = getCalendarioForecastTeste();
         ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection =
                 getParametrosGeraisDemandPlanningProjectionBottomUp();
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                new ClusterEParametrosProjectionStub(new ParametrosGlobais());
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                new CadastroEParametrosProjectionStub(new ParametrosGlobais());
         MaterialProjection materialProjection = new MaterialProjection();
         LocationProjection locationProjection = new LocationProjection();
         SalesProjectionLocationMaterialData salesProjection =
@@ -624,7 +625,7 @@ public class DemandPlanningServiceCommunityContractTest {
                         salesProjection,
                         parametrosGeraisDemandPlanningProjection,
                         getCommunityParametrosForecastProjection(),
-                        clusterEParametrosProjection,
+                        new ClusterizacaoProjection("LEGADO", cadastroEParametrosProjection),
                         false));
         IllegalArgumentException materialProjectionAusenteException = Assertions.assertThrows(
                 IllegalArgumentException.class,
@@ -635,7 +636,7 @@ public class DemandPlanningServiceCommunityContractTest {
                         salesProjection,
                         parametrosGeraisDemandPlanningProjection,
                         getCommunityParametrosForecastProjection(),
-                        clusterEParametrosProjection,
+                        new ClusterizacaoProjection("LEGADO", cadastroEParametrosProjection),
                         false));
         IllegalArgumentException locationProjectionAusenteException = Assertions.assertThrows(
                 IllegalArgumentException.class,
@@ -646,7 +647,7 @@ public class DemandPlanningServiceCommunityContractTest {
                         salesProjection,
                         parametrosGeraisDemandPlanningProjection,
                         getCommunityParametrosForecastProjection(),
-                        clusterEParametrosProjection,
+                        new ClusterizacaoProjection("LEGADO", cadastroEParametrosProjection),
                         false));
         IllegalArgumentException salesProjectionAusenteException = Assertions.assertThrows(
                 IllegalArgumentException.class,
@@ -657,7 +658,7 @@ public class DemandPlanningServiceCommunityContractTest {
                         null,
                         parametrosGeraisDemandPlanningProjection,
                         getCommunityParametrosForecastProjection(),
-                        clusterEParametrosProjection,
+                        new ClusterizacaoProjection("LEGADO", cadastroEParametrosProjection),
                         false));
 
         Assertions.assertEquals(
@@ -680,8 +681,8 @@ public class DemandPlanningServiceCommunityContractTest {
 
         DemandPlanningService demandPlanningService = new DemandPlanningService();
         CalendarioSimples calendario = getCalendarioForecastTeste();
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                new ClusterEParametrosProjectionStub(new ParametrosGlobais());
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                new CadastroEParametrosProjectionStub(new ParametrosGlobais());
         MaterialProjection materialProjection = new MaterialProjection();
         LocationProjection locationProjection = new LocationProjection();
         SalesProjectionLocationMaterialData salesProjection =
@@ -709,7 +710,7 @@ public class DemandPlanningServiceCommunityContractTest {
                         salesProjection,
                         parametrosGeraisSemAgregacao,
                         getCommunityParametrosForecastProjection(),
-                        clusterEParametrosProjection,
+                        new ClusterizacaoProjection("LEGADO", cadastroEParametrosProjection),
                         false));
         IllegalArgumentException unidadeMedidaAusenteException = Assertions.assertThrows(
                 IllegalArgumentException.class,
@@ -720,7 +721,7 @@ public class DemandPlanningServiceCommunityContractTest {
                         salesProjection,
                         parametrosGeraisSemUnidadeMedida,
                         getCommunityParametrosForecastProjection(),
-                        clusterEParametrosProjection,
+                        new ClusterizacaoProjection("LEGADO", cadastroEParametrosProjection),
                         false));
 
         Assertions.assertEquals(
@@ -2280,9 +2281,9 @@ public class DemandPlanningServiceCommunityContractTest {
 
     }
 
-    private static class ClusterEParametrosProjectionStub extends ClusterEParametrosProjection {
+    private static class CadastroEParametrosProjectionStub extends CadastroEParametrosProjection {
 
-        ClusterEParametrosProjectionStub(ParametrosGlobais parametrosGlobais) {
+        CadastroEParametrosProjectionStub(ParametrosGlobais parametrosGlobais) {
 
             this.parametrosGlobais = parametrosGlobais;
 
@@ -2290,20 +2291,20 @@ public class DemandPlanningServiceCommunityContractTest {
 
     }
 
-    private static class ClusterEParametrosProjectionFactoryStub extends ClusterEParametrosProjectionFactory {
+    private static class CadastroEParametrosProjectionFactoryStub extends CadastroEParametrosProjectionFactory {
 
-        private final ClusterEParametrosProjection clusterEParametrosProjection;
+        private final CadastroEParametrosProjection cadastroEParametrosProjection;
 
-        ClusterEParametrosProjectionFactoryStub(ClusterEParametrosProjection clusterEParametrosProjection) {
+        CadastroEParametrosProjectionFactoryStub(CadastroEParametrosProjection cadastroEParametrosProjection) {
 
-            this.clusterEParametrosProjection = clusterEParametrosProjection;
+            this.cadastroEParametrosProjection = cadastroEParametrosProjection;
 
         }
 
         @Override
-        public ClusterEParametrosProjection getParametrosProjectionCompletoDeCache() {
+        public CadastroEParametrosProjection getParametrosProjectionCompletoDeCache() {
 
-            return clusterEParametrosProjection;
+            return cadastroEParametrosProjection;
 
         }
 
@@ -2334,7 +2335,7 @@ public class DemandPlanningServiceCommunityContractTest {
                 Set<Location> locations,
                 Set<Produto> produtos,
                 UnidadeMedidaProjection unidadeMedidaProjection,
-                ClusterEParametrosProjection clusterEParametrosProjection,
+                CadastroEParametrosProjection cadastroEParametrosProjection,
                 UnidadeMedida unidadePadrao) {
 
             salesProjectionRequested = true;

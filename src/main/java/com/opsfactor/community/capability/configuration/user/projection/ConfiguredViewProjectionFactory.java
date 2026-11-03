@@ -5,7 +5,7 @@ import com.opsfactor.community.capability.configuration.user.domain.ConfiguredVi
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguredView.TipoView;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.FiltroDFUProjection;
 import com.opsfactor.community.capability.planningbook.domain.PlanningBookDfuScope;
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigureInterface;
@@ -56,11 +56,11 @@ public class ConfiguredViewProjectionFactory {
      */
     public ConfiguredViewProjection getConfiguredViewProjection(
             ConfiguredView configuredView, 
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
         
         return getConfiguredViewProjection(
                 configuredView,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 null);
         
     }
@@ -71,7 +71,7 @@ public class ConfiguredViewProjectionFactory {
      */
     public ConfiguredViewProjection getConfiguredViewProjection(
             String userId, String nomeView, TipoView tipoView, 
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             BiFunction<Produto,Location,Boolean> filtrosAdicionaisDfus) {
 
         ConfiguredView configuredView = resolveConfiguredViewObrigatoria(
@@ -81,7 +81,7 @@ public class ConfiguredViewProjectionFactory {
         
         return getConfiguredViewProjection(
                 configuredView,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 filtrosAdicionaisDfus);
         
     }
@@ -92,7 +92,7 @@ public class ConfiguredViewProjectionFactory {
      */
     public ConfiguredViewProjection getConfiguredViewProjection(
             String userId, String nomeView, TipoView tipoView, 
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         ConfiguredView configuredView = resolveConfiguredViewObrigatoria(
                 userId,
@@ -101,7 +101,7 @@ public class ConfiguredViewProjectionFactory {
         
         return getConfiguredViewProjection(
                 configuredView,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 null);
         
     }
@@ -111,16 +111,16 @@ public class ConfiguredViewProjectionFactory {
      */
     public ConfiguredViewProjection getConfiguredViewProjection(
             ConfiguredView configuredView,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             @Nullable BiFunction<Produto,Location,Boolean> filtrosAdicionaisDfus) {
 
         validaConfiguredViewProjectionInputsCommunity(
                 configuredView,
-                clusterEParametrosProjection);
+                cadastroEParametrosProjection);
         
         ConfiguredViewProjection configuredViewProjection = new ConfiguredViewProjection();
         configuredViewProjection.setConfiguredView(configuredView);
-        configuredViewProjection.setClusterEParametrosProjection(clusterEParametrosProjection);
+        configuredViewProjection.setCadastroEParametrosProjection(cadastroEParametrosProjection);
 
         /*
          * MATERIAIS E LOCATIONS FILTRADOS
@@ -129,9 +129,9 @@ public class ConfiguredViewProjectionFactory {
          * Filtros por atributos públicos são avaliados nessa fotografia em
          * memória; não há consulta por linha nem estrutura de agrupamento.
          */
-        Set<Produto> materiaisFiltrados = new HashSet<>(clusterEParametrosProjection.getMateriaisAtivos());
+        Set<Produto> materiaisFiltrados = new HashSet<>(cadastroEParametrosProjection.getMateriaisAtivos());
 
-        Set<Location> locationsFiltradas = new HashSet<>(clusterEParametrosProjection.getLocationsAtivas());
+        Set<Location> locationsFiltradas = new HashSet<>(cadastroEParametrosProjection.getLocationsAtivas());
 
         /*
          * A edição Community permite restringir a view diretamente pelas
@@ -147,7 +147,7 @@ public class ConfiguredViewProjectionFactory {
                 configuredView,
                 materiaisFiltrados,
                 locationsFiltradas,
-                clusterEParametrosProjection);
+                cadastroEParametrosProjection);
         
         // Aplica apenas filtros ad-hoc de DFU criados pelo proprio fluxo
         // Community, como esconder DFUs sem faturamento historico. Filtros
@@ -157,7 +157,7 @@ public class ConfiguredViewProjectionFactory {
                 materiaisFiltrados,
                 locationsFiltradas,
                 configuredViewProjection,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 filtrosAdicionaisDfus);
                 
         /*
@@ -251,12 +251,12 @@ public class ConfiguredViewProjectionFactory {
      *
      * <p>A factory parte da projection central de parametros/master data para
      * abrir o Planning Book em material/location. Se `ConfiguredView` ou
-     * `ClusterEParametrosProjection` vierem incompletos, falhamos antes de
+     * `CadastroEParametrosProjection` vierem incompletos, falhamos antes de
      * acessar sets ativos, tipo da view ou key figures padrao.</p>
      */
     private void validaConfiguredViewProjectionInputsCommunity(
             ConfiguredView configuredView,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         if (configuredView == null) {
             throw new IllegalArgumentException(
@@ -270,20 +270,20 @@ public class ConfiguredViewProjectionFactory {
             throw new IllegalArgumentException(
                     "Configured view type is required for Planning Book projection.");
         }
-        if (clusterEParametrosProjection == null) {
+        if (cadastroEParametrosProjection == null) {
             throw new IllegalArgumentException(
                     "Cluster and parameters projection is required for Planning Book projection.");
         }
-        if (clusterEParametrosProjection.getMaterialSet() == null) {
+        if (cadastroEParametrosProjection.getMaterialSet() == null) {
             throw new IllegalArgumentException(
                     "Material snapshot is required in cluster and parameters projection for Planning Book projection.");
         }
-        if (clusterEParametrosProjection.getLocationSet() == null) {
+        if (cadastroEParametrosProjection.getLocationSet() == null) {
             throw new IllegalArgumentException(
                     "Location snapshot is required in cluster and parameters projection for Planning Book projection.");
         }
-        validaMaterialSnapshotPlanningBookCommunity(clusterEParametrosProjection.getMaterialSet());
-        validaLocationSnapshotPlanningBookCommunity(clusterEParametrosProjection.getLocationSet());
+        validaMaterialSnapshotPlanningBookCommunity(cadastroEParametrosProjection.getMaterialSet());
+        validaLocationSnapshotPlanningBookCommunity(cadastroEParametrosProjection.getLocationSet());
 
     }
 
@@ -291,7 +291,7 @@ public class ConfiguredViewProjectionFactory {
      * Valida a fotografia de materiais antes de aplicar filtros de ativo.
      *
      * <p>A projection central normalmente ja vem da
-     * `ClusterEParametrosProjectionFactory`, que valida ids e duplicidades. A
+     * `CadastroEParametrosProjectionFactory`, que valida ids e duplicidades. A
      * factory de view, entretanto, tambem possui entry point direto para testes,
      * overlays e callers que ja tenham uma projection em maos. Esta guarda
      * evita NPE em `Produto.filtraMaterialSetAtivos(...)` e impede escopo de
@@ -378,7 +378,7 @@ public class ConfiguredViewProjectionFactory {
             ConfiguredView configuredView,
             Set<Produto> materiaisFiltrados,
             Set<Location> locationsFiltradas,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         Map<String, Set<String>> materialFilters = groupCharacteristicFilters(
                 configuredView.getMaterialCharacteristicFilterSet(),
@@ -392,7 +392,7 @@ public class ConfiguredViewProjectionFactory {
                 materialFilters,
                 characteristicId -> switch (characteristicId) {
                     case "MATERIAL_STATUS" -> material
-                            .getStatusProduto(referenceDate, clusterEParametrosProjection.getParametrosGlobais())
+                            .getStatusProduto(referenceDate, cadastroEParametrosProjection.getParametrosGlobais())
                             .toString();
                     case "MATERIAL_ACTIVE" -> Boolean.toString(material.getAtivo());
                     default -> throw new IllegalStateException(
@@ -500,18 +500,18 @@ public class ConfiguredViewProjectionFactory {
             Set<Produto> materiaisAFiltrar,
             Set<Location> locationsAFiltrar,
             ConfiguredViewProjection configuredViewProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             @Nullable BiFunction<Produto,Location,Boolean> filtrosAdicionaisDfus) {
         
         // Sem filtro ad-hoc, a projection pode representar todas as
         // combinacoes material/location e deixar a propria FiltroDFUProjection
         // aplicar a regra de DFU ativa quando os dados forem iterados.
         if (filtrosAdicionaisDfus == null) {
-            FiltroDFUProjection dfuProjection = new FiltroDFUProjection(locationsAFiltrar, materiaisAFiltrar, clusterEParametrosProjection);
+            FiltroDFUProjection dfuProjection = new FiltroDFUProjection(locationsAFiltrar, materiaisAFiltrar, cadastroEParametrosProjection);
             configuredViewProjection.dfuProjectionFiltrado = dfuProjection;
             
         } else {
-            FiltroDFUProjection dfuProjection = new FiltroDFUProjection(false, clusterEParametrosProjection);
+            FiltroDFUProjection dfuProjection = new FiltroDFUProjection(false, cadastroEParametrosProjection);
             
             Set<Produto> materiaisRemanescentes = new HashSet<>();
             Set<Location> locationsRemanescentes = new HashSet<>();

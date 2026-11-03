@@ -9,7 +9,7 @@ import com.opsfactor.community.capability.masterdata.product.material.domain.Pro
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.DemandaDiretaConsideradaLinha;
 import com.opsfactor.community.capability.supplyplanning.distributionplan.domain.DistributionPlanItem;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
@@ -50,7 +50,7 @@ public class ConstrainedPlanningHeuristicoRotinas {
         MaterialProjection materialProjection = supplyPlanningProjection.getMaterialProjection();
         LocationProjection locationProjectionLocationsOrigem = supplyPlanningProjection.getLocationProjectionLocationsOrigem();
         UnidadeMedidaProjection unidadeMedidaProjection = supplyPlanningProjection.getConversaoUnidadeMedidaProjection();
-        ClusterEParametrosProjection parametrosProjection = supplyPlanningProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection parametrosProjection = supplyPlanningProjection.getCadastroEParametrosProjection();
         
         SupplyNetworkProjection supplyNetworkProjection = supplyPlanningProjection.getSupplyNetworkProjection();
         
@@ -549,7 +549,7 @@ public class ConstrainedPlanningHeuristicoRotinas {
             SupplyPlanningProjection supplyPlanningProjectionInsumos,
             int posicaoPeriodo) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyPlanningProjectionLowLevelCodeAtual.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyPlanningProjectionLowLevelCodeAtual.getCadastroEParametrosProjection();
         SupplyNetworkProjection supplyNetworkProjection = supplyPlanningProjectionLowLevelCodeAtual.getSupplyNetworkProjection();
         Location location = supplyPlanningProjectionLowLevelCodeAtual.getLocation();
                 
@@ -567,7 +567,7 @@ public class ConstrainedPlanningHeuristicoRotinas {
         // LOOP PRINCIPAL : PELA RESTRIÇÃO, MATERIAL INPUT
         for (Produto materialInput : materiaisInput) {
             
-            UnidadeMedida unidadeMedidaPadraoMaterialInput = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(materialInput, location);
+            UnidadeMedida unidadeMedidaPadraoMaterialInput = cadastroEParametrosProjection.getSNPUnidadeMedidaPadrao(materialInput, location);
             
             Map<Produto,Double> quantidadeInputNecessariaTotalPorMaterialOutput = supplyPlanningProjectionLowLevelCodeAtual.getQuantidadeConsumidaMaterialInputPorMaterialOutput(
                     posicaoPeriodo, materialInput, Constantes.FirmePlanejado.TOTAL, Constantes.TipoPlano.PLANO_RESTRITO, unidadeMedidaPadraoMaterialInput);
@@ -591,7 +591,7 @@ public class ConstrainedPlanningHeuristicoRotinas {
             // ATUALIZA MAPAS QUE GERARÃO RESTRIÇÕES RAW MATERIAL
             for (Produto materialOutput : materiaisOutput) {
                 
-                UnidadeMedida unidadeMedidaPadraoMaterialOutput = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(materialOutput, location);
+                UnidadeMedida unidadeMedidaPadraoMaterialOutput = cadastroEParametrosProjection.getSNPUnidadeMedidaPadrao(materialOutput, location);
                 
                 double percentualDisponibilidadeInsumo = quantidadeInputDisponivelSemConsumoProducao / quantidadeInputNecessariaTotal;
 
@@ -671,7 +671,7 @@ public class ConstrainedPlanningHeuristicoRotinas {
         
         boolean restricaoAplicada = false;
         
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyPlanningProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyPlanningProjection.getCadastroEParametrosProjection();
         SupplyNetworkProjection supplyNetworkProjection = supplyPlanningProjection.getSupplyNetworkProjection();
         
         Location location = supplyPlanningProjection.getLocation();
@@ -715,7 +715,7 @@ public class ConstrainedPlanningHeuristicoRotinas {
                 double percentualDemandaPeloRecursoAtendida = capacidadeRestante / consumoCapacidadeRecursoPelosMateriaisProjection;
                 for (Produto material : materiaisComProductionPlanLinha) {
                     
-                    UnidadeMedida unidadeMedidaPadrao = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(
+                    UnidadeMedida unidadeMedidaPadrao = cadastroEParametrosProjection.getSNPUnidadeMedidaPadrao(
                             material, location);
                     double quantidadeOutputMaterialOrdens = supplyPlanningProjection.getQuantidadeProductionPlan(
                             posicaoPeriodo, material, recursoProdutivo, 

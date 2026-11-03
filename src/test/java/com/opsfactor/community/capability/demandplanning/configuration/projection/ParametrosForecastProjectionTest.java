@@ -62,6 +62,11 @@ class ParametrosForecastProjectionTest {
                         null,
                         Constantes.DPModeloSplit.HISTORICAL_SALES,
                         30);
+        Assertions.assertNull(parametrosForecastProjection.getNumeroPeriodosMixHistoricoSharding());
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> parametrosForecastProjection.setNumeroPeriodosMixHistoricoSharding(0));
+        parametrosForecastProjection.setNumeroPeriodosMixHistoricoSharding(5);
+        parametrosForecastProjection.setDefinicaoMapeShardingSnapshot("immutable-mape-definition");
         parametrosForecastProjection.setNivelAgregacaoMaterialMapeId(
                 "MAPE_MATERIAL");
         parametrosForecastProjection.setNivelAgregacaoLocationMapeId(
@@ -72,6 +77,8 @@ class ParametrosForecastProjectionTest {
                         parametrosForecastProjection,
                         null);
 
+        Assertions.assertEquals(5, parametrosForecastProjectionCopiados.getNumeroPeriodosMixHistoricoSharding());
+        Assertions.assertEquals("immutable-mape-definition", parametrosForecastProjectionCopiados.getDefinicaoMapeShardingSnapshot());
         Assertions.assertEquals(
                 "MAPE_MATERIAL",
                 parametrosForecastProjectionCopiados.getNivelAgregacaoMaterialMapeId());

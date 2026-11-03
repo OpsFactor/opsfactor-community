@@ -111,7 +111,8 @@ public class Constantes {
         @JsonProperty("ETS") ETS,
         @JsonProperty("Budget as Forecast") BUDGET_DECOMPOSITION, // RMM = ROLLING MOVING AVERAGE
         @JsonProperty("Chronos") CHRONOS,
-        @JsonProperty("Price/Campaign/Seasonal/Trend") PRICING_ML
+        @JsonProperty("Price/Campaign/Seasonal/Trend") PRICING_ML,
+        @JsonProperty("Time Series Regression") REGRESSAO_SERIE_TEMPORAL
     }
 
     /**

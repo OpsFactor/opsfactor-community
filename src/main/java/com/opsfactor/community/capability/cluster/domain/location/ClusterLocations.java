@@ -1,5 +1,8 @@
 package com.opsfactor.community.capability.cluster.domain.location;
 
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
+import com.opsfactor.community.capability.cluster.domain.ClusterKey;
+
 import com.opsfactor.community.capability.configuration.domain.cluster.location.ParametrosClusterLocations;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -25,16 +28,24 @@ import java.util.Set;
 @Getter
 @Setter
 @NoArgsConstructor
-@EqualsAndHashCode(of="id")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @NamedEntityGraph(
         name = "ClusterLocations.completo", attributeNodes = {
         @NamedAttributeNode("regrasAlocacaoClusterLocations")
 })
+@IdClass(ClusterKey.class)
 public class ClusterLocations implements Serializable {
 
+    /** Parte real da PK. LEGADO é compatibilidade explícita, nunca escolha de perfil ativo. */
+    @Id @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "perfil_clusterizacao_id", nullable = false, updatable = false)
+    private PerfilClusterizacao perfilClusterizacao = PerfilClusterizacao.referenciaLegada();
+
     @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.TABLE, generator = "cluster_location_ids")
+    @TableGenerator(name = "cluster_location_ids", table = "cluster_id_allocator", pkColumnName = "segmento",
+            valueColumnName = "proximo_valor", pkColumnValue = "LOCATION", allocationSize = 50)
     private Long id;
     
     private String descricao;
@@ -89,6 +100,14 @@ public class ClusterLocations implements Serializable {
         } else {
             return (prioridade == null) ? 99999 : Math.min(99999, prioridade);
         }
+    }
+
+    /** Identidade completa sem consulta; IDs de proxies JPA não exigem carregar o perfil. */
+    @EqualsAndHashCode.Include
+    public ClusterKey getClusterKey() {
+
+        return new ClusterKey(perfilClusterizacao.getId(), id);
+
     }
 
     @Override

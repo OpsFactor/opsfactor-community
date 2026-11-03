@@ -15,7 +15,7 @@ import com.opsfactor.community.capability.supplyplanning.productionplan.domain.P
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.platform.projection.inmemorybi.BIEmMemoria;
 import com.opsfactor.community.platform.projection.inmemorybi.applied.BIProjectionMaterialLocationPeriodo;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.configuration.user.projection.ConfiguredViewProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjectionFactory;
@@ -172,7 +172,7 @@ public class KeyFigureProjectionFactory {
     public KeyFigureProjection getKeyFigureProjectionDeDemandPlan(DemandPlan demandPlan, ConfiguredViewProjection configuredViewProjection, boolean apagarCacheProjectionsAposInicializacao) {
 
         ConfiguredView configuredView = configuredViewProjection.getConfiguredView();
-        ClusterEParametrosProjection clusterEParametrosProjection = configuredViewProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = configuredViewProjection.getCadastroEParametrosProjection();
         unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
 
         Calendario calendario = demandPlan.getCalendarioDoDemandPlanComNumeroPeriodosHistoricosFixo(
@@ -291,11 +291,11 @@ public class KeyFigureProjectionFactory {
 
     public KeyFigureProjection getKeyFigureProjectionDeSupplyPlan(SupplyPlan supplyPlan, Location location, ConfiguredViewProjection configuredViewProjection, boolean apagarCacheProjectionsAposInicializacao) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = configuredViewProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = configuredViewProjection.getCadastroEParametrosProjection();
         unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
 
         Calendario calendario = supplyPlan.getCalendarioDoSupplyPlanParaLocationComPeriodoPassadoParaEstoqueInicial(
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 location);
         KeyFigureProjection keyFigureProjection = getKeyFigureProjectionBase(calendario, configuredViewProjection);
 
@@ -733,11 +733,11 @@ public class KeyFigureProjectionFactory {
         if (keyFigureProjection.politicaEstoquesProjectionCache == null) {
             SupplyPlan supplyPlan = keyFigureProjection.supplyPlan;
             ConfiguredViewProjection configuredViewProjection = keyFigureProjection.configuredViewProjection;
-            ClusterEParametrosProjection clusterEParametrosProjection = configuredViewProjection.getClusterEParametrosProjection();
+            CadastroEParametrosProjection cadastroEParametrosProjection = configuredViewProjection.getCadastroEParametrosProjection();
 
             keyFigureProjection.politicaEstoquesProjectionCache = politicaEstoquesProjectionFactory.getPoliticaEstoquesProjection(
                     keyFigureProjection.calendario,
-                    clusterEParametrosProjection,
+                    cadastroEParametrosProjection,
                     supplyPlan.getPerfilExecucaoSupplyPlan());
         }
 
@@ -761,7 +761,7 @@ public class KeyFigureProjectionFactory {
                 throw getUnsupportedSupplyPlanningKeyFigureProjectionLocationScopeException(configuredViewProjection);
             }
 
-            ClusterEParametrosProjection clusterEParametrosProjection = configuredViewProjection.getClusterEParametrosProjection();
+            CadastroEParametrosProjection cadastroEParametrosProjection = configuredViewProjection.getCadastroEParametrosProjection();
             SupplyNetworkProjection supplyNetworkProjection = keyFigureProjection.supplyNetworkProjection;
 
             atualizaCacheKeyFigureProjectionComPoliticaEstoquesProjection(keyFigureProjection);
@@ -779,8 +779,8 @@ public class KeyFigureProjectionFactory {
                     keyFigureProjection.politicaEstoquesProjectionCache,
                     MaterialProjectionFactory.getProjectionSetMateriais(
                             configuredViewProjection.getMateriaisFiltrados(),
-                            clusterEParametrosProjection),
-                    LocationProjectionFactory.getLocationProjectionCompleto(clusterEParametrosProjection));
+                            cadastroEParametrosProjection),
+                    LocationProjectionFactory.getLocationProjectionCompleto(cadastroEParametrosProjection));
 
             // se perfil execução indicar que inventory plan não é salvo, os estoques projetados deverão ser recalculados antes de se extrair
             // KFs de estoque projetado e estoque de segurança
@@ -905,7 +905,7 @@ public class KeyFigureProjectionFactory {
         Location location = supplyPlanningProjection.getLocation();
         Calendario calendario = supplyPlanningProjection.getCalendario();
         ConfiguredViewProjection configuredViewProjection = keyFigureProjection.configuredViewProjection;
-        ParametrosGlobais parametrosGlobais = supplyPlanningProjection.getClusterEParametrosProjection().getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = supplyPlanningProjection.getCadastroEParametrosProjection().getParametrosGlobais();
 
         int posicaoPeriodoInicialDemandaDireta = calendario.getPosicaoPeriodoPresente();
 
@@ -942,7 +942,7 @@ public class KeyFigureProjectionFactory {
         Location location = supplyPlanningProjection.getLocation();
         Calendario calendario = supplyPlanningProjection.getCalendario();
         ConfiguredViewProjection configuredViewProjection = keyFigureProjection.configuredViewProjection;
-        ParametrosGlobais parametrosGlobais = supplyPlanningProjection.getClusterEParametrosProjection().getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = supplyPlanningProjection.getCadastroEParametrosProjection().getParametrosGlobais();
 
         for (Produto material : supplyPlanningProjection.getMaterialProjection().getMateriaisAtivosEmLocation(location)) {
             for (int i = calendario.getPosicaoPeriodoPresente(); i < calendario.getNumeroPeriodosTotais(); i++) {
@@ -981,7 +981,7 @@ public class KeyFigureProjectionFactory {
         Location location = supplyPlanningProjection.getLocation();
         Calendario calendario = supplyPlanningProjection.getCalendario();
         ConfiguredViewProjection configuredViewProjection = keyFigureProjection.configuredViewProjection;
-        ParametrosGlobais parametrosGlobais = supplyPlanningProjection.getClusterEParametrosProjection().getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = supplyPlanningProjection.getCadastroEParametrosProjection().getParametrosGlobais();
 
         int posicaoPeriodoInicialDemandaDireta = calendario.getPosicaoPeriodoPresente();
 
@@ -1018,7 +1018,7 @@ public class KeyFigureProjectionFactory {
         Location location = supplyPlanningProjection.getLocation();
         Calendario calendario = supplyPlanningProjection.getCalendario();
         ConfiguredViewProjection configuredViewProjection = keyFigureProjection.configuredViewProjection;
-        ParametrosGlobais parametrosGlobais = supplyPlanningProjection.getClusterEParametrosProjection().getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = supplyPlanningProjection.getCadastroEParametrosProjection().getParametrosGlobais();
 
         for (Produto material : supplyPlanningProjection.getMaterialProjection().getMateriaisAtivos()) {
             for (int i = calendario.getPosicaoPeriodoPresente(); i < calendario.getNumeroPeriodosTotais(); i++) {
@@ -1054,7 +1054,7 @@ public class KeyFigureProjectionFactory {
             case AJUSTE_DEMANDA -> atualizaKeyFigureProjectionDPComDemandPlanItem(keyFigureProjection, keyFigureStandard, demandPlanItem -> demandPlanItem.getQuantidadeAjusteDemanda());
             // vendas para períodos passados e futuros
             case HISTORICO_VENDAS -> {
-                ParametrosGlobais parametrosGlobais = keyFigureProjection.getSupplyNetworkProjection().getClusterEParametrosProjection().getParametrosGlobais();
+                ParametrosGlobais parametrosGlobais = keyFigureProjection.getSupplyNetworkProjection().getCadastroEParametrosProjection().getParametrosGlobais();
                 PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = keyFigureProjection.getDemandPlan().getPerfilExecucaoDemandPlan();
                 atualizaKeyFigureProjectionDPComSalesEmPeriodosPassadosEFuturos(keyFigureProjection, keyFigureStandard, perfilExecucaoDemandPlan.getTipoDocumentoVenda(parametrosGlobais));
             }
@@ -1245,7 +1245,7 @@ public class KeyFigureProjectionFactory {
         SupplyPlanningProjection supplyPlanningProjection = keyFigureProjection.supplyPlanningProjectionCache;
         UnidadeMedidaProjection unidadeMedidaProjection = keyFigureProjection.unidadeMedidaProjection;
         ConfiguredViewProjection configuredViewProjection = keyFigureProjection.configuredViewProjection;
-        ClusterEParametrosProjection clusterEParametrosProjection = configuredViewProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = configuredViewProjection.getCadastroEParametrosProjection();
         List<InventoryPlanLinha> inventoryPlanLinhaList = keyFigureProjection.supplyPlanningProjectionCache.getTodosInventoryPlanLinhas();
 
         inventoryPlanLinhaList.stream()
@@ -1261,8 +1261,8 @@ public class KeyFigureProjectionFactory {
                                 .keyFigure(keyFigure)
                                 .valor((double) (unidadeMedidaProjection.getConversaoParaUnidadeDestino(
                                         inventoryPlanLinha.getProduto(),
-                                        inventoryPlanLinha.getUnidadeMedida(clusterEParametrosProjection.getParametrosGlobais()),
-                                        configuredViewProjection.getUnidadeMedidaView(clusterEParametrosProjection.getParametrosGlobais()))
+                                        inventoryPlanLinha.getUnidadeMedida(cadastroEParametrosProjection.getParametrosGlobais()),
+                                        configuredViewProjection.getUnidadeMedidaView(cadastroEParametrosProjection.getParametrosGlobais()))
                                         * quantidadeEstoque))
                                 .build());
                     }
@@ -1323,7 +1323,7 @@ public class KeyFigureProjectionFactory {
             }
             ConfiguredViewProjection configuredViewProjection = keyFigureProjection.configuredViewProjection;
             UnidadeMedidaProjection unidadeMedidaProjection = keyFigureProjection.unidadeMedidaProjection;
-            ClusterEParametrosProjection clusterEParametrosProjection = configuredViewProjection.getClusterEParametrosProjection();
+            CadastroEParametrosProjection cadastroEParametrosProjection = configuredViewProjection.getCadastroEParametrosProjection();
             // Se a configured view não especificar períodos históricos, não extrair nada da base de vendas.
             // O tipo de documento de vendas é definido pelo perfil de execução do Demand Plan
             // e chega a este método pelo argumento tipoDocumentoVenda.
@@ -1334,7 +1334,7 @@ public class KeyFigureProjectionFactory {
                         configuredViewProjection.getLocationsFiltradas(),
                         configuredViewProjection.getMateriaisFiltrados(),
                         unidadeMedidaProjection,
-                        clusterEParametrosProjection);
+                        cadastroEParametrosProjection);
                 return;
             }
 
@@ -1357,8 +1357,8 @@ public class KeyFigureProjectionFactory {
                     configuredViewProjection.getLocationsFiltradas(),
                     configuredViewProjection.getMateriaisFiltrados(),
                     unidadeMedidaProjection,
-                    clusterEParametrosProjection,
-                    clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal());
+                    cadastroEParametrosProjection,
+                    cadastroEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal());
         }
 
     }
@@ -1372,8 +1372,8 @@ public class KeyFigureProjectionFactory {
 
         ConfiguredViewProjection configuredViewProjection = keyFigureProjection.configuredViewProjection;
         UnidadeMedidaProjection unidadeMedidaProjection = keyFigureProjection.unidadeMedidaProjection;
-        ClusterEParametrosProjection clusterEParametrosProjection = configuredViewProjection.getClusterEParametrosProjection();
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        CadastroEParametrosProjection cadastroEParametrosProjection = configuredViewProjection.getCadastroEParametrosProjection();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
 
         LocalDateTime dataHorarioInicialPresente = keyFigureProjection.calendario.getDataHorarioInicialPresente();
 
@@ -1412,8 +1412,8 @@ public class KeyFigureProjectionFactory {
 
         ConfiguredViewProjection configuredViewProjection = keyFigureProjection.configuredViewProjection;
         UnidadeMedidaProjection unidadeMedidaProjection = keyFigureProjection.unidadeMedidaProjection;
-        ClusterEParametrosProjection clusterEParametrosProjection = configuredViewProjection.getClusterEParametrosProjection();
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        CadastroEParametrosProjection cadastroEParametrosProjection = configuredViewProjection.getCadastroEParametrosProjection();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
 
         keyFigureProjection.salesProjectionCache.getSetSalesConsolidado().stream()
                 .forEach(ThrowingConsumer.unchecked(aggregatedByLocationMaterialUOMDate -> {
@@ -1450,7 +1450,7 @@ public class KeyFigureProjectionFactory {
         SupplyPlanningProjection supplyPlanningProjection = keyFigureProjection.supplyPlanningProjectionCache;
         UnidadeMedidaProjection unidadeMedidaProjection = keyFigureProjection.unidadeMedidaProjection;
         ConfiguredViewProjection configuredViewProjection = keyFigureProjection.configuredViewProjection;
-        ClusterEParametrosProjection clusterEParametrosProjection = configuredViewProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = configuredViewProjection.getCadastroEParametrosProjection();
         List<ProductionPlanLinha> productionPlanLinhaList = supplyPlanningProjection.getTodosProductionPlanLinhasOutput();
 
         productionPlanLinhaList.stream()
@@ -1464,8 +1464,8 @@ public class KeyFigureProjectionFactory {
                             .keyFigure(keyFigure)
                             .valor((double) (unidadeMedidaProjection.getConversaoParaUnidadeDestino(
                                     productionPlanLinha.getMaterialOutput(),
-                                    productionPlanLinha.getUnidadeMedida(clusterEParametrosProjection.getParametrosGlobais()),
-                                    configuredViewProjection.getUnidadeMedidaView(clusterEParametrosProjection.getParametrosGlobais()))
+                                    productionPlanLinha.getUnidadeMedida(cadastroEParametrosProjection.getParametrosGlobais()),
+                                    configuredViewProjection.getUnidadeMedidaView(cadastroEParametrosProjection.getParametrosGlobais()))
                                     * quantidadeProducao))
                             .build());
                 }));
@@ -1490,7 +1490,7 @@ public class KeyFigureProjectionFactory {
         SupplyPlanningProjection supplyPlanningProjection = keyFigureProjection.supplyPlanningProjectionCache;
         UnidadeMedidaProjection unidadeMedidaProjection = keyFigureProjection.unidadeMedidaProjection;
         ConfiguredViewProjection configuredViewProjection = keyFigureProjection.configuredViewProjection;
-        ClusterEParametrosProjection clusterEParametrosProjection = configuredViewProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = configuredViewProjection.getCadastroEParametrosProjection();
         Collection<DistributionPlanItem> distributionPlanItemList = supplyPlanningProjection.getTodosDistributionPlanItemsInboundSet();
 
         distributionPlanItemList.stream()
@@ -1504,8 +1504,8 @@ public class KeyFigureProjectionFactory {
                             .keyFigure(keyFigure)
                             .valor((double) (unidadeMedidaProjection.getConversaoParaUnidadeDestino(
                                     distributionPlanItem.getProduto(),
-                                    distributionPlanItem.getUnidadeMedida(clusterEParametrosProjection.getParametrosGlobais()),
-                                    configuredViewProjection.getUnidadeMedidaView(clusterEParametrosProjection.getParametrosGlobais()))
+                                    distributionPlanItem.getUnidadeMedida(cadastroEParametrosProjection.getParametrosGlobais()),
+                                    configuredViewProjection.getUnidadeMedidaView(cadastroEParametrosProjection.getParametrosGlobais()))
                                     * quantidadeInbound))
                             .build());
                 }));
@@ -1531,7 +1531,7 @@ public class KeyFigureProjectionFactory {
         SupplyPlanningProjection supplyPlanningProjection = keyFigureProjection.supplyPlanningProjectionCache;
         UnidadeMedidaProjection unidadeMedidaProjection = keyFigureProjection.unidadeMedidaProjection;
         ConfiguredViewProjection configuredViewProjection = keyFigureProjection.configuredViewProjection;
-        ClusterEParametrosProjection clusterEParametrosProjection = configuredViewProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = configuredViewProjection.getCadastroEParametrosProjection();
         Collection<DistributionPlanItem> distributionPlanItemList = supplyPlanningProjection.getTodosDistributionPlanItemsOutboundSet();
 
         distributionPlanItemList.stream()
@@ -1545,8 +1545,8 @@ public class KeyFigureProjectionFactory {
                             .keyFigure(keyFigure)
                             .valor((double) (unidadeMedidaProjection.getConversaoParaUnidadeDestino(
                                     distributionPlanItem.getProduto(),
-                                    distributionPlanItem.getUnidadeMedida(clusterEParametrosProjection.getParametrosGlobais()),
-                                    configuredViewProjection.getUnidadeMedidaView(clusterEParametrosProjection.getParametrosGlobais()))
+                                    distributionPlanItem.getUnidadeMedida(cadastroEParametrosProjection.getParametrosGlobais()),
+                                    configuredViewProjection.getUnidadeMedidaView(cadastroEParametrosProjection.getParametrosGlobais()))
                                     * quantidadeOutbound))
                             .build());
                 }));

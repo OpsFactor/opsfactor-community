@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByLocationMaterialUOM;
@@ -97,18 +97,18 @@ public class SalesProjectionFactory {
             Constantes.TipoDocumentoVenda tipoDocumentoVenda,
             CalendarioSimples calendario, Set<Location> locations, Set<Produto> produtos,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             UnidadeMedida unidadePadrao) {
 
         HistoricalSalesSource historicalSalesSource = getHistoricalSalesSource(tipoDocumentoVenda);
 
         SalesProjectionMaterialData salesProjection = SalesProjectionMaterialData.builder()
                 .conversaoUnidadeMedidaProjection(unidadeMedidaProjection)
-                .clusterEParametrosProjection(clusterEParametrosProjection)
+                .cadastroEParametrosProjection(cadastroEParametrosProjection)
                 .calendario(calendario)
                 .locations(locations)
                 .materiais(produtos)
-                .unidadeMedidaPadraoParaNulos(clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal())
+                .unidadeMedidaPadraoParaNulos(cadastroEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal())
                 .mapaVendasAgregadasPorPeriodo(new HashMap<>())
                 .build();
 
@@ -130,7 +130,7 @@ public class SalesProjectionFactory {
                 // precisa acontecer depois da leitura do agregado.
                 unidadeMedida = (unidadePadrao != null)
                         ? unidadePadrao
-                        : clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
+                        : cadastroEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
             }
 
             salesProjection.addSalesAgregado(AggregatedByMaterialUOMDateImpl.builder()
@@ -153,16 +153,16 @@ public class SalesProjectionFactory {
     public SalesProjectionLocationMaterialData getSalesProjectionLocationMaterialDataVazio(
             Calendario calendario, Set<Location> locations, Set<Produto> produtos,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
 
         return SalesProjectionLocationMaterialData.builder()
                 .conversaoUnidadeMedidaProjection(unidadeMedidaProjection)
-                .clusterEParametrosProjection(clusterEParametrosProjection)
+                .cadastroEParametrosProjection(cadastroEParametrosProjection)
                 .calendario(calendario)
                 .locations(locations)
                 .materiais(produtos)
-                .unidadeMedidaPadraoParaNulos(clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal())
+                .unidadeMedidaPadraoParaNulos(cadastroEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal())
                 .mapaVendasAgregadasPorPeriodo(new HashMap<>())
                 .build();
 
@@ -174,14 +174,14 @@ public class SalesProjectionFactory {
             @Nullable Set<Location> locations,
             @Nullable Set<Produto> produtos,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             UnidadeMedida unidadePadrao) {
 
         HistoricalSalesSource historicalSalesSource = getHistoricalSalesSource(tipoDocumentoVenda);
 
         SalesProjectionLocationMaterialData salesProjection = SalesProjectionLocationMaterialData.builder()
                 .conversaoUnidadeMedidaProjection(unidadeMedidaProjection)
-                .clusterEParametrosProjection(clusterEParametrosProjection)
+                .cadastroEParametrosProjection(cadastroEParametrosProjection)
                 .calendario(calendario)
                 .locations(locations)
                 .materiais(produtos)
@@ -218,7 +218,7 @@ public class SalesProjectionFactory {
                     // precisa acontecer depois da leitura do agregado.
                     unidadeMedida = (unidadePadrao != null)
                             ? unidadePadrao
-                            : clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
+                            : cadastroEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
                 }
 
                 AggregatedByLocationMaterialUOMDate aggregatedNormalizado = AggregatedByLocationMaterialUOMDateImpl.builder()
@@ -264,7 +264,7 @@ public class SalesProjectionFactory {
             Calendario calendario,
             LocationMaterialCorrelationScope locationMaterialCorrelationScope,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             UnidadeMedida unidadePadrao) {
 
         SalesProjectionLocationMaterialData envelopeSalesProjection =
@@ -274,15 +274,15 @@ public class SalesProjectionFactory {
                         locationMaterialCorrelationScope.getLocations(),
                         locationMaterialCorrelationScope.getMateriais(),
                         unidadeMedidaProjection,
-                        clusterEParametrosProjection,
+                        cadastroEParametrosProjection,
                         unidadePadrao);
 
         SalesProjectionLocationMaterialData correlatedSalesProjection =
                 SalesProjectionLocationMaterialData.builder()
                         .conversaoUnidadeMedidaProjection(
                                 envelopeSalesProjection.getConversaoUnidadeMedidaProjection())
-                        .clusterEParametrosProjection(
-                                envelopeSalesProjection.getClusterEParametrosProjection())
+                        .cadastroEParametrosProjection(
+                                envelopeSalesProjection.getCadastroEParametrosProjection())
                         .calendario(envelopeSalesProjection.getCalendario())
                         .locations(locationMaterialCorrelationScope.getLocations())
                         .materiais(locationMaterialCorrelationScope.getMateriais())
@@ -312,7 +312,7 @@ public class SalesProjectionFactory {
             LocationProjection locationProjection,
             MaterialProjection materialProjection,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             SupplyNetworkProjection supplyNetworkProjection,
             UnidadeMedida unidadePadrao) {
 
@@ -328,7 +328,7 @@ public class SalesProjectionFactory {
                 locationsQueReceberaoConsolidcaoDemanda,
                 materiaisNoProjection,
                 unidadeMedidaProjection,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 unidadePadrao);
 
         // extrai o sellout completo de todas as locations
@@ -347,7 +347,7 @@ public class SalesProjectionFactory {
                 // precisa acontecer depois da leitura do agregado.
                 unidadeMedida = (unidadePadrao != null)
                         ? unidadePadrao
-                        : clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
+                        : cadastroEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
             }
 
             AggregatedByLocationMaterialUOMDate selloutAgregado = AggregatedByLocationMaterialUOMDateImpl.builder()
@@ -397,7 +397,7 @@ public class SalesProjectionFactory {
             Constantes.TipoDocumentoVenda tipoDocumentoVenda,
             CalendarioSimples calendario, Location location, Set<Produto> produtos,
             UnidadeMedidaProjection conversaoUnidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             UnidadeMedida unidadePadrao) {
 
         getHistoricalSalesSource(tipoDocumentoVenda);
@@ -407,7 +407,7 @@ public class SalesProjectionFactory {
                 tipoDocumentoVenda,
                 calendario,
                 Sets.newHashSet(location), produtos,
-                conversaoUnidadeMedidaProjection, clusterEParametrosProjection, unidadePadrao);
+                conversaoUnidadeMedidaProjection, cadastroEParametrosProjection, unidadePadrao);
 
     }
 
@@ -415,14 +415,14 @@ public class SalesProjectionFactory {
             Constantes.TipoDocumentoVenda tipoDocumentoVenda,
             CalendarioSimples calendario, Set<Location> locations, Set<Produto> produtos,
             UnidadeMedidaProjection conversaoUnidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             UnidadeMedida unidadePadrao) {
 
         HistoricalSalesSource historicalSalesSource = getHistoricalSalesSource(tipoDocumentoVenda);
 
         SalesProjectionMaterial salesProjection = SalesProjectionMaterial.builder()
                 .conversaoUnidadeMedidaProjection(conversaoUnidadeMedidaProjection)
-                .clusterEParametrosProjection(clusterEParametrosProjection)
+                .cadastroEParametrosProjection(cadastroEParametrosProjection)
                 .calendario(calendario)
                 .locations(locations)
                 .materiais(produtos)
@@ -447,7 +447,7 @@ public class SalesProjectionFactory {
                 // precisa acontecer depois da leitura do agregado.
                 unidadeMedida = (unidadePadrao != null)
                         ? unidadePadrao
-                        : clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
+                        : cadastroEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
             }
 
             salesProjection.addSalesAgregado(AggregatedByMaterialUOMImpl.builder()
@@ -464,14 +464,14 @@ public class SalesProjectionFactory {
             Constantes.TipoDocumentoVenda tipoDocumentoVenda,
             CalendarioSimples calendario, Set<Location> locations, Set<Produto> produtos,
             UnidadeMedidaProjection conversaoUnidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             UnidadeMedida unidadePadrao) {
 
         HistoricalSalesSource historicalSalesSource = getHistoricalSalesSource(tipoDocumentoVenda);
 
         SalesProjectionLocationMaterial salesProjection = SalesProjectionLocationMaterial.builder()
                 .conversaoUnidadeMedidaProjection(conversaoUnidadeMedidaProjection)
-                .clusterEParametrosProjection(clusterEParametrosProjection)
+                .cadastroEParametrosProjection(cadastroEParametrosProjection)
                 .calendario(calendario)
                 .locations(locations)
                 .materiais(produtos)
@@ -497,7 +497,7 @@ public class SalesProjectionFactory {
                 // precisa acontecer depois da leitura do agregado.
                 unidadeMedida = (unidadePadrao != null)
                         ? unidadePadrao
-                        : clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
+                        : cadastroEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
             }
 
             salesProjection.addSalesAgregado(AggregatedByLocationMaterialUOMImpl.builder()

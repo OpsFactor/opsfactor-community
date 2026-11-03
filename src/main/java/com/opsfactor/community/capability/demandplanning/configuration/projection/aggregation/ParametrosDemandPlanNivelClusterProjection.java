@@ -7,6 +7,8 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosGeraisDemandPlanningProjection;
+import java.util.Collection;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -88,5 +90,12 @@ public abstract class ParametrosDemandPlanNivelClusterProjection {
      * @return parametros de forecast efetivos para a DFU
      */
     public abstract ParametrosForecastProjection getParametrosForecastProjection(Location location, Produto material);
+
+    /** Modelos efetivos do escopo, sem construir DFUs artificiais; árvores especializam por folha. */
+    public Collection<ParametrosForecastProjection> getAllForecastParameters() {
+
+        return List.of(getParametrosForecastProjection(null, null));
+
+    }
 
 }

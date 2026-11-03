@@ -1,10 +1,12 @@
 package com.opsfactor.community.capability.demandplanning.demandplan.domain;
 
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
+
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
 import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
 import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
@@ -30,6 +32,24 @@ import java.util.Set;
 @EqualsAndHashCode(of="id")
 @Entity
 public class DemandPlan {
+
+    /** Origem histórica imutável: editar o perfil de execução não reinterpreta esta revisão/plano. */
+    @Setter(AccessLevel.NONE)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "perfil_clusterizacao_origem_id", nullable = false, updatable = false)
+    private PerfilClusterizacao perfilClusterizacaoOrigem;
+
+    /** Registra origem uma vez, antes da primeira persistência; backfills são migrações explícitas. */
+    public void registraOrigemPerfilClusterizacao(PerfilClusterizacao perfil) {
+
+        if (id != null || perfilClusterizacaoOrigem != null)
+            throw new IllegalStateException("A origem da clusterização só pode ser registrada na criação");
+        if (perfil == null || perfil.getId() == null)
+            throw new IllegalArgumentException("Perfil de clusterização de origem obrigatório");
+        perfilClusterizacaoOrigem = perfil;
+
+    }
+
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -127,14 +147,14 @@ public class DemandPlan {
         return (dataFimEdicao == null) ? LocalDate.now() : dataFimEdicao;
     }
     
-    public CalendarioSimples getCalendarioDoDemandPlanSemHistorico(ClusterEParametrosProjection clusterEParametrosProjection) {
+    public CalendarioSimples getCalendarioDoDemandPlanSemHistorico(CadastroEParametrosProjection cadastroEParametrosProjection) {
         
         Constantes.TamanhoBucket tamanhoBucketConsiderado = (getTamanhoBucket() == null) ? Constantes.TamanhoBucket.MENSAL : getTamanhoBucket();
         LocalDateTime dataInicial = (getDataInicioPlano() == null) ? CalendarioSimples.getPrimeiraDataHorarioPeriodo(LocalDateTime.now(), tamanhoBucketConsiderado) : getDataInicioPlano();
         // data final não-efetiva : deveria ser a última data do último período
         // no entanto, como se exporta o calendário e não a data este deixa de ser um problema
         LocalDateTime dataFinal = (getDataFimPlano() == null) ? 
-                dataInicial.plusDays(clusterEParametrosProjection.getDPHorizonteForecastDias() - 1) 
+                dataInicial.plusDays(cadastroEParametrosProjection.getDPHorizonteForecastDias() - 1) 
                 : getDataFimPlano();
         
         CalendarioSimples calendario = CalendarioSimples.criaCalendarioDeDatas(

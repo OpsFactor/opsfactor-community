@@ -3,8 +3,8 @@ package com.opsfactor.community.capability.masterdata.calendar.temporalsplit.pro
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.factory.ParametrosDemandPlanningProjectionFactory;
 import com.opsfactor.community.platform.calendar.Calendario;
@@ -27,7 +27,7 @@ public class SplitTemporalProjectionFactory {
      * calendario Supply.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory;
 
     /**
      * Factory de parametros Demand Planning usada para reconstruir o calendario
@@ -49,11 +49,10 @@ public class SplitTemporalProjectionFactory {
 
     public SplitTemporalProjectionPorDfu geraSplitTemporalProjectionPorDfu(DemandPlan demandPlan, SupplyPlan supplyPlan) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection cadastroEParametrosProjection = cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
 
-        ParametrosDemandPlanProjection parametrosDemandPlanProjection = parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjectionDeCache(
-                        demandPlan.getPerfilExecucaoDemandPlan());
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosDemandPlanProjection parametrosDemandPlanProjection = parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjection(demandPlan.getPerfilExecucaoDemandPlan(), demandPlan.getPerfilClusterizacaoOrigem());
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
 
         return geraSplitTemporalProjectionPorDfu(
                 demandPlan.getCalendarioDoDemandPlanComHistoricoMaximo(parametrosDemandPlanProjection),

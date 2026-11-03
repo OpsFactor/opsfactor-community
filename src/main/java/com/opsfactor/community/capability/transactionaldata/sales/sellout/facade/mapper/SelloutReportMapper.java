@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.transactionaldata.sales.sellout.domain
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 
 /**
@@ -20,17 +20,17 @@ public class SelloutReportMapper {
     
     public static SelloutReportDTO convertEntityToDTO(
             Sellout entity,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             UnidadeMedidaProjection unidadeMedidaProjection) {    
         
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
         
         Produto material = entity.getProduto();
         Location locationOrigem = entity.getLocationOrigem();
 
         UnidadeMedida unidadeMedidaSellout = entity.getUnidadeMedida(parametrosGlobais);
         UnidadeMedida unidadeMedidaPadraoDP = parametrosGlobais.getUnidadeMedidaPadraoDP();
-        UnidadeMedida unidadeMedidaPadraoSNP = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(material, locationOrigem);
+        UnidadeMedida unidadeMedidaPadraoSNP = cadastroEParametrosProjection.getSNPUnidadeMedidaPadrao(material, locationOrigem);
         
         double quantidadeUnidadeSellout = entity.getQuantidade();
 

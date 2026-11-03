@@ -1,7 +1,6 @@
 package com.opsfactor.community.capability.demandplanning.configuration.repository;
 
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
@@ -44,28 +43,24 @@ public interface PerfilExecucaoDemandPlanRepository extends JpaRepository<Perfil
      * Salva perfil de execucao Demand Planning e invalida snapshot de parametros Demand Planning.
      */
     @Override
-    @CacheEvict(value = "parametrosDemandPlanProjection", key = "#entity")
     public <S extends PerfilExecucaoDemandPlan> S save(S entity);
 
     /**
      * Salva perfis de execucao Demand Planning em lote e invalida snapshot de parametros Demand Planning.
      */
     @Override
-    @CacheEvict(value = "parametrosDemandPlanProjection", key = "#entity")
     <S extends PerfilExecucaoDemandPlan> List<S> saveAll(Iterable<S> entities);
 
     /**
      * Remove perfil de execucao Demand Planning e invalida snapshot de parametros Demand Planning.
      */
     @Override
-    @CacheEvict(value = "parametrosDemandPlanProjection", key = "#entity")
     public void delete(PerfilExecucaoDemandPlan entity);
 
     /**
      * Remove perfis de execucao Demand Planning em lote e invalida snapshot de parametros Demand Planning.
      */
     @Override
-    @CacheEvict(value = "parametrosDemandPlanProjection", key = "#entity")
     void deleteAll(Iterable<? extends PerfilExecucaoDemandPlan> entities);
 
 }

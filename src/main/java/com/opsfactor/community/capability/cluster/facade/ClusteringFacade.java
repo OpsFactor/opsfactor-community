@@ -11,8 +11,8 @@ import com.opsfactor.community.capability.cluster.domain.location.*;
 import com.opsfactor.community.capability.cluster.domain.produto.*;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjectionFactory;
 import com.opsfactor.community.capability.cluster.repository.location.ClusterLocationsRepository;
 import com.opsfactor.community.capability.cluster.repository.material.ClusterMateriaisRepository;
 import com.opsfactor.community.capability.cluster.repository.material.ClusterProdutosRepository;
@@ -28,6 +28,9 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.opsfactor.community.capability.configuration.service.cluster.PerfilClusterizacaoService;
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
+import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -42,6 +45,11 @@ import java.util.stream.Collectors;
  */
 @Service
 public class ClusteringFacade {
+
+    @Autowired
+    private PerfilClusterizacaoService clusteringProfileService;
+    @Autowired
+    private EntityManager entityManager;
 
     /**
      * Repository das regras de alocacao de clusters de materiais. No Community
@@ -88,7 +96,7 @@ public class ClusteringFacade {
      * materiais/locations em clusters sem reimplementar a regra de prioridade.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private ClusterizacaoProjectionFactory clusterizacaoProjectionFactory;
 
 
     public void alocaRegrasAoClusterProdutos(ClusterProdutosDTO clusterProdutosDTO, ClusterProdutos clusterProdutos) {
@@ -402,46 +410,30 @@ public class ClusteringFacade {
 
     }
 
-    public ClusterProdutosDTO getClusterProdutosDTO(String id) {
+    public ClusterProdutosDTO getClusterProdutosDTO(String id) { return getClusterProdutosDTO(id, PerfilClusterizacao.ID_LEGADO); }
 
-        Long clusterMateriaisId = parseLongIdObrigatorioCommunity(
-                id,
-                "Material cluster id");
+    @Transactional(readOnly = true)
+    public ClusterProdutosDTO getClusterProdutosDTO(String id, String clusteringProfileId) {
 
-        Optional<ClusterMateriais> optionalClusterProdutosDemandPlanning =
-                clusterMateriaisDemandPlanningRepository.findById(clusterMateriaisId);
-        /*
-         * Cluster inexistente continua retornando null para preservar o
-         * contrato historico da tela. Optional nulo do repository, entretanto,
-         * indica quebra estrutural e deve falhar antes do mapper.
-         */
-        if (optionalClusterProdutosDemandPlanning == null) {
-            throw new IllegalStateException(
-                    "Material cluster repository returned null Optional for Community lookup id "
-                            + clusterMateriaisId
-                            + ".");
-        }
-        return optionalClusterProdutosDemandPlanning.map(ClusterProdutosMapper::convertComRegrasAlocacaoDTO).orElse(null);
+        clusteringProfileId = clusteringProfileService.resolveProfileId(clusteringProfileId);
+
+        clusteringProfileService.initializeDefinition(clusteringProfileId);
+        return ClusterProdutosMapper.convertComRegrasAlocacaoDTO(clusterProdutosRepository.findByPerfilClusterizacaoIdAndId(clusteringProfileId, Long.parseLong(id)).orElseThrow(
+                () -> new IllegalArgumentException("Cluster inexistente no perfil informado.")));
 
     }
 
-    public ClusterLocationsDTO getClusterLocationsDTO(String id) {
-        Long clusterLocationsId = parseLongIdObrigatorioCommunity(
-                id,
-                "Location cluster id");
+    public ClusterLocationsDTO getClusterLocationsDTO(String id) { return getClusterLocationsDTO(id, PerfilClusterizacao.ID_LEGADO); }
 
-        Optional<ClusterLocations> optionalClusterLocations = clusterLocationsRepository.findById(clusterLocationsId);
-        /*
-         * Ausencia funcional da location cluster continua retornando null. O
-         * repository nunca deve retornar Optional nulo.
-         */
-        if (optionalClusterLocations == null) {
-            throw new IllegalStateException(
-                    "Location cluster repository returned null Optional for Community lookup id "
-                            + clusterLocationsId
-                            + ".");
-        }
-        return optionalClusterLocations.map(ClusterLocationsMapper::convertComRegrasAlocacaoDTO).orElse(null);
+    @Transactional(readOnly = true)
+    public ClusterLocationsDTO getClusterLocationsDTO(String id, String clusteringProfileId) {
+
+        clusteringProfileId = clusteringProfileService.resolveProfileId(clusteringProfileId);
+
+        clusteringProfileService.initializeDefinition(clusteringProfileId);
+        return ClusterLocationsMapper.convertComRegrasAlocacaoDTO(clusterLocationsRepository.findByPerfilClusterizacaoIdAndId(clusteringProfileId, Long.parseLong(id)).orElseThrow(
+                () -> new IllegalArgumentException("Cluster inexistente no perfil informado.")));
+
     }
 
     /**
@@ -470,30 +462,30 @@ public class ClusteringFacade {
 
     }
 
-    public List<ClusterProdutosDTO> getListaTodosClusterProdutosDTOExcetoPadrao() {
-        List<ClusterProdutosDTO> clusterRuleDTOList = new ArrayList<>();
-        List<ClusterMateriais> clusterMateriaisList =
-                clusterMateriaisDemandPlanningRepository
-                        .customFindAllByPadraoIsFalseComRegrasAlocacaoEStatusProduto();
-        validaClusterMateriaisListCarregadaCommunity(
-                clusterMateriaisList,
-                "non-default material cluster listing");
+    public List<ClusterProdutosDTO> getListaTodosClusterProdutosDTOExcetoPadrao() { return getListaTodosClusterProdutosDTOExcetoPadrao(PerfilClusterizacao.ID_LEGADO); }
 
-        clusterMateriaisList.stream()
-                .map(ClusterProdutosMapper::convertComRegrasAlocacaoDTO).forEach(clusterRuleDTOList::add);
-        return clusterRuleDTOList;
+    @Transactional(readOnly = true)
+    public List<ClusterProdutosDTO> getListaTodosClusterProdutosDTOExcetoPadrao(String clusteringProfileId) {
+
+        clusteringProfileId = clusteringProfileService.resolveProfileId(clusteringProfileId);
+
+        clusteringProfileService.initializeDefinition(clusteringProfileId);
+        return clusterProdutosRepository.findAllByPerfilClusterizacaoId(clusteringProfileId).stream()
+                .filter(c -> !Boolean.TRUE.equals(c.getPadrao())).map(ClusterProdutosMapper::convertComRegrasAlocacaoDTO).toList();
+
     }
 
-    public List<ClusterLocationsDTO> getListaTodosClusterLocationsDTOExcetoPadrao() {
-        List<ClusterLocations> clusterLocationsList = clusterLocationsRepository.customFindAll();
-        validaClusterLocationsListCarregadaCommunity(
-                clusterLocationsList,
-                "non-default location cluster listing");
+    public List<ClusterLocationsDTO> getListaTodosClusterLocationsDTOExcetoPadrao() { return getListaTodosClusterLocationsDTOExcetoPadrao(PerfilClusterizacao.ID_LEGADO); }
 
-        return clusterLocationsList.stream()
-                .filter(clusterLocations -> !clusterLocations.getPadrao())
-                .map(ClusterLocationsMapper::convertComRegrasAlocacaoDTO)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public List<ClusterLocationsDTO> getListaTodosClusterLocationsDTOExcetoPadrao(String clusteringProfileId) {
+
+        clusteringProfileId = clusteringProfileService.resolveProfileId(clusteringProfileId);
+
+        clusteringProfileService.initializeDefinition(clusteringProfileId);
+        return clusterLocationsRepository.findAllByPerfilClusterizacaoId(clusteringProfileId).stream()
+                .filter(c -> !Boolean.TRUE.equals(c.getPadrao())).map(ClusterLocationsMapper::convertComRegrasAlocacaoDTO).toList();
+
     }
 
     public List<ClusterProdutosDTO> getListaClusterMateriaisDTO() {
@@ -586,11 +578,15 @@ public class ClusteringFacade {
      * Remove uma regra de alocacao de cluster de materiais e invalida o snapshot de parametros.
      *
      * <p>A exclusao altera o conjunto de regras usado pela
-     * `ClusterEParametrosProjection`, por isso a entrada compartilhada de cache
+     * `ClusterizacaoProjection`, por isso a entrada compartilhada de cache
      * precisa ser descartada junto com a remocao persistida.</p>
      */
-    @CacheEvict(value = "clusterEParametrosProjection", allEntries = true)
+    @CacheEvict(value = "clusterizacaoProjection", allEntries = true)
+    @Transactional
     public void deleteRegraAlocacaoClusterProdutosBy(Long id) {
+
+        var ruleOwner = regraAlocacaoClusterProdutosRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Regra inexistente.")).getClusterProdutos();
+        clusteringProfileService.requireEditable(ruleOwner.getPerfilClusterizacao().getId());
 
         regraAlocacaoClusterProdutosRepository.deleteById(id);
 
@@ -603,8 +599,12 @@ public class ClusteringFacade {
      * snapshot de clusters e parametros. O cache e limpo para impedir reuso da
      * projection anterior ao delete.</p>
      */
-    @CacheEvict(value = "clusterEParametrosProjection", allEntries = true)
+    @CacheEvict(value = "clusterizacaoProjection", allEntries = true)
+    @Transactional
     public void deleteRegraAlocacaoClusterLocationsBy(Long id) {
+
+        var ruleOwner = regraAlocacaoClusterLocationsRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Regra inexistente.")).getClusterLocations();
+        clusteringProfileService.requireEditable(ruleOwner.getPerfilClusterizacao().getId());
 
         regraAlocacaoClusterLocationsRepository.deleteById(id);
 
@@ -654,11 +654,16 @@ public class ClusteringFacade {
      *
      * <p>O metodo sincroniza descricao, prioridade e regras filhas recebidas do
      * DTO compartilhado. Como esse cadastro alimenta diretamente
-     * `ClusterEParametrosProjection`, qualquer save precisa limpar o cache
+     * `ClusterizacaoProjection`, qualquer save precisa limpar o cache
      * compartilhado antes do proximo calculo/listagem.</p>
      */
-    @CacheEvict(value = "clusterEParametrosProjection", allEntries = true)
+    @CacheEvict(value = "clusterizacaoProjection", allEntries = true)
+    @Transactional
     public void saveClusterProdutosDTO(ClusterProdutosDTO clusterProdutosDTO) {
+
+        if (clusterProdutosDTO == null) throw new IllegalArgumentException("Cluster payload is required.");
+        clusterProdutosDTO.setClusteringProfileId(clusteringProfileService.resolveProfileId(clusterProdutosDTO.getClusteringProfileId()));
+        clusteringProfileService.requireEditable(clusterProdutosDTO.getClusteringProfileId());
 
         validaPayloadClusterMateriaisCommunity(clusterProdutosDTO);
 
@@ -667,7 +672,9 @@ public class ClusteringFacade {
             clusterProdutosDTO.setId(-1L); // para não gerar erro na linha abaixo ao jogar null
         }
         Optional<ClusterMateriais> optionalClusterMateriais =
-                clusterMateriaisDemandPlanningRepository.findById(clusterProdutosDTO.getId());
+                clusterMateriaisDemandPlanningRepository.findByPerfilClusterizacaoIdAndId(clusterProdutosDTO.getClusteringProfileId(), clusterProdutosDTO.getId());
+        if (clusterProdutosDTO.getId() != null && clusterProdutosDTO.getId() > 0 && optionalClusterMateriais != null && optionalClusterMateriais.isEmpty())
+            throw new IllegalArgumentException("Cluster inexistente no perfil informado; recarregue o cadastro.");
 
         /*
          * Cluster ausente representa criacao funcional de novo cluster.
@@ -690,6 +697,7 @@ public class ClusteringFacade {
                      */
                     ClusterMateriais novoClusterMateriais =
                             new ClusterMateriais(null, false, null);
+                    novoClusterMateriais.setPerfilClusterizacao(entityManager.getReference(PerfilClusterizacao.class, clusterProdutosDTO.getClusteringProfileId()));
                     ClusterMateriais clusterMateriaisSalvo =
                             clusterMateriaisDemandPlanningRepository.save(novoClusterMateriais);
                     validaClusterMateriaisSalvoCommunity(clusterMateriaisSalvo);
@@ -713,14 +721,21 @@ public class ClusteringFacade {
      * como locations sao classificadas nas projections compartilhadas. A
      * invalidacao garante que o proximo consumidor reconstrua o snapshot.</p>
      */
-    @CacheEvict(value = "clusterEParametrosProjection", allEntries = true)
+    @CacheEvict(value = "clusterizacaoProjection", allEntries = true)
+    @Transactional
     public void saveClusterLocationsDTO(ClusterLocationsDTO clusterLocationsDTO) {
+
+        if (clusterLocationsDTO == null) throw new IllegalArgumentException("Cluster payload is required.");
+        clusterLocationsDTO.setClusteringProfileId(clusteringProfileService.resolveProfileId(clusterLocationsDTO.getClusteringProfileId()));
+        clusteringProfileService.requireEditable(clusterLocationsDTO.getClusteringProfileId());
 
         validaPayloadClusterLocationsCommunity(clusterLocationsDTO);
         ClusterLocations clusterLocations;
         if (clusterLocationsDTO.getId() == null) clusterLocationsDTO.setId(-1L); // para não gerar erro na linha abaixo ao jogar null
         Optional<ClusterLocations> optionalClusterLocations =
-                clusterLocationsRepository.findById(clusterLocationsDTO.getId());
+                clusterLocationsRepository.findByPerfilClusterizacaoIdAndId(clusterLocationsDTO.getClusteringProfileId(), clusterLocationsDTO.getId());
+        if (clusterLocationsDTO.getId() != null && clusterLocationsDTO.getId() > 0 && optionalClusterLocations != null && optionalClusterLocations.isEmpty())
+            throw new IllegalArgumentException("Cluster inexistente no perfil informado; recarregue o cadastro.");
 
         /*
          * Cluster de location ausente cria novo cadastro. Optional nulo indica
@@ -742,6 +757,7 @@ public class ClusteringFacade {
                      */
                     ClusterLocations novoClusterLocations = new ClusterLocations();
                     novoClusterLocations.setPadrao(false);
+                    novoClusterLocations.setPerfilClusterizacao(entityManager.getReference(PerfilClusterizacao.class, clusterLocationsDTO.getClusteringProfileId()));
                     ClusterLocations clusterLocationsSalvo =
                             clusterLocationsRepository.save(novoClusterLocations);
                     validaClusterLocationsSalvoCommunity(clusterLocationsSalvo);
@@ -763,16 +779,18 @@ public class ClusteringFacade {
      * alocacao e depois o cluster. O cache de parametros e limpo para que a
      * proxima projection nao enxergue a classificacao removida.</p>
      */
-    @CacheEvict(value = "clusterEParametrosProjection", allEntries = true)
+    @CacheEvict(value = "clusterizacaoProjection", allEntries = true)
     @Transactional
     public void deleteClusterProdutos(ClusterRuleDTO clusterRuleDTO) {
 
-        validaClusterRuleDTOParaDeleteCommunity(
-                clusterRuleDTO,
-                "Material cluster delete payload id is required");
-        // Remove regras primeiro porque o endpoint apaga somente clusters de materiais DP validados pela borda.
-        regraAlocacaoClusterProdutosRepository.deleteAllByClusterProdutosId(clusterRuleDTO.getId());
-        clusterProdutosRepository.deleteById(clusterRuleDTO.getId());
+        if (clusterRuleDTO == null || clusterRuleDTO.getId() == null) throw new IllegalArgumentException("Informe a identidade do cluster.");
+        clusterRuleDTO.setClusteringProfileId(clusteringProfileService.resolveProfileId(clusterRuleDTO.getClusteringProfileId()));
+        clusteringProfileService.requireEditable(clusterRuleDTO.getClusteringProfileId());
+        var cluster = clusterProdutosRepository.findByPerfilClusterizacaoIdAndId(clusterRuleDTO.getClusteringProfileId(), clusterRuleDTO.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Cluster inexistente no perfil informado."));
+        if (Boolean.TRUE.equals(cluster.getPadrao())) throw new IllegalArgumentException("O cluster padrão não pode ser removido.");
+        clusterProdutosRepository.delete(cluster);
+
     }
 
     /**
@@ -782,16 +800,18 @@ public class ClusteringFacade {
      * cluster e descarta o cache compartilhado de parametros para reconstruir o
      * snapshot sem o cadastro removido.</p>
      */
-    @CacheEvict(value = "clusterEParametrosProjection", allEntries = true)
+    @CacheEvict(value = "clusterizacaoProjection", allEntries = true)
     @Transactional
     public void deleteClusterLocations(ClusterRuleDTO clusterRuleDTO) {
 
-        validaClusterRuleDTOParaDeleteCommunity(
-                clusterRuleDTO,
-                "Location cluster delete payload id is required");
-        // Remove regras primeiro para manter a exclusao do cluster de location explicita.
-        regraAlocacaoClusterLocationsRepository.deleteAllByClusterLocationsId(clusterRuleDTO.getId());
-        clusterLocationsRepository.deleteById(clusterRuleDTO.getId());
+        if (clusterRuleDTO == null || clusterRuleDTO.getId() == null) throw new IllegalArgumentException("Informe a identidade do cluster.");
+        clusterRuleDTO.setClusteringProfileId(clusteringProfileService.resolveProfileId(clusterRuleDTO.getClusteringProfileId()));
+        clusteringProfileService.requireEditable(clusterRuleDTO.getClusteringProfileId());
+        var cluster = clusterLocationsRepository.findByPerfilClusterizacaoIdAndId(clusterRuleDTO.getClusteringProfileId(), clusterRuleDTO.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Cluster inexistente no perfil informado."));
+        if (Boolean.TRUE.equals(cluster.getPadrao())) throw new IllegalArgumentException("O cluster padrão não pode ser removido.");
+        clusterLocationsRepository.delete(cluster);
+
     }
 
     public void mapClusterProdutos(ClusterProdutos clusterProdutos, ClusterProdutosDTO clusterProdutosDTO) {
@@ -826,7 +846,7 @@ public class ClusteringFacade {
     /**
      * Valida a fotografia salva do cluster de locations.
      *
-     * <p>Clusters de location alimentam `ClusterEParametrosProjection` e
+     * <p>Clusters de location alimentam `ClusterizacaoProjection` e
      * filtros de Planning Book. A borda front precisa falhar antes de devolver
      * sucesso quando o repository nao confirma uma chave persistida.</p>
      */
@@ -947,15 +967,15 @@ public class ClusteringFacade {
      * Falha para textos obrigatorios nulos ou em branco.
      */
     public List<DFUDTO> getDFUsDeClusterProdutosEmClusterLocations(Long clusterProdutosId, Long clusterLocationsId, LocalDateTime dataReferencia) {
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        ClusterizacaoProjection clusterizacaoProjection = clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(PerfilClusterizacao.ID_LEGADO);
 
-        ClusterLocations clusterLocations = clusterEParametrosProjection.getClusterLocationsDeId(clusterLocationsId);
-        ClusterProdutos clusterProdutos = clusterEParametrosProjection.getClusterProdutosDeId(clusterProdutosId);
+        ClusterLocations clusterLocations = clusterizacaoProjection.getClusterLocationsDeId(clusterLocationsId);
+        ClusterProdutos clusterProdutos = clusterizacaoProjection.getClusterProdutosDeId(clusterProdutosId);
 
         List<DFUDTO> listaDFUDTOs = new ArrayList<>();
 
-        for (Location location : clusterEParametrosProjection.getLocationsAtivasDeClusterLocations(clusterLocations)) {
-            for (Produto produto : clusterEParametrosProjection.getMateriaisDeClusterProdutosAtivosNaLocation(clusterProdutos, location)) {
+        for (Location location : clusterizacaoProjection.getLocationsAtivasDeClusterLocations(clusterLocations)) {
+            for (Produto produto : clusterizacaoProjection.getMateriaisDeClusterProdutosAtivosNaLocation(clusterProdutos, location)) {
                 DFUDTO dfuDTO = DFUDTO.builder()
                         .materialId(produto.getId())
                         .locationId(location.getId())
@@ -975,16 +995,20 @@ public class ClusteringFacade {
      * durante a migracao, mas a superficie funcional aberta permanece restrita a
      * Demand Planning.</p>
      */
-    public List<AlocacaoClusterMaterialDTO> getAlocacaoMateriaisEmClusters() {
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+    public List<AlocacaoClusterMaterialDTO> getAlocacaoMateriaisEmClusters() { return getAlocacaoMateriaisEmClusters(PerfilClusterizacao.ID_LEGADO); }
+
+    public List<AlocacaoClusterMaterialDTO> getAlocacaoMateriaisEmClusters(String clusteringProfileId) {
+
+        clusteringProfileId = clusteringProfileService.resolveProfileId(clusteringProfileId);
+        ClusterizacaoProjection clusterizacaoProjection = clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(clusteringProfileId);
 
         Comparator<AlocacaoClusterMaterialDTO> comparadorAlocacao = Comparator
                 .comparing(AlocacaoClusterMaterialDTO::getClusterId, Comparator.nullsLast(Long::compareTo))
                 .thenComparing(AlocacaoClusterMaterialDTO::getMaterialId, Comparator.nullsLast(String::compareTo));
 
-        List<AlocacaoClusterMaterialDTO> alocacaoDemandPlanning = clusterEParametrosProjection.getMateriaisAtivos().stream()
+        List<AlocacaoClusterMaterialDTO> alocacaoDemandPlanning = clusterizacaoProjection.getCadastroEParametrosProjection().getMateriaisAtivos().stream()
                 .map(material -> {
-                    ClusterMateriais clusterMateriais = clusterEParametrosProjection.getClusterProdutosDemandPlanning(material);
+                    ClusterMateriais clusterMateriais = clusterizacaoProjection.getClusterProdutosDemandPlanning(material);
                     return AlocacaoClusterMaterialDTO.builder()
                             .clusterId(clusterMateriais.getId())
                             .clusterDescription(clusterMateriais.getDescricao())
@@ -1004,12 +1028,16 @@ public class ClusteringFacade {
      * Retorna a alocacao de locations ativas em clusters de location.
      * A alocacao segue regras e prioridades do projection em memoria.
      */
-    public List<AlocacaoClusterLocationDTO> getAlocacaoLocationsEmClusters() {
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+    public List<AlocacaoClusterLocationDTO> getAlocacaoLocationsEmClusters() { return getAlocacaoLocationsEmClusters(PerfilClusterizacao.ID_LEGADO); }
 
-        return clusterEParametrosProjection.getLocationsAtivas().stream()
+    public List<AlocacaoClusterLocationDTO> getAlocacaoLocationsEmClusters(String clusteringProfileId) {
+
+        clusteringProfileId = clusteringProfileService.resolveProfileId(clusteringProfileId);
+        ClusterizacaoProjection clusterizacaoProjection = clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(clusteringProfileId);
+
+        return clusterizacaoProjection.getCadastroEParametrosProjection().getLocationsAtivas().stream()
                 .map(location -> {
-                    ClusterLocations clusterLocations = clusterEParametrosProjection.getClusterLocationsDeLocation(location);
+                    ClusterLocations clusterLocations = clusterizacaoProjection.getClusterLocationsDeLocation(location);
                     return AlocacaoClusterLocationDTO.builder()
                             .clusterId(clusterLocations.getId())
                             .clusterDescription(clusterLocations.getDescricao())

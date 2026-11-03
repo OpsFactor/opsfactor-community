@@ -6,7 +6,8 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.HistoricoDemandPlanItem;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.FiltroDFUProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
@@ -64,7 +65,7 @@ public class DemandPlanProjectionFactoryCommunityContractTest {
                 () -> new FiltroDFUProjection(
                         (Set<Location>) null,
                         Set.of(new Produto("MAT")),
-                        getClusterEParametrosProjectionComParametrosGlobais()));
+                        getCadastroEParametrosProjectionComParametrosGlobais()));
 
         Assertions.assertEquals(
                 "FiltroDFUProjection location set is required.",
@@ -276,18 +277,18 @@ public class DemandPlanProjectionFactoryCommunityContractTest {
         return new FiltroDFUProjection(
                 Set.of(new Location("LOC")),
                 Set.of(new Produto("MAT")),
-                getClusterEParametrosProjectionComParametrosGlobais());
+                getCadastroEParametrosProjectionComParametrosGlobais());
 
     }
 
-    private ClusterEParametrosProjection getClusterEParametrosProjectionComParametrosGlobais() {
+    private CadastroEParametrosProjection getCadastroEParametrosProjectionComParametrosGlobais() {
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                Mockito.mock(ClusterEParametrosProjection.class);
-        Mockito.when(clusterEParametrosProjection.getParametrosGlobais())
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                Mockito.mock(CadastroEParametrosProjection.class);
+        Mockito.when(cadastroEParametrosProjection.getParametrosGlobais())
                 .thenReturn(new ParametrosGlobais());
 
-        return clusterEParametrosProjection;
+        return cadastroEParametrosProjection;
 
     }
 
@@ -333,16 +334,16 @@ public class DemandPlanProjectionFactoryCommunityContractTest {
 
     private DemandPlanningProjection getDemandPlanningProjectionOriginalParaConsolidacao() {
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                getClusterEParametrosProjectionComParametrosGlobais();
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                getCadastroEParametrosProjectionComParametrosGlobais();
         FiltroDFUProjection filtroDFUProjection = getFiltroDFUProjection();
         DemandPlanningProjection demandPlanningProjection = Mockito.mock(DemandPlanningProjection.class);
         Mockito.when(demandPlanningProjection.getDemandPlan())
                 .thenReturn(getDemandPlanComPerfil());
         Mockito.when(demandPlanningProjection.getUnidadeMedidaProjection())
                 .thenReturn(new UnidadeMedidaProjection());
-        Mockito.when(demandPlanningProjection.getClusterEParametrosProjection())
-                .thenReturn(clusterEParametrosProjection);
+        Mockito.when(demandPlanningProjection.getClusterizacaoProjection())
+                .thenReturn(new ClusterizacaoProjection("LEGADO", cadastroEParametrosProjection));
         Mockito.when(demandPlanningProjection.getParametrosDemandPlanProjection())
                 .thenReturn(getParametrosDemandPlanProjection());
         Mockito.when(demandPlanningProjection.getCalendario())

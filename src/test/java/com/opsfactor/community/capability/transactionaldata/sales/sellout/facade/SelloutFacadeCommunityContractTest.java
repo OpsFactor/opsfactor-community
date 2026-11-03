@@ -4,8 +4,8 @@ import com.opsfactor.community.capability.transactionaldata.sales.sellout.facade
 import com.opsfactor.community.capability.masterdata.classification.characteristic.facade.dto.FiltroMaterialLocationDeCombinacaoCaracteristicasDTO;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.transactionaldata.sales.sellout.domain.Sellout;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjectionFactory;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
@@ -176,14 +176,14 @@ public class SelloutFacadeCommunityContractTest {
     }
 
     private SelloutFacade createSelloutFrontService(
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             UnidadeMedidaProjection unidadeMedidaProjection) {
 
         SelloutFacade selloutFrontService = new SelloutFacade();
         ReflectionTestUtils.setField(
                 selloutFrontService,
-                "clusterEParametrosProjectionFactory",
-                new FakeClusterEParametrosProjectionFactory(clusterEParametrosProjection));
+                "cadastroEParametrosProjectionFactory",
+                new FakeCadastroEParametrosProjectionFactory(cadastroEParametrosProjection));
         ReflectionTestUtils.setField(
                 selloutFrontService,
                 "unidadeMedidaProjectionFactory",
@@ -192,14 +192,14 @@ public class SelloutFacadeCommunityContractTest {
 
     }
 
-    private static ClusterEParametrosProjection createClusterEParametrosProjectionComParametrosGlobais() {
+    private static CadastroEParametrosProjection createCadastroEParametrosProjectionComParametrosGlobais() {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = new ClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = new CadastroEParametrosProjection();
         ReflectionTestUtils.setField(
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 "parametrosGlobais",
                 new ParametrosGlobais());
-        return clusterEParametrosProjection;
+        return cadastroEParametrosProjection;
 
     }
 
@@ -214,21 +214,21 @@ public class SelloutFacadeCommunityContractTest {
 
     }
 
-    private static class FakeClusterEParametrosProjectionFactory extends ClusterEParametrosProjectionFactory {
+    private static class FakeCadastroEParametrosProjectionFactory extends CadastroEParametrosProjectionFactory {
 
-        private final ClusterEParametrosProjection clusterEParametrosProjection;
+        private final CadastroEParametrosProjection cadastroEParametrosProjection;
 
-        private FakeClusterEParametrosProjectionFactory(
-                ClusterEParametrosProjection clusterEParametrosProjection) {
+        private FakeCadastroEParametrosProjectionFactory(
+                CadastroEParametrosProjection cadastroEParametrosProjection) {
 
-            this.clusterEParametrosProjection = clusterEParametrosProjection;
+            this.cadastroEParametrosProjection = cadastroEParametrosProjection;
 
         }
 
         @Override
-        public ClusterEParametrosProjection getParametrosProjectionCompletoDeCache() {
+        public CadastroEParametrosProjection getParametrosProjectionCompletoDeCache() {
 
-            return clusterEParametrosProjection;
+            return cadastroEParametrosProjection;
 
         }
 

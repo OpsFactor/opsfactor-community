@@ -12,7 +12,7 @@ import com.opsfactor.community.capability.demandplanning.demandplan.domain.Deman
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlanItem.DemandPlanItemKey;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.HistoricoDemandPlanItem;
 import com.opsfactor.community.platform.exception.UnitOfMeasureConversionException;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.FiltroDFUProjection;
@@ -101,7 +101,7 @@ public class DemandPlanningProjection {
     @Getter
     private final DemandPlan demandPlan;
     @Getter
-    private final ClusterEParametrosProjection clusterEParametrosProjection;
+    private final ClusterizacaoProjection clusterizacaoProjection;
     @Getter
     private final UnidadeMedidaProjection unidadeMedidaProjection;
     @Getter
@@ -145,7 +145,7 @@ public class DemandPlanningProjection {
 
     public DemandPlanningProjection(DemandPlan demandPlan, 
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
             CalendarioSimples calendario,
             FiltroDFUProjection filtroDfuProjection,
@@ -154,7 +154,7 @@ public class DemandPlanningProjection {
             @Nullable VersaoMalha versaoMalhaParaConsolidacaoDemandaClientesFinaisEmLocationsInternas) {
         this.demandPlan = demandPlan;
         this.unidadeMedidaProjection = unidadeMedidaProjection;
-        this.clusterEParametrosProjection = clusterEParametrosProjection;
+        this.clusterizacaoProjection = clusterizacaoProjection;
         this.parametrosDemandPlanProjection = parametrosDemandPlanProjection;
         this.calendario = calendario;
         this.filtroDfuProjection = filtroDfuProjection;
@@ -490,7 +490,7 @@ public class DemandPlanningProjection {
         // converte quantidade no demand plan linha para a unidade de referência do projection
                 
         return quantidadeRetorno * unidadeMedidaProjection.getConversaoParaUnidadeDestino(
-                demandPlanItem.getProduto(), demandPlanItem.getUnidadeMedida(clusterEParametrosProjection.getParametrosGlobais()), 
+                demandPlanItem.getProduto(), demandPlanItem.getUnidadeMedida(clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais()), 
                 unidadeMedida);
         
     }
@@ -546,7 +546,7 @@ public class DemandPlanningProjection {
 
         // converte quantidade no demand plan linha para a unidade de referência do projection                
         return quantidadeRetorno * unidadeMedidaProjection.getConversaoParaUnidadeDestino(
-                material, historicoDemandPlanItem.getUnidadeMedida(clusterEParametrosProjection.getParametrosGlobais()), 
+                material, historicoDemandPlanItem.getUnidadeMedida(clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais()), 
                 unidadeMedida);
         
     }
@@ -567,20 +567,20 @@ public class DemandPlanningProjection {
             case DP:
                 DemandPlanItem demandPlanItemReferencia = getDemandPlanItem(location, material, posicaoPeriodo);
                 if (demandPlanItemReferencia != null) {
-                    return demandPlanItemReferencia.getUnidadeMedida(clusterEParametrosProjection.getParametrosGlobais());
+                    return demandPlanItemReferencia.getUnidadeMedida(clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais());
                 } else {
-                    ClusterLocations clusterLocations = clusterEParametrosProjection.getClusterLocationsDeLocation(location);
+                    ClusterLocations clusterLocations = clusterizacaoProjection.getClusterLocationsDeLocation(location);
                     ClusterMateriais clusterMateriaisDemandPlanning =
-                            clusterEParametrosProjection.getClusterMateriaisDemandPlanning(material, location);
+                            clusterizacaoProjection.getClusterMateriaisDemandPlanning(material, location);
                     return parametrosDemandPlanProjection
                             .getParametrosDemandPlanNivelClusterProjection(clusterLocations, clusterMateriaisDemandPlanning)
                             .getParametrosGeraisDemandPlanningProjection()
                             .getUnidadeMedidaDP();
                 }
             case MATERIAL_LOCATION:
-                return clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(material, location);
+                return clusterizacaoProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(material, location);
             default:
-                return clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(material, location);
+                return clusterizacaoProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(material, location);
         }
     }
 
@@ -602,8 +602,8 @@ public class DemandPlanningProjection {
         if (Math.abs(valor) < 0.00005) valor = 0f;
         
         // arredonda para múltiplo de vendas
-        if (clusterEParametrosProjection.getParametrosGlobais().getDpArredondaParaUnidadeVenda() && valor > 0) {
-            UnidadeMedida unidadeMedidaVendas = clusterEParametrosProjection.getDPUnidadeVendas(
+        if (clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais().getDpArredondaParaUnidadeVenda() && valor > 0) {
+            UnidadeMedida unidadeMedidaVendas = clusterizacaoProjection.getCadastroEParametrosProjection().getDPUnidadeVendas(
                     demandPlanItem.getProduto());
 
             double quantidadeNaUnidadeMedidaVendas = unidadeMedidaProjection.getConversaoParaUnidadeDestino(
@@ -725,8 +725,8 @@ public class DemandPlanningProjection {
         }
         
         // arredonda para múltiplo de vendas
-        if (clusterEParametrosProjection.getParametrosGlobais().getDpArredondaParaUnidadeVenda() && valor > 0) {
-            UnidadeMedida unidadeMedidaVendas = clusterEParametrosProjection.getDPUnidadeVendas(material);
+        if (clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais().getDpArredondaParaUnidadeVenda() && valor > 0) {
+            UnidadeMedida unidadeMedidaVendas = clusterizacaoProjection.getCadastroEParametrosProjection().getDPUnidadeVendas(material);
 
             double quantidadeNaUnidadeMedidaVendas = unidadeMedidaProjection.getConversaoParaUnidadeDestino(
                     material, 
@@ -836,7 +836,7 @@ public class DemandPlanningProjection {
                             getQuantidadeDemandPlanItemCommunity(demandPlanItem, tipoDemanda, tipoPlano)
                             * unidadeMedidaProjection.getConversaoParaUnidadeDestino(
                                     material, 
-                                    demandPlanItem.getUnidadeMedida(clusterEParametrosProjection.getParametrosGlobais()), 
+                                    demandPlanItem.getUnidadeMedida(clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais()), 
                                     unidadeMedidaTarget);
                     
                 }
@@ -853,7 +853,7 @@ public class DemandPlanningProjection {
             Constantes.TipoDemanda tipoDemanda, Constantes.TipoPlano tipoPlano,
             UnidadeMedida unidadeMedidaTarget) {
         
-        FiltroDFUProjection dfuProjection = new FiltroDFUProjection(dfusTarget, clusterEParametrosProjection);
+        FiltroDFUProjection dfuProjection = new FiltroDFUProjection(dfusTarget, clusterizacaoProjection.getCadastroEParametrosProjection());
                 
         return getValorDemandPlanItem(posicaoPeriodo, dfuProjection, tipoDemanda, tipoPlano, unidadeMedidaTarget);
         
@@ -883,7 +883,7 @@ public class DemandPlanningProjection {
                                 return getQuantidadeDemandPlanItemCommunity(demandPlanItem, tipoDemanda, tipoPlano)
                                         * unidadeMedidaProjection.getConversaoParaUnidadeDestino(
                                                 material, 
-                                                demandPlanItem.getUnidadeMedida(clusterEParametrosProjection.getParametrosGlobais()), 
+                                                demandPlanItem.getUnidadeMedida(clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais()), 
                                                 unidadeMedidaTarget);
                             }
                             return 0f;
@@ -926,7 +926,7 @@ public class DemandPlanningProjection {
                                         .mapToDouble(keyFigureStandard -> demandPlanItem.getQuantidade(keyFigureStandard)
                                                 * unidadeMedidaProjection.getConversaoParaUnidadeDestino(
                                                 material,
-                                                demandPlanItem.getUnidadeMedida(clusterEParametrosProjection.getParametrosGlobais()),
+                                                demandPlanItem.getUnidadeMedida(clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais()),
                                                 unidadeMedidaTarget))
                                         .sum();
                             }
@@ -1013,7 +1013,7 @@ public class DemandPlanningProjection {
                                     return demandPlanItem.getQuantidade(keyFigureStandard, tipoPlano)
                                             * unidadeMedidaProjection.getConversaoParaUnidadeDestino(
                                             material,
-                                            demandPlanItem.getUnidadeMedida(clusterEParametrosProjection.getParametrosGlobais()),
+                                            demandPlanItem.getUnidadeMedida(clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais()),
                                             unidadeMedidaTarget);
                                 }
                                 return 0f;
@@ -1431,7 +1431,7 @@ public class DemandPlanningProjection {
                 .stream()
                 .flatMap(subMapa -> subMapa.keySet().stream())
                 // para evitar LazyLoadingException se usarmos a location extraída
-                .map(locationNoMapa -> clusterEParametrosProjection.getLocationPersistida(locationNoMapa.getId()))
+                .map(locationNoMapa -> clusterizacaoProjection.getCadastroEParametrosProjection().getLocationPersistida(locationNoMapa.getId()))
                 .collect(Collectors.toSet());
         return locationsComDemandPlanItem;
     }
@@ -1441,7 +1441,7 @@ public class DemandPlanningProjection {
                 .stream()
                 .flatMap(subMapa -> subMapa.getOrDefault(location, new HashMap<>()).keySet().stream())
                 // para evitar LazyLoadingException se usarmos o material extraído
-                .map(materialNoMapa -> clusterEParametrosProjection.getMaterialPersistido(materialNoMapa.getId()))
+                .map(materialNoMapa -> clusterizacaoProjection.getCadastroEParametrosProjection().getMaterialPersistido(materialNoMapa.getId()))
                 .collect(Collectors.toSet());
         return materiaisComDemandPlanItem;
     }
@@ -1452,7 +1452,7 @@ public class DemandPlanningProjection {
                 .flatMap(subMapa -> subMapa.values().stream())
                 .flatMap(subMapa -> subMapa.keySet().stream())
                 // para evitar LazyLoadingException se usarmos o material extraído
-                .map(materialNoMapa -> clusterEParametrosProjection.getMaterialPersistido(materialNoMapa.getId()))
+                .map(materialNoMapa -> clusterizacaoProjection.getCadastroEParametrosProjection().getMaterialPersistido(materialNoMapa.getId()))
                 .collect(Collectors.toSet());
         return materiaisComDemandPlanItem;
     }

@@ -2,7 +2,7 @@ package com.opsfactor.community.platform.bi.facade;
 
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.projection.SupplyPlanningProjection;
 import com.opsfactor.community.capability.supplyplanning.engine.SupplyPlanning;
 import com.opsfactor.community.platform.bi.service.CommunityInventoryOverviewCoverageCalculator;
@@ -78,9 +78,9 @@ public class CommunityInventoryOverviewService {
 
             SupplyPlanningProjection locationProjection = projectionContext.supplyPlanningBiProjection()
                     .getSupplyPlanningProjection(location, projectionContext.materialProjection());
-            ClusterEParametrosProjection clusterAndParametersProjection = locationProjection
+            CadastroEParametrosProjection clusterAndParametersProjection = locationProjection
                     .getSupplyNetworkProjection()
-                    .getClusterEParametrosProjection();
+                    .getCadastroEParametrosProjection();
             for (Produto material : projectionContext.materialProjection().getMateriaisAtivos()) {
 
                 if (!clusterAndParametersProjection.isDfuAtiva(material, location)) {

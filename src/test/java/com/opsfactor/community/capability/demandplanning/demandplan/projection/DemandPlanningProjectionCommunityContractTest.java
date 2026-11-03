@@ -8,7 +8,8 @@ import com.opsfactor.community.capability.demandplanning.demandplan.domain.Deman
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlanItem;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.HistoricoDemandPlanItem;
 import com.opsfactor.community.platform.exception.UnitOfMeasureConversionException;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.FiltroDFUProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.KeyFigureStandard;
@@ -369,7 +370,7 @@ class DemandPlanningProjectionCommunityContractTest {
         FiltroDFUProjection filtroDFUProjection = new FiltroDFUProjection(
                 Set.of(fixture.location),
                 Set.of(fixture.material),
-                new TestClusterEParametrosProjection());
+                new TestCadastroEParametrosProjection());
 
         List<KeyFigureStandardEnum> keyFigureStandardEnumEnterpriseList = List.of(
                 KeyFigureStandardEnum.UPLIFT,
@@ -442,7 +443,7 @@ class DemandPlanningProjectionCommunityContractTest {
         FiltroDFUProjection filtroDFUProjection = new FiltroDFUProjection(
                 Set.of(fixture.location),
                 Set.of(fixture.material),
-                new TestClusterEParametrosProjection());
+                new TestCadastroEParametrosProjection());
 
         /*
          * Direct Demand e Historical Sales sao KFs Community de exibicao, mas
@@ -516,7 +517,7 @@ class DemandPlanningProjectionCommunityContractTest {
         FiltroDFUProjection filtroDFUProjection = new FiltroDFUProjection(
                 Set.of(fixture.location),
                 Set.of(fixture.material),
-                new TestClusterEParametrosProjection());
+                new TestCadastroEParametrosProjection());
 
         Assertions.assertEquals(
                 17.0d,
@@ -569,7 +570,7 @@ class DemandPlanningProjectionCommunityContractTest {
         FiltroDFUProjection aggregatedDfuFilter = new FiltroDFUProjection(
                 Set.of(fixture.location, secondLocation),
                 Set.of(fixture.material),
-                new TestClusterEParametrosProjection());
+                new TestCadastroEParametrosProjection());
 
         var adjustedLines = fixture.demandPlanningProjection.setValorDemandPlanItemEmKeyFigureStandardDp(
                 0,
@@ -606,7 +607,7 @@ class DemandPlanningProjectionCommunityContractTest {
         DemandPlanningProjection demandPlanningProjection = new DemandPlanningProjection(
                 demandPlan,
                 new UnidadeMedidaProjection(),
-                new TestClusterEParametrosProjection(),
+                new ClusterizacaoProjection("LEGADO", new TestCadastroEParametrosProjection()),
                 null,
                 calendario,
                 null,
@@ -664,9 +665,9 @@ class DemandPlanningProjectionCommunityContractTest {
      * arredondamento de DP; demais mapas de cluster nao sao acessados porque o
      * teste usa uma linha existente com unidade de medida ja definida.</p>
      */
-    private static class TestClusterEParametrosProjection extends ClusterEParametrosProjection {
+    private static class TestCadastroEParametrosProjection extends CadastroEParametrosProjection {
 
-        private TestClusterEParametrosProjection() {
+        private TestCadastroEParametrosProjection() {
 
             this.parametrosGlobais = new ParametrosGlobais();
 

@@ -34,28 +34,28 @@ public interface PoliticaEstoquesRepository extends JpaRepository<PoliticaEstoqu
      * Salva politica de estoques e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     public <S extends PoliticaEstoques> S save(S entity);
 
     /**
      * Salva politicas de estoques em lote e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     <S extends PoliticaEstoques> List<S> saveAll(Iterable<S> entities);
 
     /**
      * Remove politica de estoques e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     public void delete(PoliticaEstoques entity);
 
     /**
      * Remove politicas de estoques em lote e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     void deleteAll(Iterable<? extends PoliticaEstoques> entities);
 
 }

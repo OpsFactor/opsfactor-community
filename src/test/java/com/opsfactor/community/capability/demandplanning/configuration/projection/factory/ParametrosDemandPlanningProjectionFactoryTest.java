@@ -5,8 +5,10 @@ import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriai
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.ParametrosDemandPlanNivelCluster;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.aggregation.ParametrosDemandPlanNivelClusterProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.repository.ParametrosDemandPlanNivelClusterRepository;
@@ -34,7 +36,7 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
         ClusterLocations locations = getClusterLocations(10L);
         ClusterMateriais materials = getClusterMateriaisDemandPlanning(20L);
         var factory = getParametrosDemandPlanningProjectionFactory(
-                getClusterEParametrosProjection(List.of(locations), List.of(materials)), List.of());
+                getClusterizacaoProjection(List.of(locations), List.of(materials)), List.of());
         PerfilExecucaoDemandPlan profile = new PerfilExecucaoDemandPlan("DP_POLICY");
         var defaults = factory.getParametrosDemandPlanProjection(profile)
                 .getParametrosDemandPlanNivelClusterProjection(locations, materials)
@@ -60,7 +62,7 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
 
         ParametrosDemandPlanningProjectionFactory parametrosDemandPlanningProjectionFactory =
                 getParametrosDemandPlanningProjectionFactory(
-                        getClusterEParametrosProjection(
+                        getClusterizacaoProjection(
                                 List.of(clusterLocations),
                                 List.of(clusterMateriaisDemandPlanning)),
                         List.of());
@@ -104,7 +106,7 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
 
         ParametrosDemandPlanningProjectionFactory parametrosDemandPlanningProjectionFactory =
                 getParametrosDemandPlanningProjectionFactory(
-                        getClusterEParametrosProjection(
+                        getClusterizacaoProjection(
                                 List.of(clusterLocations),
                                 List.of(clusterMateriaisDemandPlanning)),
                         List.of(persistedParameters));
@@ -139,14 +141,14 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
 
         ParametrosDemandPlanningProjectionFactory parametrosDemandPlanningProjectionFactory =
                 getParametrosDemandPlanningProjectionFactory(
-                        getClusterEParametrosProjection(
+                        getClusterizacaoProjection(
                                 List.of(getClusterLocations(10L)),
                                 List.of(getClusterMateriaisDemandPlanning(20L))),
                         List.of());
 
         IllegalArgumentException missingProfileException = Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjection(null));
+                () -> parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjection((PerfilExecucaoDemandPlan) null));
         Assertions.assertEquals(
                 "Demand Planning execution profile is required.",
                 missingProfileException.getMessage());
@@ -176,14 +178,14 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
                 "Cluster/parameter projection returned null for Demand Planning parameters.",
                 nullProjectionException.getMessage());
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                getClusterEParametrosProjection(
+        ClusterizacaoProjection clusterizacaoProjection =
+                getClusterizacaoProjection(
                         List.of(getClusterLocations(10L)),
                         List.of(getClusterMateriaisDemandPlanning(20L)));
-        setPrivateField(clusterEParametrosProjection, "clusterLocationsList", null);
+        setPrivateField(clusterizacaoProjection, "clusterLocationsList", null);
 
         ParametrosDemandPlanningProjectionFactory nullLocationListFactory =
-                getParametrosDemandPlanningProjectionFactory(clusterEParametrosProjection, List.of());
+                getParametrosDemandPlanningProjectionFactory(clusterizacaoProjection, List.of());
 
         IllegalStateException nullLocationListException = Assertions.assertThrows(
                 IllegalStateException.class,
@@ -199,7 +201,7 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
 
         ParametrosDemandPlanningProjectionFactory parametrosDemandPlanningProjectionFactory =
                 getParametrosDemandPlanningProjectionFactory(
-                        getClusterEParametrosProjection(
+                        getClusterizacaoProjection(
                                 List.of(getClusterLocations(10L)),
                                 List.of(getClusterMateriaisDemandPlanning(20L))),
                         null);
@@ -228,7 +230,7 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
 
         ParametrosDemandPlanningProjectionFactory parametrosDemandPlanningProjectionFactory =
                 getParametrosDemandPlanningProjectionFactory(
-                        getClusterEParametrosProjection(
+                        getClusterizacaoProjection(
                                 List.of(getClusterLocations(10L)),
                                 List.of(getClusterMateriaisDemandPlanning(20L))),
                         List.of(parametrosDemandPlanNivelCluster));
@@ -256,7 +258,7 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
 
         ParametrosDemandPlanningProjectionFactory parametrosDemandPlanningProjectionFactory =
                 getParametrosDemandPlanningProjectionFactory(
-                        getClusterEParametrosProjection(
+                        getClusterizacaoProjection(
                                 List.of(getClusterLocations(10L)),
                                 List.of(getClusterMateriaisDemandPlanning(20L))),
                         List.of(
@@ -274,16 +276,65 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
 
     }
 
+    @Test
+    public void effectiveOriginSelectsOverridesBeforeIndexingLocalIdsAndCreatesFreshRuns() throws Exception {
+
+        var profile = new PerfilExecucaoDemandPlan("EXECUTION");
+        profile.setPerfilClusterizacao(new PerfilClusterizacao("A", "Manual"));
+        var locationB = getClusterLocations(10L);
+        var materialB = getClusterMateriaisDemandPlanning(20L);
+        locationB.setPerfilClusterizacao(new PerfilClusterizacao("B", "Saved origin"));
+        materialB.setPerfilClusterizacao(locationB.getPerfilClusterizacao());
+        var masters = new CadastroEParametrosProjection();
+        setPrivateField(masters, "parametrosGlobais", new ParametrosGlobais());
+        var classificationB = new ClusterizacaoProjection("B", masters);
+        setPrivateField(classificationB, "clusterLocationsList", List.of(locationB));
+        setPrivateField(classificationB, "clusterMateriaisList", List.of(materialB));
+        var rowA = getParametrosDemandPlanNivelCluster(profile, 20L, 10L);
+        rowA.getClusterLocations().setPerfilClusterizacao(profile.getPerfilClusterizacao());
+        rowA.getClusterMateriaisDemandPlanning().setPerfilClusterizacao(profile.getPerfilClusterizacao());
+        rowA.setUseExecutionProfileAutofitModel(true);
+        var rowB = new ParametrosDemandPlanNivelCluster(
+                new ParametrosDemandPlanNivelCluster.ParametrosDemandPlanNivelClusterCompositeKey(profile, materialB, locationB));
+        rowB.setUseExecutionProfileAutofitModel(false);
+        var repository = org.mockito.Mockito.mock(ParametrosDemandPlanNivelClusterRepository.class);
+        org.mockito.Mockito.when(repository.findByPerfilExecucaoDemandPlanId("EXECUTION", "A")).thenReturn(List.of(rowA));
+        org.mockito.Mockito.when(repository.findByPerfilExecucaoDemandPlanId("EXECUTION", "B")).thenReturn(List.of(rowB));
+        var factory = getParametrosDemandPlanningProjectionFactory(classificationB, List.of());
+        setPrivateField(factory, "parametrosDemandPlanNivelClusterRepository", repository);
+
+        var runA = factory.getParametrosDemandPlanProjection(profile);
+        var runB = factory.getParametrosDemandPlanProjection(profile);
+        Assertions.assertSame(classificationB, runA.getClusterizacaoProjection());
+        Assertions.assertFalse(runA.getParametrosDemandPlanNivelClusterProjection(locationB, materialB).isUseExecutionProfileAutofitModel());
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> factory.getParametrosDemandPlanProjection(profile, new PerfilClusterizacao("A", "Old plan")));
+        Assertions.assertSame(classificationB, factory.getParametrosDemandPlanProjection(profile,
+                new PerfilClusterizacao("B", "Same origin")).getClusterizacaoProjection());
+        Assertions.assertNotSame(runA, runB);
+        Assertions.assertNotSame(runA.getParametrosDemandPlanNivelClusterProjection(locationB, materialB),
+                runB.getParametrosDemandPlanNivelClusterProjection(locationB, materialB));
+        org.mockito.Mockito.verify(repository, org.mockito.Mockito.times(4)).findByPerfilExecucaoDemandPlanId("EXECUTION", "B");
+        org.mockito.Mockito.verify(repository, org.mockito.Mockito.never()).findByPerfilExecucaoDemandPlanId("EXECUTION", "A");
+        org.mockito.Mockito.verify(repository, org.mockito.Mockito.never()).findByPerfilExecucaoDemandPlanId("EXECUTION");
+
+    }
+
     private static ParametrosDemandPlanningProjectionFactory getParametrosDemandPlanningProjectionFactory(
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             List<ParametrosDemandPlanNivelCluster> parametrosDemandPlanNivelClusterList) throws Exception {
 
         ParametrosDemandPlanningProjectionFactory parametrosDemandPlanningProjectionFactory =
-                new ParametrosDemandPlanningProjectionFactory();
+                new ParametrosDemandPlanningProjectionFactory() {
+                    @Override
+                    protected String getPerfilClusterizacaoIdEfetivo(PerfilExecucaoDemandPlan profile) {
+                        return clusterizacaoProjection == null ? PerfilClusterizacao.ID_LEGADO : clusterizacaoProjection.getPerfilClusterizacaoId();
+                    }
+                };
         setPrivateField(
                 parametrosDemandPlanningProjectionFactory,
-                "clusterEParametrosProjectionFactory",
-                new TestClusterEParametrosProjectionFactory(clusterEParametrosProjection));
+                "clusterizacaoProjectionFactory",
+                new TestClusterizacaoProjectionFactory(clusterizacaoProjection));
         setPrivateField(
                 parametrosDemandPlanningProjectionFactory,
                 "parametrosDemandPlanNivelClusterRepository",
@@ -332,19 +383,21 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
 
     }
 
-    private static ClusterEParametrosProjection getClusterEParametrosProjection(
+    private static ClusterizacaoProjection getClusterizacaoProjection(
             List<ClusterLocations> clusterLocationsList,
             List<ClusterMateriais> clusterMateriaisDemandPlanningList) throws Exception {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = new ClusterEParametrosProjection();
-        setPrivateField(clusterEParametrosProjection, "parametrosGlobais", new ParametrosGlobais());
-        setPrivateField(clusterEParametrosProjection, "clusterLocationsList", clusterLocationsList);
+        CadastroEParametrosProjection cadastroEParametrosProjection = new CadastroEParametrosProjection();
+        setPrivateField(cadastroEParametrosProjection, "parametrosGlobais", new ParametrosGlobais());
+        ClusterizacaoProjection clusterizacaoProjection = new ClusterizacaoProjection(
+                PerfilClusterizacao.ID_LEGADO, cadastroEParametrosProjection);
+        setPrivateField(clusterizacaoProjection, "clusterLocationsList", clusterLocationsList);
         setPrivateField(
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 "clusterMateriaisList",
                 clusterMateriaisDemandPlanningList);
 
-        return clusterEParametrosProjection;
+        return clusterizacaoProjection;
 
     }
 
@@ -352,6 +405,7 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
 
         ClusterLocations clusterLocations = new ClusterLocations();
         clusterLocations.setId(id);
+        clusterLocations.setPerfilClusterizacao(new PerfilClusterizacao(PerfilClusterizacao.ID_LEGADO, null));
         return clusterLocations;
 
     }
@@ -361,6 +415,7 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
         ClusterMateriais clusterMateriaisDemandPlanning =
                 new ClusterMateriais();
         clusterMateriaisDemandPlanning.setId(id);
+        clusterMateriaisDemandPlanning.setPerfilClusterizacao(new PerfilClusterizacao(PerfilClusterizacao.ID_LEGADO, null));
         return clusterMateriaisDemandPlanning;
 
     }
@@ -370,26 +425,30 @@ public class ParametrosDemandPlanningProjectionFactoryTest {
             String fieldName,
             Object value) throws Exception {
 
-        Field field = target.getClass().getDeclaredField(fieldName);
+        Class<?> type = target.getClass();
+        while (java.util.Arrays.stream(type.getDeclaredFields()).noneMatch(candidate -> candidate.getName().equals(fieldName))) {
+            type = type.getSuperclass();
+        }
+        Field field = type.getDeclaredField(fieldName);
         field.setAccessible(true);
         field.set(target, value);
 
     }
 
-    private static class TestClusterEParametrosProjectionFactory extends ClusterEParametrosProjectionFactory {
+    private static class TestClusterizacaoProjectionFactory extends ClusterizacaoProjectionFactory {
 
-        private final ClusterEParametrosProjection clusterEParametrosProjection;
+        private final ClusterizacaoProjection clusterizacaoProjection;
 
-        private TestClusterEParametrosProjectionFactory(ClusterEParametrosProjection clusterEParametrosProjection) {
+        private TestClusterizacaoProjectionFactory(ClusterizacaoProjection clusterizacaoProjection) {
 
-            this.clusterEParametrosProjection = clusterEParametrosProjection;
+            this.clusterizacaoProjection = clusterizacaoProjection;
 
         }
 
         @Override
-        public ClusterEParametrosProjection getParametrosProjectionCompletoDeCache() {
+        public ClusterizacaoProjection getClusterizacaoProjectionDeCache(String perfilClusterizacaoId) {
 
-            return clusterEParametrosProjection;
+            return clusterizacaoProjection;
 
         }
 

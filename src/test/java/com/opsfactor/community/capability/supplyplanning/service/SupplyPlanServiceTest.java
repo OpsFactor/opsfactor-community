@@ -4,8 +4,8 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjectionFactory;
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.projection.PoliticaEstoquesProjection;
@@ -73,7 +73,7 @@ public class SupplyPlanServiceTest {
 
     /** Factory de parametros e clusters base para DFUs e Supply Planning. */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory;
 
     /** Factory de conversoes entre unidades de medida. */
     @Autowired
@@ -374,7 +374,7 @@ public class SupplyPlanServiceTest {
         
         UnidadeMedidaProjection unidadeMedidaProjection = unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionComConversoes();
         
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection cadastroEParametrosProjection = cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
         
         VersaoMalha versaoMalha = versaoMalhaRepository.findById("VERSAO_MALHA_01").get();
         
@@ -383,8 +383,8 @@ public class SupplyPlanServiceTest {
         LowLevelCode lowLevelCode = new LowLevelCode(
                 supplyNetworkProjection, 
                 versaoMalha,
-                MaterialProjectionFactory.getMaterialProjectionCompleto(clusterEParametrosProjection),
-                LocationProjectionFactory.getLocationProjectionCompleto(clusterEParametrosProjection),
+                MaterialProjectionFactory.getMaterialProjectionCompleto(cadastroEParametrosProjection),
+                LocationProjectionFactory.getLocationProjectionCompleto(cadastroEParametrosProjection),
                 LocalDateTime.of(2020, 1, 1, 0, 0, 0));
         lowLevelCode.atualizaMapaDFUsPorLowLevelCode();
         
@@ -396,7 +396,7 @@ public class SupplyPlanServiceTest {
         
         UnidadeMedidaProjection unidadeMedidaProjection = unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionComConversoes();
         
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection cadastroEParametrosProjection = cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
         
         VersaoMalha versaoMalha = versaoMalhaRepository.findById("VERSAO_MALHA_01").get();
         
@@ -405,8 +405,8 @@ public class SupplyPlanServiceTest {
         DemandPlan demandPlan = demandPlanRepository.customFindByIdComPerfilExecucao(1L).get();
         DemandPlanningProjection demandPlanningProjection = demandPlanProjectionFactory.getDemandPlanningProjectionCompleto(
                 demandPlan,
-                clusterEParametrosProjection.getLocationSet(),
-                clusterEParametrosProjection.getMateriaisAtivos(),
+                cadastroEParametrosProjection.getLocationSet(),
+                cadastroEParametrosProjection.getMateriaisAtivos(),
                 false);
         
         // Supply Plan temporário
@@ -418,8 +418,8 @@ public class SupplyPlanServiceTest {
                 perfilExecucaoSupplyPlanRepository.customFindById("Perfil Heuristico").get());
         
         PoliticaEstoquesProjection politicaEstoquesProjection = politicaEstoquesProjectionFactory.getPoliticaEstoquesProjection(
-                supplyPlan.getCalendarioDoSupplyPlan(clusterEParametrosProjection.getParametrosGlobais()), 
-                clusterEParametrosProjection, 
+                supplyPlan.getCalendarioDoSupplyPlan(cadastroEParametrosProjection.getParametrosGlobais()), 
+                cadastroEParametrosProjection, 
                 supplyPlan.getPerfilExecucaoSupplyPlan());
         
         SupplyPlanningProjection supplyPlanningProjection = supplyPlanProjectionFactory.getSupplyPlanningProjectionCompleto(
@@ -428,9 +428,9 @@ public class SupplyPlanServiceTest {
                 new Location("STO01"),
                 supplyNetworkProjection, politicaEstoquesProjection,
                 MaterialProjectionFactory.getMaterialProjectionDePerfilExecucaoSupplyPlan(
-                        supplyPlan.getPerfilExecucaoSupplyPlan(), clusterEParametrosProjection),
+                        supplyPlan.getPerfilExecucaoSupplyPlan(), cadastroEParametrosProjection),
                 LocationProjectionFactory.getLocationProjectionDePerfilExecucaoSupplyPlan(
-                        supplyPlan.getPerfilExecucaoSupplyPlan(), clusterEParametrosProjection));
+                        supplyPlan.getPerfilExecucaoSupplyPlan(), cadastroEParametrosProjection));
         
         SplitTemporalProjectionPorDfu splitTemporalProjectionPorDfu = splitTemporalProjectionFactory.geraSplitTemporalProjectionPorDfu(
                 demandPlan, supplyPlan);

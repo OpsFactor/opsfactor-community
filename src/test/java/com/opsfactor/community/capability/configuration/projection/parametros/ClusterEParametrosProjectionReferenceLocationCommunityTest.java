@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
  * Garante que o snapshot de parametros resolve a location de referencia uma
  * unica vez, antes dos calculos em lote.
  */
-class ClusterEParametrosProjectionReferenceLocationCommunityTest {
+class CadastroEParametrosProjectionReferenceLocationCommunityTest {
 
     @Test
     void projectionShouldReadParametersFromTheDirectReferenceOnly() {
@@ -34,23 +34,23 @@ class ClusterEParametrosProjectionReferenceLocationCommunityTest {
                 chainedReferenceLocation,
                 Constantes.StatusProduto.DESCONTINUADO);
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                new ClusterEParametrosProjection();
-        clusterEParametrosProjection.locationMap = Map.of(
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                new CadastroEParametrosProjection();
+        cadastroEParametrosProjection.locationMap = Map.of(
                 requestedLocation.getId(), requestedLocation,
                 referenceLocation.getId(), referenceLocation,
                 chainedReferenceLocation.getId(), chainedReferenceLocation);
-        clusterEParametrosProjection.locationForProductLocationParametersMap = Map.of(
+        cadastroEParametrosProjection.locationForProductLocationParametersMap = Map.of(
                 requestedLocation, referenceLocation,
                 referenceLocation, chainedReferenceLocation,
                 chainedReferenceLocation, chainedReferenceLocation);
-        clusterEParametrosProjection.mapaParametrosProdutoLocation = Map.of(
+        cadastroEParametrosProjection.mapaParametrosProdutoLocation = Map.of(
                 referenceLocation, Map.of(material, referenceParameters),
                 chainedReferenceLocation, Map.of(material, chainedReferenceParameters));
 
         Assertions.assertEquals(
                 Constantes.StatusProduto.NOVO,
-                clusterEParametrosProjection.getStatusProduto(
+                cadastroEParametrosProjection.getStatusProduto(
                         material,
                         requestedLocation,
                         LocalDateTime.of(2026, 1, 1, 0, 0)),

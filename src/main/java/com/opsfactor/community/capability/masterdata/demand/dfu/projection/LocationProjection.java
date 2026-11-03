@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.masterdata.demand.dfu.projection;
 
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import lombok.EqualsAndHashCode;
 
 import java.util.*;
@@ -21,7 +21,7 @@ public class LocationProjection {
     /**
      * Projection base que conhece status, clusters e DFUs ativas.
      */
-    protected ClusterEParametrosProjection clusterEParametrosProjection;
+    protected CadastroEParametrosProjection cadastroEParametrosProjection;
 
     /**
      * Locations candidatas do escopo em memoria. Factories entregam conjuntos
@@ -67,13 +67,13 @@ public class LocationProjection {
 
     public LocationProjection getLocationProjectionComFiltroAdicionalTipoLocation(Location.TipoLocation tipoLocation) {
         LocationProjection novoLocationProjection = new LocationProjection();
-        novoLocationProjection.clusterEParametrosProjection = clusterEParametrosProjection;
+        novoLocationProjection.cadastroEParametrosProjection = cadastroEParametrosProjection;
         novoLocationProjection.setLocations = Collections.unmodifiableSet(getLocationsAtivasSetComTipoLocation(tipoLocation));
         return novoLocationProjection;
     }
     public LocationProjection getLocationProjectionComFiltroAdicionalTiposLocation(Location.TipoLocation... tiposLocation) {
         LocationProjection novoLocationProjection = new LocationProjection();
-        novoLocationProjection.clusterEParametrosProjection = clusterEParametrosProjection;
+        novoLocationProjection.cadastroEParametrosProjection = cadastroEParametrosProjection;
         novoLocationProjection.setLocations = Collections.unmodifiableSet(getLocationsAtivasSetComTiposLocation(tiposLocation));
         return novoLocationProjection;
     }

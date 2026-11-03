@@ -19,8 +19,8 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.domai
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.LinhaTransporteProduto;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjectionFactory;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.repository.LinhaTransporteProdutoRepository;
@@ -52,7 +52,7 @@ public class SupplyNetworkProjectionFactory {
      * Factory da projection central de parametros e master data basico.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory;
 
     /**
      * Factory de conversoes de unidade.
@@ -118,12 +118,12 @@ public class SupplyNetworkProjectionFactory {
 
     public SupplyNetworkProjection getSupplyNetworkProjectionVazio(
             UnidadeMedidaProjection conversaoUnidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         SupplyNetworkProjection supplyNetworkProjection = new SupplyNetworkProjection();
         supplyNetworkProjection.inicializaProjectionsBase(
                 conversaoUnidadeMedidaProjection,
-                clusterEParametrosProjection);
+                cadastroEParametrosProjection);
 
         return supplyNetworkProjection;
 
@@ -146,8 +146,8 @@ public class SupplyNetworkProjectionFactory {
      * todas as possibilidades de inbound e outbound ligadas a esta location serão extraídas)
      * @param supplyNetworkProjection
      * @param versaoMalha
-     * @param locationsOrigemFiltradas se nulo, não realiza filtro (usa locations de clusterEParametrosProjection
-     * @param locationsDestinoFiltradas se nulo, não realiza filtro (usa locations de clusterEParametrosProjection
+     * @param locationsOrigemFiltradas se nulo, não realiza filtro (usa locations de cadastroEParametrosProjection
+     * @param locationsDestinoFiltradas se nulo, não realiza filtro (usa locations de cadastroEParametrosProjection
      */
     public void populaSupplyNetworkProjectionComLinhasTransporte(
             SupplyNetworkProjection supplyNetworkProjection,
@@ -160,8 +160,8 @@ public class SupplyNetworkProjectionFactory {
         if (supplyNetworkProjection.mapaLinhaTransporteOutboundAtivaSetPorLocation == null) supplyNetworkProjection.mapaLinhaTransporteOutboundAtivaSetPorLocation = new HashMap<>();
         if (supplyNetworkProjection.mapaLinhaTransporteProdutoPorLinhaTransporteEProduto == null) supplyNetworkProjection.mapaLinhaTransporteProdutoPorLinhaTransporteEProduto = new HashMap<>();
 
-        Set<Location> locationsAtivasSet = supplyNetworkProjection.clusterEParametrosProjection.getLocationsAtivas();
-        Set<Produto> materiaisAtivosSet = supplyNetworkProjection.clusterEParametrosProjection.getMateriaisAtivos();
+        Set<Location> locationsAtivasSet = supplyNetworkProjection.cadastroEParametrosProjection.getLocationsAtivas();
+        Set<Produto> materiaisAtivosSet = supplyNetworkProjection.cadastroEParametrosProjection.getMateriaisAtivos();
 
         Set<Location> locationsOrigemFiltradasCopia = new HashSet(locationsAtivasSet);
         if ((locationsOrigemFiltradas != null && !locationsOrigemFiltradas.isEmpty())) {
@@ -226,7 +226,7 @@ public class SupplyNetworkProjectionFactory {
                     .add(linhaTransporte);
         }
 
-        Set<Produto> materiaisAtivosSet = supplyNetworkProjection.clusterEParametrosProjection.getMateriaisAtivos();
+        Set<Produto> materiaisAtivosSet = supplyNetworkProjection.cadastroEParametrosProjection.getMateriaisAtivos();
         Set<LinhaTransporteProduto> linhaTransporteProdutoAtivasEmLinhasTransporteAtivasSet = linhaTransporteProdutoSetAAdicionar
                 .stream()
                 .filter(x -> linhaTransporteAtivaSetAAdicionar == null || linhaTransporteAtivaSetAAdicionar.contains(x.getLinhaTransporte()))
@@ -247,7 +247,7 @@ public class SupplyNetworkProjectionFactory {
 
         populaSupplyNetworkProjectionComDadosMestresProducao(
                 supplyNetworkProjection,
-                supplyNetworkProjection.getClusterEParametrosProjection().getLocationsAtivas());
+                supplyNetworkProjection.getCadastroEParametrosProjection().getLocationsAtivas());
 
     }
 
@@ -255,8 +255,8 @@ public class SupplyNetworkProjectionFactory {
             SupplyNetworkProjection supplyNetworkProjection,
             Set<Location> locationsFiltradas) {
 
-        Set<Location> locationsAtivasSet = supplyNetworkProjection.clusterEParametrosProjection.getLocationsAtivas();
-        Set<Produto> materiaisAtivosSet = supplyNetworkProjection.clusterEParametrosProjection.getMateriaisAtivos();
+        Set<Location> locationsAtivasSet = supplyNetworkProjection.cadastroEParametrosProjection.getLocationsAtivas();
+        Set<Produto> materiaisAtivosSet = supplyNetworkProjection.cadastroEParametrosProjection.getMateriaisAtivos();
 
         Set<Location> locationsFiltradasCopia = new HashSet(locationsAtivasSet);
         if ((locationsFiltradas != null && !locationsFiltradas.isEmpty())) {
@@ -317,13 +317,13 @@ public class SupplyNetworkProjectionFactory {
         Set<ListaTecnica> listasTecnicasViaveisSet = listaTecnicaList.stream()
                 .filter(x -> x.getAtivo())
                 .filter(x -> x.getMateriaisOutput().stream().allMatch(materialOutput ->
-                        supplyNetworkProjection.clusterEParametrosProjection.isDfuAtiva(
+                        supplyNetworkProjection.cadastroEParametrosProjection.isDfuAtiva(
                                 materialOutput,
                                 x.getLocation())))
                 // todos os componentes da lista técnica devem ser ativos
                 .filter(x -> x.getMateriaisInput().size() ==
                         x.getMateriaisInput().stream().filter(y ->
-                                supplyNetworkProjection.clusterEParametrosProjection.isDfuAtiva(y, x.getLocation())).count())
+                                supplyNetworkProjection.cadastroEParametrosProjection.isDfuAtiva(y, x.getLocation())).count())
                 .collect(Collectors.toSet());
         // Map<Location,Map<Produto,Set<ListaTecnica>>>
         supplyNetworkProjection.mapaListaTecnicaSetPorLocationMaterial = getListaTecnicaPorLocationEMaterial(
@@ -367,7 +367,7 @@ public class SupplyNetworkProjectionFactory {
                 .filter(x -> !x.getOperacaoRoteiroSet().stream()
                         .anyMatch(y -> !recursoProdutivoAtivoSet.contains(y.getRecursoProdutivo())))
                 .filter(x -> x.getMateriaisOutput().stream().allMatch(materialOutput ->
-                        supplyNetworkProjection.clusterEParametrosProjection.isDfuAtiva(
+                        supplyNetworkProjection.cadastroEParametrosProjection.isDfuAtiva(
                                 materialOutput,
                                 x.getLocation())))
                 .collect(Collectors.toSet());
@@ -583,11 +583,11 @@ public class SupplyNetworkProjectionFactory {
     protected SupplyNetworkProjection getSupplyNetworkProjectionCompletoSemCache() {
 
         UnidadeMedidaProjection unidadeMedidaProjection = unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection cadastroEParametrosProjection = cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
 
         SupplyNetworkProjection supplyNetworkProjection = getSupplyNetworkProjectionVazio(
                 unidadeMedidaProjection,
-                clusterEParametrosProjection);
+                cadastroEParametrosProjection);
 
         // popula linhas de transporte para cada versão malha disponível
         List<VersaoMalha> versaoMalhaList = versaoMalhaRepository.customFindAll();
@@ -757,8 +757,8 @@ public class SupplyNetworkProjectionFactory {
     public void populaSupplyNetworkProjectionComLocationOrigemPadraoClientes(
             SupplyNetworkProjection supplyNetworkProjection) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
-        Set<Location> locationsClienteERegiaoComercialAtivas = clusterEParametrosProjection.getLocationsAtivas()
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
+        Set<Location> locationsClienteERegiaoComercialAtivas = cadastroEParametrosProjection.getLocationsAtivas()
                 .parallelStream()
                 .filter(location -> location.getTipoLocation().equals(LocationAbstract.TipoLocation.CLIENTE_FINAL)
                         || location.getTipoLocation().equals(LocationAbstract.TipoLocation.REGIAO_COMERCIAL))
@@ -770,7 +770,7 @@ public class SupplyNetworkProjectionFactory {
             List<LinhaTransporte> linhasTransporteAAdicionar = new ArrayList<>();
             List<LinhaTransporteProduto> linhasTransporteProdutoAAdicionar = new ArrayList<>();
 
-            Location locationOrigemPadraoClientes = clusterEParametrosProjection.getLocationPersistida(versaoMalha.getLocationOrigemPadraoClientes().getId());
+            Location locationOrigemPadraoClientes = cadastroEParametrosProjection.getLocationPersistida(versaoMalha.getLocationOrigemPadraoClientes().getId());
             boolean locationOrigemPadraoClientesIsInterna = locationOrigemPadraoClientes.getTipoLocation().equals(LocationAbstract.TipoLocation.INTERNA);
 
             for (Location locationClienteOuRegiaoComercial : locationsClienteERegiaoComercialAtivas) {
@@ -882,8 +882,8 @@ public class SupplyNetworkProjectionFactory {
     public void populaSupplyNetworkProjectionComLocationOrigemPadraoMateriasPrimas(
             SupplyNetworkProjection supplyNetworkProjection) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
-        Set<Location> locationsInternasAtivas = clusterEParametrosProjection.getLocationsAtivas()
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
+        Set<Location> locationsInternasAtivas = cadastroEParametrosProjection.getLocationsAtivas()
                 .stream()
                 .filter(location -> location.getTipoLocation().equals(LocationAbstract.TipoLocation.INTERNA))
                 .collect(Collectors.toSet());
@@ -899,11 +899,11 @@ public class SupplyNetworkProjectionFactory {
             List<LinhaTransporteProduto> linhasTransporteProdutoAAdicionar = new ArrayList<>();
             Map<Location, LinhaTransporte> linhaTransporteOrigemPadraoPorLocationInterna = new HashMap<>();
 
-            Location locationOrigemPadraoMateriasPrimas = clusterEParametrosProjection.getLocationPersistida(
+            Location locationOrigemPadraoMateriasPrimas = cadastroEParametrosProjection.getLocationPersistida(
                     versaoMalha.getLocationOrigemPadraoMateriasPrimas().getId());
 
             for (Location locationInterna : locationsInternasAtivas) {
-                Set<Produto> materiasPrimasSemOrigem = clusterEParametrosProjection
+                Set<Produto> materiasPrimasSemOrigem = cadastroEParametrosProjection
                         .getMateriaisAtivosEmLocation(locationInterna)
                         .stream()
                         .filter(material -> !materiaisComCadastroProdutivoEmLocationsInternas.contains(material))

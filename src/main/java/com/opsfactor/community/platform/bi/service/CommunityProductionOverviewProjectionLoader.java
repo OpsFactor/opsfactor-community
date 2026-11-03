@@ -5,8 +5,8 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.network.location.domain.LocationAbstract;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
@@ -48,7 +48,7 @@ public class CommunityProductionOverviewProjectionLoader {
     private SupplyPlanService supplyPlanService;
     /** Carrega parâmetros globais e escopos ativos em cache. */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterAndParametersProjectionFactory;
+    private CadastroEParametrosProjectionFactory clusterAndParametersProjectionFactory;
     /** Fornece conversões de unidade para a seleção quantitativa. */
     @Autowired
     private UnidadeMedidaProjectionFactory unitOfMeasureProjectionFactory;
@@ -84,7 +84,7 @@ public class CommunityProductionOverviewProjectionLoader {
                 .getUnidadeMedidaProjectionCompletoDeCache();
         UnidadeMedida targetUnitOfMeasure = getRequiredQuantityUnitOfMeasure(
                 unitOfMeasureProjection, selectionDTO.uomId);
-        ClusterEParametrosProjection clusterAndParametersProjection = clusterAndParametersProjectionFactory
+        CadastroEParametrosProjection clusterAndParametersProjection = clusterAndParametersProjectionFactory
                 .getParametrosProjectionCompletoDeCache();
         SupplyNetworkProjection supplyNetworkProjection = supplyNetworkProjectionFactory
                 .getSupplyNetworkProjectionCompletoDeCache();
@@ -159,7 +159,7 @@ public class CommunityProductionOverviewProjectionLoader {
     /** Converte uma seleção vazia na projection completa, como fazia a rota histórica. */
     private LocationProjection getLocationProjection(
             CommunityProductionOverviewSelectionDTO selectionDTO,
-            ClusterEParametrosProjection clusterAndParametersProjection) {
+            CadastroEParametrosProjection clusterAndParametersProjection) {
 
         Set<String> locationIds = selectionDTO.locationDTOs.stream()
                 .map(locationDTO -> locationDTO.id)

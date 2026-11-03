@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.masterdata.demand.dfu.projection;
 
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import org.javatuples.Pair;
 
 import jakarta.annotation.Nullable;
@@ -28,7 +28,7 @@ public class FiltroDFUProjection {
      * {@link #getDFUsViaveis(Set, Set)} devem falhar cedo se ela nao tiver sido
      * materializada.
      */
-    protected ClusterEParametrosProjection clusterEParametrosProjection;
+    protected CadastroEParametrosProjection cadastroEParametrosProjection;
 
     /**
      * TRUE: o escopo e o produto cartesiano entre {@link #locations} e
@@ -50,19 +50,19 @@ public class FiltroDFUProjection {
      */
     private Map<Location,Set<Produto>> mapaMateriaisPorLocation;
     
-    public FiltroDFUProjection(Collection<DFU> dfus, ClusterEParametrosProjection clusterEParametrosProjection) {
+    public FiltroDFUProjection(Collection<DFU> dfus, CadastroEParametrosProjection cadastroEParametrosProjection) {
         
-        this.clusterEParametrosProjection = clusterEParametrosProjection;
+        this.cadastroEParametrosProjection = cadastroEParametrosProjection;
         todasCombinacoesLocationMaterialHabilitadas = false;
         validaDfus(dfus, "FiltroDFUProjection DFU collection");
         mapaMateriaisPorLocation = getMapaMateriaisPorLocationDeDFUs(dfus);
         
     }
     
-    public FiltroDFUProjection(boolean todasCombinacoesLocationMaterialHabilitadas, ClusterEParametrosProjection clusterEParametrosProjection) {
+    public FiltroDFUProjection(boolean todasCombinacoesLocationMaterialHabilitadas, CadastroEParametrosProjection cadastroEParametrosProjection) {
         
         this.todasCombinacoesLocationMaterialHabilitadas = todasCombinacoesLocationMaterialHabilitadas;
-        this.clusterEParametrosProjection = clusterEParametrosProjection;
+        this.cadastroEParametrosProjection = cadastroEParametrosProjection;
         
         if (todasCombinacoesLocationMaterialHabilitadas) {
             locations = new HashSet<>();
@@ -77,10 +77,10 @@ public class FiltroDFUProjection {
      * @param locations
      * @param materiais
      */
-    public FiltroDFUProjection(Set<Location> locations, Set<Produto> materiais, ClusterEParametrosProjection clusterEParametrosProjection) {
+    public FiltroDFUProjection(Set<Location> locations, Set<Produto> materiais, CadastroEParametrosProjection cadastroEParametrosProjection) {
         
         todasCombinacoesLocationMaterialHabilitadas = true;
-        this.clusterEParametrosProjection = clusterEParametrosProjection;
+        this.cadastroEParametrosProjection = cadastroEParametrosProjection;
 
         validaLocations(locations, "FiltroDFUProjection location set");
         validaMateriais(materiais, "FiltroDFUProjection material set");
@@ -93,18 +93,18 @@ public class FiltroDFUProjection {
      * Construtor para todas as combinações de materiais e locations.
      * @param locations
      */
-    public FiltroDFUProjection(Set<Location> locations, ClusterEParametrosProjection clusterEParametrosProjection) {
+    public FiltroDFUProjection(Set<Location> locations, CadastroEParametrosProjection cadastroEParametrosProjection) {
         
         todasCombinacoesLocationMaterialHabilitadas = true;
-        this.clusterEParametrosProjection = clusterEParametrosProjection;
+        this.cadastroEParametrosProjection = cadastroEParametrosProjection;
 
-        validaClusterEParametrosProjection(
-                clusterEParametrosProjection,
+        validaCadastroEParametrosProjection(
+                cadastroEParametrosProjection,
                 "FiltroDFUProjection requires cluster/parameter projection to derive materials from locations.");
         validaLocations(locations, "FiltroDFUProjection location set");
         this.locations = new HashSet<>(locations);
         this.materiais = locations.stream()
-                .flatMap(location -> clusterEParametrosProjection.getMateriaisAtivosEmLocation(location).stream())
+                .flatMap(location -> cadastroEParametrosProjection.getMateriaisAtivosEmLocation(location).stream())
                 .collect(Collectors.toSet());
         
     }
@@ -112,17 +112,17 @@ public class FiltroDFUProjection {
     /**
      * Construtor para todas as combinações de materiais e locations.
      */
-    public FiltroDFUProjection(ClusterEParametrosProjection clusterEParametrosProjection) {
+    public FiltroDFUProjection(CadastroEParametrosProjection cadastroEParametrosProjection) {
         
         todasCombinacoesLocationMaterialHabilitadas = true;
-        this.clusterEParametrosProjection = clusterEParametrosProjection;
+        this.cadastroEParametrosProjection = cadastroEParametrosProjection;
 
-        validaClusterEParametrosProjection(
-                clusterEParametrosProjection,
+        validaCadastroEParametrosProjection(
+                cadastroEParametrosProjection,
                 "FiltroDFUProjection requires cluster/parameter projection to build complete DFU scope.");
-        this.locations = clusterEParametrosProjection.getLocationsAtivas();
+        this.locations = cadastroEParametrosProjection.getLocationsAtivas();
         this.materiais = locations.stream()
-                .flatMap(location -> clusterEParametrosProjection.getMateriaisAtivosEmLocation(location).stream())
+                .flatMap(location -> cadastroEParametrosProjection.getMateriaisAtivosEmLocation(location).stream())
                 .collect(Collectors.toSet());
         
     }
@@ -246,15 +246,15 @@ public class FiltroDFUProjection {
     
     public List<DFU> getDFUs() {
 
-        validaClusterEParametrosProjection(
-                clusterEParametrosProjection,
+        validaCadastroEParametrosProjection(
+                cadastroEParametrosProjection,
                 "FiltroDFUProjection requires cluster/parameter projection to list active DFUs.");
         List<DFU> dfus = new ArrayList<>();
         
         if (todasCombinacoesLocationMaterialHabilitadas) {
             return locations.stream()
                     .flatMap(location -> materiais.stream()
-                            .filter(material -> clusterEParametrosProjection.isDfuAtiva(material, location))
+                            .filter(material -> cadastroEParametrosProjection.isDfuAtiva(material, location))
                             .map(material -> new DFU(material, location)))
                     .collect(Collectors.toList());
         } else {
@@ -262,7 +262,7 @@ public class FiltroDFUProjection {
             for (Entry<Location,Set<Produto>> entry : mapaMateriaisPorLocation.entrySet()) {
                 Location location = entry.getKey();
                 for (Produto material : entry.getValue()) {
-                    if (clusterEParametrosProjection.isDfuAtiva(material, location)) {
+                    if (cadastroEParametrosProjection.isDfuAtiva(material, location)) {
                         dfus.add(new DFU(material, location));
                     }
                 }
@@ -286,8 +286,8 @@ public class FiltroDFUProjection {
      * @return 
      */
     public List<DFU> getDFUsViaveis(@Nullable Set<Produto> filtroMateriais, @Nullable Set<Location> filtroLocations) {
-        validaClusterEParametrosProjection(
-                clusterEParametrosProjection,
+        validaCadastroEParametrosProjection(
+                cadastroEParametrosProjection,
                 "FiltroDFUProjection requires cluster/parameter projection to list viable active DFUs.");
         validaMateriaisOpcionais(filtroMateriais, "FiltroDFUProjection material filter");
         validaLocationsOpcionais(filtroLocations, "FiltroDFUProjection location filter");
@@ -299,14 +299,14 @@ public class FiltroDFUProjection {
                             .filter(location -> locations.contains(location))
                             .flatMap(location -> filtroMateriais.stream()
                                     .filter(material -> materiais.contains(material))
-                                    .filter(material -> clusterEParametrosProjection.isDfuAtiva(material, location))
+                                    .filter(material -> cadastroEParametrosProjection.isDfuAtiva(material, location))
                                     .map(material -> new DFU(material, location)))
                             .collect(Collectors.toList());
                 } else {
                     return filtroLocations.stream()
                             .filter(location -> locations.contains(location))
                             .flatMap(location -> materiais.stream()
-                                    .filter(material -> clusterEParametrosProjection.isDfuAtiva(material, location))
+                                    .filter(material -> cadastroEParametrosProjection.isDfuAtiva(material, location))
                                     .map(material -> new DFU(material, location)))
                             .collect(Collectors.toList());
                 }
@@ -315,13 +315,13 @@ public class FiltroDFUProjection {
                     return locations.stream()
                             .flatMap(location -> filtroMateriais.stream()
                                     .filter(material -> materiais.contains(material))
-                                    .filter(material -> clusterEParametrosProjection.isDfuAtiva(material, location))
+                                    .filter(material -> cadastroEParametrosProjection.isDfuAtiva(material, location))
                                     .map(material -> new DFU(material, location)))
                             .collect(Collectors.toList());
                 } else {
                     return locations.stream()
                             .flatMap(location -> materiais.stream()
-                                    .filter(material -> clusterEParametrosProjection.isDfuAtiva(material, location))
+                                    .filter(material -> cadastroEParametrosProjection.isDfuAtiva(material, location))
                                     .map(material -> new DFU(material, location)))
                             .collect(Collectors.toList());
                 }
@@ -332,13 +332,13 @@ public class FiltroDFUProjection {
                     return filtroLocations.stream()
                             .flatMap(location -> filtroMateriais.stream()
                                     .filter(material -> mapaMateriaisPorLocation.getOrDefault(location, new HashSet<>()).contains(material))
-                                    .filter(material -> clusterEParametrosProjection.isDfuAtiva(material, location))
+                                    .filter(material -> cadastroEParametrosProjection.isDfuAtiva(material, location))
                                     .map(material -> new DFU(material, location)))
                             .collect(Collectors.toList());
                 } else {
                     return filtroLocations.stream()
                             .flatMap(location -> mapaMateriaisPorLocation.getOrDefault(location, new HashSet<>()).stream()
-                                    .filter(material -> clusterEParametrosProjection.isDfuAtiva(material, location))
+                                    .filter(material -> cadastroEParametrosProjection.isDfuAtiva(material, location))
                                     .map(material -> new DFU(material, location)))
                             .collect(Collectors.toList());
                 }
@@ -347,13 +347,13 @@ public class FiltroDFUProjection {
                     return mapaMateriaisPorLocation.entrySet().stream()
                             .flatMap(entry -> filtroMateriais.stream()
                                     .filter(material -> entry.getValue().contains(material))
-                                    .filter(material -> clusterEParametrosProjection.isDfuAtiva(material, entry.getKey()))
+                                    .filter(material -> cadastroEParametrosProjection.isDfuAtiva(material, entry.getKey()))
                                     .map(material -> new DFU(material, entry.getKey())))
                             .collect(Collectors.toList());
                 } else {
                     return mapaMateriaisPorLocation.entrySet().stream()
                             .flatMap(entry -> entry.getValue().stream()
-                                    .filter(material -> clusterEParametrosProjection.isDfuAtiva(material, entry.getKey()))
+                                    .filter(material -> cadastroEParametrosProjection.isDfuAtiva(material, entry.getKey()))
                                     .map(material -> new DFU(material, entry.getKey())))
                             .collect(Collectors.toList());
                 }
@@ -405,13 +405,13 @@ public class FiltroDFUProjection {
     }
 
     public MaterialProjection getMaterialProjection() {
-        return MaterialProjectionFactory.getProjectionSetMateriais(getMateriais(), clusterEParametrosProjection);
+        return MaterialProjectionFactory.getProjectionSetMateriais(getMateriais(), cadastroEParametrosProjection);
     }
     public MaterialProjection getMaterialProjectionAtivosEmLocation(Location location) {
-        return MaterialProjectionFactory.getProjectionSetMateriais(getMateriaisDeLocation(location), clusterEParametrosProjection);
+        return MaterialProjectionFactory.getProjectionSetMateriais(getMateriaisDeLocation(location), cadastroEParametrosProjection);
     }
     public LocationProjection getLocationProjection() {
-        return LocationProjectionFactory.getProjectionSetLocations(getLocations(), clusterEParametrosProjection);
+        return LocationProjectionFactory.getProjectionSetLocations(getLocations(), cadastroEParametrosProjection);
     }
 
     /**
@@ -528,11 +528,11 @@ public class FiltroDFUProjection {
 
     }
 
-    private static void validaClusterEParametrosProjection(
-            ClusterEParametrosProjection clusterEParametrosProjection,
+    private static void validaCadastroEParametrosProjection(
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             String message) {
 
-        if (clusterEParametrosProjection == null) {
+        if (cadastroEParametrosProjection == null) {
             throw new IllegalArgumentException(message);
         }
 

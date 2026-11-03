@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.
 
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.platform.utility.Constantes;
 import lombok.*;
 
@@ -65,7 +65,7 @@ public class PoliticaEstoquesMaterialLocation implements Serializable {
      * Modelo operacional especifico da DFU. Quando nulo, o fluxo consulta o
      * default do material via projection de parametros.
      */
-    @Getter(AccessLevel.NONE) // caso não se encontre o modelo operacional o ClusterEParametrosProjection será usado para extrair o valor da entidade Produto
+    @Getter(AccessLevel.NONE) // caso não se encontre o modelo operacional o CadastroEParametrosProjection será usado para extrair o valor da entidade Produto
     @Enumerated(EnumType.ORDINAL) // MTS, MTO
     private Constantes.SNPModeloOperacional modeloOperacional; // MTS ou MTO
 
@@ -100,7 +100,7 @@ public class PoliticaEstoquesMaterialLocation implements Serializable {
      * Community devem neutralizar esse valor, mesmo que bases antigas possuam
      * dado preenchido.</p>
      */
-    @Getter(AccessLevel.NONE) // caso não se encontre o modelo operacional o ClusterEParametrosProjection será usado para extrair o valor da entidade Produto
+    @Getter(AccessLevel.NONE) // caso não se encontre o modelo operacional o CadastroEParametrosProjection será usado para extrair o valor da entidade Produto
     private Double frequenciaReabastecimentoDias; // valor padrao = 0 dias (ressuprimento a qualquer momento)
 
 
@@ -139,9 +139,9 @@ public class PoliticaEstoquesMaterialLocation implements Serializable {
     /**
      * Valor operacional resolvido com fallback no default do material.
      */
-    public Constantes.SNPModeloOperacional getModeloOperacional(ClusterEParametrosProjection clusterEParametrosProjection) {
+    public Constantes.SNPModeloOperacional getModeloOperacional(CadastroEParametrosProjection cadastroEParametrosProjection) {
         return (modeloOperacional == null) ?
-                clusterEParametrosProjection.getMaterialPersistido(getMaterial().getId()).getModeloOperacional()
+                cadastroEParametrosProjection.getMaterialPersistido(getMaterial().getId()).getModeloOperacional()
                 : modeloOperacional;
     }
 
@@ -266,9 +266,9 @@ public class PoliticaEstoquesMaterialLocation implements Serializable {
      * neutraliza o valor para impedir reentrada de Inventory Policy
      * Optimization.</p>
      */
-    public double getFrequenciaReabastecimentoDias(ClusterEParametrosProjection clusterEParametrosProjection) {
+    public double getFrequenciaReabastecimentoDias(CadastroEParametrosProjection cadastroEParametrosProjection) {
         return (frequenciaReabastecimentoDias == null) ?
-                clusterEParametrosProjection.getSNPFrequenciaReabascecimentoDias(getMaterial(), getLocation())
+                cadastroEParametrosProjection.getSNPFrequenciaReabascecimentoDias(getMaterial(), getLocation())
                 : frequenciaReabastecimentoDias;
     }
 

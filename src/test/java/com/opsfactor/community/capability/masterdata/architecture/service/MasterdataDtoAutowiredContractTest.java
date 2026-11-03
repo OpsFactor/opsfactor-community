@@ -29,7 +29,7 @@ class MasterdataDtoAutowiredContractTest {
                         "locationService",
                         "locationRepository",
                         "locationMapper",
-                        "clusterEParametrosProjectionFactory"));
+                        "cadastroEParametrosProjectionFactory"));
 
     }
 
@@ -42,7 +42,7 @@ class MasterdataDtoAutowiredContractTest {
                         "produtoRepository",
                         "clusterProdutosRepository",
                         "materialMapper",
-                        "clusterEParametrosProjectionFactory"));
+                        "cadastroEParametrosProjectionFactory"));
 
     }
 

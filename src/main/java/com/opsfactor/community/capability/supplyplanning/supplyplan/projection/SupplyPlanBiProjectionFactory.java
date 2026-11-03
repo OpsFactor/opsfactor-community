@@ -70,7 +70,7 @@ public class SupplyPlanBiProjectionFactory {
         Set<Location> locations = locationProjection.getLocationsAtivas();
         Set<Produto> materiais = materialProjection.getMateriaisAtivos();
         Calendario calendario = supplyPlan.getCalendarioDoSupplyPlan(
-                supplyNetworkProjection.getClusterEParametrosProjection().getParametrosGlobais());
+                supplyNetworkProjection.getCadastroEParametrosProjection().getParametrosGlobais());
         DemandaDiretaConsideradaProjection demandaDiretaConsideradaProjection =
                 demandaDiretaConsideradaProjectionFactory.getDemandaDiretaConsideradaProjectionCompleto(supplyPlan,
                         calendario);
@@ -87,7 +87,7 @@ public class SupplyPlanBiProjectionFactory {
         Collection<ProductionPlanLinha> productionPlanLinhas = productionPlanLinhaRepository
                 .customFindByProductionPlanLinhaCompositeKeySupplyPlanAndProductionPlanLinhaCompositeKeyLocationInIncluindoListaTecnicaEMateriaisInput(supplyPlan, locations);
         productionPlanLinhas.stream()
-                .filter(productionPlanLinha -> supplyNetworkProjection.getClusterEParametrosProjection().isDfuAtiva(
+                .filter(productionPlanLinha -> supplyNetworkProjection.getCadastroEParametrosProjection().isDfuAtiva(
                         productionPlanLinha.getMaterialOutput(), productionPlanLinha.getLocation()))
                 .forEach(supplyPlanningBiProjection::addProductionPlanLinha);
 

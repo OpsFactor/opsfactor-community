@@ -1,5 +1,8 @@
 package com.opsfactor.community.capability.cluster.domain.produto;
 
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
+import com.opsfactor.community.capability.cluster.domain.ClusterKey;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -22,16 +25,24 @@ import java.util.Set;
 @Data
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "tipo_cluster")
-@EqualsAndHashCode(of = "id")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
 @NamedEntityGraph(
     name = "ClusterProdutos.completo", attributeNodes = {
         @NamedAttributeNode("regrasAlocacaoClusterProdutos")
     }
 )
+@IdClass(ClusterKey.class)
 public class ClusterProdutos implements Serializable {
+
+    /** Parte real da PK. LEGADO é compatibilidade explícita, nunca escolha de perfil ativo. */
+    @Id @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "perfil_clusterizacao_id", nullable = false, updatable = false)
+    private PerfilClusterizacao perfilClusterizacao = PerfilClusterizacao.referenciaLegada();
     @Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.TABLE, generator = "cluster_material_ids")
+    @TableGenerator(name = "cluster_material_ids", table = "cluster_id_allocator", pkColumnName = "segmento",
+            valueColumnName = "proximo_valor", pkColumnValue = "MATERIAL", allocationSize = 50)
     private Long id;
     
     private String descricao;
@@ -73,6 +84,14 @@ public class ClusterProdutos implements Serializable {
         } else {
             return (prioridade == null) ? 99999 : Math.min(99999, prioridade);
         }
+    }
+
+    /** Identidade completa sem consulta; IDs de proxies JPA não exigem carregar o perfil. */
+    @EqualsAndHashCode.Include
+    public ClusterKey getClusterKey() {
+
+        return new ClusterKey(perfilClusterizacao.getId(), id);
+
     }
 
     @Override

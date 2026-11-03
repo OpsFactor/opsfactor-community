@@ -13,8 +13,9 @@ import com.opsfactor.community.capability.demandplanning.configuration.domain.Pe
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosGeraisDemandPlanningProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.aggregation.ParametrosDemandPlanNivelClusterProjection;
@@ -168,8 +169,8 @@ public class DemandSimulationFacadeCommunityContractTest {
                 getPerfilExecucaoDemandPlanRepositoryStub(Optional.of(new PerfilExecucaoDemandPlan())));
         ReflectionTestUtils.setField(
                 demandSimulationFrontService,
-                "clusterEParametrosProjectionFactory",
-                new TestClusterEParametrosProjectionFactory(
+                "clusterizacaoProjectionFactory",
+                new TestClusterizacaoProjectionFactory(
                         Optional.empty(),
                         new ClusterLocations()));
 
@@ -216,8 +217,8 @@ public class DemandSimulationFacadeCommunityContractTest {
                 getPerfilExecucaoDemandPlanRepositoryStub(Optional.of(perfilExecucaoDemandPlan)));
         ReflectionTestUtils.setField(
                 demandSimulationFrontService,
-                "clusterEParametrosProjectionFactory",
-                new TestClusterEParametrosProjectionFactory(
+                "clusterizacaoProjectionFactory",
+                new TestClusterizacaoProjectionFactory(
                         Optional.of(clusterMateriaisDemandPlanning),
                         clusterLocations));
         ReflectionTestUtils.setField(
@@ -592,8 +593,8 @@ public class DemandSimulationFacadeCommunityContractTest {
                 getPerfilExecucaoDemandPlanRepositoryStub(Optional.of(perfilExecucaoDemandPlan)));
         ReflectionTestUtils.setField(
                 demandSimulationFrontService,
-                "clusterEParametrosProjectionFactory",
-                new TestClusterEParametrosProjectionFactory(
+                "clusterizacaoProjectionFactory",
+                new TestClusterizacaoProjectionFactory(
                         Optional.of(clusterMateriaisDemandPlanning),
                         clusterLocations));
         ReflectionTestUtils.setField(
@@ -664,9 +665,9 @@ public class DemandSimulationFacadeCommunityContractTest {
                 new TestUnidadeMedidaProjectionFactory(unidadeMedidaProjection));
         ReflectionTestUtils.setField(
                 demandSimulationFrontService,
-                "clusterEParametrosProjectionFactory",
-                new TestClusterEParametrosProjectionFactory(
-                        new TestClusterEParametrosProjection(
+                "clusterizacaoProjectionFactory",
+                new TestClusterizacaoProjectionFactory(
+                        new TestClusterizacaoProjection(
                                 Optional.of(clusterMateriaisDemandPlanning),
                                 clusterLocations,
                                 parametrosGlobais,
@@ -838,22 +839,22 @@ public class DemandSimulationFacadeCommunityContractTest {
 
     }
 
-    private static class TestClusterEParametrosProjectionFactory extends ClusterEParametrosProjectionFactory {
+    private static class TestClusterizacaoProjectionFactory extends ClusterizacaoProjectionFactory {
 
-        private final ClusterEParametrosProjection clusterEParametrosProjection;
+        private final ClusterizacaoProjection clusterizacaoProjection;
 
-        private TestClusterEParametrosProjectionFactory(
-                ClusterEParametrosProjection clusterEParametrosProjection) {
+        private TestClusterizacaoProjectionFactory(
+                ClusterizacaoProjection clusterizacaoProjection) {
 
-            this.clusterEParametrosProjection = clusterEParametrosProjection;
+            this.clusterizacaoProjection = clusterizacaoProjection;
 
         }
 
-        private TestClusterEParametrosProjectionFactory(
+        private TestClusterizacaoProjectionFactory(
                 Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional,
                 ClusterLocations clusterLocations) {
 
-            this(new TestClusterEParametrosProjection(
+            this(new TestClusterizacaoProjection(
                     clusterMateriaisDemandPlanningOptional,
                     clusterLocations,
                     new ParametrosGlobais()));
@@ -861,15 +862,23 @@ public class DemandSimulationFacadeCommunityContractTest {
         }
 
         @Override
-        public ClusterEParametrosProjection getParametrosProjectionCompletoDeCache() {
+        public ClusterizacaoProjection getClusterizacaoProjectionDeCache(String perfilClusterizacaoId) {
 
-            return clusterEParametrosProjection;
+            return clusterizacaoProjection;
 
         }
 
     }
 
-    private static class TestClusterEParametrosProjection extends ClusterEParametrosProjection {
+    private static class TestMasterParameters extends CadastroEParametrosProjection {
+        TestMasterParameters(ParametrosGlobais parameters, Set<Produto> materials, Set<Location> locations) {
+            this.parametrosGlobais = parameters;
+            this.materialSet = materials;
+            this.locationSet = locations;
+        }
+    }
+
+    private static class TestClusterizacaoProjection extends ClusterizacaoProjection {
 
         private final Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional;
         private final ClusterLocations clusterLocations;
@@ -877,7 +886,7 @@ public class DemandSimulationFacadeCommunityContractTest {
         private final Set<Produto> materialSet;
         private final Set<Location> locationSet;
 
-        private TestClusterEParametrosProjection(
+        private TestClusterizacaoProjection(
                 Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional,
                 ClusterLocations clusterLocations,
                 ParametrosGlobais parametrosGlobais) {
@@ -891,13 +900,14 @@ public class DemandSimulationFacadeCommunityContractTest {
 
         }
 
-        private TestClusterEParametrosProjection(
+        private TestClusterizacaoProjection(
                 Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional,
                 ClusterLocations clusterLocations,
                 ParametrosGlobais parametrosGlobais,
                 Set<Produto> materialSet,
                 Set<Location> locationSet) {
 
+            super("LEGADO", new TestMasterParameters(parametrosGlobais, materialSet, locationSet));
             this.clusterMateriaisDemandPlanningOptional = clusterMateriaisDemandPlanningOptional;
             this.clusterLocations = clusterLocations;
             this.parametrosGlobais = parametrosGlobais;
@@ -906,7 +916,6 @@ public class DemandSimulationFacadeCommunityContractTest {
 
         }
 
-        @Override
         public ParametrosGlobais getParametrosGlobais() {
 
             return parametrosGlobais;
@@ -1039,7 +1048,7 @@ public class DemandSimulationFacadeCommunityContractTest {
                 Set<Location> locations,
                 Set<Produto> produtos,
                 UnidadeMedidaProjection unidadeMedidaProjection,
-                ClusterEParametrosProjection clusterEParametrosProjection,
+                CadastroEParametrosProjection cadastroEParametrosProjection,
                 UnidadeMedida unidadePadrao) {
 
             return salesProjection;
@@ -1066,7 +1075,7 @@ public class DemandSimulationFacadeCommunityContractTest {
                 MaterialProjection materialProjection,
                 LocationProjection locationProjection,
                 SalesProjectionLocationMaterialData salesProjection,
-                ClusterEParametrosProjection clusterEParametrosProjection,
+                ClusterizacaoProjection clusterizacaoProjection,
                 boolean preencheHorizonteForecastComDemandaHistorica) {
 
             return demandPlanForecastProjectionList;
@@ -1130,7 +1139,6 @@ public class DemandSimulationFacadeCommunityContractTest {
 
         }
 
-        @Override
         public ParametrosGlobais getParametrosGlobais() {
 
             return parametrosGlobais;

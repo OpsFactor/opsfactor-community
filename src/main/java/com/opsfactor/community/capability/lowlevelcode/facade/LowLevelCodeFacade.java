@@ -10,8 +10,8 @@ import com.opsfactor.community.capability.masterdata.production.billofmaterials.
 import com.opsfactor.community.capability.masterdata.production.operation.domain.OperacaoRoteiro;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjectionFactory;
@@ -67,7 +67,7 @@ public class LowLevelCodeFacade {
      * origens alternativas sem voltar ao banco a cada DFU.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory;
 
     /**
      * Repositorio da versao de malha selecionada pelo usuario.
@@ -103,12 +103,12 @@ public class LowLevelCodeFacade {
 
         VersaoMalha versaoMalha = versaoMalhaRepository.findById(versaoMalhaId).get();
         
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection cadastroEParametrosProjection = cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
 
         SupplyNetworkProjection supplyNetworkProjection = supplyNetworkProjectionFactory.getSupplyNetworkProjectionCompletoDeCache();
 
-        MaterialProjection materialProjection = MaterialProjectionFactory.getMaterialProjectionCompleto(clusterEParametrosProjection);
-        LocationProjection locationProjection = LocationProjectionFactory.getLocationProjectionCompleto(clusterEParametrosProjection);
+        MaterialProjection materialProjection = MaterialProjectionFactory.getMaterialProjectionCompleto(cadastroEParametrosProjection);
+        LocationProjection locationProjection = LocationProjectionFactory.getLocationProjectionCompleto(cadastroEParametrosProjection);
         
         log.info("Iniciando geração do Mapa DFUs");
         LowLevelCode lowLevelCode = new LowLevelCode(supplyNetworkProjection, versaoMalha, materialProjection, locationProjection, dataReferencia);
@@ -138,14 +138,14 @@ public class LowLevelCodeFacade {
 
         // traz parametros e malha completa para todos os materiais e location
         // importante para poder processar insumos e insumos de insumos
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection cadastroEParametrosProjection = cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
 
         SupplyNetworkProjection supplyNetworkProjection = supplyNetworkProjectionFactory.getSupplyNetworkProjectionCompletoDeCache();
         
         LowLevelCodeDTO lowLevelCodeDTO = new LowLevelCodeDTO();
 
-        MaterialProjection materialProjection = MaterialProjectionFactory.getProjectionUnicoMaterial(material, clusterEParametrosProjection);
-        LocationProjection locationProjection = LocationProjectionFactory.getLocationProjectionCompleto(clusterEParametrosProjection);
+        MaterialProjection materialProjection = MaterialProjectionFactory.getProjectionUnicoMaterial(material, cadastroEParametrosProjection);
+        LocationProjection locationProjection = LocationProjectionFactory.getLocationProjectionCompleto(cadastroEParametrosProjection);
 
         // low level codes para este SKU
         LowLevelCode lowLevelCode = new LowLevelCode(supplyNetworkProjection, versaoMalha, materialProjection, locationProjection, dataAtual);
@@ -192,7 +192,7 @@ public class LowLevelCodeFacade {
             
         }
         
-        if (!clusterEParametrosProjection.getParametrosGlobais().getExibeLocationsClienteFinalLowLevelCode()) {
+        if (!cadastroEParametrosProjection.getParametrosGlobais().getExibeLocationsClienteFinalLowLevelCode()) {
             
             Set<String> locationClienteIdSet = locationProjection.getLocationsAtivasSetComTiposLocation(
                     LocationAbstract.TipoLocation.CLIENTE_FINAL)
@@ -303,7 +303,7 @@ public class LowLevelCodeFacade {
      * inbound e tambem le {@link ParametrosGlobais} a partir da propria
      * projection de malha. Por isso a validacao inclui o snapshot de parametros
      * embutido nela, mesmo quando a chamada publica tambem carrega
-     * {@link ClusterEParametrosProjection} separadamente para Material/Location
+     * {@link CadastroEParametrosProjection} separadamente para Material/Location
      * projections.</p>
      */
     /**
@@ -329,7 +329,7 @@ public class LowLevelCodeFacade {
         if (dfusProcessadas.contains(new DFU(material, location))) return Optional.empty();
         dfusProcessadas.add(new DFU(material, location));      
                 
-        ParametrosGlobais parametrosGlobais = supplyNetworkProjection.getClusterEParametrosProjection().getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = supplyNetworkProjection.getCadastroEParametrosProjection().getParametrosGlobais();
         
         LowLevelCodeDTO lowLevelCodeDTO = new LowLevelCodeDTO();
         
@@ -574,12 +574,12 @@ public class LowLevelCodeFacade {
 
         VersaoMalha versaoMalha = versaoMalhaRepository.findById(versaoMalhaId).get();
         
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection cadastroEParametrosProjection = cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
 
         SupplyNetworkProjection supplyNetworkProjection = supplyNetworkProjectionFactory.getSupplyNetworkProjectionCompletoDeCache();
 
-        MaterialProjection materialProjection = MaterialProjectionFactory.getMaterialProjectionCompleto(clusterEParametrosProjection);
-        LocationProjection locationProjection = LocationProjectionFactory.getLocationProjectionCompleto(clusterEParametrosProjection);
+        MaterialProjection materialProjection = MaterialProjectionFactory.getMaterialProjectionCompleto(cadastroEParametrosProjection);
+        LocationProjection locationProjection = LocationProjectionFactory.getLocationProjectionCompleto(cadastroEParametrosProjection);
         
         LowLevelCode lowLevelCode = new LowLevelCode(supplyNetworkProjection, versaoMalha, materialProjection, locationProjection, dataReferencia);
         

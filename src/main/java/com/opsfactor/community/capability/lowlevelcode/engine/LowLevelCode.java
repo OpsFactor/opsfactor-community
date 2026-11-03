@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.domai
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
 import com.opsfactor.community.capability.masterdata.production.billofmaterials.domain.ListaTecnica;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
@@ -77,14 +77,14 @@ public class LowLevelCode {
     
     public Optional<Integer> getLowLevelCode(Location location, Produto material) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
         
         switch (location.getTipoLocation()) {
             case CLIENTE_FINAL:
-                if (clusterEParametrosProjection.isDfuAtiva(material, location)) return Optional.of(1);
+                if (cadastroEParametrosProjection.isDfuAtiva(material, location)) return Optional.of(1);
                 return Optional.empty();
             case REGIAO_COMERCIAL:
-                if (clusterEParametrosProjection.isDfuAtiva(material, location)) return Optional.of(1);
+                if (cadastroEParametrosProjection.isDfuAtiva(material, location)) return Optional.of(1);
                 return Optional.empty();
             default:
                 Integer lowLevelCode = null;
@@ -108,7 +108,7 @@ public class LowLevelCode {
         
         // locations de clientes fazem parte do low level code 1
         if (lowLevelCode == 1) {
-            ClusterEParametrosProjection clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+            CadastroEParametrosProjection cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
             locationsInternasOuFornecedores.addAll(locationProjection.getLocationsAtivasSetComTiposLocation(
                     LocationAbstract.TipoLocation.CLIENTE_FINAL, LocationAbstract.TipoLocation.REGIAO_COMERCIAL));
         }
@@ -119,7 +119,7 @@ public class LowLevelCode {
     
     public Set<Produto> getMateriaisLowLevelCodeEmLocation(int lowLevelCode, Location location) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
 
         switch (location.getTipoLocation()) {
             case CLIENTE_FINAL:
@@ -160,7 +160,7 @@ public class LowLevelCode {
         }
 
         if (lowLevelCode == 1) {
-            ClusterEParametrosProjection clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+            CadastroEParametrosProjection cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
             return locationProjection.getLocationsAtivasSetComTiposLocation(
                     LocationAbstract.TipoLocation.CLIENTE_FINAL, LocationAbstract.TipoLocation.REGIAO_COMERCIAL)
                     .stream()
@@ -238,7 +238,7 @@ public class LowLevelCode {
                 .count();
         
         if (lowLevelCode == 1) {
-            ClusterEParametrosProjection clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+            CadastroEParametrosProjection cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
             numeroDFUs += locationProjection.getLocationsAtivasSetComTiposLocation(
                     LocationAbstract.TipoLocation.CLIENTE_FINAL, LocationAbstract.TipoLocation.REGIAO_COMERCIAL).size();
         }
@@ -257,7 +257,7 @@ public class LowLevelCode {
      */
     public void atualizaMapaDFUsPorLowLevelCode() {
         
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
         
         Map<Integer,Set<DFU>> mapaDFUsOrdenadosPorLowLevelCode = new HashMap<>();
         
@@ -269,7 +269,7 @@ public class LowLevelCode {
         
         log.info("Gerando produto cartesiano de materiais e locations internas/fornecedores");
         Set<DFU> setDFUsLocationsInternasEFornecedores = AgregacaoDFU.getDFUListDeProdutoCartesianoLocationMaterial(
-                locationsInternasEFornecedores, materiaisAtivos, supplyNetworkProjection.getClusterEParametrosProjection());
+                locationsInternasEFornecedores, materiaisAtivos, supplyNetworkProjection.getCadastroEParametrosProjection());
         log.info("{} DFUs de locations internas/fornecedores sendo processadas",
                 setDFUsLocationsInternasEFornecedores.size());
 
@@ -329,7 +329,7 @@ public class LowLevelCode {
         log.info("Low level Code {}", lowLevelCodeAtual);
         mapaDFUsOrdenadosPorLowLevelCode.computeIfAbsent(lowLevelCodeAtual, x -> new HashSet<>());
         
-        ClusterEParametrosProjection clustersEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection clustersEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
         
         Set<DFU> dfusARemover = new HashSet<>();
 

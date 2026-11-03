@@ -3,6 +3,8 @@ package com.opsfactor.community.capability.configuration.repository.cluster.loca
 import com.opsfactor.community.capability.cluster.domain.location.RegraAlocacaoClusterLocationsTipoLocation;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,6 +14,10 @@ import java.util.List;
  */
 @Repository
 public interface RegraAlocacaoClusterLocationsTipoLocationRepository extends JpaRepository<RegraAlocacaoClusterLocationsTipoLocation, RegraAlocacaoClusterLocationsTipoLocation.RegraAlocacaoClusterLocationsTipoLocationCompositeKey> {
+    /** Carrega somente o perfil solicitado, com a regra em lote, sem N+1. */
+    @Query("SELECT v FROM RegraAlocacaoClusterLocationsTipoLocation v JOIN FETCH v.regraAlocacaoClusterLocationsTipoLocationCompositeKey.regraAlocacaoClusterLocations r JOIN FETCH r.clusterLocations c WHERE c.perfilClusterizacao.id = :perfilId")
+    List<RegraAlocacaoClusterLocationsTipoLocation> findAllForClusteringProfile(@Param("perfilId") String perfilId);
+
 
     // OVERRIDES SAVE E DELETE PARA @CACHEEVICT -------------------------------------------------------------------------------------------
     // limpa caches dependentes em chamadas de saveAll e deleteAll (cacheEvict nao funciona em metodos @Override dos serviços de integração)
@@ -19,28 +25,28 @@ public interface RegraAlocacaoClusterLocationsTipoLocationRepository extends Jpa
      * Salva regra por tipo de location de cluster de locations e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     public <S extends RegraAlocacaoClusterLocationsTipoLocation> S save(S entity);
 
     /**
      * Salva regras por tipo de location de cluster de locations em lote e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     <S extends RegraAlocacaoClusterLocationsTipoLocation> List<S> saveAll(Iterable<S> entities);
 
     /**
      * Remove regra por tipo de location de cluster de locations e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     public void delete(RegraAlocacaoClusterLocationsTipoLocation entity);
 
     /**
      * Remove regras por tipo de location de cluster de locations em lote e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     void deleteAll(Iterable<? extends RegraAlocacaoClusterLocationsTipoLocation> entities);
 
 }

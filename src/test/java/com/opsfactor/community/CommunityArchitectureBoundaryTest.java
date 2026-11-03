@@ -589,8 +589,8 @@ class CommunityArchitectureBoundaryTest {
     );
 
     private static final List<String> COMMUNITY_ALLOWED_MODEL_PROJECTION_FILES = List.of(
-            "configuration/parametros/ClusterEParametrosProjection.java",
-            "configuration/parametros/ClusterEParametrosProjectionFactory.java",
+            "configuration/parametros/CadastroEParametrosProjection.java",
+            "configuration/parametros/CadastroEParametrosProjectionFactory.java",
             "configuration/planning/demand/aggregation/ParametrosDemandPlanNivelClusterProjection.java",
             "configuration/planning/demand/aggregation/ParametrosDemandPlanNivelClusterProjectionSimples.java",
             "configuration/planning/demand/factory/ParametrosDemandPlanningProjectionFactory.java",
@@ -1974,7 +1974,7 @@ class CommunityArchitectureBoundaryTest {
         List<String> violations = new ArrayList<>();
 
         /*
-         * MaterialDtoService e ClusterEParametrosProjectionFactory validam id
+         * MaterialDtoService e CadastroEParametrosProjectionFactory validam id
          * ausente e duplicado antes de indexar materiais ativos. O repository
          * precisa retornar List para que ids duplicados vindos do snapshot nao
          * sejam deduplicados antes dessas validations.
@@ -2045,7 +2045,7 @@ class CommunityArchitectureBoundaryTest {
         List<String> violations = new ArrayList<>();
 
         /*
-         * ClusterEParametrosProjectionFactory valida ids duplicados de clusters
+         * CadastroEParametrosProjectionFactory valida ids duplicados de clusters
          * de location antes de montar os mapas centrais. O repository nao pode
          * voltar a retornar Set nesse snapshot amplo, pois isso deduplicaria a
          * cardinalidade estrutural antes da borda funcional validar o dado.

@@ -5,8 +5,8 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.network.location.domain.LocationAbstract;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaLocation;
@@ -49,7 +49,7 @@ public class CommunityInventoryOverviewProjectionLoader {
 
     /** Carrega a projection de clusters e parâmetros sem navegar entidades por DFU. */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterAndParametersProjectionFactory;
+    private CadastroEParametrosProjectionFactory clusterAndParametersProjectionFactory;
 
     /** Resolve a unidade solicitada para a agregação de estoque. */
     @Autowired
@@ -78,7 +78,7 @@ public class CommunityInventoryOverviewProjectionLoader {
         if (selectionDTO.supplyPlanId() == null) {
             throw new IllegalArgumentException("supplyPlanId is required for Inventory Overview");
         }
-        ClusterEParametrosProjection clusterAndParametersProjection = clusterAndParametersProjectionFactory
+        CadastroEParametrosProjection clusterAndParametersProjection = clusterAndParametersProjectionFactory
                 .getParametrosProjectionCompletoDeCache();
         UnidadeMedida targetUnitOfMeasure = getRequiredUnitOfMeasure(
                 unitOfMeasureProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache(),

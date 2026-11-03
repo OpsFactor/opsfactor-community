@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.transactionaldata.sales.saleshistory.
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.FiltroDFUProjection;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByLocationMaterialUOMDateImpl;
@@ -154,7 +154,7 @@ public class SalesProjectionLocationMaterialCorrelationScopeTest {
                 Set<Location> locations,
                 Set<Produto> produtos,
                 UnidadeMedidaProjection unidadeMedidaProjection,
-                ClusterEParametrosProjection clusterEParametrosProjection,
+                CadastroEParametrosProjection cadastroEParametrosProjection,
                 UnidadeMedida unidadePadrao) {
 
             envelopeReadCount++;

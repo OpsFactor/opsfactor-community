@@ -1,12 +1,13 @@
 package com.opsfactor.community.capability.demandplanning.configuration.projection.factory;
 
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
 import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriais;
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.ParametrosDemandPlanNivelCluster;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosGeraisDemandPlanningProjection;
@@ -41,7 +42,7 @@ public class ParametrosDemandPlanningProjectionFactory {
      * cluster location x cluster material.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private ClusterizacaoProjectionFactory clusterizacaoProjectionFactory;
 
     /**
      * Repository do perfil de execucao Demand Planning usado para resolver
@@ -62,24 +63,44 @@ public class ParametrosDemandPlanningProjectionFactory {
      * Materializa a projection completa de parametros de Demand Planning para
      * o perfil informado.
      */
+    /**
+     * Prepara contexto operacional para consultar um plano salvo, exigindo a
+     * mesma origem de classificação. O perfil atual não é uma fotografia dos
+     * parâmetros históricos: mudanças de origem devem falhar antes do cálculo.
+     */
+    public ParametrosDemandPlanProjection getParametrosDemandPlanProjection(
+            PerfilExecucaoDemandPlan perfilExecucaoDemandPlan, PerfilClusterizacao perfilClusterizacaoOrigem) {
+
+        Objects.requireNonNull(perfilClusterizacaoOrigem, "Saved plan requires a clustering origin.");
+        ParametrosDemandPlanProjection parametros = getParametrosDemandPlanProjection(perfilExecucaoDemandPlan);
+        String perfilEfetivoId = parametros.getClusterizacaoProjection().getPerfilClusterizacaoId();
+        if (!perfilEfetivoId.equals(perfilClusterizacaoOrigem.getId())) {
+            throw new IllegalStateException("Saved plan clustering origin " + perfilClusterizacaoOrigem.getId()
+                    + " differs from current execution origin " + perfilEfetivoId + ".");
+        }
+        return parametros;
+
+    }
+
     public ParametrosDemandPlanProjection getParametrosDemandPlanProjection(PerfilExecucaoDemandPlan perfilExecucaoDemandPlan) {
 
         validaPerfilExecucaoDemandPlan(perfilExecucaoDemandPlan);
 
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
-        validaClusterEParametrosProjection(clusterEParametrosProjection);
+        ClusterizacaoProjection clusterizacaoProjection = clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(getPerfilClusterizacaoIdEfetivo(perfilExecucaoDemandPlan));
+        validaClusterizacaoProjection(clusterizacaoProjection);
 
         // id cluster locations -> id cluster materiais -> (se existir) parametrosDemandPlanNivelCluster
         Map<Long, Map<Long, ParametrosDemandPlanNivelCluster>> mapaParametrosDemandPlanNivelCluster =
-                getMapaParametrosDemandPlanNivelClusterValidado(perfilExecucaoDemandPlan);
+                getMapaParametrosDemandPlanNivelClusterValidado(perfilExecucaoDemandPlan, clusterizacaoProjection.getPerfilClusterizacaoId());
 
         ParametrosDemandPlanProjection parametrosDemandPlanProjection = ParametrosDemandPlanProjection.builder()
-                .parametrosGlobais(clusterEParametrosProjection.getParametrosGlobais())
+                .clusterizacaoProjection(clusterizacaoProjection)
+                .parametrosGlobais(clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais())
                 .perfilExecucaoDemandPlan(perfilExecucaoDemandPlan)
-                        .mapaParametrosPorClusterLocationsClusterMateriais(clusterEParametrosProjection
+                        .mapaParametrosPorClusterLocationsClusterMateriais(clusterizacaoProjection
                         .getClusterLocationsList()
                         .parallelStream()
-                        .flatMap(clusterLocations -> clusterEParametrosProjection.getClusterMateriaisDemandPlanningList()
+                        .flatMap(clusterLocations -> clusterizacaoProjection.getClusterMateriaisDemandPlanningList()
                                 .stream()
                                 .map(clusterMateriaisDemandPlanning -> getParametrosDemandPlanNivelClusterProjection(perfilExecucaoDemandPlan, clusterLocations, clusterMateriaisDemandPlanning, mapaParametrosDemandPlanNivelCluster)))
                         .collect(Collectors.groupingBy(
@@ -112,6 +133,15 @@ public class ParametrosDemandPlanningProjectionFactory {
      *                                         para o perfil solicitado
      * @return projection efetiva a ser consumida pela execucao
      */
+    /** Origem pública; o overlay privado resolve a herança antes da leitura de clusters. */
+    protected String getPerfilClusterizacaoIdEfetivo(PerfilExecucaoDemandPlan perfilExecucaoDemandPlan) {
+
+        // O Community possui uma única definição operacional; a versão privada
+        // substitui este hook para resolver sua seleção e a herança de modelos.
+        return PerfilClusterizacao.ID_LEGADO;
+
+    }
+
     protected ParametrosDemandPlanProjection enriqueceParametrosDemandPlanProjection(
             ParametrosDemandPlanProjection parametrosDemandPlanProjection) {
 
@@ -147,20 +177,20 @@ public class ParametrosDemandPlanningProjectionFactory {
      * estrutural quebrado da projection central e devem falhar antes do
      * {@code parallelStream}, onde a excecao ficaria menos diagnostica.</p>
      */
-    private void validaClusterEParametrosProjection(ClusterEParametrosProjection clusterEParametrosProjection) {
+    private void validaClusterizacaoProjection(ClusterizacaoProjection clusterizacaoProjection) {
 
-        if (clusterEParametrosProjection == null) {
+        if (clusterizacaoProjection == null) {
             throw new IllegalStateException("Cluster/parameter projection returned null for Demand Planning parameters.");
         }
-        if (clusterEParametrosProjection.getParametrosGlobais() == null) {
+        if (clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais() == null) {
             throw new IllegalStateException("Cluster/parameter projection returned null global parameters for Demand Planning parameters.");
         }
 
         validaClusterLocationsList(
-                clusterEParametrosProjection.getClusterLocationsList(),
+                clusterizacaoProjection.getClusterLocationsList(),
                 "Demand Planning cluster location list");
         validaClusterMateriaisDemandPlanningList(
-                clusterEParametrosProjection.getClusterMateriaisDemandPlanningList(),
+                clusterizacaoProjection.getClusterMateriaisDemandPlanningList(),
                 "Demand Planning material cluster list");
 
     }
@@ -178,11 +208,11 @@ public class ParametrosDemandPlanningProjectionFactory {
      * mapa funcional.</p>
      */
     private Map<Long, Map<Long, ParametrosDemandPlanNivelCluster>> getMapaParametrosDemandPlanNivelClusterValidado(
-            PerfilExecucaoDemandPlan perfilExecucaoDemandPlan) {
+            PerfilExecucaoDemandPlan perfilExecucaoDemandPlan, String perfilClusterizacaoId) {
 
         List<ParametrosDemandPlanNivelCluster> parametrosDemandPlanNivelClusterList =
                 parametrosDemandPlanNivelClusterRepository.findByPerfilExecucaoDemandPlanId(
-                        perfilExecucaoDemandPlan.getId());
+                        perfilExecucaoDemandPlan.getId(), perfilClusterizacaoId);
 
         if (parametrosDemandPlanNivelClusterList == null) {
             throw new IllegalStateException(
@@ -327,21 +357,11 @@ public class ParametrosDemandPlanningProjectionFactory {
     /**
      * Resolve o perfil por id e materializa a projection de parametros.
      */
-    public ParametrosDemandPlanProjection getParametrosDemandPlanProjectionDeCache(String perfilExecucaoDemandPlanId) {
+    public ParametrosDemandPlanProjection getParametrosDemandPlanProjection(String perfilExecucaoDemandPlanId) {
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = perfilExecucaoDemandPlanRepository
                 .findById(perfilExecucaoDemandPlanId)
                 .orElseThrow(() -> new NoResultException("No execution profile found with id " + perfilExecucaoDemandPlanId));
-        return getParametrosDemandPlanProjectionDeCache(perfilExecucaoDemandPlan);
-    }
-
-    /**
-     * Mantem a assinatura historica de cache, mas hoje delega para a montagem
-     * completa Community. O cache efetivo fica nas projections/factories
-     * centrais chamadas por este metodo.
-     */
-    public ParametrosDemandPlanProjection getParametrosDemandPlanProjectionDeCache(PerfilExecucaoDemandPlan perfilExecucaoDemandPlan) {
-        ParametrosDemandPlanProjection parametrosDemandPlanProjection = getParametrosDemandPlanProjection(perfilExecucaoDemandPlan);
-        return parametrosDemandPlanProjection;
+        return getParametrosDemandPlanProjection(perfilExecucaoDemandPlan);
     }
 
     /**
@@ -382,15 +402,21 @@ public class ParametrosDemandPlanningProjectionFactory {
     public ParametrosDemandPlanNivelClusterProjection getParametrosDemandPlanNivelClusterProjection(
             ParametrosDemandPlanNivelCluster parametrosDemandPlanNivelCluster) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
-
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = parametrosDemandPlanNivelCluster.getPerfilExecucaoDemandPlan();
+        // A linha já pertence à origem efetiva resolvida em lote. Não consultar
+        // novamente a seleção Enterprise para cada par em threads paralelas.
+        String perfilClusterizacaoId = parametrosDemandPlanNivelCluster.getClusterLocations().getPerfilClusterizacao().getId();
+        if (!perfilClusterizacaoId.equals(parametrosDemandPlanNivelCluster.getClusterMateriaisDemandPlanning().getPerfilClusterizacao().getId())) {
+            throw new IllegalStateException("Demand Planning parameters mix clustering profiles.");
+        }
+        ClusterizacaoProjection clusterizacaoProjection = clusterizacaoProjectionFactory
+                .getClusterizacaoProjectionDeCache(perfilClusterizacaoId);
 
         ClusterLocations clusterLocations = parametrosDemandPlanNivelCluster.getClusterLocations();
         ClusterMateriais clusterMateriaisDemandPlanning =
                 parametrosDemandPlanNivelCluster.getClusterMateriaisDemandPlanning();
 
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais();
 
         /*
          * Community usa sempre parametros configurados manualmente no nivel

@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.transactionaldata.sales.saleshistory.
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedDataInterface;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.platform.calendar.Calendario;
@@ -33,7 +33,7 @@ public abstract class SalesProjectionAbstract {
      * nos agregados lidos do repository; manter este campo explicito ajuda os
      * overlays Enterprise a seguirem o mesmo contrato.
      */
-    protected ClusterEParametrosProjection clusterEParametrosProjection;
+    protected CadastroEParametrosProjection cadastroEParametrosProjection;
 
     /**
      * Projection de conversao entre unidades. Consumers devem usar este objeto

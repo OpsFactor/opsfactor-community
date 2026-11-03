@@ -86,9 +86,9 @@ public class ClusteringRestController {
     @GetMapping("api/secured/materialclustering")
     @Secured("ROLE_ADMIN")
     @ResponseBody @ResponseStatus(HttpStatus.OK)
-    public List<ClusterProdutosDTO> getMaterialClusterDTOList() {
+    public List<ClusterProdutosDTO> getMaterialClusterDTOList(@RequestParam(required = false) String clusteringProfileId) {
 
-        return clusteringFrontService.getListaTodosClusterProdutosDTOExcetoPadrao();
+        return clusteringFrontService.getListaTodosClusterProdutosDTOExcetoPadrao(clusteringProfileId);
 
     }
 
@@ -98,9 +98,9 @@ public class ClusteringRestController {
     @GetMapping("api/secured/locationclustering")
     @Secured("ROLE_ADMIN")
     @ResponseBody @ResponseStatus(HttpStatus.OK)
-    public List<ClusterLocationsDTO> getClusterLocationsDTOList() {
+    public List<ClusterLocationsDTO> getClusterLocationsDTOList(@RequestParam(required = false) String clusteringProfileId) {
 
-        return clusteringFrontService.getListaTodosClusterLocationsDTOExcetoPadrao();
+        return clusteringFrontService.getListaTodosClusterLocationsDTOExcetoPadrao(clusteringProfileId);
 
     }
 
@@ -110,9 +110,9 @@ public class ClusteringRestController {
     @GetMapping("api/secured/materialclustering/{id}")
     @Secured("ROLE_ADMIN")
     @ResponseBody @ResponseStatus(HttpStatus.OK)
-    public ClusterProdutosDTO getMaterialClusterDTOById(@PathVariable String id) {
+    public ClusterProdutosDTO getMaterialClusterDTOById(@PathVariable String id, @RequestParam(required = false) String clusteringProfileId) {
 
-        return clusteringFrontService.getClusterProdutosDTO(id);
+        return clusteringFrontService.getClusterProdutosDTO(id, clusteringProfileId);
 
     }
 
@@ -122,9 +122,9 @@ public class ClusteringRestController {
     @GetMapping("api/secured/locationclustering/{id}")
     @Secured("ROLE_ADMIN")
     @ResponseBody @ResponseStatus(HttpStatus.OK)
-    public ClusterLocationsDTO getClusterLocationsDTODeId(@PathVariable String id) {
+    public ClusterLocationsDTO getClusterLocationsDTODeId(@PathVariable String id, @RequestParam(required = false) String clusteringProfileId) {
 
-        return clusteringFrontService.getClusterLocationsDTO(id);
+        return clusteringFrontService.getClusterLocationsDTO(id, clusteringProfileId);
 
     }
 
@@ -223,9 +223,9 @@ public class ClusteringRestController {
     @Secured("ROLE_ADMIN")
     @ResponseBody
     @ResponseStatus(HttpStatus.OK)
-    public List<AlocacaoClusterMaterialDTO> getAlocacaoMateriaisEmClusters() {
+    public List<AlocacaoClusterMaterialDTO> getAlocacaoMateriaisEmClusters(@RequestParam(required = false) String clusteringProfileId) {
 
-        return clusteringFrontService.getAlocacaoMateriaisEmClusters();
+        return clusteringFrontService.getAlocacaoMateriaisEmClusters(clusteringProfileId);
 
     }
 
@@ -236,9 +236,9 @@ public class ClusteringRestController {
     @Secured("ROLE_ADMIN")
     @ResponseBody
     @ResponseStatus(HttpStatus.OK)
-    public List<AlocacaoClusterLocationDTO> getAlocacaoLocationsEmClusters() {
+    public List<AlocacaoClusterLocationDTO> getAlocacaoLocationsEmClusters(@RequestParam(required = false) String clusteringProfileId) {
 
-        return clusteringFrontService.getAlocacaoLocationsEmClusters();
+        return clusteringFrontService.getAlocacaoLocationsEmClusters(clusteringProfileId);
 
     }
 

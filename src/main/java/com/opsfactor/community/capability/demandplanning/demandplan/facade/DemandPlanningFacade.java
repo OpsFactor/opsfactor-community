@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.demandplan.facade;
 
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
+
 import com.opsfactor.community.capability.demandplanning.planningbook.service.PlanningBookDemandAdjustmentContext;
 import com.opsfactor.community.capability.planningbook.domain.AjusteCelulaPlanningBook;
 import com.opsfactor.community.capability.planningbook.domain.PlanningBookDfuScope;
@@ -16,8 +18,8 @@ import com.opsfactor.community.capability.demandplanning.demandplan.domain.Deman
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlanItem;
 import com.opsfactor.community.platform.exception.AccessDeniedException;
 import com.opsfactor.community.platform.exception.UnitOfMeasureConversionException;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.factory.ParametrosDemandPlanningProjectionFactory;
 import com.opsfactor.community.capability.configuration.user.projection.ConfiguredViewProjection;
@@ -166,7 +168,7 @@ public class DemandPlanningFacade {
      * Factory da projection geral de parametros, clusters e master data.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private ClusterizacaoProjectionFactory clusterizacaoProjectionFactory;
 
     /**
      * Factory da projection de Demand Plan usada para aplicar ajustes em
@@ -218,15 +220,15 @@ public class DemandPlanningFacade {
         List<Location> locationListCarregada = locationRepository.findAll();
         validaLocationListCarregadaParaSeletorDemandPlanningCommunity(locationListCarregada);
 
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        ClusterizacaoProjection clusterizacaoProjection = clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(PerfilClusterizacao.ID_LEGADO);
 
         // extrai objetos que serão incorporados ao DTO
         List<Location> demandPlanLocations = locationListCarregada.stream()
-                .filter(x -> clusterEParametrosProjection.getClusterLocationsDeLocation(x).getParametrosClusterLocations().getPlanejaDP())
+                .filter(x -> clusterizacaoProjection.getClusterLocationsDeLocation(x).getParametrosClusterLocations().getPlanejaDP())
                 .collect(Collectors.toList());
 
         List<ClusterLocations> demandPlanClusterLocations = demandPlanLocations.stream()
-                .map(location -> clusterEParametrosProjection.getClusterLocationsDeLocation(location))
+                .map(location -> clusterizacaoProjection.getClusterLocationsDeLocation(location))
                 .distinct()
                 .collect(Collectors.toList());
         /*
@@ -241,7 +243,7 @@ public class DemandPlanningFacade {
         
         // incorpora objetos no DTO
         DemandPlanSelectDTO demandPlanningSelectDTO = new DemandPlanSelectDTO();
-        demandPlanningSelectDTO.addClusterLocationsList(demandPlanClusterLocations, clusterEParametrosProjection);
+        demandPlanningSelectDTO.addClusterLocationsList(demandPlanClusterLocations, clusterizacaoProjection);
         demandPlanningSelectDTO.addDemandPlanList(demandPlanList);
         
         return demandPlanningSelectDTO;
@@ -251,7 +253,7 @@ public class DemandPlanningFacade {
      * Valida as locations carregadas para o seletor de Demand Planning.
      *
      * <p>Lista vazia e valida para base nova. Item nulo ou location sem id nao
-     * pode chegar ao `ClusterEParametrosProjection`, que usa a identidade da
+     * pode chegar ao `ClusterizacaoProjection`, que usa a identidade da
      * location para resolver o cluster de exibicao do seletor.</p>
      */
     private void validaLocationListCarregadaParaSeletorDemandPlanningCommunity(
@@ -690,14 +692,14 @@ public class DemandPlanningFacade {
         
         DemandPlan demandPlan = demandPlanningService.getDemandPlanDeId(demandPlanId);
         
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        ClusterizacaoProjection clusterizacaoProjection = clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(demandPlan.getPerfilClusterizacaoOrigem().getId());
         UnidadeMedidaProjection conversaoUnidadeMedidaProjection = conversaoUnidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
         
         ConfiguredViewProjection configuredViewProjection = getConfiguredViewProjectionDemandPlanning(
                 userId,
                 configuredViewSelectionDTO.viewName,
                 demandPlan,
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 conversaoUnidadeMedidaProjection);
         
         validaConfiguredViewProjectionDemandPlanningBookCommunity(configuredViewProjection);
@@ -965,7 +967,7 @@ public class DemandPlanningFacade {
         DemandPlan demandPlan = demandPlanRepository.customFindByIdComPerfilExecucao(
                 selectedPlanningBookCellDTOs.get(0).planId).get();
 
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        ClusterizacaoProjection clusterizacaoProjection = clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(demandPlan.getPerfilClusterizacaoOrigem().getId());
 
         UnidadeMedidaProjection unidadeMedidaProjection = conversaoUnidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
 
@@ -974,8 +976,7 @@ public class DemandPlanningFacade {
         }
 
         ParametrosDemandPlanProjection parametrosDemandPlanProjection =
-                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjectionDeCache(
-                                demandPlan.getPerfilExecucaoDemandPlan());
+                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjection(demandPlan.getPerfilExecucaoDemandPlan(), demandPlan.getPerfilClusterizacaoOrigem());
 
         ConfiguredView configuredView = configuredViewService.getConfiguredView(
                 userId,
@@ -984,7 +985,7 @@ public class DemandPlanningFacade {
 
         ConfiguredViewProjection configuredViewProjectionSemFiltroFaturamentoHistorico = configuredViewProjectionFactory.getConfiguredViewProjection(
                 configuredView,
-                clusterEParametrosProjection);
+                clusterizacaoProjection.getCadastroEParametrosProjection());
 
         // O filtro de faturamento historico deve respeitar primeiro os filtros da propria
         // view para evitar uma consolidacao de sellout em toda a malha ativa.
@@ -993,7 +994,7 @@ public class DemandPlanningFacade {
                 demandPlan,
                 configuredViewProjectionSemFiltroFaturamentoHistorico.getLocationsFiltradas(),
                 configuredViewProjectionSemFiltroFaturamentoHistorico.getMateriaisFiltrados(),
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 unidadeMedidaProjection);
 
         ConfiguredViewProjection configuredViewProjectionComSelecaoAAtualizar = configuredViewService.getConfiguredViewProjectionComDTOSelecaoCelulas(
@@ -1002,14 +1003,14 @@ public class DemandPlanningFacade {
                 ConfiguredView.TipoView.DEMANDPLANNINGBOOK,
                 demandPlan.getTamanhoBucket(),
                 selectedPlanningBookCellDTOs,
-                clusterEParametrosProjection,
+                clusterizacaoProjection.getCadastroEParametrosProjection(),
                 filtroFaturamentoHistorico);
 
         DemandPlanningProjection demandPlanningProjection = demandPlanProjectionFactory.getDemandPlanningProjectionCompleto(
                 demandPlan,
                 configuredViewProjectionComSelecaoAAtualizar.getDfuProjectionFiltrado(),
                 unidadeMedidaProjection,
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 parametrosDemandPlanProjection,
                 false);
 
@@ -1307,7 +1308,7 @@ public class DemandPlanningFacade {
             DemandPlanningProjection demandPlanningProjection,
             PlanningBookDemandAdjustmentContext adjustmentContext) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = demandPlanningProjection.getClusterEParametrosProjection();
+        ClusterizacaoProjection clusterizacaoProjection = demandPlanningProjection.getClusterizacaoProjection();
         ConfiguredView configuredView = configuredViewProjection.getConfiguredView();
         Boolean permiteAlteracaoHorizonteCongelado = configuredView.getPermiteAlteracaoHorizonteCongelado();
 
@@ -1328,7 +1329,7 @@ public class DemandPlanningFacade {
                 planningBookDfuScope.getLocations(),
                 planningBookDfuScope.getMateriais(),
                 calendarioDemandPlan,
-                clusterEParametrosProjection)) throw new AccessDeniedException("The adjustment was made inside the frozen horizon");
+                clusterizacaoProjection.getCadastroEParametrosProjection())) throw new AccessDeniedException("The adjustment was made inside the frozen horizon");
 
         // Permissão por key figure configurada na User View é Enterprise.
         // O Community usa apenas o modo padrão de edição de cada KF standard.
@@ -1565,7 +1566,7 @@ public class DemandPlanningFacade {
             @Nullable PlanningBookDemandAdjustmentContext adjustmentContext) {
 
         KeyFigureInterface keyFigureInputAjuste = keyFigureService.getKeyFigureDeId(ajusteCelulaPlanningBook.getKeyFigureId());
-        ClusterEParametrosProjection clusterEParametrosProjection = demandPlanningProjection.getClusterEParametrosProjection();
+        ClusterizacaoProjection clusterizacaoProjection = demandPlanningProjection.getClusterizacaoProjection();
 
         validaKeyFigureAjustePlanningBookCommunity(keyFigureInputAjuste);
 
@@ -1576,7 +1577,7 @@ public class DemandPlanningFacade {
         // Chamadas internas isoladas podem não possuir contexto; lotes reutilizam o mesmo filtro da validação.
         FiltroDFUProjection filtroDFUProjection = adjustmentContext == null
                 ? planningBookDfuScope.getNovoDFUProjectionInterseccaoComProjectionFiltro(
-                        demandPlanningProjection.getFiltroDfuProjection(), clusterEParametrosProjection)
+                        demandPlanningProjection.getFiltroDfuProjection(), clusterizacaoProjection.getCadastroEParametrosProjection())
                 : adjustmentContext.getOrCreateDfuFilter(planningBookDfuScope, demandPlanningProjection);
 
         if (!(keyFigureInputAjuste instanceof KeyFigureStandard)) {
@@ -1673,7 +1674,7 @@ public class DemandPlanningFacade {
                 "Demand Planning split reference key figures");
         validaFiltroDFUProjectionPlanningBookDemand(filtroDFUProjection);
 
-        ClusterEParametrosProjection clusterEParametrosProjection = demandPlanningProjection.getClusterEParametrosProjection();
+        ClusterizacaoProjection clusterizacaoProjection = demandPlanningProjection.getClusterizacaoProjection();
 
         Integer posicaoPeriodo = demandPlanningProjection.getCalendario().getPosicaoPeriodo(dataHorarioReferencia);
 
@@ -1687,7 +1688,7 @@ public class DemandPlanningFacade {
                 valorNovo,
                 valorAtualKeyFiguresOndeFoiAplicadoAjusteTotal,
                 filtroDFUProjection,
-                clusterEParametrosProjection);
+                clusterizacaoProjection);
 
         double quantidadeTotalEmKeyFiguresTotalizacao = demandPlanningProjection.getValorTotalKeyFigures(
                 keyFiguresOndeFoiAplicadoAjusteTotal,
@@ -1759,7 +1760,7 @@ public class DemandPlanningFacade {
             double valorNovo,
             double valorAtualReferencia,
             FiltroDFUProjection filtroDFUProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            ClusterizacaoProjection clusterizacaoProjection) {
 
         if (valorNovo <= 0.0000001 || valorAtualReferencia > 0.0000001) {
             return;
@@ -1767,7 +1768,7 @@ public class DemandPlanningFacade {
 
         boolean nivelMaterial = filtroDFUProjection.getMateriais().size() == 1;
         boolean nivelLocation = filtroDFUProjection.getLocations().size() == 1;
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais();
         if ((!nivelMaterial && !parametrosGlobais.getPermiteAjusteAgregadoSemBaselineProduto())
                 || (!nivelLocation && !parametrosGlobais.getPermiteAjusteAgregadoSemBaselineLocation())) {
             throw new DemandPlanException(
@@ -2074,7 +2075,7 @@ public class DemandPlanningFacade {
             String userId,
             String viewName,
             DemandPlan demandPlan,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             UnidadeMedidaProjection unidadeMedidaProjection) {
 
         ConfiguredView configuredView = configuredViewService.getConfiguredView(
@@ -2084,14 +2085,14 @@ public class DemandPlanningFacade {
 
         ConfiguredViewProjection configuredViewProjectionSemFiltroFaturamentoHistorico = configuredViewProjectionFactory.getConfiguredViewProjection(
                 configuredView,
-                clusterEParametrosProjection);
+                clusterizacaoProjection.getCadastroEParametrosProjection());
 
         BiFunction<Produto,Location,Boolean> filtroFaturamentoHistorico = getFiltroFaturamentoHistorico(
                 configuredView,
                 demandPlan,
                 configuredViewProjectionSemFiltroFaturamentoHistorico.getLocationsFiltradas(),
                 configuredViewProjectionSemFiltroFaturamentoHistorico.getMateriaisFiltrados(),
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 unidadeMedidaProjection);
 
         if (filtroFaturamentoHistorico == null) {
@@ -2100,7 +2101,7 @@ public class DemandPlanningFacade {
 
         return configuredViewProjectionFactory.getConfiguredViewProjection(
                 configuredView,
-                clusterEParametrosProjection,
+                clusterizacaoProjection.getCadastroEParametrosProjection(),
                 filtroFaturamentoHistorico);
 
     }
@@ -2115,13 +2116,13 @@ public class DemandPlanningFacade {
             DemandPlan demandPlan,
             Set<Location> locationsFiltradas,
             Set<Produto> materiaisFiltrados,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             UnidadeMedidaProjection unidadeMedidaProjection) {
         
         BiFunction<Produto,Location,Boolean> filtroFaturamentoHistorico = null;
         if (!configuredView.getExibeDfusSemFaturamentoNoHorizonteHistorico() && configuredView.getNumeroPeriodosHistoricosDemandPlanningBook() > 0) {
             
-            ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+            ParametrosGlobais parametrosGlobais = clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais();
             PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = demandPlan.getPerfilExecucaoDemandPlan();
             
             CalendarioSimples calendarioHistoricoVendas = CalendarioSimples.criaCalendarioDeOffsetsPeriodos(
@@ -2135,7 +2136,7 @@ public class DemandPlanningFacade {
                     locationsFiltradas,
                     materiaisFiltrados,
                     unidadeMedidaProjection, 
-                    clusterEParametrosProjection, 
+                    clusterizacaoProjection.getCadastroEParametrosProjection(), 
                     configuredView.getUnidadeMedidaView(parametrosGlobais));
             
             filtroFaturamentoHistorico = (material, location) -> salesProjectionMaterialLocation.getQuantidadeSales(material, location, unidadeMedidaVisao) > 0;

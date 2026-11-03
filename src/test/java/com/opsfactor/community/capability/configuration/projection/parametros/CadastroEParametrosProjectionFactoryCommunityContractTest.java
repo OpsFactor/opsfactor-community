@@ -1,5 +1,8 @@
 package com.opsfactor.community.capability.configuration.projection.parametros;
 
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
@@ -15,7 +18,7 @@ import com.opsfactor.community.capability.configuration.repository.cluster.produ
 import com.opsfactor.community.capability.configuration.repository.cluster.produto.RegraAlocacaoClusterProdutosCaracteristicaRepository;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.repository.CaracteristicaLocationRepository;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.repository.CaracteristicaMaterialRepository;
-import com.opsfactor.community.capability.cluster.service.ClusteringService;
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
 import com.opsfactor.community.capability.configuration.service.ParametrosGlobaisService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -30,37 +33,37 @@ import java.util.Set;
 /**
  * Contratos Community da factory central de parametros e master data basico.
  *
- * <p>A `ClusterEParametrosProjectionFactory` materializa o snapshot mais usado
+ * <p>A `CadastroEParametrosProjectionFactory` materializa o snapshot mais usado
  * por Demand Planning, Supply Planning e projections auxiliares. Esses testes
  * protegem a fronteira inicial de material/location: a projection nao deve
  * chegar aos repositories de clusters nem aos `Collectors.toMap(...)` quando o
  * snapshot base vem nulo, com item nulo, sem id ou com id funcional duplicado.</p>
  */
-class ClusterEParametrosProjectionFactoryCommunityContractTest {
+class CadastroEParametrosProjectionFactoryCommunityContractTest {
 
     @Test
     void getParametrosProjectionBaseShouldRejectBrokenMaterialSnapshotBeforeDependencies() {
 
-        ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory =
-                new ClusterEParametrosProjectionFactory();
+        CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory =
+                new CadastroEParametrosProjectionFactory();
 
         assertIllegalArgumentMessage(
-                () -> clusterEParametrosProjectionFactory.getParametrosProjectionBase(
+                () -> cadastroEParametrosProjectionFactory.getParametrosProjectionBase(
                         Set.of(new Location("LOC")),
                         null),
                 "Cluster and parameters projection requires material snapshot collection.");
         assertIllegalArgumentMessage(
-                () -> clusterEParametrosProjectionFactory.getParametrosProjectionBase(
+                () -> cadastroEParametrosProjectionFactory.getParametrosProjectionBase(
                         Set.of(new Location("LOC")),
                         getSnapshotComItemNulo()),
                 "Cluster and parameters projection material snapshot item at index 0 is required.");
         assertIllegalArgumentMessage(
-                () -> clusterEParametrosProjectionFactory.getParametrosProjectionBase(
+                () -> cadastroEParametrosProjectionFactory.getParametrosProjectionBase(
                         Set.of(new Location("LOC")),
                         Set.of(new Produto())),
                 "Cluster and parameters projection material snapshot item at index 0 must have id.");
         assertIllegalArgumentMessage(
-                () -> clusterEParametrosProjectionFactory.getParametrosProjectionBase(
+                () -> cadastroEParametrosProjectionFactory.getParametrosProjectionBase(
                         Set.of(new Location("LOC")),
                         getMateriaisComIdDuplicado()),
                 "Cluster and parameters projection material snapshot has duplicated id MAT.");
@@ -70,26 +73,26 @@ class ClusterEParametrosProjectionFactoryCommunityContractTest {
     @Test
     void getParametrosProjectionBaseShouldRejectBrokenLocationSnapshotBeforeDependencies() {
 
-        ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory =
-                new ClusterEParametrosProjectionFactory();
+        CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory =
+                new CadastroEParametrosProjectionFactory();
 
         assertIllegalArgumentMessage(
-                () -> clusterEParametrosProjectionFactory.getParametrosProjectionBase(
+                () -> cadastroEParametrosProjectionFactory.getParametrosProjectionBase(
                         null,
                         Set.of(new Produto("MAT"))),
                 "Cluster and parameters projection requires location snapshot collection.");
         assertIllegalArgumentMessage(
-                () -> clusterEParametrosProjectionFactory.getParametrosProjectionBase(
+                () -> cadastroEParametrosProjectionFactory.getParametrosProjectionBase(
                         getSnapshotComItemNulo(),
                         Set.of(new Produto("MAT"))),
                 "Cluster and parameters projection location snapshot item at index 0 is required.");
         assertIllegalArgumentMessage(
-                () -> clusterEParametrosProjectionFactory.getParametrosProjectionBase(
+                () -> cadastroEParametrosProjectionFactory.getParametrosProjectionBase(
                         Set.of(new Location()),
                         Set.of(new Produto("MAT"))),
                 "Cluster and parameters projection location snapshot item at index 0 must have id.");
         assertIllegalArgumentMessage(
-                () -> clusterEParametrosProjectionFactory.getParametrosProjectionBase(
+                () -> cadastroEParametrosProjectionFactory.getParametrosProjectionBase(
                         getLocationsComIdDuplicado(),
                         Set.of(new Produto("MAT"))),
                 "Cluster and parameters projection location snapshot has duplicated id LOC.");
@@ -99,18 +102,15 @@ class ClusterEParametrosProjectionFactoryCommunityContractTest {
     @Test
     void getParametrosProjectionBaseShouldRejectDuplicatedMaterialClusterIdBeforeMapIndexing() throws Exception {
 
-        ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory =
-                getFactoryComSnapshotsDeRepositories(
+        ClusterizacaoProjectionFactory cadastroEParametrosProjectionFactory =
+                getClusteringFactory(
                         List.of(
                                 getClusterProdutosDemandPlanning(1L),
                                 getClusterProdutosDemandPlanning(1L)),
-                        List.of(),
                         List.of());
 
         assertIllegalStateMessage(
-                () -> clusterEParametrosProjectionFactory.getParametrosProjectionBase(
-                        Set.of(new Location("LOC")),
-                        Set.of(new Produto("MAT"))),
+                () -> cadastroEParametrosProjectionFactory.getClusterizacaoProjectionBase("LEGADO", emptyMasters()),
                 "Demand Planning material cluster repository has duplicated id 1 for Cluster and parameters projection.");
 
     }
@@ -118,16 +118,13 @@ class ClusterEParametrosProjectionFactoryCommunityContractTest {
     @Test
     void getParametrosProjectionBaseShouldRejectDuplicatedLocationClusterIdBeforeMapIndexing() throws Exception {
 
-        ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory =
-                getFactoryComSnapshotsDeRepositories(
+        ClusterizacaoProjectionFactory cadastroEParametrosProjectionFactory =
+                getClusteringFactory(
                         List.of(),
-                        getClusterLocationsComIdDuplicadoParaRepository(),
-                        List.of());
+                        getClusterLocationsComIdDuplicadoParaRepository());
 
         assertIllegalStateMessage(
-                () -> clusterEParametrosProjectionFactory.getParametrosProjectionBase(
-                        Set.of(new Location("LOC")),
-                        Set.of(new Produto("MAT"))),
+                () -> cadastroEParametrosProjectionFactory.getClusterizacaoProjectionBase("LEGADO", emptyMasters()),
                 "Location cluster repository has duplicated id 1 for Cluster and parameters projection.");
 
     }
@@ -137,7 +134,7 @@ class ClusterEParametrosProjectionFactoryCommunityContractTest {
 
         Produto material = new Produto("MAT");
         Location location = new Location("LOC");
-        ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory =
+        CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory =
                 getFactoryComSnapshotsDeRepositories(
                         List.of(),
                         List.of(),
@@ -152,45 +149,21 @@ class ClusterEParametrosProjectionFactoryCommunityContractTest {
                                                 new Location("LOC")))));
 
         assertIllegalStateMessage(
-                () -> clusterEParametrosProjectionFactory.getParametrosProjectionBase(
+                () -> cadastroEParametrosProjectionFactory.getParametrosProjectionBase(
                         Set.of(location),
                         Set.of(material)),
                 "Material/location parameter repository has duplicated key material MAT / location LOC for Cluster and parameters projection.");
 
     }
 
-    private static ClusterEParametrosProjectionFactory getFactoryComClusterMaterialRepositoryResult(
-            List<ClusterMateriais> clusterMateriaisList)
-            throws Exception {
-
-        ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory =
-                new ClusterEParametrosProjectionFactory();
-        ClusterMateriaisRepository clusterMateriaisRepository =
-                Mockito.mock(ClusterMateriaisRepository.class);
-        Mockito.when(clusterMateriaisRepository.findAll())
-                .thenReturn(clusterMateriaisList);
-
-        setPrivateField(
-                clusterEParametrosProjectionFactory,
-                "clusteringService",
-                Mockito.mock(ClusteringService.class));
-        setPrivateField(
-                clusterEParametrosProjectionFactory,
-                "clusterMateriaisDemandPlanningRepository",
-                clusterMateriaisRepository);
-
-        return clusterEParametrosProjectionFactory;
-
-    }
-
-    private static ClusterEParametrosProjectionFactory getFactoryComSnapshotsDeRepositories(
+    private static CadastroEParametrosProjectionFactory getFactoryComSnapshotsDeRepositories(
             List<ClusterMateriais> clusterMateriaisList,
             List<ClusterLocations> clusterLocationsList,
             List<ParametrosProdutoLocation> parametrosProdutoLocationList)
             throws Exception {
 
-        ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory =
-                new ClusterEParametrosProjectionFactory();
+        CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory =
+                new CadastroEParametrosProjectionFactory();
         ClusterMateriaisRepository clusterMateriaisRepository =
                 Mockito.mock(ClusterMateriaisRepository.class);
         RegraAlocacaoClusterProdutosStatusRepository regraAlocacaoClusterProdutosStatusRepository =
@@ -212,17 +185,28 @@ class ClusterEParametrosProjectionFactoryCommunityContractTest {
         CaracteristicaLocationRepository caracteristicaLocationRepository =
                 Mockito.mock(CaracteristicaLocationRepository.class);
 
-        Mockito.when(clusterMateriaisRepository.findAll())
+        if (clusterMateriaisList.isEmpty()) {
+            ClusterMateriais materialDefault = getClusterProdutosDemandPlanning(90L);
+            materialDefault.setPadrao(true);
+            clusterMateriaisList = List.of(materialDefault);
+        }
+        if (clusterLocationsList.isEmpty()) {
+            ClusterLocations locationDefault = getClusterLocations(90L);
+            locationDefault.setPadrao(true);
+            clusterLocationsList = List.of(locationDefault);
+        }
+
+        Mockito.when(clusterMateriaisRepository.findAllByPerfilClusterizacaoId(Mockito.anyString()))
                 .thenReturn(clusterMateriaisList);
-        Mockito.when(regraAlocacaoClusterProdutosStatusRepository.findAll())
+        Mockito.when(regraAlocacaoClusterProdutosStatusRepository.findAllForClusteringProfile(Mockito.anyString()))
                 .thenReturn(List.of());
-        Mockito.when(regraAlocacaoClusterProdutosCaracteristicaRepository.findAll())
+        Mockito.when(regraAlocacaoClusterProdutosCaracteristicaRepository.findAllForClusteringProfile(Mockito.anyString()))
                 .thenReturn(List.of());
-        Mockito.when(clusterLocationsRepository.customFindAll())
+        Mockito.when(clusterLocationsRepository.findAllByPerfilClusterizacaoId(Mockito.anyString()))
                 .thenReturn(clusterLocationsList);
-        Mockito.when(regraAlocacaoClusterLocationsPaisEstadoRepository.findAll())
+        Mockito.when(regraAlocacaoClusterLocationsPaisEstadoRepository.findAllForClusteringProfile(Mockito.anyString()))
                 .thenReturn(List.of());
-        Mockito.when(regraAlocacaoClusterLocationsTipoLocationRepository.findAll())
+        Mockito.when(regraAlocacaoClusterLocationsTipoLocationRepository.findAllForClusteringProfile(Mockito.anyString()))
                 .thenReturn(List.of());
         Mockito.when(parametrosGlobaisService.getParametrosGlobais())
                 .thenReturn(Mockito.mock(ParametrosGlobais.class));
@@ -234,51 +218,23 @@ class ClusterEParametrosProjectionFactoryCommunityContractTest {
                 .thenReturn(List.of());
 
         setPrivateField(
-                clusterEParametrosProjectionFactory,
-                "clusteringService",
-                Mockito.mock(ClusteringService.class));
-        setPrivateField(
-                clusterEParametrosProjectionFactory,
-                "clusterMateriaisDemandPlanningRepository",
-                clusterMateriaisRepository);
-        setPrivateField(
-                clusterEParametrosProjectionFactory,
-                "regraAlocacaoClusterProdutosStatusRepository",
-                regraAlocacaoClusterProdutosStatusRepository);
-        setPrivateField(
-                clusterEParametrosProjectionFactory,
-                "regraAlocacaoClusterProdutosCaracteristicaRepository",
-                regraAlocacaoClusterProdutosCaracteristicaRepository);
-        setPrivateField(
-                clusterEParametrosProjectionFactory,
-                "clusterLocationsRepository",
-                clusterLocationsRepository);
-        setPrivateField(
-                clusterEParametrosProjectionFactory,
-                "regraAlocacaoClusterLocationsPaisEstadoRepository",
-                regraAlocacaoClusterLocationsPaisEstadoRepository);
-        setPrivateField(
-                clusterEParametrosProjectionFactory,
-                "regraAlocacaoClusterLocationsTipoLocationRepository",
-                regraAlocacaoClusterLocationsTipoLocationRepository);
-        setPrivateField(
-                clusterEParametrosProjectionFactory,
+                cadastroEParametrosProjectionFactory,
                 "parametrosGlobaisService",
                 parametrosGlobaisService);
         setPrivateField(
-                clusterEParametrosProjectionFactory,
+                cadastroEParametrosProjectionFactory,
                 "parametrosProdutoLocationRepository",
                 parametrosProdutoLocationRepository);
         setPrivateField(
-                clusterEParametrosProjectionFactory,
+                cadastroEParametrosProjectionFactory,
                 "caracteristicaMaterialRepository",
                 caracteristicaMaterialRepository);
         setPrivateField(
-                clusterEParametrosProjectionFactory,
+                cadastroEParametrosProjectionFactory,
                 "caracteristicaLocationRepository",
                 caracteristicaLocationRepository);
 
-        return clusterEParametrosProjectionFactory;
+        return cadastroEParametrosProjectionFactory;
 
     }
 
@@ -373,4 +329,94 @@ class ClusterEParametrosProjectionFactoryCommunityContractTest {
 
     }
 
+
+    @Test
+    void shouldKeepIdenticalLocalIdsInSeparateProfileSnapshots() throws Exception {
+
+        ClusterMateriais materialA = getClusterProdutosDemandPlanning(1L);
+        materialA.setPadrao(true);
+        materialA.setPerfilClusterizacao(new PerfilClusterizacao("A", "Perfil A"));
+        ClusterLocations locationA = getClusterLocations(1L);
+        locationA.setPadrao(true);
+        locationA.setPerfilClusterizacao(materialA.getPerfilClusterizacao());
+        ClusterizacaoProjectionFactory factory = getClusteringFactory(
+                List.of(materialA), List.of(locationA));
+        ClusterMateriaisRepository materials = (ClusterMateriaisRepository) getPrivateField(factory, "clusterMateriaisDemandPlanningRepository");
+        ClusterLocationsRepository locations = (ClusterLocationsRepository) getPrivateField(factory, "clusterLocationsRepository");
+        ClusterMateriais materialB = getClusterProdutosDemandPlanning(1L);
+        materialB.setPadrao(true);
+        materialB.setPerfilClusterizacao(new PerfilClusterizacao("B", "Perfil B"));
+        ClusterLocations locationB = getClusterLocations(1L);
+        locationB.setPadrao(true);
+        locationB.setPerfilClusterizacao(materialB.getPerfilClusterizacao());
+        Mockito.when(materials.findAllByPerfilClusterizacaoId("B")).thenReturn(List.of(materialB));
+        Mockito.when(locations.findAllByPerfilClusterizacaoId("B")).thenReturn(List.of(locationB));
+
+        ClusterizacaoProjection snapshotA = factory.getClusterizacaoProjectionBase("A", emptyMasters());
+        ClusterizacaoProjection snapshotB = factory.getClusterizacaoProjectionBase("B", emptyMasters());
+
+        Assertions.assertEquals("A", snapshotA.getPerfilClusterizacaoId());
+        Assertions.assertEquals("B", snapshotB.getPerfilClusterizacaoId());
+        Assertions.assertSame(materialA, snapshotA.getClusterMateriaisList().getFirst());
+        Assertions.assertSame(materialB, snapshotB.getClusterMateriaisList().getFirst());
+        Assertions.assertNotEquals(materialA, materialB);
+        Mockito.verify(materials, Mockito.never()).findAll();
+        Mockito.verify(locations, Mockito.never()).customFindAll();
+
+    }
+
+    @Test
+    void shouldRejectProfileWithoutItsOwnMaterialDefault() throws Exception {
+
+        ClusterMateriais nonDefault = getClusterProdutosDemandPlanning(1L);
+        ClusterizacaoProjectionFactory factory = getClusteringFactory(
+                List.of(nonDefault), List.of());
+        IllegalStateException error = Assertions.assertThrows(IllegalStateException.class,
+                () -> factory.getClusterizacaoProjectionBase("NOVO", emptyMasters()));
+        Assertions.assertTrue(error.getMessage().contains("NOVO"));
+        Assertions.assertTrue(error.getMessage().contains("encontrados 0"));
+
+    }
+
+    private static CadastroEParametrosProjection emptyMasters() {
+        var masters = new CadastroEParametrosProjection();
+        masters.materialSet = Set.of();
+        masters.locationSet = Set.of();
+        masters.parametrosGlobais = new ParametrosGlobais();
+        return masters;
+    }
+
+    private static ClusterizacaoProjectionFactory getClusteringFactory(
+            List<ClusterMateriais> materials, List<ClusterLocations> locations) throws Exception {
+        var factory = new ClusterizacaoProjectionFactory();
+        var materialRepository = Mockito.mock(ClusterMateriaisRepository.class);
+        var locationRepository = Mockito.mock(ClusterLocationsRepository.class);
+        if (materials.isEmpty()) {
+            var value = getClusterProdutosDemandPlanning(90L);
+            value.setPadrao(true);
+            materials = List.of(value);
+        }
+        if (locations.isEmpty()) {
+            var value = getClusterLocations(90L);
+            value.setPadrao(true);
+            locations = List.of(value);
+        }
+        Mockito.when(materialRepository.findAllByPerfilClusterizacaoId(Mockito.anyString())).thenReturn(materials);
+        Mockito.when(locationRepository.findAllByPerfilClusterizacaoId(Mockito.anyString())).thenReturn(locations);
+        setPrivateField(factory, "clusterMateriaisDemandPlanningRepository", materialRepository);
+        setPrivateField(factory, "clusterLocationsRepository", locationRepository);
+        setPrivateField(factory, "regraAlocacaoClusterProdutosStatusRepository", Mockito.mock(RegraAlocacaoClusterProdutosStatusRepository.class));
+        setPrivateField(factory, "regraAlocacaoClusterProdutosCaracteristicaRepository", Mockito.mock(RegraAlocacaoClusterProdutosCaracteristicaRepository.class));
+        setPrivateField(factory, "regraAlocacaoClusterLocationsPaisEstadoRepository", Mockito.mock(RegraAlocacaoClusterLocationsPaisEstadoRepository.class));
+        setPrivateField(factory, "regraAlocacaoClusterLocationsTipoLocationRepository", Mockito.mock(RegraAlocacaoClusterLocationsTipoLocationRepository.class));
+        return factory;
+    }
+
+    private static Object getPrivateField(Object target, String name) throws Exception {
+
+        Field field = target.getClass().getDeclaredField(name);
+        field.setAccessible(true);
+        return field.get(target);
+
+    }
 }

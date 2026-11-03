@@ -1,6 +1,6 @@
 package com.opsfactor.community.capability.masterdata.classification.characteristic.facade.mapper;
 
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.facade.dto.FiltroMaterialLocationDeCombinacaoCaracteristicasDTO;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjectionFactory;
@@ -22,7 +22,7 @@ public interface FiltroMaterialDeCombinacaoCaracteristicasMapper {
      */
     static MaterialProjection getMaterialProjection(
             FiltroMaterialLocationDeCombinacaoCaracteristicasDTO dto,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             boolean activeMaterialsOnly) {
 
         return MaterialProjectionFactory.getMaterialProjectionFiltroCombinacoesCaracteristicasIds(
@@ -30,7 +30,7 @@ public interface FiltroMaterialDeCombinacaoCaracteristicasMapper {
                         ? null
                         : dto.valuesByMaterialCharacteristicId,
                 dto == null ? null : dto.materialIds,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 activeMaterialsOnly);
 
     }

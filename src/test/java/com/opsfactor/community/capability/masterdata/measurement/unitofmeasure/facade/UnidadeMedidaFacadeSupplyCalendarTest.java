@@ -9,8 +9,8 @@ import com.opsfactor.community.capability.masterdata.product.material.domain.Pro
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlanItem;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.transactionaldata.inventory.stock.projection.EstoqueProjectionLocationProduto;
 import com.opsfactor.community.capability.transactionaldata.inventory.stock.projection.EstoqueProjectionFactory;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
@@ -73,7 +73,7 @@ class UnidadeMedidaFacadeSupplyCalendarTest {
         DemandPlan demandPlan = mock(DemandPlan.class);
         VersaoMalha networkVersion = mock(VersaoMalha.class);
         PerfilExecucaoSupplyPlan profile = mock(PerfilExecucaoSupplyPlan.class);
-        ClusterEParametrosProjection cluster = mock(ClusterEParametrosProjection.class);
+        CadastroEParametrosProjection cluster = mock(CadastroEParametrosProjection.class);
         SupplyNetworkProjection network = mock(SupplyNetworkProjection.class);
         DemandPlanningProjection demand = mock(DemandPlanningProjection.class);
         UnidadeMedidaProjection units = mock(UnidadeMedidaProjection.class);
@@ -120,8 +120,8 @@ class UnidadeMedidaFacadeSupplyCalendarTest {
         ReflectionTestUtils.setField(service, "parametrosGlobaisService", parametrosGlobaisService);
         UnidadeMedidaProjectionFactory unidadeMedidaProjectionFactory = mock(UnidadeMedidaProjectionFactory.class);
         ReflectionTestUtils.setField(service, "unidadeMedidaProjectionFactory", unidadeMedidaProjectionFactory);
-        ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory = mock(ClusterEParametrosProjectionFactory.class);
-        ReflectionTestUtils.setField(service, "clusterEParametrosProjectionFactory", clusterEParametrosProjectionFactory);
+        CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory = mock(CadastroEParametrosProjectionFactory.class);
+        ReflectionTestUtils.setField(service, "cadastroEParametrosProjectionFactory", cadastroEParametrosProjectionFactory);
         SupplyNetworkProjectionFactory supplyNetworkProjectionFactory = mock(SupplyNetworkProjectionFactory.class);
         ReflectionTestUtils.setField(service, "supplyNetworkProjectionFactory", supplyNetworkProjectionFactory);
         DemandPlanProjectionFactory demandPlanProjectionFactory = mock(DemandPlanProjectionFactory.class);
@@ -133,13 +133,13 @@ class UnidadeMedidaFacadeSupplyCalendarTest {
         when(perfilExecucaoSupplyPlanRepository.findById("PROFILE")).thenReturn(Optional.of(profile));
         when(parametrosGlobaisService.getParametrosGlobais()).thenReturn(parameters);
         when(unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache()).thenReturn(units);
-        when(clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache()).thenReturn(cluster);
+        when(cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache()).thenReturn(cluster);
         when(supplyNetworkProjectionFactory.getSupplyNetworkProjectionCompletoDeCache()).thenReturn(network);
         when(demandPlanProjectionFactory.getDemandPlanningProjectionCompleto(
                 any(DemandPlan.class), any(Set.class), any(Set.class), anyBoolean())).thenReturn(demand);
         when(estoqueProjectionFactory.getEstoqueProjectionLocationProduto(
                 any(LocalDateTime.class), any(Set.class), any(Set.class),
-                any(UnidadeMedidaProjection.class), any(ClusterEParametrosProjection.class), any(UnidadeMedida.class)))
+                any(UnidadeMedidaProjection.class), any(CadastroEParametrosProjection.class), any(UnidadeMedida.class)))
                 .thenReturn(stock);
 
         Set<UnidadeConversaoFaltanteDTO> gaps = service.getUnidadeConversaoFaltanteSNPListDTO(

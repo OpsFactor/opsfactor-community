@@ -4,7 +4,7 @@ import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.transactionaldata.sales.sellout.repository.SelloutRepository;
 import com.opsfactor.community.platform.calendar.CalendarioSimples;
@@ -71,7 +71,7 @@ public class SalesProjectionFactoryCommunityContractTest {
                         Collections.emptySet(),
                         Collections.emptySet(),
                         criaUnidadeMedidaProjectionComParametrosGlobais(),
-                        criaClusterEParametrosProjectionComParametrosGlobais(),
+                        criaCadastroEParametrosProjectionComParametrosGlobais(),
                         null));
 
     }
@@ -203,17 +203,17 @@ public class SalesProjectionFactoryCommunityContractTest {
 
     }
 
-    private static ClusterEParametrosProjection criaClusterEParametrosProjectionComParametrosGlobais()
+    private static CadastroEParametrosProjection criaCadastroEParametrosProjectionComParametrosGlobais()
             throws Exception {
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                new ClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                new CadastroEParametrosProjection();
         setField(
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 "parametrosGlobais",
                 new ParametrosGlobais());
 
-        return clusterEParametrosProjection;
+        return cadastroEParametrosProjection;
 
     }
 

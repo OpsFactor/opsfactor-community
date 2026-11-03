@@ -4,8 +4,8 @@ import com.opsfactor.community.capability.configuration.user.domain.ConfiguredVi
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguredView.TipoView;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.configuration.user.projection.ConfiguredViewProjection;
 import com.opsfactor.community.capability.configuration.user.projection.ConfiguredViewProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
@@ -59,7 +59,7 @@ public class ConfiguredViewService {
      * com a UOM e filtros de material/location da view.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory;
     
     public ConfiguredView getConfiguredView(
             String userId, String nomeView, ConfiguredView.TipoView tipoView) {
@@ -74,13 +74,13 @@ public class ConfiguredViewService {
             String userId, String nomeView, ConfiguredView.TipoView tipoView,
             TamanhoBucket tamanhoBucket,
             SelectedPlanningBookCellDTO selectedPlanningBookCellDTO,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
     
         return getConfiguredViewProjectionComDTOSelecaoCelulas(
                 userId, nomeView, tipoView, 
                 tamanhoBucket,
                 Collections.singleton(selectedPlanningBookCellDTO), 
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 null);
     
     }    
@@ -89,14 +89,14 @@ public class ConfiguredViewService {
             String userId, String nomeView, ConfiguredView.TipoView tipoView,
             TamanhoBucket tamanhoBucket,
             SelectedPlanningBookCellDTO selectedPlanningBookCellDTO,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             @Nullable BiFunction<Produto,Location,Boolean> filtrosAdicionaisDfus) {
     
         return getConfiguredViewProjectionComDTOSelecaoCelulas(
                 userId, nomeView, tipoView, 
                 tamanhoBucket,
                 Collections.singleton(selectedPlanningBookCellDTO), 
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 filtrosAdicionaisDfus);
     
     }    
@@ -108,14 +108,14 @@ public class ConfiguredViewService {
      * @param nomeView
      * @param tipoView
      * @param selectedPlanningBookCellDTOCollection DTOs que irão popular o Set<DetalheSelecao> detalhesSelecaoAAtualizar do projection
-     * @param clusterEParametrosProjection
+     * @param cadastroEParametrosProjection
      * @return 
      */
     public ConfiguredViewProjection getConfiguredViewProjectionComDTOSelecaoCelulas(
             String userId, String nomeView, ConfiguredView.TipoView tipoView,
             TamanhoBucket tamanhoBucket,
             Collection<SelectedPlanningBookCellDTO> selectedPlanningBookCellDTOCollection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             @Nullable BiFunction<Produto,Location,Boolean> filtrosAdicionaisDfus) {
      
         if (selectedPlanningBookCellDTOCollection == null) {
@@ -128,7 +128,7 @@ public class ConfiguredViewService {
 
         ConfiguredViewProjection configuredViewProjection = configuredViewProjectionFactory.getConfiguredViewProjection(
                 userId, nomeView, tipoView, 
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 filtrosAdicionaisDfus);
         configuredViewProjection = configuredViewProjection;
         
@@ -141,7 +141,7 @@ public class ConfiguredViewService {
             PlanningBookDfuScope planningBookDfuScopeAAtualizar = getPlanningBookDfuScopeAAtualizar(
                     selectedPlanningBookCellDTO,
                     configuredViewProjection,
-                    clusterEParametrosProjection);
+                    cadastroEParametrosProjection);
 
             // cria o DetalheSelecao, que traz todas as informações (periodo, quantidade e DFU) da célula modificada
             AjusteCelulaPlanningBook ajusteCelulaPlanningBook = new AjusteCelulaPlanningBook(
@@ -169,12 +169,12 @@ public class ConfiguredViewService {
     protected PlanningBookDfuScope getPlanningBookDfuScopeAAtualizar(
             SelectedPlanningBookCellDTO selectedPlanningBookCellDTO,
             ConfiguredViewProjection configuredViewProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         validaSelectedPlanningBookCellDTOCommunity(selectedPlanningBookCellDTO);
 
-        Produto materialSelecionado = clusterEParametrosProjection.getMaterialPersistido(selectedPlanningBookCellDTO.getMaterialId());
-        Location locationSelecionada = clusterEParametrosProjection.getLocationPersistida(selectedPlanningBookCellDTO.getLocationId());
+        Produto materialSelecionado = cadastroEParametrosProjection.getMaterialPersistido(selectedPlanningBookCellDTO.getMaterialId());
+        Location locationSelecionada = cadastroEParametrosProjection.getLocationPersistida(selectedPlanningBookCellDTO.getLocationId());
         validaDfuSelecionadoPertenceAViewCommunity(
                 configuredViewProjection,
                 materialSelecionado,
@@ -262,7 +262,7 @@ public class ConfiguredViewService {
 
     /**
      * Valida a chave funcional do material selecionado pelo front. O lookup
-     * anterior em `ClusterEParametrosProjection` deveria retornar uma entidade
+     * anterior em `CadastroEParametrosProjection` deveria retornar uma entidade
      * persistida, mas manter a guarda aqui torna o contrato da celula selecionada
      * independente de como a projection foi construida em testes ou overlays.
      */
@@ -339,14 +339,14 @@ public class ConfiguredViewService {
                     "Configured view type is required for configured view coverage");
         }
         
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection cadastroEParametrosProjection = cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
         List<ConfiguredView> configuredViewsCobertura =
                 getConfiguredViewsCoberturaCommunity(
                         configuredViewRepository.customFindByConfiguredViewCompositeKeyTipoView(tipoView));
         
         Map<Location,Set<Produto>> mapaDFUs = configuredViewsCobertura.parallelStream()
                 .flatMap(configuredView -> {
-                    ConfiguredViewProjection configuredViewProjection = configuredViewProjectionFactory.getConfiguredViewProjection(configuredView, clusterEParametrosProjection);
+                    ConfiguredViewProjection configuredViewProjection = configuredViewProjectionFactory.getConfiguredViewProjection(configuredView, cadastroEParametrosProjection);
                     
                     return configuredViewProjection.getDfuProjectionFiltrado().getDFUs().stream();
                 })
@@ -355,8 +355,8 @@ public class ConfiguredViewService {
         
         Map<Location,Set<Produto>> mapaDFUsNaoCobertos = new HashMap<>();
         
-        for (Location location : clusterEParametrosProjection.getLocationsAtivas()) {
-            for (Produto material : clusterEParametrosProjection.getMateriaisAtivosEmLocation(location)) {
+        for (Location location : cadastroEParametrosProjection.getLocationsAtivas()) {
+            for (Produto material : cadastroEParametrosProjection.getMateriaisAtivosEmLocation(location)) {
                 
                 Set<Produto> materiaisEmViews = mapaDFUs.get(location);
                 

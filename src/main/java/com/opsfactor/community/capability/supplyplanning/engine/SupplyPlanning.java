@@ -17,7 +17,7 @@ import com.opsfactor.community.capability.supplyplanning.inventoryplan.domain.In
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.platform.exception.UnitOfMeasureConversionException;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
@@ -67,7 +67,7 @@ public class SupplyPlanning {
             Constantes.TipoPlano tipoPlano,
             FirmePlanejado firmePlanejado) {
         
-        UnidadeMedida unidadeMedidaPadrao = supplyPlanningProjection.getClusterEParametrosProjection().getSNPUnidadeMedidaPadrao(
+        UnidadeMedida unidadeMedidaPadrao = supplyPlanningProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(
                 material, supplyPlanningProjection.getLocation());
         
         double requisicoes = supplyPlanningProjection.getQuantidadeDistributionPlanInbound(ReferenciaPeriodo.DISPONIBILIZACAO_MATERIAL, posicaoPeriodo, material, FirmePlanejado.PLANEJADO, tipoPlano, unidadeMedidaPadrao);
@@ -936,7 +936,7 @@ public class SupplyPlanning {
             Location location = supplyPlanningProjection.getLocation();
             Calendario calendario = supplyPlanningProjection.getCalendario();
             VersaoMalha versaoMalha = supplyPlanningProjection.getSupplyPlan().getVersaoMalha();
-            ParametrosGlobais parametrosGlobais = supplyPlanningProjection.getClusterEParametrosProjection().getParametrosGlobais();
+            ParametrosGlobais parametrosGlobais = supplyPlanningProjection.getCadastroEParametrosProjection().getParametrosGlobais();
             LocalDate dataReferencia = calendario.getPrimeiraDataPeriodo(calendario.getPosicaoPeriodoPresente());
             
             Set<Location> locationsOrigemFiltradas = (locationsOrigemConsideradasParaRequisicoes != null) ?
@@ -1097,7 +1097,7 @@ public class SupplyPlanning {
         Calendario calendario = supplyPlanningProjection.getCalendario();
         VersaoMalha versaoMalha = supplyPlanningProjection.getSupplyPlan().getVersaoMalha();
         
-        ClusterEParametrosProjection clusterEparametrosProjection = supplyPlanningProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection clusterEparametrosProjection = supplyPlanningProjection.getCadastroEParametrosProjection();
         PoliticaEstoquesProjection politicaEstoquesProjection = supplyPlanningProjection.getPoliticaEstoquesProjection();
         SupplyNetworkProjection supplyNetworkProjection = supplyPlanningProjection.getSupplyNetworkProjection();
         UnidadeMedidaProjection unidadeMedidaProjection = supplyPlanningProjection.getConversaoUnidadeMedidaProjection();
@@ -1515,7 +1515,7 @@ public class SupplyPlanning {
             SupplyPlanningProjection supplyPlanningProjection,
             TipoPlano tipoPlano) {
 
-        ClusterEParametrosProjection clusterEparametrosProjection = supplyPlanningProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection clusterEparametrosProjection = supplyPlanningProjection.getCadastroEParametrosProjection();
         MaterialProjection materialProjection = supplyPlanningProjection.getMaterialProjection();
 
         Location location = supplyPlanningProjection.getLocation();
@@ -1640,7 +1640,7 @@ public class SupplyPlanning {
             Produto material,
             Constantes.TipoPlano tipoPlano) {
 
-        UnidadeMedida unidadeMedidaPadrao = supplyPlanningProjection.getClusterEParametrosProjection().getSNPUnidadeMedidaPadrao(
+        UnidadeMedida unidadeMedidaPadrao = supplyPlanningProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(
                 material, supplyPlanningProjection.getLocation());
         
         double estoqueProjetado = getEstoqueProjetado(
@@ -1709,7 +1709,7 @@ public class SupplyPlanning {
        
         Location location = supplyPlanningProjection.getLocation();
         Calendario calendario = supplyPlanningProjection.getCalendario();
-        ClusterEParametrosProjection parametrosProjection = supplyPlanningProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection parametrosProjection = supplyPlanningProjection.getCadastroEParametrosProjection();
         PoliticaEstoquesProjection politicaEstoquesProjection = supplyPlanningProjection.getPoliticaEstoquesProjection();
         PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan = supplyPlanningProjection.getPerfilExecucaoSupplyPlanConsiderado();
 
@@ -1843,8 +1843,8 @@ public class SupplyPlanning {
         int i = posicaoPeriodo;
         
         Calendario calendario = supplyPlanningProjection.getCalendario();
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyPlanningProjection.getClusterEParametrosProjection();
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyPlanningProjection.getCadastroEParametrosProjection();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
 
         double coberturaSegurancaPeriodos = calendario.converteDiasParaPeriodosCalendario(coberturaEstoqueEmDias, i + 1);
 
@@ -1891,7 +1891,7 @@ public class SupplyPlanning {
         
         Location location = supplyPlanningProjection.getLocation();
         Calendario calendario = supplyPlanningProjection.getCalendario();
-        UnidadeMedida unidadeMedidaPadrao = supplyPlanningProjection.getClusterEParametrosProjection().getSNPUnidadeMedidaPadrao(
+        UnidadeMedida unidadeMedidaPadrao = supplyPlanningProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(
                 material, location);
         
         double demandaAcumulada = 0;
@@ -2373,14 +2373,14 @@ public class SupplyPlanning {
             Location location, Produto material, 
             double quantidade, UnidadeMedida unidadeMedidaTarget,
             Constantes.ModoArredondamento modoArredondamento, 
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             UnidadeMedidaProjection unidadeMedidaProjection,
             LocalDateTime dataHorarioStatusMateriais) throws UnitOfMeasureConversionException {
         
-        double loteMinimo = clusterEParametrosProjection.getSNPLoteMinimoProducao(material, location, unidadeMedidaTarget, unidadeMedidaProjection).orElse(0);
+        double loteMinimo = cadastroEParametrosProjection.getSNPLoteMinimoProducao(material, location, unidadeMedidaTarget, unidadeMedidaProjection).orElse(0);
         quantidade = Math.max(quantidade, loteMinimo);
         
-        OptionalDouble optionalMultiplo = clusterEParametrosProjection.getSNPMultiploProducao(material, location, unidadeMedidaTarget, unidadeMedidaProjection);
+        OptionalDouble optionalMultiplo = cadastroEParametrosProjection.getSNPMultiploProducao(material, location, unidadeMedidaTarget, unidadeMedidaProjection);
         
         return arredondaQuantidadeParaMinimoEMultiplo(quantidade, loteMinimo, optionalMultiplo, modoArredondamento);
         
@@ -2431,7 +2431,7 @@ public class SupplyPlanning {
             Collection<DistributionPlanItem> distributionPlanItemSet,
             SupplyNetworkProjection supplyNetworkProjection) {
         
-        ParametrosGlobais parametrosGlobais = supplyNetworkProjection.getClusterEParametrosProjection().getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = supplyNetworkProjection.getCadastroEParametrosProjection().getParametrosGlobais();
         
         for (DistributionPlanItem distributionPlanItem : distributionPlanItemSet) {
             VersaoMalha versaoMalha = distributionPlanItem.getSupplyPlan().getVersaoMalha();
@@ -2462,20 +2462,20 @@ public class SupplyPlanning {
      * @param location location avaliada
      * @param material material avaliado
      * @param calendario calendario da rodada
-     * @param clusterEParametrosProjection projection de parâmetros já carregada
+     * @param cadastroEParametrosProjection projection de parâmetros já carregada
      * @return número de segmentos ou vazio quando aging/shelf-life não se aplica
      */
     public static Optional<Integer> getNumeroSegmentosLotes(
             Location location,
             Produto material,
             Calendario calendario,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         Optional<Integer> optionalPrazoValidade =
-                clusterEParametrosProjection.getPrazoValidadeEmPeriodos(location, material,
+                cadastroEParametrosProjection.getPrazoValidadeEmPeriodos(location, material,
                         calendario);
         Optional<Integer> optionalTempoProcesso =
-                clusterEParametrosProjection.getTempoProcessoEmPeriodos(location, material,
+                cadastroEParametrosProjection.getTempoProcessoEmPeriodos(location, material,
                         calendario);
 
         if (optionalPrazoValidade.isPresent() && optionalTempoProcesso.isPresent()) {

@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.facade;
 
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
+
 import com.opsfactor.community.capability.demandplanning.configuration.facade.dto.DemandPlanningClusterLevelConfigurationDTO;
 import com.opsfactor.community.capability.demandplanning.configuration.facade.dto.DemandPlanningPreviaForecastRequestDTO;
 import com.opsfactor.community.capability.cluster.facade.mapper.ClusterLocationsMapper;
@@ -13,8 +15,9 @@ import com.opsfactor.community.capability.demandplanning.configuration.domain.Pe
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.demandplanning.configuration.projection.factory.ParametrosDemandPlanningProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.aggregation.ParametrosDemandPlanNivelClusterProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjectionFactory;
@@ -58,6 +61,9 @@ public class DemandSimulationFacade {
      * estatistico Community da rodada real, reaproveitando sales/projections ja
      * materializadas pela simulacao.
      */
+    @Autowired
+    private ParametrosDemandPlanningProjectionFactory parametrosDemandPlanningProjectionFactory;
+
     @Autowired
     private DemandPlanningService demandPlanningService;
 
@@ -111,7 +117,7 @@ public class DemandSimulationFacade {
      * simulacao.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private ClusterizacaoProjectionFactory clusterizacaoProjectionFactory;
 
     /**
      * Factory da projection de unidades/conversoes usada para normalizar o
@@ -144,10 +150,11 @@ public class DemandSimulationFacade {
          * borda Community e o front novo trabalham com o conceito publico de
          * cluster de materiais.
          */
-        ClusterMateriais clusterMateriaisDemandPlanning =
-                clusterMateriaisDemandPlanningRepository.findById(materialClusterId).get();
-        ClusterLocations clusterLocations =
-                clusterLocationService.getClusterLocation(locationClusterId).get();
+        ClusterizacaoProjection clusterizacaoProjection = parametrosDemandPlanningProjectionFactory
+                .getParametrosDemandPlanProjection(perfilExecucaoDemandPlan).getClusterizacaoProjection();
+        ClusterMateriais clusterMateriaisDemandPlanning = clusterizacaoProjection
+                .getClusterMateriaisDemandPlanningDeId(materialClusterId).orElseThrow();
+        ClusterLocations clusterLocations = clusterizacaoProjection.getClusterLocationsDeId(locationClusterId);
 
         DemandPlanningClusterLevelConfigurationDTO demandPlanningClusterLevelConfigurationDTO = demandPlanningConfigurationMapper.getDemandPlanningConfigurationDtoFromEntities(
                 getParametrosDemandPlanNivelClusterExistenteOuNovoCommunity(
@@ -200,16 +207,16 @@ public class DemandSimulationFacade {
          * Mantemos o tipo JPA transicional, mas deste ponto em diante o nome da
          * variavel acompanha o contrato Community: material cluster.
          */
-        ClusterMateriais clusterMateriaisDemandPlanning =
-                clusterMateriaisDemandPlanningRepository.findById(
-                        demandPlanningClusterLevelConfigurationDTO.materialClusterId).get();
-        ClusterLocations clusterLocations =
-                clusterLocationService.getClusterLocation(
-                        demandPlanningClusterLevelConfigurationDTO.locationClusterId).get();
+        ClusterizacaoProjection clusterizacaoProjection = parametrosDemandPlanningProjectionFactory
+                .getParametrosDemandPlanProjection(demandPlanningClusterLevelConfigurationDTO.demandPlanExecutionProfileId)
+                .getClusterizacaoProjection();
+        ClusterMateriais clusterMateriaisDemandPlanning = clusterizacaoProjection.getClusterMateriaisDemandPlanningDeId(
+                demandPlanningClusterLevelConfigurationDTO.materialClusterId).orElseThrow();
+        ClusterLocations clusterLocations = clusterizacaoProjection.getClusterLocationsDeId(
+                demandPlanningClusterLevelConfigurationDTO.locationClusterId);
 
         UnidadeMedidaProjection unidadeMedidaProjection = unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais();
 
         // cria-se um projection de parâmetros do demand planning a partir do DTO
         ParametrosDemandPlanNivelClusterProjection parametrosDemandPlanNivelClusterProjection = demandPlanningConfigurationMapper.getProjectionDeDto(
@@ -227,10 +234,10 @@ public class DemandSimulationFacade {
                 .getParametrosGeraisDemandPlanningProjection()
                 .isDpUsaHistoricoDemandaInativos();
 
-        Set<Produto> materiaisDoCluster = clusterEParametrosProjection.getMateriaisDeClusterMateriaisDemandPlanning(
+        Set<Produto> materiaisDoCluster = clusterizacaoProjection.getMateriaisDeClusterMateriaisDemandPlanning(
                 clusterMateriaisDemandPlanning,
                 !usaHistoricoDemandaDeDfusInativos);
-        Set<Location> locationsCluster = clusterEParametrosProjection.getLocationsDeClusterLocations(
+        Set<Location> locationsCluster = clusterizacaoProjection.getLocationsDeClusterLocations(
                 clusterLocations,
                 !usaHistoricoDemandaDeDfusInativos);
 
@@ -242,7 +249,7 @@ public class DemandSimulationFacade {
                 calendario,
                         locationsCluster, materiaisDoCluster,
                         unidadeMedidaProjection,
-                        clusterEParametrosProjection,
+                        clusterizacaoProjection.getCadastroEParametrosProjection(),
                         unidadeMedidaDP);
 
         /*
@@ -253,9 +260,9 @@ public class DemandSimulationFacade {
          * validacao Community.
          */
         LocationProjection locationProjection = LocationProjectionFactory
-                .getProjectionClusterLocations(clusterLocations, clusterEParametrosProjection, !usaHistoricoDemandaDeDfusInativos);
+                .getProjectionClusterLocations(clusterLocations, clusterizacaoProjection, !usaHistoricoDemandaDeDfusInativos);
         MaterialProjection materialProjection = MaterialProjectionFactory
-                .getProjectionClusterMateriais(clusterMateriaisDemandPlanning, clusterEParametrosProjection, !usaHistoricoDemandaDeDfusInativos);
+                .getProjectionClusterMateriais(clusterMateriaisDemandPlanning, clusterizacaoProjection, !usaHistoricoDemandaDeDfusInativos);
 
         // gera o forecast
         List<? extends DemandPlanForecastProjection> demandPlanForecastProjectionsExecucao = demandPlanningService.geraDemandPlanForecastProjectionsExecucaoComForecast(
@@ -264,7 +271,7 @@ public class DemandSimulationFacade {
                 materialProjection,
                 locationProjection,
                 salesProjection,
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 true);
         validaDemandPlanForecastProjectionsExecucaoSimulacaoCommunity(
                 demandPlanForecastProjectionsExecucao);
@@ -279,9 +286,9 @@ public class DemandSimulationFacade {
 
         // seta os clusters
         simulatedDemandPlanDTO.materialClusterDTO = ClusterProdutosMapper.convertComListaMateriaisERegrasAlocacaoDTO(
-                clusterMateriaisDemandPlanning, clusterEParametrosProjection);
+                clusterMateriaisDemandPlanning, clusterizacaoProjection);
         simulatedDemandPlanDTO.clusterLocationsDTO = ClusterLocationsMapper.convertComListaLocationsERegrasAlocacaoDTO(
-                clusterLocations, clusterEParametrosProjection);
+                clusterLocations, clusterizacaoProjection);
 
         // lista com:
         // Calendario mensal : meses
@@ -389,14 +396,15 @@ public class DemandSimulationFacade {
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan =
                 perfilExecucaoDemandPlanRepository.findById(
                         demandPlanningClusterLevelConfigurationDTO.demandPlanExecutionProfileId).get();
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
-        ClusterMateriais clusterMateriaisDemandPlanning = clusterEParametrosProjection.getClusterMateriaisDemandPlanningDeId(
+        ClusterizacaoProjection clusterizacaoProjection = parametrosDemandPlanningProjectionFactory
+                .getParametrosDemandPlanProjection(perfilExecucaoDemandPlan).getClusterizacaoProjection();
+        ClusterMateriais clusterMateriaisDemandPlanning = clusterizacaoProjection.getClusterMateriaisDemandPlanningDeId(
                         demandPlanningClusterLevelConfigurationDTO.materialClusterId)
                 .orElseThrow(() -> new NoResultException(
                         "Demand Planning Material Cluster "
                                 + demandPlanningClusterLevelConfigurationDTO.materialClusterId
                                 + " not found in parameter projection"));
-        ClusterLocations clusterLocations = clusterEParametrosProjection.getClusterLocationsDeId(
+        ClusterLocations clusterLocations = clusterizacaoProjection.getClusterLocationsDeId(
                 demandPlanningClusterLevelConfigurationDTO.locationClusterId);
 
         // extrai a versão atual dos parâmetros do banco de dados

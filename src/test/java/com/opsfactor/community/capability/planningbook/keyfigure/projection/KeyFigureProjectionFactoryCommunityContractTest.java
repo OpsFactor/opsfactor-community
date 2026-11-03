@@ -13,7 +13,7 @@ import com.opsfactor.community.capability.supplyplanning.configuration.domain.Pe
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguredView;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.configuration.user.projection.ConfiguredViewProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjectionFactory;
@@ -608,23 +608,23 @@ class KeyFigureProjectionFactoryCommunityContractTest {
 
         return new FakeConfiguredViewProjection(
                 Set.of(),
-                createClusterEParametrosProjectionComParametrosGlobais(),
+                createCadastroEParametrosProjectionComParametrosGlobais(),
                 new ConfiguredView());
 
     }
 
-    private static ClusterEParametrosProjection createClusterEParametrosProjectionComParametrosGlobais()
+    private static CadastroEParametrosProjection createCadastroEParametrosProjectionComParametrosGlobais()
             throws Exception {
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                new ClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                new CadastroEParametrosProjection();
 
         setField(
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 "parametrosGlobais",
                 new ParametrosGlobais());
 
-        return clusterEParametrosProjection;
+        return cadastroEParametrosProjection;
 
     }
 
@@ -665,7 +665,7 @@ class KeyFigureProjectionFactoryCommunityContractTest {
     private static class FakeConfiguredViewProjection extends ConfiguredViewProjection {
 
         private final Set<Location> locationsFiltradas;
-        private final ClusterEParametrosProjection clusterEParametrosProjection;
+        private final CadastroEParametrosProjection cadastroEParametrosProjection;
         private final ConfiguredView configuredView;
 
         private FakeConfiguredViewProjection(Set<Location> locationsFiltradas) {
@@ -679,11 +679,11 @@ class KeyFigureProjectionFactoryCommunityContractTest {
 
         private FakeConfiguredViewProjection(
                 Set<Location> locationsFiltradas,
-                ClusterEParametrosProjection clusterEParametrosProjection,
+                CadastroEParametrosProjection cadastroEParametrosProjection,
                 ConfiguredView configuredView) {
 
             this.locationsFiltradas = locationsFiltradas;
-            this.clusterEParametrosProjection = clusterEParametrosProjection;
+            this.cadastroEParametrosProjection = cadastroEParametrosProjection;
             this.configuredView = configuredView;
 
         }
@@ -696,9 +696,9 @@ class KeyFigureProjectionFactoryCommunityContractTest {
         }
 
         @Override
-        public ClusterEParametrosProjection getClusterEParametrosProjection() {
+        public CadastroEParametrosProjection getCadastroEParametrosProjection() {
 
-            return clusterEParametrosProjection;
+            return cadastroEParametrosProjection;
 
         }
 

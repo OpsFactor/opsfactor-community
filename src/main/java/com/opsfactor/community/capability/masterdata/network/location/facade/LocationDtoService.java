@@ -1,11 +1,13 @@
 package com.opsfactor.community.capability.masterdata.network.location.facade;
 
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
+
 import com.opsfactor.community.capability.masterdata.network.location.facade.dto.LocationDTO;
 import com.opsfactor.community.capability.masterdata.network.location.facade.mapper.LocationMapper;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.network.location.domain.LocationAbstract;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjectionFactory;
 import com.opsfactor.community.capability.masterdata.network.location.repository.LocationRepository;
 import com.opsfactor.community.capability.masterdata.network.location.service.LocationService;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
@@ -53,7 +55,7 @@ public class LocationDtoService {
      * consultar entidade a entidade.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private ClusterizacaoProjectionFactory clusterizacaoProjectionFactory;
 
     /**
      * Lista locations sem caracteristicas para consumo do front Community.
@@ -116,8 +118,8 @@ public class LocationDtoService {
      */
     public List<LocationDTO> getLocationsDeClusterLocationsId(Long clusterLocationsId) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
-        return clusterEParametrosProjection.getLocationsDeClusterLocationsId(clusterLocationsId).stream()
+        ClusterizacaoProjection clusterizacaoProjection = clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(PerfilClusterizacao.ID_LEGADO);
+        return clusterizacaoProjection.getLocationsDeClusterLocationsId(clusterLocationsId).stream()
                 .map(locationMapper::convertLocationDtoWithoutCharacteristics)
                 .sorted(Comparator.comparing(LocationDTO::getId))
                 .collect(Collectors.toList());

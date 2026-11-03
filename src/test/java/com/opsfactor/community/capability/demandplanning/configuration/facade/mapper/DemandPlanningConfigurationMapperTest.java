@@ -11,8 +11,9 @@ import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais
 import com.opsfactor.community.capability.demandplanning.configuration.domain.ParametrosDemandPlanNivelCluster;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.configuration.repository.PerfilExecucaoDemandPlanRepository;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.repository.UnidadeMedidaRepository;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
@@ -719,8 +720,8 @@ public class DemandPlanningConfigurationMapperTest {
         DemandPlanningConfigurationMapper demandPlanningConfigurationMapper = new DemandPlanningConfigurationMapper();
         setField(
                 demandPlanningConfigurationMapper,
-                "clusterEParametrosProjectionFactory",
-                new TestClusterEParametrosProjectionFactory());
+                "clusterizacaoProjectionFactory",
+                new TestClusterizacaoProjectionFactory());
 
         ParametrosDemandPlanNivelCluster parametrosDemandPlanNivelCluster = new ParametrosDemandPlanNivelCluster();
         parametrosDemandPlanNivelCluster.setExecutaDp(true);
@@ -769,8 +770,8 @@ public class DemandPlanningConfigurationMapperTest {
         DemandPlanningConfigurationMapper demandPlanningConfigurationMapper = new DemandPlanningConfigurationMapper();
         setField(
                 demandPlanningConfigurationMapper,
-                "clusterEParametrosProjectionFactory",
-                new TestClusterEParametrosProjectionFactory(false));
+                "clusterizacaoProjectionFactory",
+                new TestClusterizacaoProjectionFactory(false));
 
         ParametrosDemandPlanNivelCluster parametrosDemandPlanNivelCluster = new ParametrosDemandPlanNivelCluster();
         /*
@@ -1091,6 +1092,12 @@ public class DemandPlanningConfigurationMapperTest {
             DemandPlanningConfigurationMapper demandPlanningConfigurationMapper,
             ParametrosDemandPlanNivelCluster parametrosDemandPlanNivelCluster) throws Exception {
 
+        if (parametrosDemandPlanNivelCluster.getParametrosDemandPlanNivelClusterCompositeKey() == null) {
+            parametrosDemandPlanNivelCluster.setParametrosDemandPlanNivelClusterCompositeKey(
+                    new ParametrosDemandPlanNivelCluster.ParametrosDemandPlanNivelClusterCompositeKey(
+                            new PerfilExecucaoDemandPlan("DP_PROFILE"), new ClusterMateriais(), new ClusterLocations()));
+        }
+
         Method getDemandPlanningGeneralParametersDTOFromEntitiesMethod = DemandPlanningConfigurationMapper.class.getDeclaredMethod(
                 "getDemandPlanningGeneralParametersDTOFromEntities",
                 ParametrosDemandPlanNivelCluster.class);
@@ -1155,13 +1162,13 @@ public class DemandPlanningConfigurationMapperTest {
 
     }
 
-    private static class TestClusterEParametrosProjectionFactory extends ClusterEParametrosProjectionFactory {
+    private static class TestClusterizacaoProjectionFactory extends ClusterizacaoProjectionFactory {
 
         private final Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional;
         private final ClusterLocations clusterLocations;
         private final boolean demandPlanningGenerateForecastForDiscontinuedMaterials;
 
-        private TestClusterEParametrosProjectionFactory() {
+        private TestClusterizacaoProjectionFactory() {
 
             this(
                     Optional.of(new ClusterMateriais()),
@@ -1170,7 +1177,7 @@ public class DemandPlanningConfigurationMapperTest {
 
         }
 
-        private TestClusterEParametrosProjectionFactory(
+        private TestClusterizacaoProjectionFactory(
                 boolean demandPlanningGenerateForecastForDiscontinuedMaterials) {
 
             this(
@@ -1180,7 +1187,7 @@ public class DemandPlanningConfigurationMapperTest {
 
         }
 
-        private TestClusterEParametrosProjectionFactory(
+        private TestClusterizacaoProjectionFactory(
                 Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional,
                 ClusterLocations clusterLocations) {
 
@@ -1191,7 +1198,7 @@ public class DemandPlanningConfigurationMapperTest {
 
         }
 
-        private TestClusterEParametrosProjectionFactory(
+        private TestClusterizacaoProjectionFactory(
                 Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional,
                 ClusterLocations clusterLocations,
                 boolean demandPlanningGenerateForecastForDiscontinuedMaterials) {
@@ -1204,9 +1211,9 @@ public class DemandPlanningConfigurationMapperTest {
         }
 
         @Override
-        public ClusterEParametrosProjection getParametrosProjectionCompletoDeCache() {
+        public ClusterizacaoProjection getClusterizacaoProjectionDeCache(String perfilClusterizacaoId) {
 
-            return new TestClusterEParametrosProjection(
+            return new TestClusterizacaoProjection(
                     clusterMateriaisDemandPlanningOptional,
                     clusterLocations,
                     demandPlanningGenerateForecastForDiscontinuedMaterials);
@@ -1215,40 +1222,45 @@ public class DemandPlanningConfigurationMapperTest {
 
     }
 
-    private static class NullClusterEParametrosProjectionFactory extends ClusterEParametrosProjectionFactory {
+    private static class NullClusterizacaoProjectionFactory extends ClusterizacaoProjectionFactory {
 
         @Override
-        public ClusterEParametrosProjection getParametrosProjectionCompletoDeCache() {
+        public ClusterizacaoProjection getClusterizacaoProjectionDeCache(String perfilClusterizacaoId) {
 
             return null;
 
         }
     }
 
-    private static class MissingGlobalParametersClusterEParametrosProjectionFactory extends ClusterEParametrosProjectionFactory {
+    private static class MissingGlobalParametersClusterizacaoProjectionFactory extends ClusterizacaoProjectionFactory {
 
         @Override
-        public ClusterEParametrosProjection getParametrosProjectionCompletoDeCache() {
+        public ClusterizacaoProjection getClusterizacaoProjectionDeCache(String perfilClusterizacaoId) {
 
-            return new ClusterEParametrosProjection();
+            return new ClusterizacaoProjection("LEGADO", new CadastroEParametrosProjection());
 
         }
     }
 
-    private static class TestClusterEParametrosProjection extends ClusterEParametrosProjection {
+    private static class TestMasterParameters extends CadastroEParametrosProjection {
+        TestMasterParameters(boolean includeDiscontinued) {
+            this.parametrosGlobais = new ParametrosGlobais();
+            this.parametrosGlobais.setDiasHistoricosForecastEstatistico(120);
+            this.parametrosGlobais.setDpGeraForecastParaDescontinuados(includeDiscontinued);
+        }
+    }
+
+    private static class TestClusterizacaoProjection extends ClusterizacaoProjection {
 
         private final Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional;
         private final ClusterLocations clusterLocations;
 
-        private TestClusterEParametrosProjection(
+        private TestClusterizacaoProjection(
                 Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional,
                 ClusterLocations clusterLocations,
                 boolean demandPlanningGenerateForecastForDiscontinuedMaterials) {
 
-            this.parametrosGlobais = new ParametrosGlobais();
-            this.parametrosGlobais.setDiasHistoricosForecastEstatistico(120);
-            this.parametrosGlobais.setDpGeraForecastParaDescontinuados(
-                    demandPlanningGenerateForecastForDiscontinuedMaterials);
+            super("LEGADO", new TestMasterParameters(demandPlanningGenerateForecastForDiscontinuedMaterials));
             this.clusterMateriaisDemandPlanningOptional = clusterMateriaisDemandPlanningOptional;
             this.clusterLocations = clusterLocations;
 

@@ -21,30 +21,30 @@ import java.nio.file.Paths;
  * pseudo-caracteristicas tecnicas, como ID, usadas por fluxos simples que
  * precisam tratar material/location como dimensoes diretas.</p>
  */
-public class ClusterEParametrosProjectionCommunityContractTest {
+public class CadastroEParametrosProjectionCommunityContractTest {
 
     @Test
     public void getValorCaracteristicaProdutoShouldKeepMaterialIdPseudoCharacteristic() {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = new ClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = new CadastroEParametrosProjection();
         Produto material = new Produto();
         material.setId("M1");
 
         Assertions.assertEquals(
                 "M1",
-                clusterEParametrosProjection.getValorCaracteristicaProduto(material, new CaracteristicaProdutoId()));
+                cadastroEParametrosProjection.getValorCaracteristicaProduto(material, new CaracteristicaProdutoId()));
 
     }
 
     @Test
     public void getValorCaracteristicaLocationShouldKeepLocationIdPseudoCharacteristic() {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = new ClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = new CadastroEParametrosProjection();
         Location location = new Location("L1");
 
         Assertions.assertEquals(
                 "L1",
-                clusterEParametrosProjection.getValorCaracteristicaLocation(location, new CaracteristicaLocationId()));
+                cadastroEParametrosProjection.getValorCaracteristicaLocation(location, new CaracteristicaLocationId()));
 
     }
 
@@ -52,10 +52,10 @@ public class ClusterEParametrosProjectionCommunityContractTest {
     public void sourceShouldNotKeepCurveClusterAllocationImplementationCommented() throws IOException {
 
         Path communityWorkspaceDirectory = resolveCommunityWorkspaceDirectory();
-        Path clusterEParametrosProjectionSourcePath = communityWorkspaceDirectory.resolve(
-                "src/main/java/com/opsfactor/community/capability/configuration/projection/parametros/ClusterEParametrosProjection.java");
-        String clusterEParametrosProjectionSource = Files.readString(
-                clusterEParametrosProjectionSourcePath,
+        Path cadastroEParametrosProjectionSourcePath = communityWorkspaceDirectory.resolve(
+                "src/main/java/com/opsfactor/community/capability/configuration/projection/parametros/CadastroEParametrosProjection.java");
+        String cadastroEParametrosProjectionSource = Files.readString(
+                cadastroEParametrosProjectionSourcePath,
                 StandardCharsets.UTF_8);
 
         /*
@@ -64,15 +64,18 @@ public class ClusterEParametrosProjectionCommunityContractTest {
          * de caracteristicas Enterprise, sem algoritmo antigo comentado.
          */
         Assertions.assertFalse(
-                clusterEParametrosProjectionSource.contains("case CURVA")
-                        || clusterEParametrosProjectionSource.contains("regraAlocacaoClusterProdutos.getCurvaSet()"),
-                "ClusterEParametrosProjection nao deve manter implementacao antiga de curva comentada.");
+                cadastroEParametrosProjectionSource.contains("case CURVA")
+                        || cadastroEParametrosProjectionSource.contains("regraAlocacaoClusterProdutos.getCurvaSet()"),
+                "CadastroEParametrosProjection nao deve manter implementacao antiga de curva comentada.");
 
     }
 
     private Path resolveCommunityWorkspaceDirectory() {
 
         Path currentDirectory = Paths.get("").toAbsolutePath().normalize();
+        if (Files.isDirectory(currentDirectory.resolve("opsfactor-community/src/main/java"))) {
+            return currentDirectory.resolve("opsfactor-community");
+        }
 
         if ("community".equals(currentDirectory.getFileName().toString())
                 || currentDirectory.getFileName().toString().startsWith("community-")) {

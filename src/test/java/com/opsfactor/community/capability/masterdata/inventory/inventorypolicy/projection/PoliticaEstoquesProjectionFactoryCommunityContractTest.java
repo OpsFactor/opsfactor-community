@@ -8,7 +8,7 @@ import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.d
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.domain.PoliticaEstoquesMaterialLocation.PoliticaEstoquesMaterialLocationCompositeKey;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.supplyplanning.configuration.repository.PerfilExecucaoPoliticaEstoquesRepository;
 import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
@@ -39,7 +39,7 @@ class PoliticaEstoquesProjectionFactoryCommunityContractTest {
                 projectionFactoryFixture.politicaEstoquesProjectionFactory()
                         .getPoliticaEstoquesProjection(
                                 getCalendarioTeste(),
-                                Mockito.mock(ClusterEParametrosProjection.class),
+                                Mockito.mock(CadastroEParametrosProjection.class),
                                 projectionFactoryFixture.perfilExecucaoSupplyPlan());
 
         Assertions.assertNotNull(politicaEstoquesProjection);

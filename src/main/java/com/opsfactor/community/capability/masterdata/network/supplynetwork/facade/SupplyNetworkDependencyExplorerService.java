@@ -12,7 +12,7 @@ import com.opsfactor.community.capability.masterdata.production.billofmaterials.
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.LinhaTransporte;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjectionFactory;
 import jakarta.annotation.Nullable;
@@ -71,7 +71,7 @@ public class SupplyNetworkDependencyExplorerService {
                 supplyNetworkProjectionFactory.getSupplyNetworkProjectionCompletoDeCache();
         VersaoMalha supplyNetwork = supplyNetworkProjection.getVersaoMalhaDeId(supplyNetworkId)
                 .orElseThrow(() -> new NoResultException("Supply Network with id " + supplyNetworkId + " not found"));
-        ClusterEParametrosProjection parametersProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection parametersProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
         Location location = parametersProjection.getLocationPersistida(locationId);
         Produto material = materialId == null ? null : parametersProjection.getMaterialPersistido(materialId);
 
@@ -87,7 +87,7 @@ public class SupplyNetworkDependencyExplorerService {
             int maximumTreeDepth) {
 
         Set<Produto> materials = selectedMaterial == null
-                ? supplyNetworkProjection.getClusterEParametrosProjection().getMateriaisAtivosEmLocation(location) : Set.of(selectedMaterial);
+                ? supplyNetworkProjection.getCadastroEParametrosProjection().getMateriaisAtivosEmLocation(location) : Set.of(selectedMaterial);
         return new ExplorerSession(supplyNetwork, supplyNetworkProjection, maximumTreeDepth).explore(location, materials);
 
     }
@@ -396,7 +396,7 @@ public class SupplyNetworkDependencyExplorerService {
             resourceDependency.productionResourceId = resource.getId();
             resourceDependency.active = resource.getAtivo();
             resourceDependency.viableStep = resourceDependency.active
-                    && supplyNetworkProjection.getClusterEParametrosProjection()
+                    && supplyNetworkProjection.getCadastroEParametrosProjection()
                     .getLocationPersistida(resource.getLocation().getId()).getAtivo();
             if (!resourceDependency.viableStep)
                 resourceDependency.localBlockingReasons.add("Inactive production resource or resource location");
@@ -418,7 +418,7 @@ public class SupplyNetworkDependencyExplorerService {
         checkBudget.run();
 
         ListaTecnica snapshotBom = supplyNetworkProjection.getListaTecnicaFromId(bom.getId()).orElseThrow();
-        ClusterEParametrosProjection parameters = supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection parameters = supplyNetworkProjection.getCadastroEParametrosProjection();
         // Indexed inputs avoid lazy entity navigation and correctly include multi-output BOMs.
         for (Produto material : supplyNetworkProjection.getMateriaisInput(snapshotBom)) {
             checkBudget.run();
@@ -441,7 +441,7 @@ public class SupplyNetworkDependencyExplorerService {
 
         checkBudget.run();
 
-        ClusterEParametrosProjection parametersProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection parametersProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
         MaterialLocationDependencyDTO originDependency = createMaterialLocationDependency(
                 origin,
                 material,
@@ -495,7 +495,7 @@ public class SupplyNetworkDependencyExplorerService {
             outputs.addAll(combination.getValue1().getMateriaisOutput());
             for (Produto output : outputs) {
                 checkBudget.run();
-                if (!projection.getClusterEParametrosProjection().isDfuAtiva(output, executionLocation)) {
+                if (!projection.getCadastroEParametrosProjection().isDfuAtiva(output, executionLocation)) {
                     dependency.viableStep = false;
                     dependency.localBlockingReasons.add("Inactive joint output at execution location: " + output.getId());
                 }
@@ -528,7 +528,7 @@ public class SupplyNetworkDependencyExplorerService {
 
         SupplyNetworkProjection projection = supplyNetworkProjectionFactory.getSupplyNetworkProjectionCompletoDeCache();
         VersaoMalha network = projection.getVersaoMalhaDeId(networkId).orElseThrow();
-        ClusterEParametrosProjection parameters = projection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection parameters = projection.getCadastroEParametrosProjection();
         Location location = parameters.getLocationPersistida(locationId);
         return new ExplorerSession(network, projection, depth, limits).explore(location,
                 materialId == null ? parameters.getMateriaisAtivosEmLocation(location)
@@ -583,7 +583,7 @@ public class SupplyNetworkDependencyExplorerService {
         private int remainingInspections = 100_000;
         private final VersaoMalha network;
         private final SupplyNetworkProjection projection;
-        private final ClusterEParametrosProjection parameters;
+        private final CadastroEParametrosProjection parameters;
         private final int requestedDepth;
         private final int displayDepth;
         private final LocalDateTime referenceDate = LocalDateTime.now();
@@ -607,7 +607,7 @@ public class SupplyNetworkDependencyExplorerService {
             if (requestedDepth < 0) throw new IllegalArgumentException("Explorer depth must be non-negative");
             this.network = network;
             this.projection = projection;
-            this.parameters = projection.getClusterEParametrosProjection();
+            this.parameters = projection.getCadastroEParametrosProjection();
             this.requestedDepth = requestedDepth;
             this.displayDepth = Math.min(requestedDepth, MAX_DISPLAY_DEPTH);
             this.limits = limits;

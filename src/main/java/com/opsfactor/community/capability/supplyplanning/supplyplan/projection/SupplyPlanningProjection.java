@@ -18,7 +18,7 @@ import com.opsfactor.community.capability.supplyplanning.productionplan.domain.P
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha.ProductionPlanLinhaCompositeKey;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.platform.exception.UnitOfMeasureConversionException;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.projection.PoliticaEstoquesProjection;
@@ -78,7 +78,7 @@ public class SupplyPlanningProjection {
     private final UnidadeMedidaProjection conversaoUnidadeMedidaProjection;
 
     /** Parametros globais, materiais, locations e clusters usados no calculo. */
-    private final ClusterEParametrosProjection clusterEParametrosProjection;
+    private final CadastroEParametrosProjection cadastroEParametrosProjection;
 
     /**
      * Malha operacional que define linhas inbound prioritarias, roteiros e
@@ -186,8 +186,8 @@ public class SupplyPlanningProjection {
         this.location = location;
         this.materialProjection = materialProjection;
         this.locationProjectionLocationsOrigem = locationProjectionLocationsOrigem;
-        this.clusterEParametrosProjection =
-                supplyNetworkProjectionObrigatoria.getClusterEParametrosProjection();
+        this.cadastroEParametrosProjection =
+                supplyNetworkProjectionObrigatoria.getCadastroEParametrosProjection();
         this.supplyNetworkProjection = supplyNetworkProjectionObrigatoria;
         this.politicaEstoquesProjection = politicaEstoquesProjection;
         configuraPoliticaExecucaoLocationCommunity(perfilExecucaoSupplyPlanConsiderado);
@@ -993,7 +993,7 @@ public class SupplyPlanningProjection {
                                     getLocation(),
                                     material,
                                     getCalendario().getUltimaDataHorarioPeriodo(posicaoPeriodo)));
-                    novoInventoryPlanLinha.setUnidadeMedida(clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(material, getLocation()));
+                    novoInventoryPlanLinha.setUnidadeMedida(cadastroEParametrosProjection.getSNPUnidadeMedidaPadrao(material, getLocation()));
                     return novoInventoryPlanLinha;
                 });
 
@@ -1378,7 +1378,7 @@ public class SupplyPlanningProjection {
             DistributionPlanItem novaDistributionPlanItem = new DistributionPlanItem(new DistributionPlanItemKey(
                     supplyPlan, getLocation(), locationOrigem, material, 
                     datasExpedicaoERecebimento.getValue0(), datasExpedicaoERecebimento.getValue1()));
-            novaDistributionPlanItem.setUnidadeMedida(getClusterEParametrosProjection().getSNPUnidadeMedidaPadrao(material, getLocation()));
+            novaDistributionPlanItem.setUnidadeMedida(getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(material, getLocation()));
 
             addDistributionPlanItemInbound(novaDistributionPlanItem);
             return novaDistributionPlanItem;
@@ -1418,7 +1418,7 @@ public class SupplyPlanningProjection {
                     material,
                     calendario.getPrimeiraDataHorarioPeriodo(posicaoPeriodoExpedicao),
                     calendario.getUltimoSegundoPeriodo(posicaoPeriodoRecebimento)));
-            novaDistributionPlanItemInbound.setUnidadeMedida(getClusterEParametrosProjection().getSNPUnidadeMedidaPadrao(material, getLocation()));
+            novaDistributionPlanItemInbound.setUnidadeMedida(getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(material, getLocation()));
 
             addDistributionPlanItemInbound(novaDistributionPlanItemInbound);
             return novaDistributionPlanItemInbound;
@@ -1454,7 +1454,7 @@ public class SupplyPlanningProjection {
             
         // extratores necessários para se definir o BiConsumer setterCampoValorFinal
         Function<DistributionPlanItem,Produto> extratorMaterial = x -> x.getProduto();
-        Function<DistributionPlanItem,UnidadeMedida> extratorUnidadeMedida = x -> x.getUnidadeMedida(getClusterEParametrosProjection().getParametrosGlobais());
+        Function<DistributionPlanItem,UnidadeMedida> extratorUnidadeMedida = x -> x.getUnidadeMedida(getCadastroEParametrosProjection().getParametrosGlobais());
         
         // define o extrator do valor de referência (valor total de ordens planejadas e firmes)
         ToDoubleFunction<DistributionPlanItem> extratorValorReferencia = x -> x.getQuantidade(firmePlanejado, tipoPlano);
@@ -1733,7 +1733,7 @@ public class SupplyPlanningProjection {
                         firmePlanejado,
                         tipoPlano,
                         getConversaoUnidadeMedidaProjection(),
-                        getClusterEParametrosProjection(),
+                        getCadastroEParametrosProjection(),
                         unidadeMedidaTarget))
                 .sum();
 
@@ -1823,7 +1823,7 @@ public class SupplyPlanningProjection {
                         listaTecnica,
                         getCalendario().getUltimoSegundoPeriodo(posicaoPeriodo)),
                         materialComponenteRoteiroListaTecnica);
-                novoProductionPlanLinhaOutput.setUnidadeMedida(getClusterEParametrosProjection().getSNPUnidadeMedidaPadrao(material, getLocation()));
+                novoProductionPlanLinhaOutput.setUnidadeMedida(getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(material, getLocation()));
                 addProductionPlanLinhaOutput(novoProductionPlanLinhaOutput);
                 return novoProductionPlanLinhaOutput;
 
@@ -1961,7 +1961,7 @@ public class SupplyPlanningProjection {
                                 materialInput, 
                                 firmePlanejado, tipoPlano,
                                 getConversaoUnidadeMedidaProjection(),
-                                getClusterEParametrosProjection(),
+                                getCadastroEParametrosProjection(),
                                 unidadeMedida);
                         return valorAtual + valorAAdicionar;
                     },
@@ -2048,7 +2048,7 @@ public class SupplyPlanningProjection {
         
         Queue<ProductionPlanLinha> productionPlanLinhasOutput = getProductionPlanLinhaOutput(posicaoPeriodo, recursoProdutivo);
 
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
         UnidadeMedida unidadeMedidaCapacidadeRecursoProdutivo = recursoProdutivo.getUnidadeMedidaCapacidadeEmUom(parametrosGlobais);
         
         return productionPlanLinhasOutput.stream()
@@ -2075,7 +2075,7 @@ public class SupplyPlanningProjection {
         
         Queue<ProductionPlanLinha> productionPlanLinhasOutput = getProductionPlanLinhaOutput(posicaoPeriodo, material, recursoProdutivo);
 
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
         UnidadeMedida unidadeMedidaCapacidadeRecursoProdutivo = recursoProdutivo.getUnidadeMedidaCapacidadeEmUom(parametrosGlobais);
 
         return productionPlanLinhasOutput.stream()

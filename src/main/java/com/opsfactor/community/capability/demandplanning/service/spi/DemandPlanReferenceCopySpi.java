@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.service.spi;
 
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 
@@ -30,7 +30,7 @@ public interface DemandPlanReferenceCopySpi {
             Long referenceDemandPlanId,
             boolean copyOnlyFrozenHorizon,
             ParametrosDemandPlanProjection demandPlanParametersProjection,
-            ClusterEParametrosProjection clusterAndParametersProjection,
+            CadastroEParametrosProjection clusterAndParametersProjection,
             UnidadeMedidaProjection unitOfMeasureProjection);
 
 }

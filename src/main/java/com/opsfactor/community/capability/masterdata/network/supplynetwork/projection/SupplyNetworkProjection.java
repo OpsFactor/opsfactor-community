@@ -15,7 +15,7 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.domai
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.platform.exception.UnitOfMeasureConversionException;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.calendar.CalendarioSimples;
@@ -54,7 +54,7 @@ public class SupplyNetworkProjection {
      * Projection central de materiais, locations, parametros e clusters.
      */
     @Getter
-    protected ClusterEParametrosProjection clusterEParametrosProjection;
+    protected CadastroEParametrosProjection cadastroEParametrosProjection;
 
     /**
      * Inicializa as projections transversais usadas por toda a malha.
@@ -65,10 +65,10 @@ public class SupplyNetworkProjection {
      */
     public void inicializaProjectionsBase(
             UnidadeMedidaProjection conversaoUnidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         this.conversaoUnidadeMedidaProjection = conversaoUnidadeMedidaProjection;
-        this.clusterEParametrosProjection = clusterEParametrosProjection;
+        this.cadastroEParametrosProjection = cadastroEParametrosProjection;
 
     }
     
@@ -508,7 +508,7 @@ public class SupplyNetworkProjection {
                          */
                         .leadTimeDias(linhaTransporteProduto.getLeadTimeDias())
                         .unidadeMedidaLoteMinimoMultiploTransporte((linhaTransporteProduto.getUnidadeMedidaLoteMinimoMultiploTransporteCadastrada() == null) ?
-                                clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(material, linhaTransporte.getLocationDestino())
+                                cadastroEParametrosProjection.getSNPUnidadeMedidaPadrao(material, linhaTransporte.getLocationDestino())
                                 : linhaTransporteProduto.getUnidadeMedidaLoteMinimoMultiploTransporteCadastrada())
                         .loteMinimoTransporte((linhaTransporteProduto.getLoteMinimoTransporteCadastrado() == null) ? linhaTransporte.getLoteMinimoTransporte() : linhaTransporteProduto.getLoteMinimoTransporte())
                         .multiploTransporte((linhaTransporteProduto.getMultiploTransporteCadastrado() == null) ? linhaTransporte.getMultiploTransporte() : linhaTransporteProduto.getMultiploTransporte())
@@ -517,7 +517,7 @@ public class SupplyNetworkProjection {
                         .prioridade(linhaTransporte.getPrioridade())
                         .leadTimeDias(linhaTransporte.getLeadTimeDiasInteiro())
                         .unidadeMedidaLoteMinimoMultiploTransporte((linhaTransporte.getUnidadeMedidaLoteMinimoMultiploTransporteCadastrada() == null) ?
-                                clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(material, linhaTransporte.getLocationDestino())
+                                cadastroEParametrosProjection.getSNPUnidadeMedidaPadrao(material, linhaTransporte.getLocationDestino())
                                 : linhaTransporte.getUnidadeMedidaLoteMinimoMultiploTransporteCadastrada())
                         .loteMinimoTransporte(linhaTransporte.getLoteMinimoTransporte())
                         .multiploTransporte(linhaTransporte.getMultiploTransporte())
@@ -563,8 +563,8 @@ public class SupplyNetworkProjection {
     public boolean verificaSeMaterialPodeSerTransferidoNaLinhaTransporte(
             Produto material, LinhaTransporte linhaTransporte, LocalDateTime dataReferenciaParaStatusProduto) {
         
-        if (!clusterEParametrosProjection.isDfuAtiva(material, linhaTransporte.getLocationOrigem())) return false;
-        if (!clusterEParametrosProjection.isDfuAtiva(material, linhaTransporte.getLocationDestino())) return false;
+        if (!cadastroEParametrosProjection.isDfuAtiva(material, linhaTransporte.getLocationOrigem())) return false;
+        if (!cadastroEParametrosProjection.isDfuAtiva(material, linhaTransporte.getLocationDestino())) return false;
         
         Optional<LinhaTransporteProduto> optionalLinhaTransporteProduto = Optional.ofNullable(mapaLinhaTransporteProdutoPorLinhaTransporteEProduto
                 .getOrDefault(linhaTransporte.getVersaoMalha(), new HashMap<>())
@@ -581,7 +581,7 @@ public class SupplyNetworkProjection {
                 return true;
             } else {
                 
-                Constantes.StatusProduto statusProduto = clusterEParametrosProjection.getStatusProduto(
+                Constantes.StatusProduto statusProduto = cadastroEParametrosProjection.getStatusProduto(
                         material, linhaTransporte.getLocationDestino(), dataReferenciaParaStatusProduto);
             
                 if (linhaTransporte.getHabilitadoProdutosDescontinuados() || !statusProduto.equals(Constantes.StatusProduto.DESCONTINUADO)) {
@@ -635,7 +635,7 @@ public class SupplyNetworkProjection {
                     Produto material = linhaTransporteProduto.getProduto();
                     if (possiveisMateriais != null && !possiveisMateriais.contains(material)) return false;
                     
-                    Constantes.StatusProduto statusProduto = clusterEParametrosProjection.getStatusProduto(
+                    Constantes.StatusProduto statusProduto = cadastroEParametrosProjection.getStatusProduto(
                         material, linhaTransporte.getLocationDestino(), dataReferenciaParaStatusProduto);
                     
                     if (statusProduto.equals(Constantes.StatusProduto.DESCONTINUADO) && !linhaTransporte.getHabilitadoProdutosDescontinuados()) return true;
@@ -649,7 +649,7 @@ public class SupplyNetworkProjection {
         
         Set<Produto> conjuntoBaseProdutos = (linhaTransporte.getHabilitadoProdutosNaoCadastradosLinhaTransporte()) ? 
                 new HashSet((possiveisMateriais == null) ?
-                        clusterEParametrosProjection.getMaterialSet()
+                        cadastroEParametrosProjection.getMaterialSet()
                         : possiveisMateriais)
                 : linhasTransporteProduto.stream().map(linhaTransporteProduto -> linhaTransporteProduto.getProduto()).collect(Collectors.toSet());
 
@@ -760,7 +760,7 @@ public class SupplyNetworkProjection {
             OperacaoRoteiro operacao,
             double quantidade, UnidadeMedida unidadeMedidaQuantidade) {
         
-        ParametrosGlobais parametrosGlobais = getClusterEParametrosProjection().getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = getCadastroEParametrosProjection().getParametrosGlobais();
         
         Roteiro roteiro = operacao.getRoteiro();
         double conversaoParaUnidadeRoteiroOperacao = conversaoUnidadeMedidaProjection.getConversaoParaUnidadeDestino(
@@ -790,7 +790,7 @@ public class SupplyNetworkProjection {
                         "Roteiro " + roteiro.getId() + " não encontrado na SupplyNetworkProjection"));
         Produto material = roteiroPopulado.getMaterialOutput();
 
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
 
         double consumoCapacidade =  0.0;
         for (OperacaoRoteiro operacao : getOperacoesRoteiro(roteiroPopulado)) {
@@ -838,7 +838,7 @@ public class SupplyNetworkProjection {
         
         Map<RecursoProdutivo,Double> mapaConsumoCapacidadePorRecursoProdutivo = new HashMap<>();
         
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
                 
         // O roteiro e recarregado a partir da projection para garantir operacoes e recursos produtivos
         // populados antes do calculo de capacidade. Manter esta leitura centralizada evita lazy loading
@@ -1940,7 +1940,7 @@ public class SupplyNetworkProjection {
                 .map(linhaTransporte -> getParametrosLinhaTransporte(
                         linhaTransporte, material, dataReferenciaParaStatusProduto)
                         .map(parametrosLinhaTransporte -> parametrosLinhaTransporte.unidadeMedidaLoteMinimoMultiploTransporte)
-                        .orElseGet(() -> getClusterEParametrosProjection().getSNPUnidadeMedidaPadrao(
+                        .orElseGet(() -> getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(
                                 material, locationDestino)))
                 .orElse(null);
         
@@ -2041,8 +2041,8 @@ public class SupplyNetworkProjection {
      */
     public double getQuantidadeMinimaRoteiroPorPeriodo(Calendario calendario, int posicaoPeriodo, Roteiro roteiro) {
         
-        ParametrosGlobais parametrosGlobais = getClusterEParametrosProjection().getParametrosGlobais();
-        UnidadeMedida unidadeMedidaPadrao = getClusterEParametrosProjection().getSNPUnidadeMedidaPadrao(
+        ParametrosGlobais parametrosGlobais = getCadastroEParametrosProjection().getParametrosGlobais();
+        UnidadeMedida unidadeMedidaPadrao = getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(
                 roteiro.getMaterialOutput(), roteiro.getLocation());
         
         double quantidadePorHoraMinimo = getOperacoesRoteiro(roteiro).stream()
@@ -2092,13 +2092,13 @@ public class SupplyNetworkProjection {
                 .mapToDouble(operacao -> horasNoPeriodo / operacao.getHorasPorQuantidadeBase())
                 .min()
                 .orElse(0d);
-        ParametrosGlobais parametrosGlobais = getClusterEParametrosProjection().getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = getCadastroEParametrosProjection().getParametrosGlobais();
         Map<Produto, Double> quantidadePorOutput = new HashMap<>();
         for (Produto materialOutput : materiaisOutput) {
             UnidadeMedida unidadeMedidaOutput = listaTecnica.getUnidadeMedidaMaterialOutput(
                     materialOutput,
                     parametrosGlobais);
-            UnidadeMedida unidadeMedidaPlano = getClusterEParametrosProjection()
+            UnidadeMedida unidadeMedidaPlano = getCadastroEParametrosProjection()
                     .getSNPUnidadeMedidaPadrao(materialOutput, roteiro.getLocation());
             double quantidade = numeroExecucoes
                     * listaTecnica.getQuantidadeBaseOutput(materialOutput)

@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.cluster.facade.dto.RegraAlocaoClusterL
 import com.opsfactor.community.capability.masterdata.network.location.facade.dto.LocationDTO;
 import com.opsfactor.community.capability.masterdata.network.location.facade.mapper.LocationMapper;
 import com.opsfactor.community.capability.cluster.domain.location.*;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
 
@@ -20,6 +20,7 @@ public abstract class ClusterLocationsMapper {
         ClusterLocationsDTO dto = new ClusterLocationsDTO();
         dto.setDescription(clusterLocations.getDescricao());
         dto.setId(clusterLocations.getId());
+        dto.setClusteringProfileId(clusterLocations.getPerfilClusterizacao().getId());
         dto.setPriority(clusterLocations.getPrioridade());
         return dto;
     }
@@ -33,6 +34,7 @@ public abstract class ClusterLocationsMapper {
     public static ClusterLocationsDTO convertComRegrasAlocacaoDTO(ClusterLocations clusterLocations){
         ClusterLocationsDTO dto = new ClusterLocationsDTO();
         dto.setId(clusterLocations.getId());
+        dto.setClusteringProfileId(clusterLocations.getPerfilClusterizacao().getId());
         dto.setDescription(clusterLocations.getDescricao());
         dto.setPriority(clusterLocations.getPrioridade());
         for (RegraAlocacaoClusterLocations regrasAlocacaoClusterLocation :  clusterLocations.getRegrasAlocacaoClusterLocations()) {
@@ -65,11 +67,11 @@ public abstract class ClusterLocationsMapper {
 
     public static ClusterLocationsDTO convertComListaLocationsERegrasAlocacaoDTO(
             ClusterLocations clusterLocations,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            ClusterizacaoProjection clusterizacaoProjection) {
 
         ClusterLocationsDTO dto = convertComRegrasAlocacaoDTO(clusterLocations);
 
-        List<LocationDTO> produtoDTOList = clusterEParametrosProjection.getLocationsDeClusterLocations(clusterLocations, true)
+        List<LocationDTO> produtoDTOList = clusterizacaoProjection.getLocationsDeClusterLocations(clusterLocations, true)
                 .stream()
                 .map(LocationMapper::convertSemCaracteristicasLocation)
                 .collect(Collectors.toList());

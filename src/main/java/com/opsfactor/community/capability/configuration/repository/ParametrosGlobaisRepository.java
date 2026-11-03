@@ -28,28 +28,28 @@ public interface ParametrosGlobaisRepository extends JpaRepository<ParametrosGlo
      * Salva parametros globais e invalida snapshots de parametros, cluster, malha e Demand Planning.
      */
     @Override
-    @CacheEvict(value = {"parametrosGlobais", "clusterEParametrosProjection", "supplyNetworkProjection", "parametrosDemandPlanProjection"}, allEntries = true)
+    @CacheEvict(value = {"parametrosGlobais", "cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     public <S extends ParametrosGlobais> S save(S entity);
 
     /**
      * Salva parametros globais em lote e invalida snapshots de parametros, cluster, malha e Demand Planning.
      */
     @Override
-    @CacheEvict(value = {"parametrosGlobais", "clusterEParametrosProjection", "supplyNetworkProjection", "parametrosDemandPlanProjection"}, allEntries = true)
+    @CacheEvict(value = {"parametrosGlobais", "cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     <S extends ParametrosGlobais> List<S> saveAll(Iterable<S> entities);
 
     /**
      * Remove parametros globais e invalida snapshots de parametros, cluster, malha e Demand Planning.
      */
     @Override
-    @CacheEvict(value = {"parametrosGlobais", "clusterEParametrosProjection", "supplyNetworkProjection", "parametrosDemandPlanProjection"}, allEntries = true)
+    @CacheEvict(value = {"parametrosGlobais", "cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     public void delete(ParametrosGlobais entity);
 
     /**
      * Remove parametros globais em lote e invalida snapshots de parametros, cluster, malha e Demand Planning.
      */
     @Override
-    @CacheEvict(value = {"parametrosGlobais", "clusterEParametrosProjection", "supplyNetworkProjection", "parametrosDemandPlanProjection"}, allEntries = true)
+    @CacheEvict(value = {"parametrosGlobais", "cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     void deleteAll(Iterable<? extends ParametrosGlobais> entities);
 
 }

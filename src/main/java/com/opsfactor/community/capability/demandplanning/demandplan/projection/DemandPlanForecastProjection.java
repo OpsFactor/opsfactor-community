@@ -88,11 +88,57 @@ public abstract class DemandPlanForecastProjection {
     @Setter
     private Map<String, double[]> forecastRegressorSeries = Map.of();
 
+    /** Exposições locais fixas preparadas pelo workflow; sem implementação numérica no Community. */
+    @Getter
+    @Setter
+    private Map<String, double[]> regressoresFixos = Map.of();
+
+    @Getter
+    @Setter
+    private Map<String, Object> diagnosticoRegressao = Map.of();
+
+    /** Historical-only covariates are never invented in future rows. */
+    @Getter
+    @Setter
+    private Map<String, double[]> historicalOnlyRegressorSeries = Map.of();
+
+    /** Diagnostics and transformations of optional inputs, kept with the execution. */
+    @Getter
+    @Setter
+    private Map<String, String> regressorIncompatibilities = Map.of();
+    @Getter
+    @Setter
+    private Map<String, Double> regressorNeutralAnchors = Map.of();
+
+    /** Identidade funcional das colunas técnicas, para coeficientes e auditoria. */
+    @Getter
+    @Setter
+    private Map<String, String> regressorSourceIds = Map.of();
+
+    /** Optional batch-prepared historical cleansing mask. Null keeps the operational provider. */
+    @Getter @Setter
+    private boolean[] historicalCampaignPresence;
+
     /*
      * Series auxiliares do modelo. `fitModeloHistorico` e usado no Community
      * para inspecao/simulacao. STL, trend e bounds permanecem no contrato para
      * modelos Enterprise e ficam nulos quando o modelo Community nao os gera.
      */
+    /** Identidade MAPE imutável da rodada, resolvida em lote antes do fit/sharding. */
+    @lombok.Getter
+    @lombok.Setter
+    private String grupoMapeForecast;
+
+    /** Histórico inativo pode entrar no ajuste, mas não receber abertura futura. */
+    @lombok.Getter
+    @lombok.Setter
+    private boolean elegivelMixSharding = true;
+
+    /** Regras de mix aplicadas no futuro; não altera fitted values históricos. */
+    @lombok.Getter
+    @lombok.Setter
+    private Map<String, Object> diagnosticoMixSharding = Map.of();
+
     public double[] fitModeloHistorico; // fit historico do modelo estatistico, usado quando alguma etapa precisa comparar ajustado x observado
     public double[] seasonalStlHistorico;
     public double[] trendStlHistorico;

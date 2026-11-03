@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlanItem;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.HistoricoDemandPlanItem;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosAgregacaoForecast;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosLimpezaHistoricoForecast;
@@ -358,7 +358,8 @@ class DemandPlanningCommunityContractTest {
                 Constantes.DPModeloEstatistico.TBATS,
                 Constantes.DPModeloEstatistico.BUDGET_DECOMPOSITION,
                 Constantes.DPModeloEstatistico.CHRONOS,
-                Constantes.DPModeloEstatistico.PRICING_ML}) {
+                Constantes.DPModeloEstatistico.PRICING_ML,
+                Constantes.DPModeloEstatistico.REGRESSAO_SERIE_TEMPORAL}) {
             assertRequiresEnterpriseVersionException(dpModeloEstatisticoEnterprise);
         }
 
@@ -489,8 +490,8 @@ class DemandPlanningCommunityContractTest {
         LocationProjection locationProjection = new LocationProjection();
         MaterialProjection materialProjection = new MaterialProjection();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                new ClusterEParametrosProjectionComDfusAtivas();
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                new CadastroEParametrosProjectionComDfusAtivas();
 
         /*
          * Esta rotina estatica e uma fachada transicional do legado e pode ser
@@ -507,7 +508,7 @@ class DemandPlanningCommunityContractTest {
                         unidadeMedida,
                         false,
                         salesProjectionLocationMaterialData,
-                        clusterEParametrosProjection,
+                        cadastroEParametrosProjection,
                         false));
         IllegalArgumentException materialProjectionAusenteException = Assertions.assertThrows(
                 IllegalArgumentException.class,
@@ -518,7 +519,7 @@ class DemandPlanningCommunityContractTest {
                         unidadeMedida,
                         false,
                         salesProjectionLocationMaterialData,
-                        clusterEParametrosProjection,
+                        cadastroEParametrosProjection,
                         false));
         IllegalArgumentException unidadeMedidaAusenteException = Assertions.assertThrows(
                 IllegalArgumentException.class,
@@ -529,9 +530,9 @@ class DemandPlanningCommunityContractTest {
                         null,
                         false,
                         salesProjectionLocationMaterialData,
-                        clusterEParametrosProjection,
+                        cadastroEParametrosProjection,
                         false));
-        IllegalArgumentException clusterEParametrosProjectionAusenteException = Assertions.assertThrows(
+        IllegalArgumentException cadastroEParametrosProjectionAusenteException = Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> DemandPlanning.geraDemandPlanForecastProjectionMaterialLocationListComDemandaHistoricaPopuladaCommunity(
                         calendario,
@@ -554,7 +555,7 @@ class DemandPlanningCommunityContractTest {
                 unidadeMedidaAusenteException.getMessage());
         Assertions.assertEquals(
                 "Demand Planning cluster and parameters projection is required for material/location forecast series generation.",
-                clusterEParametrosProjectionAusenteException.getMessage());
+                cadastroEParametrosProjectionAusenteException.getMessage());
 
     }
 
@@ -573,8 +574,8 @@ class DemandPlanningCommunityContractTest {
                         .calendario(calendario)
                         .build();
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                new ClusterEParametrosProjectionComDfusAtivas();
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                new CadastroEParametrosProjectionComDfusAtivas();
 
         /*
          * Collections nulas dentro das projections indicam snapshot corrompido,
@@ -590,7 +591,7 @@ class DemandPlanningCommunityContractTest {
                         unidadeMedida,
                         false,
                         salesProjectionLocationMaterialData,
-                        clusterEParametrosProjection,
+                        cadastroEParametrosProjection,
                         false));
         IllegalStateException materialSetNuloException = Assertions.assertThrows(
                 IllegalStateException.class,
@@ -601,7 +602,7 @@ class DemandPlanningCommunityContractTest {
                         unidadeMedida,
                         false,
                         salesProjectionLocationMaterialData,
-                        clusterEParametrosProjection,
+                        cadastroEParametrosProjection,
                         false));
 
         Assertions.assertEquals(
@@ -749,7 +750,7 @@ class DemandPlanningCommunityContractTest {
                         List.of(demandPlanForecastProjectionMaterialLocation),
                         calendario,
                         null,
-                        new ClusterEParametrosProjectionComDfusAtivas());
+                        new CadastroEParametrosProjectionComDfusAtivas());
 
         Assertions.assertEquals(
                 2,
@@ -825,7 +826,7 @@ class DemandPlanningCommunityContractTest {
                 Constantes.DPModeloSplit.HISTORICAL_SALES,
                 2,
                 demandPlanForecastProjectionAgregado,
-                new ClusterEParametrosProjectionComDfusAtivas());
+                new CadastroEParametrosProjectionComDfusAtivas());
 
         Assertions.assertEquals(
                 40.0d,
@@ -897,7 +898,7 @@ class DemandPlanningCommunityContractTest {
                 Constantes.DPModeloSplit.HISTORICAL_SALES,
                 2,
                 demandPlanForecastProjectionAgregado,
-                new ClusterEParametrosProjectionComDfuInativa(
+                new CadastroEParametrosProjectionComDfuInativa(
                         "MATERIAL_INACTIVE",
                         "LOCATION_INACTIVE"));
 
@@ -960,7 +961,7 @@ class DemandPlanningCommunityContractTest {
                 Constantes.DPModeloSplit.HISTORICAL_SALES,
                 2,
                 demandPlanForecastProjectionAgregado,
-                new ClusterEParametrosProjectionComDfusAtivas());
+                new CadastroEParametrosProjectionComDfusAtivas());
 
         Assertions.assertEquals(
                 45.0d,
@@ -1012,7 +1013,7 @@ class DemandPlanningCommunityContractTest {
 
     }
 
-    private static class ClusterEParametrosProjectionComDfusAtivas extends ClusterEParametrosProjection {
+    private static class CadastroEParametrosProjectionComDfusAtivas extends CadastroEParametrosProjection {
 
         @Override
         public boolean isDfuAtiva(Produto material, Location location) {
@@ -1023,12 +1024,12 @@ class DemandPlanningCommunityContractTest {
 
     }
 
-    private static class ClusterEParametrosProjectionComDfuInativa extends ClusterEParametrosProjection {
+    private static class CadastroEParametrosProjectionComDfuInativa extends CadastroEParametrosProjection {
 
         private final String materialInativoId;
         private final String locationInativaId;
 
-        private ClusterEParametrosProjectionComDfuInativa(
+        private CadastroEParametrosProjectionComDfuInativa(
                 String materialInativoId,
                 String locationInativaId) {
 

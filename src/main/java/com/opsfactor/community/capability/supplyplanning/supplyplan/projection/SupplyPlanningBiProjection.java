@@ -11,7 +11,7 @@ import com.opsfactor.community.capability.supplyplanning.distributionplan.domain
 import com.opsfactor.community.capability.supplyplanning.inventoryplan.domain.InventoryPlanLinha;
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.projection.PoliticaEstoquesProjection;
@@ -42,7 +42,7 @@ public class SupplyPlanningBiProjection {
     private final PoliticaEstoquesProjection politicaEstoquesProjection;
     private final MaterialProjection materialProjection;
     private final LocationProjection locationProjection;
-    private final ClusterEParametrosProjection clusterEParametrosProjection;
+    private final CadastroEParametrosProjection cadastroEParametrosProjection;
     private final UnidadeMedidaProjection conversaoUnidadeMedidaProjection;
     private final Map<Location, Calendario> calendarioPorLocation = new LinkedHashMap<>();
     private final InventoryPlanLinhaBiProjection inventoryPlanLinhaBiProjection;
@@ -65,14 +65,14 @@ public class SupplyPlanningBiProjection {
         this.politicaEstoquesProjection = politicaEstoquesProjection;
         this.materialProjection = materialProjection;
         this.locationProjection = locationProjection;
-        this.clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+        this.cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
         this.conversaoUnidadeMedidaProjection = supplyNetworkProjection.getConversaoUnidadeMedidaProjection();
         this.demandaDiretaConsideradaProjection = demandaDiretaConsideradaProjection;
         locationProjection.getLocationsAtivas().forEach(location -> calendarioPorLocation.put(
-                location, supplyPlan.getCalendarioDoSupplyPlanParaLocation(clusterEParametrosProjection, location)));
+                location, supplyPlan.getCalendarioDoSupplyPlanParaLocation(cadastroEParametrosProjection, location)));
 
         Calendario calendarioGlobal = supplyPlan.getCalendarioDoSupplyPlan(
-                clusterEParametrosProjection.getParametrosGlobais());
+                cadastroEParametrosProjection.getParametrosGlobais());
         this.inventoryPlanLinhaBiProjection = new InventoryPlanLinhaBiProjection();
         this.distributionPlanItemBiProjection = new DistributionPlanItemBiProjection(
                 calendarioGlobal, conversaoUnidadeMedidaProjection, false);

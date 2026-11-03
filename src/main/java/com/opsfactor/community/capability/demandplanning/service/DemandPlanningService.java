@@ -8,8 +8,8 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlanItem;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosGeraisDemandPlanningProjection;
@@ -157,7 +157,7 @@ public class DemandPlanningService {
      * Factory da projection global de parametros, clusters e master data.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private ClusterizacaoProjectionFactory clusterizacaoProjectionFactory;
 
     /**
      * Factory da projection de UOM/conversoes usada no forecast e persistencia
@@ -499,12 +499,12 @@ public class DemandPlanningService {
         // alvo da combinacao cluster material / cluster location definida nos parametros DP.
         UnidadeMedidaProjection unidadeMedidaProjection =
                 unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ClusterizacaoProjection clusterizacaoProjection =
+                clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(perfilExecucaoDemandPlan.getPerfilClusterizacao().getId());
+        ParametrosGlobais parametrosGlobais = clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais();
         validaPerfilExecucaoDemandPlanDisponivel(perfilExecucaoDemandPlan, parametrosGlobais);
         ParametrosDemandPlanProjection parametrosDemandPlanProjection =
-                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjectionDeCache(perfilExecucaoDemandPlan);
+                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjection(perfilExecucaoDemandPlan);
 
         if (descricao == null || descricao.isBlank()) {
             descricao = "Demand Plan " + String.valueOf(CalendarioSimples.getDescricaoIntegerPeriodo(LocalDateTime.now(), perfilExecucaoDemandPlan.getTamanhoBucket()));
@@ -512,6 +512,8 @@ public class DemandPlanningService {
 
         DemandPlan demandPlan = new DemandPlan();
         demandPlan.setPerfilExecucaoDemandPlan(perfilExecucaoDemandPlan);
+        // A origem histórica não acompanha alterações posteriores no perfil de execução.
+        demandPlan.registraOrigemPerfilClusterizacao(perfilExecucaoDemandPlan.getPerfilClusterizacao());
         if (perfilExecucaoDemandPlan.getPerfilCalendario() == null) {
             throw new IllegalArgumentException("Select a simple calendar profile before creating a Demand Plan.");
         }
@@ -589,7 +591,7 @@ public class DemandPlanningService {
                                                 demandPlanForecastProjectionsExecucao,
                                                 calendario,
                                                 parametrosGeraisDemandPlanningProjection,
-                                                clusterEParametrosProjection));
+                                                clusterizacaoProjection.getCadastroEParametrosProjection()));
 
                         // ARREDONDA PARA UNIDADE DE VENDA
                         if (demandPlansLinhaClusterLocations.size() > 0) {
@@ -599,7 +601,7 @@ public class DemandPlanningService {
                                         demandPlansLinhaClusterLocations,
                                         Constantes.ModificacaoAgregadaPlano.PROPORCIONAL_OU_BASELINE,
                                         Constantes.TipoPlano.PLANO_IRRESTRITO,
-                                        clusterEParametrosProjection,
+                                        clusterizacaoProjection.getCadastroEParametrosProjection(),
                                         unidadeMedidaProjection);
                             }
                             log.info("Salvando demand plan e demand plan linha para Cluster Materiais " + clusterMateriaisDemandPlanning.getDescricao() +
@@ -628,7 +630,7 @@ public class DemandPlanningService {
 
             executaPosProcessamentoDemandPlanGerado(
                     demandPlan,
-                    clusterEParametrosProjection);
+                    clusterizacaoProjection);
 
             if (demandPlanIdReferenciaCopiaDados != null) {
                 demandPlanReferenceCopySpi.copyReferencePlan(
@@ -636,7 +638,7 @@ public class DemandPlanningService {
                         demandPlanIdReferenciaCopiaDados,
                         copiaApenasNoHorizonteCongelado,
                         parametrosDemandPlanProjection,
-                        clusterEParametrosProjection,
+                        clusterizacaoProjection.getCadastroEParametrosProjection(),
                         unidadeMedidaProjection);
             }
 
@@ -781,7 +783,7 @@ public class DemandPlanningService {
      */
     protected void executaPosProcessamentoDemandPlanGerado(
             DemandPlan demandPlan,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            ClusterizacaoProjection clusterizacaoProjection) {
 
         /*
          * No-op intencional: sucessao de materiais, New Materials, location
@@ -1061,8 +1063,8 @@ public class DemandPlanningService {
 
         if (!parametrosGeraisDemandPlanningProjection.executaPlanoDemanda) return new ArrayList<>();
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        ClusterizacaoProjection clusterizacaoProjection =
+                clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(parametrosDemandPlanNivelClusterProjection.getClusterLocations().getPerfilClusterizacao().getId());
 
         ClusterLocations clusterLocations = parametrosDemandPlanNivelClusterProjection.getClusterLocations();
         ClusterMateriais clusterMateriaisDemandPlanning = parametrosDemandPlanNivelClusterProjection.getClusterMateriaisDemandPlanning();
@@ -1070,7 +1072,7 @@ public class DemandPlanningService {
         UnidadeMedida unidadeMedidaPadraoDp = parametrosGeraisDemandPlanningProjection.getUnidadeMedidaDP();
 
 
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais();
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = parametrosDemandPlanNivelClusterProjection.getPerfilExecucaoDemandPlan();
         validaPerfilExecucaoDemandPlanDisponivel(perfilExecucaoDemandPlan, parametrosGlobais);
 
@@ -1091,16 +1093,16 @@ public class DemandPlanningService {
         SalesProjectionLocationMaterialData salesProjection = salesProjectionFactory.getSalesProjectionLocationMaterialData(
                 perfilExecucaoDemandPlan.getTipoDocumentoVenda(parametrosGlobais),
                 calendario,
-                clusterEParametrosProjection.getLocationsDeClusterLocations(clusterLocations, !consideraDfusInativos),
-                clusterEParametrosProjection.getMateriaisDeClusterMateriaisDemandPlanning(clusterMateriaisDemandPlanning, !consideraDfusInativos),
+                clusterizacaoProjection.getLocationsDeClusterLocations(clusterLocations, !consideraDfusInativos),
+                clusterizacaoProjection.getMateriaisDeClusterMateriaisDemandPlanning(clusterMateriaisDemandPlanning, !consideraDfusInativos),
                 unidadeMedidaProjection,
-                clusterEParametrosProjection,
+                clusterizacaoProjection.getCadastroEParametrosProjection(),
                 unidadeMedidaPadraoDp);
 
         LocationProjection locationProjection = LocationProjectionFactory
-                .getProjectionClusterLocations(clusterLocations, clusterEParametrosProjection, !consideraDfusInativos);
+                .getProjectionClusterLocations(clusterLocations, clusterizacaoProjection, !consideraDfusInativos);
         MaterialProjection materialProjection = MaterialProjectionFactory
-                .getProjectionClusterMateriais(clusterMateriaisDemandPlanning, clusterEParametrosProjection, !consideraDfusInativos);
+                .getProjectionClusterMateriais(clusterMateriaisDemandPlanning, clusterizacaoProjection, !consideraDfusInativos);
 
         return geraDemandPlanForecastProjectionsExecucaoComForecast(
                 calendario,
@@ -1108,7 +1110,7 @@ public class DemandPlanningService {
                 materialProjection,
                 locationProjection,
                 salesProjection,
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 preencheHorizonteForecastComDemandaHistorica);
 
     }
@@ -1127,7 +1129,7 @@ public class DemandPlanningService {
             MaterialProjection materialProjection,
             LocationProjection locationProjection,
             SalesProjectionLocationMaterialData salesProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             boolean preencheHorizonteForecastComDemandaHistorica) {
 
         ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection =
@@ -1136,7 +1138,7 @@ public class DemandPlanningService {
         if (!parametrosGeraisDemandPlanningProjection.executaPlanoDemanda) return new ArrayList<>();
 
 
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais();
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = parametrosDemandPlanNivelClusterProjection.getPerfilExecucaoDemandPlan();
         validaPerfilExecucaoDemandPlanDisponivel(perfilExecucaoDemandPlan, parametrosGlobais);
 
@@ -1154,7 +1156,7 @@ public class DemandPlanningService {
                         salesProjection,
                         parametrosGeraisDemandPlanningProjection,
                         parametrosForecastProjection,
-                        clusterEParametrosProjection,
+                        clusterizacaoProjection,
                         preencheHorizonteForecastComDemandaHistorica);
 
         /*
@@ -1166,7 +1168,7 @@ public class DemandPlanningService {
         DemandPlanning.redistribuiForecastBaselineTrendSeasonalEntreMateriaisAtivosCommunity(
                 demandPlanForecastProjectionsExecucaoComForecast,
                 calendario,
-                clusterEParametrosProjection,
+                clusterizacaoProjection.getCadastroEParametrosProjection(),
                 parametrosDemandPlanNivelClusterProjection.getParametrosGeraisDemandPlanningProjection());
 
         return demandPlanForecastProjectionsExecucaoComForecast;
@@ -1190,7 +1192,7 @@ public class DemandPlanningService {
                     SalesProjectionLocationMaterialData salesProjection,
                     ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
                     ParametrosForecastProjection parametrosForecastProjection,
-                    ClusterEParametrosProjection clusterEParametrosProjection,
+                    ClusterizacaoProjection clusterizacaoProjection,
                     boolean preencheHorizonteForecastComDemandaHistorica) {
 
         return geraDemandPlanForecastProjectionsExecucaoComForecast(
@@ -1200,7 +1202,7 @@ public class DemandPlanningService {
                 salesProjection,
                 parametrosGeraisDemandPlanningProjection,
                 parametrosForecastProjection,
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 preencheHorizonteForecastComDemandaHistorica);
 
     }
@@ -1252,7 +1254,7 @@ public class DemandPlanningService {
             SalesProjectionLocationMaterialData salesProjection,
             ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
             ParametrosForecastProjection parametrosForecastProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             boolean preencheHorizonteForecastComDemandaHistorica) {
 
         if (parametrosGeraisDemandPlanningProjection == null) {
@@ -1274,7 +1276,7 @@ public class DemandPlanningService {
                 salesProjection,
                 parametrosGeraisDemandPlanningProjection,
                 parametrosForecastProjection,
-                clusterEParametrosProjection);
+                clusterizacaoProjection);
 
         List<DemandPlanForecastProjectionMaterialLocation> demandPlanForecastProjectionMaterialLocationList = DemandPlanning.geraDemandPlanForecastProjectionMaterialLocationListComDemandaHistoricaPopuladaCommunity(
                 calendario,
@@ -1283,7 +1285,7 @@ public class DemandPlanningService {
                 unidadeMedidaPadraoDp,
                 consideraDfusInativos,
                 salesProjection,
-                clusterEParametrosProjection,
+                clusterizacaoProjection.getCadastroEParametrosProjection(),
                 preencheHorizonteForecastComDemandaHistorica);
 
         demandPlanForecastProjectionMaterialLocationList = preparaFolhasAntesDoWorkflowForecast(
@@ -1293,7 +1295,7 @@ public class DemandPlanningService {
                 locationProjection,
                 parametrosGeraisDemandPlanningProjection,
                 parametrosForecastProjection,
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 preencheHorizonteForecastComDemandaHistorica);
 
         return geraDemandPlanForecastProjectionsExecucaoComForecast(
@@ -1303,7 +1305,7 @@ public class DemandPlanningService {
                 locationProjection,
                 parametrosGeraisDemandPlanningProjection,
                 parametrosForecastProjection,
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 preencheHorizonteForecastComDemandaHistorica);
 
     }
@@ -1322,7 +1324,7 @@ public class DemandPlanningService {
                     LocationProjection locationProjection,
                     ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
                     ParametrosForecastProjection parametrosForecastProjection,
-                    ClusterEParametrosProjection clusterEParametrosProjection,
+                    ClusterizacaoProjection clusterizacaoProjection,
                     boolean preencheHorizonteForecastComDemandaHistorica) {
 
         if (Constantes.DPModeloEstatistico.BUDGET_DECOMPOSITION.equals(
@@ -1393,14 +1395,14 @@ public class DemandPlanningService {
      * @param parametrosGeraisDemandPlanningProjection parametros gerais ja
      *                                                 normalizados para a edicao
      * @param parametrosForecastProjection parametros do modelo/split da rodada
-     * @param clusterEParametrosProjection fotografia de parametros e master data
+     * @param clusterizacaoProjection fotografia de parametros e master data
      *                                     usada pela execucao do forecast
      */
     protected void preparaHistoricoForecastDemandPlanning(
             SalesProjectionLocationMaterialData salesProjection,
             ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
             ParametrosForecastProjection parametrosForecastProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            ClusterizacaoProjection clusterizacaoProjection) {
 
     }
 
@@ -1423,7 +1425,7 @@ public class DemandPlanningService {
             LocationProjection locationProjection,
             ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
             ParametrosForecastProjection parametrosForecastProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             boolean preencheHorizonteForecastComDemandaHistorica) {
 
         validaParametrosForecastCommunity(parametrosForecastProjection);
@@ -1437,7 +1439,7 @@ public class DemandPlanningService {
                         calendario,
                         parametrosGeraisDemandPlanningProjection,
                         parametrosForecastProjection,
-                        clusterEParametrosProjection,
+                        clusterizacaoProjection,
                         demandPlanForecastProjectionMaterialLocationList);
 
         return geraDemandPlanForecastProjectionsExecucaoComForecastEContextoStockout(
@@ -1447,7 +1449,7 @@ public class DemandPlanningService {
                 locationProjection,
                 parametrosGeraisDemandPlanningProjection,
                 parametrosForecastProjection,
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 preencheHorizonteForecastComDemandaHistorica,
                 demandForecastStockoutContext);
 
@@ -1472,7 +1474,7 @@ public class DemandPlanningService {
                     LocationProjection locationProjection,
                     ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
                     ParametrosForecastProjection parametrosForecastProjection,
-                    ClusterEParametrosProjection clusterEParametrosProjection,
+                    ClusterizacaoProjection clusterizacaoProjection,
                     boolean preencheHorizonteForecastComDemandaHistorica,
                     DemandForecastStockoutContext demandForecastStockoutContext) {
 
@@ -1498,7 +1500,7 @@ public class DemandPlanningService {
                     parametrosForecastProjection,
                     parametrosGeraisDemandPlanningProjection.getParametrosAgregacaoForecast(),
                     demandPlanForecastProjection,
-                    clusterEParametrosProjection,
+                    clusterizacaoProjection.getCadastroEParametrosProjection(),
                     demandForecastStockoutContext);
 
         }
@@ -1519,7 +1521,7 @@ public class DemandPlanningService {
             CalendarioSimples calendario,
             ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
             ParametrosForecastProjection parametrosForecastProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             List<DemandPlanForecastProjectionMaterialLocation> demandPlanForecastProjectionMaterialLocationList) {
 
         return null;

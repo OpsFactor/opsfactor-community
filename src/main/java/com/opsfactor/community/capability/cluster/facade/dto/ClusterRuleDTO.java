@@ -18,6 +18,7 @@ import java.util.List;
  */
 @Data @NoArgsConstructor @AllArgsConstructor
 public class ClusterRuleDTO {
+    private String clusteringProfileId;
     private Long id;
     private String name;
     private String criterion;

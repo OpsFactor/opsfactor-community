@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.configuration.user.domain.ConfiguredVi
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.FiltroDFUProjection;
 import com.opsfactor.community.capability.planningbook.domain.AjusteCelulaPlanningBook;
 import com.opsfactor.community.capability.planningbook.domain.PlanningBookDfuScope;
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 @Data
 public class ConfiguredViewProjection {
 
-    protected ClusterEParametrosProjection clusterEParametrosProjection;
+    protected CadastroEParametrosProjection cadastroEParametrosProjection;
     protected ConfiguredView configuredView; 
 
     protected List<KeyFigureInterface> keyFiguresOrdenadasParaExibicao;

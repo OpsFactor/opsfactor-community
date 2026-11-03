@@ -4,10 +4,9 @@ import com.opsfactor.community.capability.supplyplanning.configuration.domain.Pe
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.production.productionresource.projection.BIProjectionCapacidadeProdutiva;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.projection.SupplyPlanningProjection;
-import com.opsfactor.community.capability.supplyplanning.engine.SupplyPlanning;
 import com.opsfactor.community.platform.bi.service.CommunityProductionOverviewProjectionLoader;
 import com.opsfactor.community.platform.bi.service.CommunityProductionOverviewProjectionLoader.CommunityProductionOverviewProjectionContext;
 import com.opsfactor.community.platform.bi.facade.dto.CommunityProductionOverviewDTO;
@@ -48,7 +47,7 @@ public class CommunityProductionOverviewService {
                 .load(selectionDTO);
         CommunitySupplyOverviewBaseDTO base = supplyOverviewBaseFactory.create(
                 projectionContext.calendar(), projectionContext.eligibleLocations(), projectionContext.materialProjection(),
-                projectionContext.supplyNetworkProjection().getClusterEParametrosProjection(),
+                projectionContext.supplyNetworkProjection().getCadastroEParametrosProjection(),
                 projectionContext.targetUnitOfMeasure(), projectionContext.supplyPlanningProjection());
         CommunityProductionOverviewDTO response = new CommunityProductionOverviewDTO(base);
 
@@ -119,8 +118,8 @@ public class CommunityProductionOverviewService {
             Calendario calendar,
             PerfilExecucaoSupplyPlan.TipoCapacidadeProdutiva productionCapacityType) {
 
-        ClusterEParametrosProjection clusterAndParametersProjection = projectionContext.supplyNetworkProjection()
-                .getClusterEParametrosProjection();
+        CadastroEParametrosProjection clusterAndParametersProjection = projectionContext.supplyNetworkProjection()
+                .getCadastroEParametrosProjection();
         for (int period = calendar.getPosicaoPeriodoPresente();
              period <= calendar.getPosicaoPeriodoFinalFuturo();
              period++) {

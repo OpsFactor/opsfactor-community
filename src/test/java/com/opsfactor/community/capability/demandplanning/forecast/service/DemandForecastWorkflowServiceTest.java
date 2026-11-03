@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.demandplanning.forecast.service;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosAgregacaoForecast;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosMediaMovel;
@@ -110,7 +110,7 @@ class DemandForecastWorkflowServiceTest {
                         parametrosForecastProjection,
                         getParametrosAgregacaoForecastTopDown(),
                         getDemandPlanForecastProjectionMaterialLocationVazia(),
-                        new ClusterEParametrosProjectionComDfusAtivas()));
+                        new CadastroEParametrosProjectionComDfusAtivas()));
         Assertions.assertEquals(
                 "Demand Planning statistical forecast model is required",
                 illegalArgumentException.getMessage());
@@ -138,7 +138,7 @@ class DemandForecastWorkflowServiceTest {
                         parametrosForecastProjection,
                         getParametrosAgregacaoForecastTopDown(),
                         getDemandPlanForecastProjectionMaterialLocationVazia(),
-                        new ClusterEParametrosProjectionComDfusAtivas()));
+                        new CadastroEParametrosProjectionComDfusAtivas()));
         Assertions.assertEquals(
                 "Demand Planning forecast split model is required",
                 illegalArgumentException.getMessage());
@@ -162,7 +162,7 @@ class DemandForecastWorkflowServiceTest {
                         parametrosForecastProjection,
                         getParametrosAgregacaoForecastTopDown(),
                         getDemandPlanForecastProjectionMaterialLocationVazia(),
-                        new ClusterEParametrosProjectionComDfusAtivas()));
+                        new CadastroEParametrosProjectionComDfusAtivas()));
 
         Assertions.assertTrue(
                 illegalArgumentException.getMessage().contains("accepts only Historical Sales split"));
@@ -204,7 +204,7 @@ class DemandForecastWorkflowServiceTest {
                         getParametrosForecastProjectionMediaMovel(),
                         getParametrosAgregacaoForecastTopDown(),
                         demandPlanForecastProjectionMaterialLocation,
-                        new ClusterEParametrosProjectionComDfusAtivas()));
+                        new CadastroEParametrosProjectionComDfusAtivas()));
         Assertions.assertEquals(
                 "Demand Planning calendar is required",
                 illegalArgumentException.getMessage());
@@ -225,7 +225,7 @@ class DemandForecastWorkflowServiceTest {
                         getParametrosForecastProjectionMediaMovel(),
                         getParametrosAgregacaoForecastTopDown(),
                         null,
-                        new ClusterEParametrosProjectionComDfusAtivas()));
+                        new CadastroEParametrosProjectionComDfusAtivas()));
         Assertions.assertEquals(
                 "Demand Planning forecast projection is required",
                 illegalArgumentException.getMessage());
@@ -309,7 +309,7 @@ class DemandForecastWorkflowServiceTest {
                 parametrosForecastProjection,
                 getParametrosAgregacaoForecastTopDown(),
                 demandPlanForecastProjectionAgregado,
-                new ClusterEParametrosProjectionComDfusAtivas());
+                new CadastroEParametrosProjectionComDfusAtivas());
 
         Assertions.assertEquals(
                 50.0d,
@@ -367,7 +367,7 @@ class DemandForecastWorkflowServiceTest {
         /*
          * Bottom-up executa o forecast diretamente no leaf material/location.
          * Nao ha decisao de DFU ativa nem redistribuicao top-down, portanto o
-         * workflow nao deve exigir ClusterEParametrosProjection nesse caminho.
+         * workflow nao deve exigir CadastroEParametrosProjection nesse caminho.
          */
         Assertions.assertEquals(
                 50.0d,
@@ -398,7 +398,7 @@ class DemandForecastWorkflowServiceTest {
                         getParametrosForecastProjectionMediaMovel(),
                         getParametrosAgregacaoForecastTopDown(),
                         demandPlanForecastProjectionMaterialLocation,
-                        new ClusterEParametrosProjectionComDfusAtivas()));
+                        new CadastroEParametrosProjectionComDfusAtivas()));
 
         Assertions.assertTrue(
                 illegalStateException.getMessage().contains("requer desagregacao"));
@@ -506,7 +506,7 @@ class DemandForecastWorkflowServiceTest {
 
     }
 
-    private static class ClusterEParametrosProjectionComDfusAtivas extends ClusterEParametrosProjection {
+    private static class CadastroEParametrosProjectionComDfusAtivas extends CadastroEParametrosProjection {
 
         @Override
         public boolean isDfuAtiva(Produto material, Location location) {

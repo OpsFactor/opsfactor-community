@@ -10,8 +10,8 @@ import com.opsfactor.community.capability.demandplanning.configuration.domain.Pa
 import com.opsfactor.community.capability.demandplanning.configuration.domain.ParametrosModeloEstatisticoAbstract;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.aggregation.ParametrosDemandPlanNivelClusterProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.factory.ParametrosDemandPlanningProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosAgregacaoForecast;
@@ -51,7 +51,7 @@ public class DemandPlanningConfigurationMapper {
      * resolver clusters na criacao de entidades transicionais.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private ClusterizacaoProjectionFactory clusterizacaoProjectionFactory;
 
     /**
      * Factory que materializa a projection simples Community depois que o DTO
@@ -146,17 +146,17 @@ public class DemandPlanningConfigurationMapper {
     private DemandPlanningGeneralParametersDTO getDemandPlanningGeneralParametersDTOFromEntities(
             ParametrosDemandPlanNivelCluster parametrosDemandPlanNivelCluster) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        ClusterizacaoProjection clusterizacaoProjection =
+                clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(parametrosDemandPlanNivelCluster.getClusterLocations().getPerfilClusterizacao().getId());
         ParametrosGlobais parametrosGlobais =
-                clusterEParametrosProjection.getParametrosGlobais();
+                clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais();
 
         DemandPlanningGeneralParametersDTO demandPlanningGeneralParametersDTO = new DemandPlanningGeneralParametersDTO();
         demandPlanningGeneralParametersDTO.executeDemandPlan = (parametrosDemandPlanNivelCluster.getExecutaDp() == null) ?
                 true :
                 parametrosDemandPlanNivelCluster.getExecutaDp();
         demandPlanningGeneralParametersDTO.uomId = (parametrosDemandPlanNivelCluster.getUnidadeMedidaPadraoDP() == null) ?
-                clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal().getId()
+                clusterizacaoProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaPadraoGlobal().getId()
                 : parametrosDemandPlanNivelCluster.getUnidadeMedidaPadraoDP().getId();
         // O arredondamento pela UOM de venda e uma capacidade Pro. A borda
         // Community nunca reexpoe um valor legado persistido.
@@ -545,11 +545,11 @@ public class DemandPlanningConfigurationMapper {
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = perfilExecucaoDemandPlanRepository
                 .findById(demandPlanningClusterLevelConfigurationDTO.demandPlanExecutionProfileId)
                 .get();
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
-        ClusterLocations clusterLocations = clusterEParametrosProjection.getClusterLocationsDeId(
+        ClusterizacaoProjection clusterizacaoProjection =
+                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjection(perfilExecucaoDemandPlan).getClusterizacaoProjection();
+        ClusterLocations clusterLocations = clusterizacaoProjection.getClusterLocationsDeId(
                 demandPlanningClusterLevelConfigurationDTO.locationClusterId);
-        ClusterMateriais clusterMateriaisDemandPlanning = clusterEParametrosProjection
+        ClusterMateriais clusterMateriaisDemandPlanning = clusterizacaoProjection
                 .getClusterMateriaisDemandPlanningDeId(
                         demandPlanningClusterLevelConfigurationDTO.materialClusterId)
                 .get();

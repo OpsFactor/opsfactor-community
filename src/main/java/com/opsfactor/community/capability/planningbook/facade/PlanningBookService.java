@@ -7,7 +7,7 @@ import com.opsfactor.community.capability.planningbook.facade.dto.specializedkey
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguredView;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.configuration.user.projection.ConfiguredViewProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.FiltroDFUProjection;
@@ -49,8 +49,8 @@ public class PlanningBookService {
         ConfiguredViewProjection configuredViewProjection =
                 keyFigureProjection.getConfiguredViewProjection();
         ConfiguredView configuredView = configuredViewProjection.getConfiguredView();
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                configuredViewProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                configuredViewProjection.getCadastroEParametrosProjection();
         validaKeyFiguresApresentadas(keyFigureProjection);
 
         Map<String,String> additionalParameters = new HashMap<>();
@@ -78,7 +78,7 @@ public class PlanningBookService {
                 .groups(getGroupDTOList(keyFigureProjection))
                 .additionalParameters(additionalParameters)
                 .periodList(periodList)
-                .uom(configuredViewProjection.getUnidadeMedidaView(clusterEParametrosProjection.getParametrosGlobais()).getId())
+                .uom(configuredViewProjection.getUnidadeMedidaView(cadastroEParametrosProjection.getParametrosGlobais()).getId())
                 .build();
 
         atualizaPeriodosSemInformacaoComValorZero(planningBookDTO,
@@ -266,7 +266,7 @@ public class PlanningBookService {
             FiltroDFUProjection dfuProjectionDoEscopo =
                     planningBookDfuScope.getNovoDFUProjectionInterseccaoComProjectionFiltro(
                             configuredViewProjection.getDfuProjectionFiltrado(),
-                            configuredViewProjection.getClusterEParametrosProjection());
+                            configuredViewProjection.getCadastroEParametrosProjection());
             dfusDetalhados.addAll(dfuProjectionDoEscopo.getDFUs());
         }
 
@@ -345,7 +345,7 @@ public class PlanningBookService {
             DFU dfu) {
 
         ConfiguredViewProjection configuredViewProjection = keyFigureProjection.getConfiguredViewProjection();
-        ClusterEParametrosProjection clusterEParametrosProjection = configuredViewProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = configuredViewProjection.getCadastroEParametrosProjection();
         Calendario calendario = keyFigureProjection.getCalendario();
         Produto material = dfu.getProduto();
         Location location = dfu.getLocation();
@@ -382,7 +382,7 @@ public class PlanningBookService {
                     material,
                     configuredViewProjection.getDfuProjectionFiltrado(),
                     calendario,
-                    clusterEParametrosProjection);
+                    cadastroEParametrosProjection);
         }
 
         populaGroupDTOComAdditionalClassETooltipDeErro(
@@ -440,14 +440,14 @@ public class PlanningBookService {
             @Nullable Produto materialFiltradoNullable,
             FiltroDFUProjection dfuProjectionFiltradoParaAgrupamento,
             Calendario calendario,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
         
         List<DFU> dfusConsideradasParaCalculoHorizonteCongelado = dfuProjectionFiltradoParaAgrupamento.getDFUsViaveis(
                 (materialFiltradoNullable == null) ? null : Set.of(materialFiltradoNullable), 
                 (locationFiltradaNullable == null) ? null : Set.of(locationFiltradaNullable));
         
         int horizonteCongeladoPeriodos = dfusConsideradasParaCalculoHorizonteCongelado.parallelStream()
-                .mapToInt(dfu -> clusterEParametrosProjection.getDPHorizonteCongeladoEmPeriodos(
+                .mapToInt(dfu -> cadastroEParametrosProjection.getDPHorizonteCongeladoEmPeriodos(
                         dfu.getLocation(), dfu.getProduto(),
                         calendario).orElse(0))
                 .max().orElse(0);

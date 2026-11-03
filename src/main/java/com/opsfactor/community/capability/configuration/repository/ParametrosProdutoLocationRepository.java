@@ -37,28 +37,28 @@ public interface ParametrosProdutoLocationRepository extends JpaRepository<Param
      * Salva parametros material-location e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     public <S extends ParametrosProdutoLocation> S save(S entity);
 
     /**
      * Salva parametros material-location em lote e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     <S extends ParametrosProdutoLocation> List<S> saveAll(Iterable<S> entities);
 
     /**
      * Remove parametros material-location e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     public void delete(ParametrosProdutoLocation entity);
 
     /**
      * Remove parametros material-location em lote e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     void deleteAll(Iterable<? extends ParametrosProdutoLocation> entities);
 
 }

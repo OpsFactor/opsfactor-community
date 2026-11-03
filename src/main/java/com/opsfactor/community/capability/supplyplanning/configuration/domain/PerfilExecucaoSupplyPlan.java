@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.masterdata.calendar.profile.domain.Per
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.network.location.domain.LocationAbstract;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.utility.Constantes;
 import lombok.*;
@@ -675,14 +675,14 @@ public class PerfilExecucaoSupplyPlan implements Serializable, Cloneable {
         return getHorizontePlanoDias(parametrosGlobais);
 
     }
-    public int getUltimoPeriodoFuturoHorizonteAPartirPeriodoPresente(Location location, Calendario calendario, ClusterEParametrosProjection clusterEParametrosProjection) {
+    public int getUltimoPeriodoFuturoHorizonteAPartirPeriodoPresente(Location location, Calendario calendario, CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         // Com receita explícita o horizonte vem dos períodos resolvidos. O campo
         // legado em dias só serve aos planos antigos ainda sem perfil calendário.
         if (getPerfilCalendario() != null) {
             return calendario.getPosicaoPeriodoFinalFuturo();
         }
-        int numeroDiasHorizonte = getHorizontePlanoDias(clusterEParametrosProjection, location);
+        int numeroDiasHorizonte = getHorizontePlanoDias(cadastroEParametrosProjection, location);
         int posicaoPeriodoPresente = calendario.getPosicaoPeriodoPresente();
 
         /*
@@ -702,9 +702,9 @@ public class PerfilExecucaoSupplyPlan implements Serializable, Cloneable {
 
         return Math.min(calendario.getPosicaoPeriodoFinalFuturo(), ultimoPeriodoDentroHorizonte);
     }
-    public int getHorizontePlanoDias(ClusterEParametrosProjection clusterEParametrosProjection, Location location) {
+    public int getHorizontePlanoDias(CadastroEParametrosProjection cadastroEParametrosProjection, Location location) {
         
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
         return getHorizontePlanoDias(parametrosGlobais);
 
     }
@@ -1243,14 +1243,14 @@ public class PerfilExecucaoSupplyPlan implements Serializable, Cloneable {
         return (geraRequisicoesInboundParaMateriaisComProducaoViavel == null) ? true : geraRequisicoesInboundParaMateriaisComProducaoViavel;
     }
     
-    public Set<Location> getLocationsConsideradas(ClusterEParametrosProjection clusterEParametrosProjection) {
+    public Set<Location> getLocationsConsideradas(CadastroEParametrosProjection cadastroEParametrosProjection) {
         /*
          * Community nao possui inclusao/exclusao por location no perfil de
          * execucao. A projection/factory que consome este metodo ainda pode
          * aplicar filtros globais, como propagacao de demanda, mas nao existe
          * uma whitelist/blacklist por location nesta edicao.
          */
-        return clusterEParametrosProjection.getLocationsAtivas();
+        return cadastroEParametrosProjection.getLocationsAtivas();
     }
 
     public boolean getGeraPlanoIrrestrito() {
@@ -1261,8 +1261,8 @@ public class PerfilExecucaoSupplyPlan implements Serializable, Cloneable {
         return (ignoraRestricaoProducaoIrrestrito == null) ? true : ignoraRestricaoProducaoIrrestrito;
     }
 
-    public boolean contemLocation(ClusterEParametrosProjection clusterEParametrosProjection, Location location) {
-        return getLocationsConsideradas(clusterEParametrosProjection).contains(location);
+    public boolean contemLocation(CadastroEParametrosProjection cadastroEParametrosProjection, Location location) {
+        return getLocationsConsideradas(cadastroEParametrosProjection).contains(location);
     }
     
     public Optional<Integer> getTempoMaximoDiasParaAbastecimento(Location location) {
@@ -1978,7 +1978,7 @@ public class PerfilExecucaoSupplyPlan implements Serializable, Cloneable {
 
     }
 
-    public Set<Location> getLocationsGreenfield(ClusterEParametrosProjection clusterEParametrosProjection) {
+    public Set<Location> getLocationsGreenfield(CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         /*
          * Greenfield e capability Enterprise. O Community nao abre/fecha

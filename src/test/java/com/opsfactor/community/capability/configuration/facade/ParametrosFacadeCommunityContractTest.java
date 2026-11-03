@@ -20,6 +20,8 @@ import com.opsfactor.community.platform.utility.Constantes;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import com.opsfactor.community.capability.configuration.service.cluster.PerfilClusterizacaoService;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
@@ -95,7 +97,7 @@ public class ParametrosFacadeCommunityContractTest {
     }
 
     @Test
-    public void saveParametroClusterLocationDTOShouldReturnFalseWhenSavedSnapshotIsBroken()
+    public void saveParametroClusterLocationDTOShouldRejectBrokenSavedSnapshot()
             throws Exception {
 
         ParametroClusterLocationDTO parametroClusterLocationDTO = new ParametroClusterLocationDTO();
@@ -105,22 +107,22 @@ public class ParametrosFacadeCommunityContractTest {
         ParametrosFacade parametrosFrontServiceComSnapshotNulo =
                 criaParametrosFrontServiceParaSaveParametroClusterLocation(null);
 
-        Assertions.assertFalse(
-                parametrosFrontServiceComSnapshotNulo.saveParametroClusterLocationDTO(
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> parametrosFrontServiceComSnapshotNulo.saveParametroClusterLocationDTO(
                         parametroClusterLocationDTO));
 
         ParametrosFacade parametrosFrontServiceComSnapshotSemChave =
                 criaParametrosFrontServiceParaSaveParametroClusterLocation(
                         new ParametrosClusterLocations());
 
-        Assertions.assertFalse(
-                parametrosFrontServiceComSnapshotSemChave.saveParametroClusterLocationDTO(
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> parametrosFrontServiceComSnapshotSemChave.saveParametroClusterLocationDTO(
                         parametroClusterLocationDTO));
 
     }
 
     @Test
-    public void saveParametroClusterLocationDTOShouldReturnFalseWhenClusterRepositoryReturnsNullOptional()
+    public void saveParametroClusterLocationDTOShouldRejectNullRepositoryOptional()
             throws Exception {
 
         ParametroClusterLocationDTO parametroClusterLocationDTO = new ParametroClusterLocationDTO();
@@ -134,12 +136,11 @@ public class ParametrosFacadeCommunityContractTest {
                 getClusterLocationsRepositoryComFindByIdRetornando(null));
 
         /*
-         * Optional.empty() representa cluster inexistente; Optional nulo e
-         * repository quebrado. Ambos preservam o contrato publico false, mas
-         * nenhum deles deve chegar ao save dos parametros.
+         * Optional nulo acusa falha de contrato; o fluxo não pode convertê-la
+         * em resultado booleano e ocultar a inconsistência do snapshot.
          */
-        Assertions.assertFalse(
-                parametrosFrontService.saveParametroClusterLocationDTO(
+        Assertions.assertThrows(IllegalStateException.class,
+                () -> parametrosFrontService.saveParametroClusterLocationDTO(
                         parametroClusterLocationDTO));
 
     }
@@ -736,7 +737,7 @@ public class ParametrosFacadeCommunityContractTest {
         clusterLocations.getParametrosClusterLocations();
 
         InvocationHandler invocationHandler = (proxy, method, args) -> {
-            if ("findById".equals(method.getName())) {
+            if ("findByPerfilClusterizacaoIdAndId".equals(method.getName())) {
                 return Optional.of(clusterLocations);
             }
             if ("toString".equals(method.getName())) {
@@ -763,7 +764,7 @@ public class ParametrosFacadeCommunityContractTest {
             List<ClusterLocations> clusterLocationsList) {
 
         InvocationHandler invocationHandler = (proxy, method, args) -> {
-            if ("customFindAll".equals(method.getName())) {
+            if ("findAllByPerfilClusterizacaoId".equals(method.getName())) {
                 quantidadeLeiturasComFetch.incrementAndGet();
                 return clusterLocationsList;
             }
@@ -789,7 +790,7 @@ public class ParametrosFacadeCommunityContractTest {
             Optional<ClusterLocations> optionalClusterLocations) {
 
         InvocationHandler invocationHandler = (proxy, method, args) -> {
-            if ("findById".equals(method.getName())) {
+            if ("findByPerfilClusterizacaoIdAndId".equals(method.getName())) {
                 return optionalClusterLocations;
             }
             if ("toString".equals(method.getName())) {
@@ -1096,6 +1097,17 @@ public class ParametrosFacadeCommunityContractTest {
             Object target,
             String fieldName,
             Object value) throws Exception {
+        if (target instanceof ParametrosFacade && "clusterLocationsRepository".equals(fieldName)) {
+            Field guard = ParametrosFacade.class.getDeclaredField("perfilClusterizacaoService");
+            guard.setAccessible(true);
+            PerfilClusterizacaoService profilePolicy = Mockito.mock(PerfilClusterizacaoService.class);
+            Mockito.when(profilePolicy.resolveProfileId(Mockito.any())).thenAnswer(call -> {
+                String requested = call.getArgument(0);
+                return requested == null || requested.isBlank() ? "LEGADO" : requested;
+            });
+            guard.set(target, profilePolicy);
+        }
+
 
         Field field = target.getClass().getDeclaredField(fieldName);
         field.setAccessible(true);
@@ -1103,4 +1115,23 @@ public class ParametrosFacadeCommunityContractTest {
 
     }
 
+
+    @Test
+    void shouldProtectUsedProfileBeforeChangingLocationFlags() throws Exception {
+
+        ParametrosFacade facade = new ParametrosFacade();
+        ClusterLocationsRepository repository = Mockito.mock(ClusterLocationsRepository.class);
+        setPrivateField(facade, "clusterLocationsRepository", repository);
+        PerfilClusterizacaoService guard = Mockito.mock(PerfilClusterizacaoService.class);
+        Mockito.when(guard.resolveProfileId(Mockito.anyString())).thenAnswer(call -> call.getArgument(0));
+        Mockito.doThrow(new IllegalArgumentException("Clone a versão utilizada")).when(guard).requireEditable("USADO");
+        setPrivateField(facade, "perfilClusterizacaoService", guard);
+        ParametroClusterLocationDTO parameters = new ParametroClusterLocationDTO();
+        parameters.setClusterLocationsID(10L);
+        parameters.setPerfilClusterizacaoId("USADO");
+
+        Assertions.assertThrows(IllegalArgumentException.class, () -> facade.saveParametroClusterLocationDTO(parameters));
+        Mockito.verifyNoInteractions(repository);
+
+    }
 }

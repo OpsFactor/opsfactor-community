@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.planningbook.domain;
 
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.FiltroDFUProjection;
 import lombok.EqualsAndHashCode;
@@ -100,20 +100,20 @@ public class PlanningBookDfuScope {
      */
     public FiltroDFUProjection getNovoDFUProjectionInterseccaoComProjectionFiltro(
             FiltroDFUProjection dfuProjectionFiltro,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         if (dfuProjectionFiltro == null) {
             throw new IllegalArgumentException(
                     "PlanningBookDfuScope requires DFU filter projection to create an intersection projection.");
         }
-        if (clusterEParametrosProjection == null) {
+        if (cadastroEParametrosProjection == null) {
             throw new IllegalArgumentException(
                     "PlanningBookDfuScope requires cluster/parameter projection to create an intersection projection.");
         }
 
         FiltroDFUProjection novoDFUProjection = new FiltroDFUProjection(
                 dfuProjectionFiltro.getTodasCombinacoesLocationMaterialHabilitadas(),
-                clusterEParametrosProjection);
+                cadastroEParametrosProjection);
 
         for (Location location : locations) {
             for (Produto material : materiais) {

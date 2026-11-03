@@ -8,8 +8,8 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlanItem;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.HistoricoDemandPlanItem;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.factory.ParametrosDemandPlanningProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.FiltroDFUProjection;
@@ -71,7 +71,7 @@ public class DemandPlanProjectionFactory {
      * Factory da projection central de parametros, materiais e locations.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private ClusterizacaoProjectionFactory clusterizacaoProjectionFactory;
 
     /**
      * Factory dos parametros de Demand Planning associados ao perfil do plano.
@@ -99,7 +99,7 @@ public class DemandPlanProjectionFactory {
     public DemandPlanningProjection getDemandPlanningProjectionVazio(
             DemandPlan demandPlan, Location location, Set<Produto> materiais,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection parametrosProjection,
+            ClusterizacaoProjection parametrosProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
             boolean efetuaCatchUpVendas) {
 
@@ -112,7 +112,7 @@ public class DemandPlanProjectionFactory {
     private DemandPlanningProjection getDemandPlanningProjectionVazio(
             DemandPlan demandPlan, Location location, Set<Produto> materiais,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection parametrosProjection,
+            ClusterizacaoProjection parametrosProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection) {
 
 
@@ -130,12 +130,12 @@ public class DemandPlanProjectionFactory {
     public DemandPlanningProjection getDemandPlanningProjectionVazio(
             DemandPlan demandPlan, Set<Location> locations, Set<Produto> materiais,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
             boolean efetuaCatchUpVendas) {
 
         validaCatchUpVendasCommunity(efetuaCatchUpVendas);
-        return getDemandPlanningProjectionVazio(demandPlan, locations, materiais, unidadeMedidaProjection, clusterEParametrosProjection,
+        return getDemandPlanningProjectionVazio(demandPlan, locations, materiais, unidadeMedidaProjection, clusterizacaoProjection,
                 parametrosDemandPlanProjection);
 
     }
@@ -152,7 +152,7 @@ public class DemandPlanProjectionFactory {
     private DemandPlanningProjection getDemandPlanningProjectionVazio(
             DemandPlan demandPlan, Set<Location> locations, Set<Produto> materiais,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection) {
 
         /*
@@ -164,9 +164,9 @@ public class DemandPlanProjectionFactory {
         FiltroDFUProjection dfuProjection = new FiltroDFUProjection(
                 locations,
                 materiais,
-                clusterEParametrosProjection);
+                clusterizacaoProjection.getCadastroEParametrosProjection());
 
-        return getDemandPlanningProjectionVazio(demandPlan, dfuProjection, clusterEParametrosProjection, unidadeMedidaProjection,
+        return getDemandPlanningProjectionVazio(demandPlan, dfuProjection, clusterizacaoProjection, unidadeMedidaProjection,
                 parametrosDemandPlanProjection);
 
     }
@@ -182,9 +182,8 @@ public class DemandPlanProjectionFactory {
                 locations,
                 materiais,
                 unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache(),
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache(),
-                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjectionDeCache(
-                                demandPlan.getPerfilExecucaoDemandPlan()));
+                clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(demandPlan.getPerfilClusterizacaoOrigem().getId()),
+                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjection(demandPlan.getPerfilExecucaoDemandPlan(), demandPlan.getPerfilClusterizacaoOrigem()));
 
     }
 
@@ -192,12 +191,12 @@ public class DemandPlanProjectionFactory {
             DemandPlan demandPlan,
             FiltroDFUProjection dfuProjection,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
             boolean efetuaCatchUpVendas) {
 
         validaCatchUpVendasCommunity(efetuaCatchUpVendas);
-        return getDemandPlanningProjectionVazio(demandPlan, dfuProjection, clusterEParametrosProjection, unidadeMedidaProjection,
+        return getDemandPlanningProjectionVazio(demandPlan, dfuProjection, clusterizacaoProjection, unidadeMedidaProjection,
                 parametrosDemandPlanProjection);
 
     }
@@ -205,7 +204,7 @@ public class DemandPlanProjectionFactory {
     private DemandPlanningProjection getDemandPlanningProjectionVazio(
             DemandPlan demandPlan,
             FiltroDFUProjection dfuProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             UnidadeMedidaProjection unidadeMedidaProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection) {
 
@@ -218,7 +217,7 @@ public class DemandPlanProjectionFactory {
                 calendario,
                 dfuProjection,
                 unidadeMedidaProjection,
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 parametrosDemandPlanProjection);
 
     }
@@ -234,9 +233,8 @@ public class DemandPlanProjectionFactory {
                 calendario,
                 dfuProjection,
                 unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache(),
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache(),
-                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjectionDeCache(
-                                demandPlan.getPerfilExecucaoDemandPlan()));
+                clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(demandPlan.getPerfilClusterizacaoOrigem().getId()),
+                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjection(demandPlan.getPerfilExecucaoDemandPlan(), demandPlan.getPerfilClusterizacaoOrigem()));
 
     }
 
@@ -245,14 +243,14 @@ public class DemandPlanProjectionFactory {
             CalendarioSimples calendario,
             FiltroDFUProjection dfuProjection,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection) {
 
 
         DemandPlanningProjection demandPlanningProjection = criaDemandPlanningProjection(
                 demandPlan,
                 unidadeMedidaProjection,
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 parametrosDemandPlanProjection,
                 calendario,
                 dfuProjection,
@@ -276,7 +274,7 @@ public class DemandPlanProjectionFactory {
     protected DemandPlanningProjection criaDemandPlanningProjection(
             DemandPlan demandPlan,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
             CalendarioSimples calendario,
             FiltroDFUProjection dfuProjection,
@@ -287,7 +285,7 @@ public class DemandPlanProjectionFactory {
         return new DemandPlanningProjection(
                 demandPlan,
                 unidadeMedidaProjection,
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 parametrosDemandPlanProjection,
                 calendario,
                 dfuProjection,
@@ -307,9 +305,8 @@ public class DemandPlanProjectionFactory {
                 demandPlan,
                 dfuProjection,
                 unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache(),
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache(),
-                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjectionDeCache(
-                                demandPlan.getPerfilExecucaoDemandPlan()),
+                clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(demandPlan.getPerfilClusterizacaoOrigem().getId()),
+                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjection(demandPlan.getPerfilExecucaoDemandPlan(), demandPlan.getPerfilClusterizacaoOrigem()),
                 efetuaCatchUpVendas);
 
     }
@@ -318,7 +315,7 @@ public class DemandPlanProjectionFactory {
             DemandPlan demandPlan,
             FiltroDFUProjection dfuProjection,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection parametrosProjection,
+            ClusterizacaoProjection parametrosProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
             boolean efetuaCatchUpVendas) {
 
@@ -341,7 +338,7 @@ public class DemandPlanProjectionFactory {
             int lagPeriodos,
             FiltroDFUProjection dfuProjection,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection parametrosProjection,
+            ClusterizacaoProjection parametrosProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
             boolean efetuaCatchUpVendas) {
 
@@ -372,9 +369,8 @@ public class DemandPlanProjectionFactory {
                 locations,
                 materiais,
                 unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache(),
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache(),
-                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjectionDeCache(
-                                demandPlan.getPerfilExecucaoDemandPlan()),
+                clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(demandPlan.getPerfilClusterizacaoOrigem().getId()),
+                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjection(demandPlan.getPerfilExecucaoDemandPlan(), demandPlan.getPerfilClusterizacaoOrigem()),
                 efetuaCatchUpVendas);
 
     }
@@ -391,9 +387,8 @@ public class DemandPlanProjectionFactory {
                 locationProjection,
                 materialProjection,
                 unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache(),
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache(),
-                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjectionDeCache(
-                                demandPlan.getPerfilExecucaoDemandPlan()),
+                clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(demandPlan.getPerfilClusterizacaoOrigem().getId()),
+                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjection(demandPlan.getPerfilExecucaoDemandPlan(), demandPlan.getPerfilClusterizacaoOrigem()),
                 efetuaCatchUpVendas);
 
     }
@@ -404,7 +399,7 @@ public class DemandPlanProjectionFactory {
             LocationProjection locationProjection,
             MaterialProjection materialProjection,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
             boolean efetuaCatchUpVendas) {
 
@@ -414,7 +409,7 @@ public class DemandPlanProjectionFactory {
                 locationProjection.getLocationsAtivas(),
                 materialProjection.getMateriaisAtivos(),
                 unidadeMedidaProjection,
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 parametrosDemandPlanProjection,
                 efetuaCatchUpVendas);
 
@@ -426,7 +421,7 @@ public class DemandPlanProjectionFactory {
             Set<Location> locations,
             Set<Produto> materiais,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            ClusterizacaoProjection clusterizacaoProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
             boolean efetuaCatchUpVendas) {
 
@@ -434,7 +429,7 @@ public class DemandPlanProjectionFactory {
                 demandPlan,
                 locations, materiais,
                 unidadeMedidaProjection,
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 parametrosDemandPlanProjection,
                 efetuaCatchUpVendas);
 
@@ -448,7 +443,7 @@ public class DemandPlanProjectionFactory {
             DemandPlan demandPlan, Set<Location> locations, Set<Produto> materiais,
             int lagPeriodos,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection parametrosProjection,
+            ClusterizacaoProjection parametrosProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
             boolean efetuaCatchUpVendas) {
 
@@ -478,7 +473,7 @@ public class DemandPlanProjectionFactory {
             LocalDateTime dataReferenciaInicial,
             LocalDateTime dataReferenciaFinal,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection parametrosProjection,
+            ClusterizacaoProjection parametrosProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
             boolean efetuaCatchUpVendas) {
 
@@ -520,9 +515,8 @@ public class DemandPlanProjectionFactory {
                 demandPlan,
                 dfuProjection,
                 unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache(),
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache(),
-                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjectionDeCache(
-                        demandPlan.getPerfilExecucaoDemandPlan()),
+                clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(demandPlan.getPerfilClusterizacaoOrigem().getId()),
+                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjection(demandPlan.getPerfilExecucaoDemandPlan(), demandPlan.getPerfilClusterizacaoOrigem()),
                 efetuaCatchUpVendas);
 
         populaDemandPlanningProjectionComDemandPlanNasDatas(
@@ -536,7 +530,7 @@ public class DemandPlanProjectionFactory {
     public DemandPlanningProjection getDemandPlanningProjectionCompleto(
             DemandPlan demandPlan, Location location, Set<Produto> materiais,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection parametrosProjection,
+            ClusterizacaoProjection parametrosProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
             boolean efetuaCatchUpVendas) {
 
@@ -564,9 +558,8 @@ public class DemandPlanProjectionFactory {
                 location,
                 materiais,
                 unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache(),
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache(),
-                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjectionDeCache(
-                                demandPlan.getPerfilExecucaoDemandPlan()),
+                clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(demandPlan.getPerfilClusterizacaoOrigem().getId()),
+                parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjection(demandPlan.getPerfilExecucaoDemandPlan(), demandPlan.getPerfilClusterizacaoOrigem()),
                 efetuaCatchUpVendas);
 
     }
@@ -1016,8 +1009,8 @@ public class DemandPlanProjectionFactory {
             SupplyNetworkProjection supplyNetworkProjection) {
 
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                demandPlanningProjectionOriginal.getClusterEParametrosProjection();
+        ClusterizacaoProjection clusterizacaoProjection =
+                demandPlanningProjectionOriginal.getClusterizacaoProjection();
         UnidadeMedidaProjection unidadeMedidaProjection =
                 demandPlanningProjectionOriginal.getUnidadeMedidaProjection();
         ParametrosDemandPlanProjection parametrosDemandPlanProjection =
@@ -1029,7 +1022,7 @@ public class DemandPlanProjectionFactory {
         DemandPlanningProjection demandPlanningProjectionOriginalConsolidado = new DemandPlanningProjection(
                 demandPlanningProjectionOriginal.getDemandPlan(),
                 unidadeMedidaProjection,
-                clusterEParametrosProjection,
+                clusterizacaoProjection,
                 parametrosDemandPlanProjection,
                 calendarioOriginal,
                 filtroDFUProjection,
@@ -1065,8 +1058,8 @@ public class DemandPlanProjectionFactory {
                     for (Produto material : demandPlanningProjectionOriginal.getMateriaisComPlanoNaLocation(location)) {
                         UnidadeMedida unidadeMedidaPadraoDp = parametrosDemandPlanProjection
                                 .getParametrosDemandPlanNivelClusterProjection(
-                                        clusterEParametrosProjection.getClusterLocationsDeLocation(location),
-                                        clusterEParametrosProjection.getClusterMateriaisDemandPlanning(material, location))
+                                        clusterizacaoProjection.getClusterLocationsDeLocation(location),
+                                        clusterizacaoProjection.getClusterMateriaisDemandPlanning(material, location))
                                         .getParametrosGeraisDemandPlanningProjection()
                                         .getUnidadeMedidaDP();
 
@@ -1148,7 +1141,7 @@ public class DemandPlanProjectionFactory {
             PerfilExecucaoSupplyPlan.ModoPropagacaoDemanda modoPropagacaoDemanda,
             VersaoMalha versaoMalha,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection parametrosProjection,
+            ClusterizacaoProjection parametrosProjection,
             SupplyNetworkProjection supplyNetworkProjection,
             ParametrosDemandPlanProjection parametrosDemandPlanProjection,
             boolean efetuaCatchUpVendas) {

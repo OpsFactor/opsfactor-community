@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.masterdata.demand.dfu.projection;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -28,7 +28,7 @@ public class DfuProjectionFactoriesCommunityContractTest {
 
         MaterialProjection materialProjection = MaterialProjectionFactory.getProjectionSetMateriais(
                 Set.of(),
-                new ClusterEParametrosProjection());
+                new CadastroEParametrosProjection());
 
         Assertions.assertTrue(materialProjection.getMaterialSet().isEmpty());
 
@@ -41,7 +41,7 @@ public class DfuProjectionFactoriesCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> MaterialProjectionFactory.getProjectionSetMateriais(
                         null,
-                        new ClusterEParametrosProjection()));
+                        new CadastroEParametrosProjection()));
         Assertions.assertEquals(
                 "MaterialProjectionFactory received null material collection.",
                 nullCollectionException.getMessage());
@@ -50,7 +50,7 @@ public class DfuProjectionFactoriesCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> MaterialProjectionFactory.getProjectionDeDfus(
                         List.of(new DFU(null, new Location("LOC_01"))),
-                        new ClusterEParametrosProjection()));
+                        new CadastroEParametrosProjection()));
         Assertions.assertEquals(
                 "MaterialProjectionFactory received DFU without material at index 0.",
                 nullDfuMaterialException.getMessage());
@@ -59,7 +59,7 @@ public class DfuProjectionFactoriesCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> MaterialProjectionFactory.getProjectionDeDfus(
                         Collections.singletonList(null),
-                        new ClusterEParametrosProjection()));
+                        new CadastroEParametrosProjection()));
         Assertions.assertEquals(
                 "MaterialProjectionFactory received null DFU at index 0.",
                 nullDfuException.getMessage());
@@ -71,7 +71,7 @@ public class DfuProjectionFactoriesCommunityContractTest {
 
         LocationProjection locationProjection = LocationProjectionFactory.getProjectionSetLocations(
                 Set.of(),
-                new ClusterEParametrosProjection());
+                new CadastroEParametrosProjection());
 
         Assertions.assertTrue(locationProjection.getLocationSet().isEmpty());
 
@@ -84,7 +84,7 @@ public class DfuProjectionFactoriesCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> LocationProjectionFactory.getProjectionSetLocations(
                         null,
-                        new ClusterEParametrosProjection()));
+                        new CadastroEParametrosProjection()));
         Assertions.assertEquals(
                 "LocationProjectionFactory received null location collection.",
                 nullCollectionException.getMessage());
@@ -93,7 +93,7 @@ public class DfuProjectionFactoriesCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> LocationProjectionFactory.getProjectionDeDfus(
                         List.of(new DFU(new Produto("MAT_01"), null)),
-                        new ClusterEParametrosProjection()));
+                        new CadastroEParametrosProjection()));
         Assertions.assertEquals(
                 "LocationProjectionFactory received DFU without location at index 0.",
                 nullDfuLocationException.getMessage());
@@ -102,7 +102,7 @@ public class DfuProjectionFactoriesCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> LocationProjectionFactory.getProjectionSetLocationIds(
                         List.of(""),
-                        new ClusterEParametrosProjection()));
+                        new CadastroEParametrosProjection()));
         Assertions.assertEquals(
                 "LocationProjectionFactory received blank location id at index 0.",
                 blankLocationIdException.getMessage());
@@ -148,8 +148,8 @@ public class DfuProjectionFactoriesCommunityContractTest {
 
         Produto firstMaterial = new Produto("MAT_01");
         Produto secondMaterial = new Produto("MAT_02");
-        ClusterEParametrosProjection clusterAndParametersProjection = Mockito.mock(
-                ClusterEParametrosProjection.class);
+        CadastroEParametrosProjection clusterAndParametersProjection = Mockito.mock(
+                CadastroEParametrosProjection.class);
         Mockito.when(clusterAndParametersProjection.getMateriaisAtivos())
                 .thenReturn(Set.of(firstMaterial, secondMaterial));
         PerfilExecucaoSupplyPlan profile = new PerfilExecucaoSupplyPlan();
@@ -173,8 +173,8 @@ public class DfuProjectionFactoriesCommunityContractTest {
 
         Produto firstMaterial = new Produto("MAT_01");
         Produto secondMaterial = new Produto("MAT_02");
-        ClusterEParametrosProjection clusterAndParametersProjection = Mockito.mock(
-                ClusterEParametrosProjection.class);
+        CadastroEParametrosProjection clusterAndParametersProjection = Mockito.mock(
+                CadastroEParametrosProjection.class);
         Mockito.when(clusterAndParametersProjection.getMateriais(false))
                 .thenReturn(Set.of(firstMaterial, secondMaterial));
 
@@ -197,7 +197,7 @@ public class DfuProjectionFactoriesCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> MaterialProjectionFactory.getProjectionByMaterialCharacteristicValues(
                         Map.of("FAMILY", List.of("A")),
-                        new ClusterEParametrosProjection(),
+                        new CadastroEParametrosProjection(),
                         false));
 
         Assertions.assertEquals(

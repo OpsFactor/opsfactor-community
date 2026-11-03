@@ -1,6 +1,6 @@
 package com.opsfactor.community.capability.demandplanning.forecast.service;
 
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosAgregacaoForecast;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjection;
@@ -15,6 +15,7 @@ import com.opsfactor.community.platform.utility.Constantes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.opsfactor.community.capability.demandplanning.forecast.engine.ForecastShardingMix;
 import java.util.List;
 
 /**
@@ -67,14 +68,14 @@ public class DemandForecastWorkflowService {
             ParametrosForecastProjection parametrosForecastProjection,
             ParametrosAgregacaoForecast parametrosAgregacaoForecast,
             DemandPlanForecastProjection demandPlanForecastProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         executaForecastEDesagregacao(
                 calendario,
                 parametrosForecastProjection,
                 parametrosAgregacaoForecast,
                 demandPlanForecastProjection,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 null);
 
     }
@@ -91,7 +92,7 @@ public class DemandForecastWorkflowService {
             ParametrosForecastProjection parametrosForecastProjection,
             ParametrosAgregacaoForecast parametrosAgregacaoForecast,
             DemandPlanForecastProjection demandPlanForecastProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             DemandForecastStockoutContext demandForecastStockoutContext) {
 
         validaParametrosBasicosForecastWorkflow(
@@ -117,7 +118,7 @@ public class DemandForecastWorkflowService {
                 parametrosForecastProjection,
                 parametrosAgregacaoForecast,
                 demandPlanForecastProjection,
-                clusterEParametrosProjection);
+                cadastroEParametrosProjection);
         validaSaidaFinalMaterialLocation(demandPlanForecastProjection);
 
     }
@@ -281,7 +282,7 @@ public class DemandForecastWorkflowService {
             ParametrosForecastProjection parametrosForecastProjection,
             ParametrosAgregacaoForecast parametrosAgregacaoForecast,
             DemandPlanForecastProjection demandPlanForecastProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         /*
          * A engine decide se sua saida precisa ser aberta ate material/location
@@ -289,6 +290,11 @@ public class DemandForecastWorkflowService {
          * continua sendo validada aqui para capturar cedo qualquer divergencia
          * entre factory e parametros de agregacao.
          */
+        if (parametrosForecastProjection.getNumeroPeriodosMixHistoricoSharding() != null) {
+            ForecastShardingMix.aplicar(calendario, parametrosForecastProjection.getNumeroPeriodosMixHistoricoSharding(),
+                    demandPlanForecastProjection, false);
+            return;
+        }
         if (!requerDesagregacao(parametrosForecastProjection, parametrosAgregacaoForecast)) {
             validaProjectionNaoAgregadaQuandoDesagregacaoNaoEhNecessaria(demandPlanForecastProjection);
             return;
@@ -299,13 +305,13 @@ public class DemandForecastWorkflowService {
                     "Configuracao de forecast requer desagregacao, mas a factory retornou projection nao agregada: "
                             + demandPlanForecastProjection.getClass().getSimpleName());
         }
-        validaClusterEParametrosProjectionParaDesagregacao(clusterEParametrosProjection);
+        validaCadastroEParametrosProjectionParaDesagregacao(cadastroEParametrosProjection);
 
         DemandPlanning.desagregaForecast(
                 calendario,
                 parametrosForecastProjection,
                 demandPlanForecastProjectionAgregado,
-                clusterEParametrosProjection);
+                cadastroEParametrosProjection);
 
     }
 
@@ -318,10 +324,10 @@ public class DemandForecastWorkflowService {
      * forecast e para preservar o mesmo contrato nos overlays Enterprise de
      * Forecast Proportion e HTS.</p>
      */
-    protected void validaClusterEParametrosProjectionParaDesagregacao(
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+    protected void validaCadastroEParametrosProjectionParaDesagregacao(
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
-        if (clusterEParametrosProjection == null) {
+        if (cadastroEParametrosProjection == null) {
             throw new IllegalArgumentException(
                     "Demand Planning cluster parameters projection is required for forecast disaggregation");
         }

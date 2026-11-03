@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.planningbook;
 
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.FiltroDFUProjection;
 import com.opsfactor.community.capability.planningbook.domain.PlanningBookDfuScope;
 import org.junit.jupiter.api.Assertions;
@@ -90,7 +90,7 @@ public class PlanningBookDfuScopeCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> planningBookDfuScope.getNovoDFUProjectionInterseccaoComProjectionFiltro(
                         null,
-                        new ClusterEParametrosProjection()));
+                        new CadastroEParametrosProjection()));
         Assertions.assertEquals(
                 "PlanningBookDfuScope requires DFU filter projection to create an intersection projection.",
                 missingFilterException.getMessage());
@@ -98,7 +98,7 @@ public class PlanningBookDfuScopeCommunityContractTest {
         FiltroDFUProjection filtroDFUProjection = new FiltroDFUProjection(
                 Set.of(new Location("LOC_01", "Location 01")),
                 Set.of(new Produto("MAT_01", "Material 01")),
-                new ClusterEParametrosProjection());
+                new CadastroEParametrosProjection());
         IllegalArgumentException missingClusterProjectionException = Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> planningBookDfuScope.getNovoDFUProjectionInterseccaoComProjectionFiltro(

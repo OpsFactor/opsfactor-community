@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.aggregation.ParametrosDemandPlanNivelClusterProjection;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,6 +22,10 @@ public class ParametrosDemandPlanProjection {
     PerfilExecucaoDemandPlan perfilExecucaoDemandPlan;
     @Getter
     ParametrosGlobais parametrosGlobais;
+
+    /** Classificação efetiva desta execução; não pertence à rede de supply. */
+    @Getter
+    ClusterizacaoProjection clusterizacaoProjection;
 
     Map<ClusterLocations, Map<ClusterMateriais, ParametrosDemandPlanNivelClusterProjection>> mapaParametrosPorClusterLocationsClusterMateriais = new HashMap<>();
 
@@ -60,11 +64,11 @@ public class ParametrosDemandPlanProjection {
     public ParametrosDemandPlanNivelClusterProjection getParametrosDemandPlanNivelClusterProjection(
             Location location,
             Produto material,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            ClusterizacaoProjection clusterizacaoProjection) {
 
-        ClusterLocations clusterLocations = clusterEParametrosProjection.getClusterLocationsDeLocation(location);
+        ClusterLocations clusterLocations = clusterizacaoProjection.getClusterLocationsDeLocation(location);
         ClusterMateriais clusterMateriaisDemandPlanning =
-                clusterEParametrosProjection.getClusterMateriaisDemandPlanning(material, location);
+                clusterizacaoProjection.getClusterMateriaisDemandPlanning(material, location);
 
         return getParametrosDemandPlanNivelClusterProjection(clusterLocations, clusterMateriaisDemandPlanning);
 

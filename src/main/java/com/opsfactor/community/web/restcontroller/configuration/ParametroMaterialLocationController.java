@@ -43,9 +43,9 @@ public class ParametroMaterialLocationController {
      */
     @GetMapping("api/secured/configs/parametros/clusterLocation")
     @Secured("ROLE_ADMIN")
-    public ResponseEntity<List<ParametroClusterLocationDTO>> pullParametrosClusterLocation() {
+    public ResponseEntity<List<ParametroClusterLocationDTO>> pullParametrosClusterLocation(@RequestParam(required = false) String perfilClusterizacaoId) {
 
-        List<ParametroClusterLocationDTO> parametroClusterLocationDTOList = parametrosFrontService.getParametroClusterLocationDTO();
+        List<ParametroClusterLocationDTO> parametroClusterLocationDTOList = parametrosFrontService.getParametroClusterLocationDTO(perfilClusterizacaoId);
         if (parametroClusterLocationDTOList.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(parametroClusterLocationDTOList);
         } else {

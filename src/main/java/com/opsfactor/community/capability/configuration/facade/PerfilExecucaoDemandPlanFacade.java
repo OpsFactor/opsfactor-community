@@ -1,6 +1,8 @@
 package com.opsfactor.community.capability.configuration.facade;
 
 import com.opsfactor.community.capability.demandplanning.configuration.facade.dto.PerfilExecucaoDemandPlanDTO;
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
+import com.opsfactor.community.capability.configuration.repository.cluster.PerfilClusterizacaoRepository;
 import com.opsfactor.community.capability.masterdata.calendar.profile.domain.PerfilCalendarioSimples;
 import com.opsfactor.community.capability.masterdata.calendar.profile.repository.PerfilCalendarioSimplesRepository;
 import com.opsfactor.community.capability.demandplanning.configuration.facade.mapper.PerfilExecucaoDemandPlanAutoMapper;
@@ -29,6 +31,10 @@ import java.util.Optional;
  */
 @Service
 public class PerfilExecucaoDemandPlanFacade {
+
+    /** O perfil técnico único é resolvido no backend; não há seletor Community. */
+    @Autowired
+    private PerfilClusterizacaoRepository perfilClusterizacaoRepository;
 
     /** Catálogo tipado: Demand Planning somente admite receita simples. */
     @Autowired
@@ -142,6 +148,10 @@ public class PerfilExecucaoDemandPlanFacade {
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan =
                 getPerfilExecucaoDemandPlanParaSave(perfilExecucaoDemandPlanDTO.id);
 
+        // Uma referência gerenciada evita persistir novamente o token inicial.
+        // Qualquer vínculo antigo a outra definição é neutralizado no save CE.
+        perfilExecucaoDemandPlan.setPerfilClusterizacao(
+                perfilClusterizacaoRepository.getReferenceById(PerfilClusterizacao.ID_LEGADO));
         perfilExecucaoDemandPlan.setTipoDocumentoVenda(Constantes.TipoDocumentoVenda.SELLOUT);
         perfilExecucaoDemandPlan.setDescricao(perfilExecucaoDemandPlanDTO.description);
         perfilExecucaoDemandPlan.setPerfilCalendario(resolvePerfilCalendarioDemandPlan(perfilExecucaoDemandPlanDTO.calendarProfileId));

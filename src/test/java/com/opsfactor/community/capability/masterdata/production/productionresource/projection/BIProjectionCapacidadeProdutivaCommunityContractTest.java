@@ -10,7 +10,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.CapacidadeProdutivaEfetivaRecursoProdutivoSupplyPlan;
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.CapacidadeProdutivaEfetivaRecursoProdutivoSupplyPlan.CapacidadeProdutivaEfetivaRecursoProdutivoSupplyPlanCompositeKey;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjectionFactory;
 import com.opsfactor.community.capability.masterdata.production.productionresource.repository.DisponibilidadeRecursoProdutivoRepository;
@@ -440,7 +440,7 @@ class BIProjectionCapacidadeProdutivaCommunityContractTest {
 
     private static class FakeSupplyNetworkProjection extends SupplyNetworkProjection {
 
-        private final FakeClusterEParametrosProjection clusterEParametrosProjection;
+        private final FakeCadastroEParametrosProjection cadastroEParametrosProjection;
         private final RecursoProdutivo recursoProdutivo;
 
         private FakeSupplyNetworkProjection(Location location, RecursoProdutivo recursoProdutivo) {
@@ -454,15 +454,15 @@ class BIProjectionCapacidadeProdutivaCommunityContractTest {
                 RecursoProdutivo recursoProdutivo,
                 ParametrosGlobais parametrosGlobais) {
 
-            this.clusterEParametrosProjection = new FakeClusterEParametrosProjection(location, parametrosGlobais);
+            this.cadastroEParametrosProjection = new FakeCadastroEParametrosProjection(location, parametrosGlobais);
             this.recursoProdutivo = recursoProdutivo;
 
         }
 
         @Override
-        public ClusterEParametrosProjection getClusterEParametrosProjection() {
+        public CadastroEParametrosProjection getCadastroEParametrosProjection() {
 
-            return clusterEParametrosProjection;
+            return cadastroEParametrosProjection;
 
         }
 
@@ -475,18 +475,18 @@ class BIProjectionCapacidadeProdutivaCommunityContractTest {
 
     }
 
-    private static class FakeClusterEParametrosProjection extends ClusterEParametrosProjection {
+    private static class FakeCadastroEParametrosProjection extends CadastroEParametrosProjection {
 
         private final Location location;
         private final ParametrosGlobais parametrosGlobais;
 
-        private FakeClusterEParametrosProjection(Location location) {
+        private FakeCadastroEParametrosProjection(Location location) {
 
             this(location, null);
 
         }
 
-        private FakeClusterEParametrosProjection(Location location, ParametrosGlobais parametrosGlobais) {
+        private FakeCadastroEParametrosProjection(Location location, ParametrosGlobais parametrosGlobais) {
 
             this.location = location;
             this.parametrosGlobais = parametrosGlobais;

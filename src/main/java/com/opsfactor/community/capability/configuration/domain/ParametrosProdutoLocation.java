@@ -62,7 +62,7 @@ public class ParametrosProdutoLocation implements Serializable {
     /*
      * Restricoes fisicas de producao por material/location. Null significa
      * ausencia operacional; valor presente deve ser validado aqui, antes de
-     * chegar a ClusterEParametrosProjection, heuristico ou optimizer.
+     * chegar a CadastroEParametrosProjection, heuristico ou optimizer.
      */
     @Getter(AccessLevel.NONE)
     private Double loteMinimoProducao; 

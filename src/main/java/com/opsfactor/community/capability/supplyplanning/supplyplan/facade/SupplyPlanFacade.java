@@ -20,8 +20,8 @@ import com.opsfactor.community.capability.supplyplanning.distributionplan.domain
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.platform.exception.UnitOfMeasureConversionException;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.configuration.user.projection.ConfiguredViewProjection;
 import com.opsfactor.community.capability.configuration.user.projection.ConfiguredViewProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
@@ -167,7 +167,7 @@ public class SupplyPlanFacade {
      * Factory da projection global de parametros, clusters e master data.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory;
 
     /**
      * Factory de split temporal operacional. Curvas configuraveis Enterprise
@@ -488,7 +488,7 @@ public class SupplyPlanFacade {
         Long supplyPlanId = validaConfiguredViewSelectionSupplyPlanningBookCommunity(
                 configuredViewSelectionDTO);
 
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection cadastroEParametrosProjection = cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
 
         Location location = locationRepository.findById(configuredViewSelectionDTO.locationId).get();
 
@@ -496,7 +496,7 @@ public class SupplyPlanFacade {
                 userId,
                 configuredViewSelectionDTO.viewName,
                 ConfiguredView.TipoView.SUPPLYPLANNINGBOOK,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 (materialIterado, locationIterada) -> locationIterada.equals(location));
 
         validaConfiguredViewProjectionSupplyPlanningBookCommunity(
@@ -705,7 +705,7 @@ public class SupplyPlanFacade {
                 selectedPlanningBookCellDTOs);
         SelectedPlanningBookCellDTO selectedPlanningBookCellDTO = selectedPlanningBookCellDTOs.get(0);
 
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection cadastroEParametrosProjection = cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
 
         SupplyPlan supplyPlan = supplyPlanRepository.findById(selectedPlanningBookCellDTO.planId).get();
         VersaoMalha versaoMalha = supplyPlan.getVersaoMalha();
@@ -719,7 +719,7 @@ public class SupplyPlanFacade {
                 ConfiguredView.TipoView.SUPPLYPLANNINGBOOK,
                 supplyPlan.getTamanhoBucket(),
                 selectedPlanningBookCellDTOs,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 null);
 
         String locationId = selectedPlanningBookCellDTO.locationId;
@@ -743,11 +743,11 @@ public class SupplyPlanFacade {
         PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan = supplyPlan.getPerfilExecucaoSupplyPlan();
         MaterialProjection materialProjection = getMaterialProjectionComEscopoEnterprise(
                 perfilExecucaoSupplyPlan,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 MaterialProjectionFactory.getMaterialProjectionDePerfilExecucaoSupplyPlan(
                         perfilExecucaoSupplyPlan,
-                        clusterEParametrosProjection));
-        LocationProjection locationProjection = LocationProjectionFactory.getLocationProjectionDePerfilExecucaoSupplyPlan(perfilExecucaoSupplyPlan, clusterEParametrosProjection);
+                        cadastroEParametrosProjection));
+        LocationProjection locationProjection = LocationProjectionFactory.getLocationProjectionDePerfilExecucaoSupplyPlan(perfilExecucaoSupplyPlan, cadastroEParametrosProjection);
 
         /*
          * A selecao da view e independente do perfil de execucao. Antes de
@@ -766,18 +766,18 @@ public class SupplyPlanFacade {
                 AgregacaoDFU.getDFUListDeProdutoCartesianoLocationMaterial(
                         Sets.newHashSet(location),
                         materiaisView,
-                        clusterEParametrosProjection));
+                        cadastroEParametrosProjection));
 
         DemandPlan demandPlan = supplyPlan.getDemandPlan();
 
         PoliticaEstoquesProjection politicaEstoquesProjection = politicaEstoquesProjectionFactory.getPoliticaEstoquesProjection(
-                        supplyPlan.getCalendarioDoSupplyPlan(clusterEParametrosProjection.getParametrosGlobais()),
-                        clusterEParametrosProjection,
+                        supplyPlan.getCalendarioDoSupplyPlan(cadastroEParametrosProjection.getParametrosGlobais()),
+                        cadastroEParametrosProjection,
                         perfilExecucaoSupplyPlan);
 
         UnidadeMedidaProjection conversaoUnidadeMedidaProjection = conversaoUnidadeMedidaProjectionFactory.getUnidadeMedidaProjectionComConversoes();
 
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
 
         SupplyNetworkProjection supplyNetworkProjection = supplyNetworkProjectionFactory.getSupplyNetworkProjectionCompletoDeCache();
 
@@ -806,7 +806,7 @@ public class SupplyPlanFacade {
                 location,
                 supplyNetworkProjection,
                 politicaEstoquesProjection,
-                MaterialProjectionFactory.getProjectionSetMateriais(materiaisProjectionAAtualizar, clusterEParametrosProjection),
+                MaterialProjectionFactory.getProjectionSetMateriais(materiaisProjectionAAtualizar, cadastroEParametrosProjection),
                 locationProjection);
 
         if (!materiaisAAtualizar.isEmpty()) {
@@ -895,7 +895,7 @@ public class SupplyPlanFacade {
 
         Constantes.TipoPlano tipoPlano = keyFigureStandardSupplyPlanning.getTipoPlano();
 
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection cadastroEParametrosProjection = cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
 
         SupplyPlan supplyPlan = supplyPlanRepository.findById(selectedPlanningBookCellDTO.planId).get();
 
@@ -906,7 +906,7 @@ public class SupplyPlanFacade {
                 selectedPlanningBookCellDTO.viewName,
                 ConfiguredView.TipoView.SUPPLYPLANNINGBOOK,
                 supplyPlan.getTamanhoBucket(),
-                selectedPlanningBookCellDTO, clusterEParametrosProjection);
+                selectedPlanningBookCellDTO, cadastroEParametrosProjection);
 
         String locationId = selectedPlanningBookCellDTO.locationId;
         Location location = locationRepository.findById(locationId).get();
@@ -922,9 +922,9 @@ public class SupplyPlanFacade {
 
         // Usa o perfil de execucao raiz do Supply Plan Community.
         PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan = supplyPlan.getPerfilExecucaoSupplyPlan();
-        LocationProjectionCompleto locationProjectionCompleto = LocationProjectionFactory.getLocationProjectionCompleto(clusterEParametrosProjection);
+        LocationProjectionCompleto locationProjectionCompleto = LocationProjectionFactory.getLocationProjectionCompleto(cadastroEParametrosProjection);
 
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
 
         UnidadeMedida unidadeMedidaView = configuredViewProjectionComAgrupamentosAAtualizar.getUnidadeMedidaView(parametrosGlobais);
         UnidadeMedidaProjection unidadeMedidaProjection = conversaoUnidadeMedidaProjectionFactory.getUnidadeMedidaProjectionComConversoes();
@@ -937,7 +937,7 @@ public class SupplyPlanFacade {
                 location,
                 supplyNetworkProjection,
                 null,
-                MaterialProjectionFactory.getProjectionSetMateriais(materiaisFiltrados, clusterEParametrosProjection),
+                MaterialProjectionFactory.getProjectionSetMateriais(materiaisFiltrados, cadastroEParametrosProjection),
                 locationProjectionCompleto);
         supplyPlanProjectionFactory.populaSupplyPlanningProjectionComDistributionPlanOutbound(supplyPlanningProjection);
         supplyPlanProjectionFactory.populaSupplyPlanningProjectionComProductionPlanInput(supplyPlanningProjection);
@@ -996,7 +996,7 @@ public class SupplyPlanFacade {
                 detalhes.put("Routing Id", productionPlanLinha.getRoteiro().getId());
                 detalhes.put("Bill of Materials Id", productionPlanLinha.getListaTecnica().getId());
                 detalhes.put("UOM", unidadeMedidaView.getId());
-                detalhes.put("Planned Quantity", productionPlanLinha.getQuantidadeMaterialInputConsumido(material, Constantes.FirmePlanejado.PLANEJADO, tipoPlano, unidadeMedidaProjection, clusterEParametrosProjection, unidadeMedidaView));
+                detalhes.put("Planned Quantity", productionPlanLinha.getQuantidadeMaterialInputConsumido(material, Constantes.FirmePlanejado.PLANEJADO, tipoPlano, unidadeMedidaProjection, cadastroEParametrosProjection, unidadeMedidaView));
 
                 cellDetailsDTO.detailLines.add(detalhes);
 
@@ -1016,7 +1016,7 @@ public class SupplyPlanFacade {
 
         
 
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection cadastroEParametrosProjection = cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
 
         SupplyPlan supplyPlan = supplyPlanRepository.findById(selectedPlanningBookCellDTO.planId).get();
         VersaoMalha versaoMalha = supplyPlan.getVersaoMalha();
@@ -1028,7 +1028,7 @@ public class SupplyPlanFacade {
                 selectedPlanningBookCellDTO.viewName,
                 ConfiguredView.TipoView.SUPPLYPLANNINGBOOK,
                 supplyPlan.getTamanhoBucket(),
-                selectedPlanningBookCellDTO, clusterEParametrosProjection);
+                selectedPlanningBookCellDTO, cadastroEParametrosProjection);
 
         String locationId = selectedPlanningBookCellDTO.locationId;
         String materialId = selectedPlanningBookCellDTO.getMaterialId();
@@ -1048,16 +1048,16 @@ public class SupplyPlanFacade {
 
         // Usa o perfil de execucao raiz do Supply Plan Community.
         PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan = supplyPlan.getPerfilExecucaoSupplyPlan();
-        LocationProjectionCompleto locationProjectionCompleto = LocationProjectionFactory.getLocationProjectionCompleto(clusterEParametrosProjection);
+        LocationProjectionCompleto locationProjectionCompleto = LocationProjectionFactory.getLocationProjectionCompleto(cadastroEParametrosProjection);
 
         PoliticaEstoquesProjection politicaEstoquesProjection = politicaEstoquesProjectionFactory.getPoliticaEstoquesProjection(
-                        supplyPlan.getCalendarioDoSupplyPlan(clusterEParametrosProjection.getParametrosGlobais()),
-                        clusterEParametrosProjection,
+                        supplyPlan.getCalendarioDoSupplyPlan(cadastroEParametrosProjection.getParametrosGlobais()),
+                        cadastroEParametrosProjection,
                         perfilExecucaoSupplyPlan);
 
         UnidadeMedidaProjection conversaoUnidadeMedidaProjection = conversaoUnidadeMedidaProjectionFactory.getUnidadeMedidaProjectionComConversoes();
 
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
 
         SupplyNetworkProjection supplyNetworkProjection = supplyNetworkProjectionFactory.getSupplyNetworkProjectionCompletoDeCache();
 
@@ -1069,7 +1069,7 @@ public class SupplyPlanFacade {
                 location,
                 supplyNetworkProjection,
                 politicaEstoquesProjection,
-                MaterialProjectionFactory.getProjectionUnicoMaterial(material, clusterEParametrosProjection),
+                MaterialProjectionFactory.getProjectionUnicoMaterial(material, cadastroEParametrosProjection),
                 locationProjectionCompleto);
 
         Calendario calendario = supplyPlanningProjection.getCalendario();
@@ -1287,7 +1287,7 @@ public class SupplyPlanFacade {
         String materialId = cellDetailsDTO.materialId;
         Location location = locationRepository.findById(locationId).get();
 
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection cadastroEParametrosProjection = cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
 
         // gera view projection, incluindo todas as locations possíveis para a view
         // ao se gerar o planning book DTO se deverão filtrar somente dados da location selecionada
@@ -1295,7 +1295,7 @@ public class SupplyPlanFacade {
                 userId,
                 cellDetailsDTO.viewName,
                 ConfiguredView.TipoView.SUPPLYPLANNINGBOOK,
-                clusterEParametrosProjection);
+                cadastroEParametrosProjection);
 
         Set<Produto> materiaisView = configuredViewProjectionFiltrado.getMateriaisFiltrados();
         Produto material = materiaisView.stream()
@@ -1313,25 +1313,25 @@ public class SupplyPlanFacade {
                 AgregacaoDFU.getDFUListDeProdutoCartesianoLocationMaterial(
                         Sets.newHashSet(location),
                         materiaisView,
-                        clusterEParametrosProjection));
+                        cadastroEParametrosProjection));
 
         SupplyPlan supplyPlan = supplyPlanRepository.findById(cellDetailsDTO.planId).get();
         VersaoMalha versaoMalha = supplyPlan.getVersaoMalha();
         // Usa o perfil de execucao raiz do Supply Plan Community.
         PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan = supplyPlan.getPerfilExecucaoSupplyPlan();
-        LocationProjection locationProjection = LocationProjectionFactory.getLocationProjectionDePerfilExecucaoSupplyPlan(perfilExecucaoSupplyPlan, clusterEParametrosProjection);
-        MaterialProjection materialProjectionMateriaisView = MaterialProjectionFactory.getProjectionSetMateriais(materiaisView, clusterEParametrosProjection);
+        LocationProjection locationProjection = LocationProjectionFactory.getLocationProjectionDePerfilExecucaoSupplyPlan(perfilExecucaoSupplyPlan, cadastroEParametrosProjection);
+        MaterialProjection materialProjectionMateriaisView = MaterialProjectionFactory.getProjectionSetMateriais(materiaisView, cadastroEParametrosProjection);
 
         DemandPlan demandPlan = supplyPlan.getDemandPlan();
 
         PoliticaEstoquesProjection politicaEstoquesProjection = politicaEstoquesProjectionFactory.getPoliticaEstoquesProjection(
-                        supplyPlan.getCalendarioDoSupplyPlan(clusterEParametrosProjection.getParametrosGlobais()),
-                        clusterEParametrosProjection,
+                        supplyPlan.getCalendarioDoSupplyPlan(cadastroEParametrosProjection.getParametrosGlobais()),
+                        cadastroEParametrosProjection,
                         perfilExecucaoSupplyPlan);
 
         UnidadeMedidaProjection conversaoUnidadeMedidaProjection = conversaoUnidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
 
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
 
         SupplyNetworkProjection supplyNetworkProjection = supplyNetworkProjectionFactory.getSupplyNetworkProjectionCompletoDeCache();
 
@@ -1473,7 +1473,7 @@ public class SupplyPlanFacade {
 
         // atualiza o inventory plan das DFUs dependentes (material/location de origem ou insumos de produção)
         Set<DFU> dfusDependentes = SupplyPlanning.getDfusDependentes(
-                AgregacaoDFU.getDFUListDeProdutoCartesianoLocationMaterial(Sets.newHashSet(location), Sets.newHashSet(material), clusterEParametrosProjection),
+                AgregacaoDFU.getDFUListDeProdutoCartesianoLocationMaterial(Sets.newHashSet(location), Sets.newHashSet(material), cadastroEParametrosProjection),
                 versaoMalha,
                 supplyPlanningProjection.getSupplyPlan().getDataInicioPlano(),
                 supplyPlanningProjection.getSupplyNetworkProjection(),
@@ -1859,7 +1859,7 @@ public class SupplyPlanFacade {
      */
     private MaterialProjection getMaterialProjectionComEscopoEnterprise(
             PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             MaterialProjection materialProjectionCommunity) {
 
         if (supplyPlanExecutionProfileMaterialScope == null) {
@@ -1869,7 +1869,7 @@ public class SupplyPlanFacade {
         return supplyPlanExecutionProfileMaterialScope
                 .getMaterialProjectionParaExecucaoSupplyPlan(
                         perfilExecucaoSupplyPlan,
-                        clusterEParametrosProjection,
+                        cadastroEParametrosProjection,
                         materialProjectionCommunity);
 
     }

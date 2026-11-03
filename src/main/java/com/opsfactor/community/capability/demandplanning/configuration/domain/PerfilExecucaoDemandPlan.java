@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.demandplanning.configuration.domain;
 
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
+
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.masterdata.calendar.profile.domain.PerfilCalendarioSimples;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
@@ -22,6 +24,12 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Entity
 public class PerfilExecucaoDemandPlan {
+
+    /** Versão da classificação usada nesta configuração; LEGADO é somente a compatibilidade explícita. */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "perfil_clusterizacao_id", nullable = false)
+    private PerfilClusterizacao perfilClusterizacao = PerfilClusterizacao.referenciaLegada();
+
 
     @Id
     @Column(length = 50)

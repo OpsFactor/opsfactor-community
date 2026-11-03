@@ -43,7 +43,7 @@ public class ReconciliacaoFisicaPlanoRestritoHeuristicoService {
             SupplyPlanningBiProjection supplyPlanningBiProjection) {
 
         Calendario calendario = supplyPlan.getCalendarioDoSupplyPlan(
-                supplyNetworkProjection.getClusterEParametrosProjection().getParametrosGlobais());
+                supplyNetworkProjection.getCadastroEParametrosProjection().getParametrosGlobais());
         int ultimoLowLevelCode = lowLevelCode.getUltimoLowLevelCode().getAsInt();
         MaterialProjection materialProjection = lowLevelCode.getMaterialProjection();
 
@@ -119,7 +119,7 @@ public class ReconciliacaoFisicaPlanoRestritoHeuristicoService {
                         .getSupplyPlanningProjection(location,
                                 MaterialProjectionFactory.getProjectionSetMateriais(
                                         materiaisOutput,
-                                        supplyNetworkProjection.getClusterEParametrosProjection()));
+                                        supplyNetworkProjection.getCadastroEParametrosProjection()));
                 if (projectionOutput.getProductionPlanLinhaOutput(posicaoPeriodo).isEmpty()) {
                     continue;
                 }
@@ -128,7 +128,7 @@ public class ReconciliacaoFisicaPlanoRestritoHeuristicoService {
                         .getSupplyPlanningProjection(location,
                                 MaterialProjectionFactory.getProjectionSetMateriais(
                                         materiaisLocation,
-                                        supplyNetworkProjection.getClusterEParametrosProjection()));
+                                        supplyNetworkProjection.getCadastroEParametrosProjection()));
                 ConstrainedPlanningHeuristicoRotinas
                         .restringeSugestoesEOrdensProducaoNoProjectionPorDisponibilidadeInsumos(
                                 projectionOutput,
@@ -160,7 +160,7 @@ public class ReconciliacaoFisicaPlanoRestritoHeuristicoService {
                         .getSupplyPlanningProjection(location,
                                 MaterialProjectionFactory.getProjectionSetMateriais(
                                         materiais,
-                                        supplyNetworkProjection.getClusterEParametrosProjection()));
+                                        supplyNetworkProjection.getCadastroEParametrosProjection()));
                 ConstrainedPlanningHeuristicoRotinas.restringeDistributionPlanOutboundEDemandPlan(
                         projection,
                         posicaoPeriodo);
@@ -212,7 +212,7 @@ public class ReconciliacaoFisicaPlanoRestritoHeuristicoService {
                             .getSupplyPlanningProjection(location,
                                     MaterialProjectionFactory.getProjectionSetMateriais(
                                             materiais,
-                                            supplyNetworkProjection.getClusterEParametrosProjection()));
+                                            supplyNetworkProjection.getCadastroEParametrosProjection()));
                     for (Produto material : materiais) {
                         double saldoFisico = SupplyPlanning.getEstoqueProjetado(
                                 projection,
@@ -220,7 +220,7 @@ public class ReconciliacaoFisicaPlanoRestritoHeuristicoService {
                                 posicaoPeriodo,
                                 material,
                                 Constantes.TipoPlano.PLANO_RESTRITO,
-                                supplyNetworkProjection.getClusterEParametrosProjection()
+                                supplyNetworkProjection.getCadastroEParametrosProjection()
                                         .getSNPUnidadeMedidaPadrao(material, location),
                                 true, true, false, true);
                         if (saldoFisico < -TOLERANCIA_QUANTIDADE) {

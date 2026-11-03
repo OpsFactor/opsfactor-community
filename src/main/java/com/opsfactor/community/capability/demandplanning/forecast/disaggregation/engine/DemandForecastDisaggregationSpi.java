@@ -1,6 +1,6 @@
 package com.opsfactor.community.capability.demandplanning.forecast.disaggregation.engine;
 
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionAgregado;
 import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
@@ -31,6 +31,6 @@ public interface DemandForecastDisaggregationSpi {
             CalendarioSimples calendario,
             int numeroDiasSplitTopDown,
             DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado,
-            ClusterEParametrosProjection clusterEParametrosProjection);
+            CadastroEParametrosProjection cadastroEParametrosProjection);
 
 }

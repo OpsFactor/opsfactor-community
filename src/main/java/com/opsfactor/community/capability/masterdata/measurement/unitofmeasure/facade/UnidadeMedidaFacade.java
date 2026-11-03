@@ -1,5 +1,7 @@
 package com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade;
 
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
+
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade.dto.ConversaoUnidadeMedidaDTO;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade.spi.SupplyConversionDiagnosticContext;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade.spi.SupplyConversionDiagnosticContributor;
@@ -18,8 +20,10 @@ import com.opsfactor.community.capability.demandplanning.demandplan.domain.Deman
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlanItem;
 import com.opsfactor.community.capability.supplyplanning.distributionplan.domain.DistributionPlanItem;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.factory.ParametrosDemandPlanningProjectionFactory;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByLocationMaterialUOM;
@@ -78,6 +82,9 @@ public class UnidadeMedidaFacade {
      * Factory da projection de conversoes UOM em memoria.
      */
     @Autowired
+    private CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory;
+
+    @Autowired
     private UnidadeMedidaProjectionFactory unidadeMedidaProjectionFactory;
 
     /**
@@ -97,7 +104,7 @@ public class UnidadeMedidaFacade {
      * UOMs padrao por contexto.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private ClusterizacaoProjectionFactory clusterizacaoProjectionFactory;
 
     /**
      * Factory dos parametros de Demand Planning usados na checagem de
@@ -200,7 +207,7 @@ public class UnidadeMedidaFacade {
         
         ParametrosGlobais parametrosGlobais = parametrosGlobaisService.getParametrosGlobais();
         UnidadeMedidaProjection unidadeMedidaProjection = unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        ClusterizacaoProjection clusterizacaoProjection = clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(demandPlan.getPerfilClusterizacaoOrigem().getId());
         
         // The request bucket parses the reference only; the profile owns the complete planning calendar.
         Calendario calendarioSNP = Objects.requireNonNull(
@@ -211,29 +218,29 @@ public class UnidadeMedidaFacade {
         
         DemandPlanningProjection demandPlanningProjection = demandPlanProjectionFactory.getDemandPlanningProjectionCompleto(
                 demandPlan, 
-                clusterEParametrosProjection.getLocationSet(),
-                clusterEParametrosProjection.getMaterialSet(),
+                clusterizacaoProjection.getCadastroEParametrosProjection().getLocationSet(),
+                clusterizacaoProjection.getCadastroEParametrosProjection().getMaterialSet(),
                 false);
         
         // estoque do início do período inicial = estoque de abertura considerado no plano (equivalente ao estoque de fechamento do período -1 no inventory plan)
         LocalDateTime dataEstoque = calendarioSNP.getDataHorarioInicial();
         EstoqueProjectionLocationProduto estoqueProjection = estoqueProjectionFactory.getEstoqueProjectionLocationProduto(
-                dataEstoque, clusterEParametrosProjection.getLocationSet(), clusterEParametrosProjection.getMaterialSet(), 
-                unidadeMedidaProjection, clusterEParametrosProjection, 
-                clusterEParametrosProjection.getParametrosGlobais().getUnidadeMedidaPadraoSNP());
+                dataEstoque, clusterizacaoProjection.getCadastroEParametrosProjection().getLocationSet(), clusterizacaoProjection.getCadastroEParametrosProjection().getMaterialSet(), 
+                unidadeMedidaProjection, clusterizacaoProjection.getCadastroEParametrosProjection(), 
+                clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais().getUnidadeMedidaPadraoSNP());
         
         Set<UnidadeConversaoFaltanteDTO> unidadeConversaoFaltanteDTOSet = new HashSet<>();
                 
-        for (Location location : clusterEParametrosProjection.getLocationSet()) {
+        for (Location location : clusterizacaoProjection.getCadastroEParametrosProjection().getLocationSet()) {
 
-            for (Produto material : clusterEParametrosProjection.getMateriaisAtivosEmLocation(location)) {
+            for (Produto material : clusterizacaoProjection.getCadastroEParametrosProjection().getMateriaisAtivosEmLocation(location)) {
             
                 // se material output inativo e demais operações da receita não puderem ser utilizadas individualmente,
                 // pula para próxima receita
-                if (!clusterEParametrosProjection.isDfuAtiva(material, location)) continue;
+                if (!clusterizacaoProjection.getCadastroEParametrosProjection().isDfuAtiva(material, location)) continue;
 
-                UnidadeMedida unidadeMedidaPadrao = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(material, location);
-                String identificadorUnidadeMedidaPadrao = (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null)
+                UnidadeMedida unidadeMedidaPadrao = clusterizacaoProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(material, location);
+                String identificadorUnidadeMedidaPadrao = (clusterizacaoProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null)
                         ?  "Location " + location.getId() + " / Material " + material.getId() : "Material " + material.getId();
                 // determina se a unidade target do SNP é do material ou material/location
                 
@@ -245,15 +252,15 @@ public class UnidadeMedidaFacade {
                     for (OperacaoRoteiro operacaoRoteiro : roteiro.getOperacaoRoteiroListOrdenadaPorPosicaoAsc()) {
                         // será necessária conversão da unidade DP para unidade medida SNP
                         if (!unidadeMedidaProjection.contemConversaoParaUnidadeDestino(
-                                material, roteiro.getUnidadeMedidaQuantidadeBase(clusterEParametrosProjection.getParametrosGlobais()),
+                                material, roteiro.getUnidadeMedidaQuantidadeBase(clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais()),
                                 unidadeMedidaPadrao)) {
                             unidadeConversaoFaltanteDTOSet.add(UnidadeConversaoFaltanteDTO.builder()
                                     .materialId(roteiro.getMaterialOutput().getId())
                                     .originUnitOfMeasure(roteiro.getUnidadeMedidaQuantidadeBase(
-                                            clusterEParametrosProjection.getParametrosGlobais()).getId())
+                                            clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais()).getId())
                                     .targetUnitOfMeasure(unidadeMedidaPadrao.getId())
                                     .reason(NecessidadeConversao.ROTEIRO_OPERACAO.getDescription())
-                                    .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation("Routing " + roteiro.getId() + " / Operation " + operacaoRoteiro.getPosicao(), identificadorUnidadeMedidaPadrao, ((clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null) ? location.getId() : null) == null ? null : "Location " + ((clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null) ? location.getId() : null)))
+                                    .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation("Routing " + roteiro.getId() + " / Operation " + operacaoRoteiro.getPosicao(), identificadorUnidadeMedidaPadrao, ((clusterizacaoProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null) ? location.getId() : null) == null ? null : "Location " + ((clusterizacaoProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null) ? location.getId() : null)))
                                     .build());
                         }
                     }
@@ -264,12 +271,12 @@ public class UnidadeMedidaFacade {
                     // CONVERSÃO DE UNIDADE OUTPUT LISTA TÉCNICA PARA UNIDADE PADRAO LOCATION
                     if (!unidadeMedidaProjection.contemConversaoParaUnidadeDestino(
                             material, 
-                            listaTecnica.getUnidadeMedidaMaterialOutput(clusterEParametrosProjection.getParametrosGlobais()), 
+                            listaTecnica.getUnidadeMedidaMaterialOutput(clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais()), 
                             unidadeMedidaPadrao)) {
                             
                         unidadeConversaoFaltanteDTOSet.add(UnidadeConversaoFaltanteDTO.builder()
                                 .materialId(material.getId())
-                                .originUnitOfMeasure(listaTecnica.getUnidadeMedidaMaterialOutput(clusterEParametrosProjection.getParametrosGlobais()).getId())
+                                .originUnitOfMeasure(listaTecnica.getUnidadeMedidaMaterialOutput(clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais()).getId())
                                 .targetUnitOfMeasure(unidadeMedidaPadrao.getId())
                                 .reason(NecessidadeConversao.LISTA_TECNICA_OUTPUT.getDescription())
                                 .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation("Bill of Materials " + listaTecnica.getId(), identificadorUnidadeMedidaPadrao))
@@ -280,20 +287,20 @@ public class UnidadeMedidaFacade {
                     for (ListaTecnicaComponente listaTecnicaComponente : listaTecnica.getListaTecnicaComponenteSet()) {
                         Produto materialInput = listaTecnicaComponente.getMaterialComponente();
                         // CONVERSÃO DE UNIDADE DE INPUT DA LISTA TÉCNICA PARA UNIDADE PADRÃO NA LOCATION
-                        String identificadorUnidadeMedidaPadraoInput = (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(materialInput, location) != null) 
+                        String identificadorUnidadeMedidaPadraoInput = (clusterizacaoProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaProdutoLocationCadastrado(materialInput, location) != null) 
                                 ?  "Location " + location.getId() + " / Material " + materialInput.getId() : "Material " + materialInput.getId();
-                        UnidadeMedida unidadeMedidaPadraoInput = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(materialInput, location);
+                        UnidadeMedida unidadeMedidaPadraoInput = clusterizacaoProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(materialInput, location);
 
                         if (!unidadeMedidaProjection.contemConversaoParaUnidadeDestino(
                                 materialInput, 
-                                listaTecnicaComponente.getUnidadeMedidaMaterialComponente(clusterEParametrosProjection.getParametrosGlobais()), 
+                                listaTecnicaComponente.getUnidadeMedidaMaterialComponente(clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais()), 
                                 unidadeMedidaPadraoInput)) {
                             unidadeConversaoFaltanteDTOSet.add(UnidadeConversaoFaltanteDTO.builder()
                                     .materialId(materialInput.getId())
-                                    .originUnitOfMeasure(listaTecnicaComponente.getUnidadeMedidaMaterialComponente(clusterEParametrosProjection.getParametrosGlobais()).getId())
+                                    .originUnitOfMeasure(listaTecnicaComponente.getUnidadeMedidaMaterialComponente(clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais()).getId())
                                     .targetUnitOfMeasure(unidadeMedidaPadraoInput.getId())
                                     .reason(NecessidadeConversao.LISTA_TECNICA_COMPONENTE.getDescription())
-                                    .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation("Bill of Materials " + listaTecnica.getId() + " component " + materialInput.getId(), identificadorUnidadeMedidaPadraoInput, (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(materialInput, location) != null) ? "Location " + location.getId() : null))
+                                    .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation("Bill of Materials " + listaTecnica.getId() + " component " + materialInput.getId(), identificadorUnidadeMedidaPadraoInput, (clusterizacaoProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaProdutoLocationCadastrado(materialInput, location) != null) ? "Location " + location.getId() : null))
                                     .build());
                         }
                     }
@@ -331,9 +338,9 @@ public class UnidadeMedidaFacade {
                         null)) {
                     
                     // determina se a unidade target do SNP é do material ou material/location
-                    String identificadorUnidadeMedidaPadraoLocationDestino = (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, locationDestino) != null) 
+                    String identificadorUnidadeMedidaPadraoLocationDestino = (clusterizacaoProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaProdutoLocationCadastrado(material, locationDestino) != null) 
                             ?  "Location " + locationDestino.getId() + " / Material " + material.getId() : "Material " + material.getId();
-                    UnidadeMedida unidadeMedidaPadraoLocationDestino = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(material, locationDestino);
+                    UnidadeMedida unidadeMedidaPadraoLocationDestino = clusterizacaoProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(material, locationDestino);
                     
                     // será necessária conversão da unidade padrão da location destino para a location origem
                     if (!unidadeMedidaProjection.contemConversaoParaUnidadeDestino(
@@ -343,7 +350,7 @@ public class UnidadeMedidaFacade {
                                 .originUnitOfMeasure(unidadeMedidaPadraoLocationDestino.getId())
                                 .targetUnitOfMeasure(unidadeMedidaPadrao.getId())
                                 .reason(NecessidadeConversao.REQUISICAO_OUTBOUND.getDescription())
-                                .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation(identificadorUnidadeMedidaPadraoLocationDestino, identificadorUnidadeMedidaPadrao, (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, locationDestino) != null) ? "Location " + location.getId() : null))
+                                .additionalInformation(UnidadeConversaoFaltanteDTO.additionalInformation(identificadorUnidadeMedidaPadraoLocationDestino, identificadorUnidadeMedidaPadrao, (clusterizacaoProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaProdutoLocationCadastrado(material, locationDestino) != null) ? "Location " + location.getId() : null))
                                 .build());
                     }
                     
@@ -371,9 +378,9 @@ public class UnidadeMedidaFacade {
             
             // AVALIA BASE DE ESTOQUE NA DATA REFERENCIA            
             for (Produto material : estoqueProjection.getMateriaisComEstoqueNaLocation(location)) {
-                String identificadorUnidadeMedidaPadrao = (clusterEParametrosProjection.getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null) 
+                String identificadorUnidadeMedidaPadrao = (clusterizacaoProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaProdutoLocationCadastrado(material, location) != null) 
                         ?  "Location " + location.getId() + " / Material " + material.getId() : "Material " + material.getId();
-                UnidadeMedida unidadeMedidaPadrao = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(material, location);
+                UnidadeMedida unidadeMedidaPadrao = clusterizacaoProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(material, location);
                 
                 Set<UnidadeMedida> unidadesMedidaEstoque = estoqueProjection.getEstoques(location, material).stream()
                         .map(x -> x.getUom())
@@ -406,7 +413,7 @@ public class UnidadeMedidaFacade {
         // add their diagnostics here, and any unexpected failure remains explicit.
         SupplyConversionDiagnosticContext context = new SupplyConversionDiagnosticContext(
                 versaoMalha, perfilExecucaoSupplyPlan, calendarioSNP, demandPlanningProjection,
-                supplyNetworkProjection, clusterEParametrosProjection, unidadeMedidaProjection);
+                supplyNetworkProjection, clusterizacaoProjection.getCadastroEParametrosProjection(), unidadeMedidaProjection);
         for (SupplyConversionDiagnosticContributor contributor : supplyConversionDiagnosticContributors) {
             unidadeConversaoFaltanteDTOSet.addAll(contributor.findGaps(context));
         }
@@ -568,9 +575,9 @@ public class UnidadeMedidaFacade {
                 distributionPlanItemRepository.customFindBySupplyPlan(supplyPlan);
         UnidadeMedidaProjection unidadeMedidaProjection =
                 unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
         Set<UnidadeConversaoFaltanteDTO> unidadeConversaoFaltanteDTOSet = new HashSet<>();
 
         for (DistributionPlanItem distributionPlanItem : distributionPlanItemCollection) {
@@ -584,7 +591,7 @@ public class UnidadeMedidaFacade {
              * A UOM cadastrada nela prevalece e a UOM global de Deployment
              * reproduz o fallback funcional ja usado pelo legado.
              */
-            Location locationOrigemCanonica = clusterEParametrosProjection.getLocationMap()
+            Location locationOrigemCanonica = cadastroEParametrosProjection.getLocationMap()
                     .get(locationOrigem.getId());
             if (locationOrigemCanonica == null) {
                 throw new IllegalStateException(
@@ -595,7 +602,7 @@ public class UnidadeMedidaFacade {
             if (unidadeMedidaExpedicao == null) {
                 unidadeMedidaExpedicao = parametrosGlobais.getUnidadeMedidaPadraoDeployment();
             }
-            UnidadeMedida unidadeMedidaTransferencia = clusterEParametrosProjection
+            UnidadeMedida unidadeMedidaTransferencia = cadastroEParametrosProjection
                     .getTransferenciaUnidadeMedida(material, locationOrigem, locationDestino);
 
             if (!unidadeMedidaProjection.contemConversaoParaUnidadeDestino(
@@ -642,9 +649,9 @@ public class UnidadeMedidaFacade {
         Set<UnidadeConversaoFaltanteDTO> unidadeConversaoFaltanteDTOSet = new HashSet<>();
         
         UnidadeMedidaProjection conversaoUnidadeMedidaProjection = unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
-        ParametrosDemandPlanProjection parametrosDemandPlanProjection = parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjectionDeCache(perfilExecucaoDemandPlanId);
+        ParametrosDemandPlanProjection parametrosDemandPlanProjection = parametrosDemandPlanningProjectionFactory.getParametrosDemandPlanProjection(perfilExecucaoDemandPlanId);
+        ClusterizacaoProjection clusterizacaoProjection = parametrosDemandPlanProjection.getClusterizacaoProjection();
+        ParametrosGlobais parametrosGlobais = clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais();
         PerfilExecucaoDemandPlan perfilExecucaoDemandPlan = parametrosDemandPlanProjection.getPerfilExecucaoDemandPlan();
 
         LocalDateTime dataReferenciaDpTratada = CalendarioSimples.getPrimeiraDataFromDescricaoPeriodo(
@@ -664,10 +671,10 @@ public class UnidadeMedidaFacade {
         SalesProjectionLocationMaterial salesProjectionLocationMaterial = salesProjectionFactory.getSalesProjectionMaterialLocation(
                 parametrosDemandPlanProjection.getPerfilExecucaoDemandPlan().getTipoDocumentoVenda(parametrosGlobais),
                 calendario,
-                clusterEParametrosProjection.getLocationsComExecucaoDP(), 
-                clusterEParametrosProjection.getMaterialSet(), 
-                conversaoUnidadeMedidaProjection, clusterEParametrosProjection, 
-                clusterEParametrosProjection.getParametrosGlobais().getUnidadeMedidaPadraoSNP());
+                clusterizacaoProjection.getLocationsComExecucaoDP(), 
+                clusterizacaoProjection.getCadastroEParametrosProjection().getMaterialSet(), 
+                conversaoUnidadeMedidaProjection, clusterizacaoProjection.getCadastroEParametrosProjection(), 
+                clusterizacaoProjection.getCadastroEParametrosProjection().getParametrosGlobais().getUnidadeMedidaPadraoSNP());
             
         for (AggregatedByLocationMaterialUOM aggregatedByLocationMaterialUOM : salesProjectionLocationMaterial.getSetSalesConsolidado()) {
             Produto material = aggregatedByLocationMaterialUOM.getMaterial();
@@ -675,7 +682,7 @@ public class UnidadeMedidaFacade {
             UnidadeMedida unidadeMedidaVenda = aggregatedByLocationMaterialUOM.getUom();
             
             UnidadeMedida unidadeMedidaDP = parametrosDemandPlanProjection
-                    .getParametrosDemandPlanNivelClusterProjection(location, material, clusterEParametrosProjection)
+                    .getParametrosDemandPlanNivelClusterProjection(location, material, clusterizacaoProjection)
                     .getParametrosGeraisDemandPlanningProjection()
                     .getUnidadeMedidaDP();
 

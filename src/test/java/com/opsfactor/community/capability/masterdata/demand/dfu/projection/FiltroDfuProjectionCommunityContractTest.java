@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.masterdata.demand.dfu.projection;
 
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -111,7 +111,7 @@ public class FiltroDfuProjectionCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> new FiltroDFUProjection(
                         (java.util.Collection<DFU>) null,
-                        new TestClusterEParametrosProjection()));
+                        new TestCadastroEParametrosProjection()));
         Assertions.assertEquals(
                 "FiltroDFUProjection DFU collection is required.",
                 nullCollectionException.getMessage());
@@ -120,7 +120,7 @@ public class FiltroDfuProjectionCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> new FiltroDFUProjection(
                         Arrays.asList(new DFU(new Produto("MAT_01"), new Location("LOC_01")), null),
-                        new TestClusterEParametrosProjection()));
+                        new TestCadastroEParametrosProjection()));
         Assertions.assertEquals(
                 "FiltroDFUProjection DFU collection contains null DFU at index 1.",
                 nullDfuException.getMessage());
@@ -129,7 +129,7 @@ public class FiltroDfuProjectionCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> new FiltroDFUProjection(
                         List.of(new DFU(new Produto("MAT_01"), null)),
-                        new TestClusterEParametrosProjection()));
+                        new TestCadastroEParametrosProjection()));
         Assertions.assertEquals(
                 "FiltroDFUProjection DFU collection contains DFU without location at index 0.",
                 missingLocationException.getMessage());
@@ -138,7 +138,7 @@ public class FiltroDfuProjectionCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> new FiltroDFUProjection(
                         List.of(new DFU(new Produto("MAT_01"), new Location(" "))),
-                        new TestClusterEParametrosProjection()));
+                        new TestCadastroEParametrosProjection()));
         Assertions.assertEquals(
                 "FiltroDFUProjection DFU collection contains DFU with location without id at index 0.",
                 locationWithoutIdException.getMessage());
@@ -147,7 +147,7 @@ public class FiltroDfuProjectionCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> new FiltroDFUProjection(
                         List.of(new DFU(null, new Location("LOC_01"))),
-                        new TestClusterEParametrosProjection()));
+                        new TestCadastroEParametrosProjection()));
         Assertions.assertEquals(
                 "FiltroDFUProjection DFU collection contains DFU without material at index 0.",
                 missingMaterialException.getMessage());
@@ -156,7 +156,7 @@ public class FiltroDfuProjectionCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> new FiltroDFUProjection(
                         List.of(new DFU(new Produto(" "), new Location("LOC_01"))),
-                        new TestClusterEParametrosProjection()));
+                        new TestCadastroEParametrosProjection()));
         Assertions.assertEquals(
                 "FiltroDFUProjection DFU collection contains DFU with material without id at index 0.",
                 materialWithoutIdException.getMessage());
@@ -197,7 +197,7 @@ public class FiltroDfuProjectionCommunityContractTest {
 
         FiltroDFUProjection filtroDFUProjection = new FiltroDFUProjection(
                 false,
-                new TestClusterEParametrosProjection());
+                new TestCadastroEParametrosProjection());
 
         IllegalArgumentException addLocationException = Assertions.assertThrows(
                 IllegalArgumentException.class,
@@ -239,11 +239,11 @@ public class FiltroDfuProjectionCommunityContractTest {
     @Test
     public void viableDfusShouldRejectNullItemsInsideOptionalFilters() {
 
-        TestClusterEParametrosProjection clusterEParametrosProjection = new TestClusterEParametrosProjection();
+        TestCadastroEParametrosProjection cadastroEParametrosProjection = new TestCadastroEParametrosProjection();
         FiltroDFUProjection filtroDFUProjection = new FiltroDFUProjection(
                 Set.of(new Location("LOC_01")),
                 Set.of(new Produto("MAT_01")),
-                clusterEParametrosProjection);
+                cadastroEParametrosProjection);
 
         Set<Produto> materiaisComItemNulo = new HashSet<>();
         materiaisComItemNulo.add(null);
@@ -290,7 +290,7 @@ public class FiltroDfuProjectionCommunityContractTest {
      * a semantica necessaria: toda DFU material/location informada no teste e
      * considerada ativa.</p>
      */
-    private static class TestClusterEParametrosProjection extends ClusterEParametrosProjection {
+    private static class TestCadastroEParametrosProjection extends CadastroEParametrosProjection {
 
         @Override
         public boolean isDfuAtiva(Produto material, Location location) {

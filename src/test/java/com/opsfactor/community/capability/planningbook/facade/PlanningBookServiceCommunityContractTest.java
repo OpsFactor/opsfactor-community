@@ -12,7 +12,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.FiltroDFUProjection;
 import com.opsfactor.community.capability.planningbook.keyfigure.domain.EditMode;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.configuration.user.projection.ConfiguredViewProjection;
 import com.opsfactor.community.capability.planningbook.keyfigure.projection.KeyFigureProjection;
 import com.opsfactor.community.platform.calendar.CalendarioSimples;
@@ -78,9 +78,9 @@ class PlanningBookServiceCommunityContractTest {
         configuredView.setExibeVendaMediaHistorica(false);
 
         ParametrosGlobais parametrosGlobais = Mockito.mock(ParametrosGlobais.class);
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                Mockito.mock(ClusterEParametrosProjection.class);
-        Mockito.when(clusterEParametrosProjection.getParametrosGlobais())
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                Mockito.mock(CadastroEParametrosProjection.class);
+        Mockito.when(cadastroEParametrosProjection.getParametrosGlobais())
                 .thenReturn(parametrosGlobais);
 
         UnidadeMedida unidadeMedida = new UnidadeMedida("UN");
@@ -88,8 +88,8 @@ class PlanningBookServiceCommunityContractTest {
                 Mockito.mock(ConfiguredViewProjection.class);
         Mockito.when(configuredViewProjection.getConfiguredView())
                 .thenReturn(configuredView);
-        Mockito.when(configuredViewProjection.getClusterEParametrosProjection())
-                .thenReturn(clusterEParametrosProjection);
+        Mockito.when(configuredViewProjection.getCadastroEParametrosProjection())
+                .thenReturn(cadastroEParametrosProjection);
         Mockito.when(configuredViewProjection.getUnidadeMedidaView(parametrosGlobais))
                 .thenReturn(unidadeMedida);
         Mockito.when(configuredViewProjection.getDetalhesSelecaoAAtualizar())
@@ -116,11 +116,11 @@ class PlanningBookServiceCommunityContractTest {
         PlanningBookDfuScope segundoEscopo = Mockito.mock(PlanningBookDfuScope.class);
         Mockito.when(primeiroEscopo.getNovoDFUProjectionInterseccaoComProjectionFiltro(
                         filtroDFUProjection,
-                        clusterEParametrosProjection))
+                        cadastroEParametrosProjection))
                 .thenReturn(primeiroEscopoProjection);
         Mockito.when(segundoEscopo.getNovoDFUProjectionInterseccaoComProjectionFiltro(
                         filtroDFUProjection,
-                        clusterEParametrosProjection))
+                        cadastroEParametrosProjection))
                 .thenReturn(segundoEscopoProjection);
         Mockito.when(configuredViewProjection.getPlanningBookDfuScopes())
                 .thenReturn(new LinkedHashSet<>(List.of(primeiroEscopo, segundoEscopo)));

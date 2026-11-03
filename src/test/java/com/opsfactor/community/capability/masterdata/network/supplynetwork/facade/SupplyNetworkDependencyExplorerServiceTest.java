@@ -10,7 +10,7 @@ import com.opsfactor.community.capability.masterdata.production.productionresour
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.capability.masterdata.production.routing.domain.Roteiro;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjectionFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -235,7 +235,7 @@ class SupplyNetworkDependencyExplorerServiceTest {
     private static final class Fixture {
         final SupplyNetworkProjectionFactory factory = mock(SupplyNetworkProjectionFactory.class);
         final SupplyNetworkProjection projection = mock(SupplyNetworkProjection.class);
-        final ClusterEParametrosProjection parameters = mock(ClusterEParametrosProjection.class);
+        final CadastroEParametrosProjection parameters = mock(CadastroEParametrosProjection.class);
         final VersaoMalha network = mock(VersaoMalha.class);
         final Produto material = mock(Produto.class);
         final Map<String, Location> locations = new HashMap<>();
@@ -245,7 +245,7 @@ class SupplyNetworkDependencyExplorerServiceTest {
         Fixture() {
 
             when(factory.getSupplyNetworkProjectionCompletoDeCache()).thenReturn(projection);
-            when(projection.getClusterEParametrosProjection()).thenReturn(parameters);
+            when(projection.getCadastroEParametrosProjection()).thenReturn(parameters);
             when(projection.getVersaoMalhaDeId("NETWORK")).thenReturn(Optional.of(network));
             when(material.getId()).thenReturn("M"); when(parameters.getMaterialPersistido("M")).thenReturn(material);
             location("A");

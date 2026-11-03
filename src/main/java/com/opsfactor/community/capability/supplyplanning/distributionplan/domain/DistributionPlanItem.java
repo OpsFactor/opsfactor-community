@@ -5,7 +5,7 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
@@ -672,11 +672,11 @@ public class DistributionPlanItem {
     public double getQuantidadeNaUomPadraoLocationOrigem(
             FirmePlanejado firmePlanejado,
             TipoPlano tipoPlano,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             UnidadeMedidaProjection unidadeMedidaProjection) {
 
         ParametrosGlobais parametrosGlobais = unidadeMedidaProjection.getParametrosGlobais();
-        UnidadeMedida unidadeMedidaPadraoOrigem = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(
+        UnidadeMedida unidadeMedidaPadraoOrigem = cadastroEParametrosProjection.getSNPUnidadeMedidaPadrao(
                 getProduto(),
                 getLocationOrigem());
         double conversaoParaUnidadeMedidaPadraoOrigem = unidadeMedidaProjection.getConversaoParaUnidadeDestino(
@@ -691,11 +691,11 @@ public class DistributionPlanItem {
     public double getQuantidadeNaUomPadraoLocationDestino(
             FirmePlanejado firmePlanejado,
             TipoPlano tipoPlano,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             UnidadeMedidaProjection unidadeMedidaProjection) {
 
         ParametrosGlobais parametrosGlobais = unidadeMedidaProjection.getParametrosGlobais();
-        UnidadeMedida unidadeMedidaPadraoDestino = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(
+        UnidadeMedida unidadeMedidaPadraoDestino = cadastroEParametrosProjection.getSNPUnidadeMedidaPadrao(
                 getProduto(),
                 getLocationDestino());
         double conversaoParaUnidadeMedidaPadraoDestino = unidadeMedidaProjection.getConversaoParaUnidadeDestino(

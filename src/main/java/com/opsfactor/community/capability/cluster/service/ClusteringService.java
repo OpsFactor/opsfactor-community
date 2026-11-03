@@ -4,6 +4,7 @@ import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriai
 import com.opsfactor.community.capability.cluster.repository.material.ClusterMateriaisRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.DependsOn;
 
 import java.util.Optional;
 
@@ -17,7 +18,9 @@ import java.util.Optional;
  * entidades, repositories e configuracoes correspondentes.</p>
  */
 @Service
+@DependsOn("perfilClusterizacaoInicializacaoService")
 public class ClusteringService {
+
 
     /**
      * Descricao canonica do cluster default de materiais usado pelo Demand
@@ -43,6 +46,7 @@ public class ClusteringService {
      */
     public void criaClustersPadrao() {
 
+        // O perfil padrão já foi garantido pelo inicializador compartilhado.
         getClusterProdutosDemandPlanningDefault();
 
     }

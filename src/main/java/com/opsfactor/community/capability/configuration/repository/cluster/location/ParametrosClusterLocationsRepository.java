@@ -23,28 +23,28 @@ public interface ParametrosClusterLocationsRepository extends CrudRepository<Par
      * Salva parametros de cluster de locations e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     public <S extends ParametrosClusterLocations> S save(S entity);
 
     /**
      * Salva parametros de cluster de locations em lote e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     <S extends ParametrosClusterLocations> List<S> saveAll(Iterable<S> entities);
 
     /**
      * Remove parametros de cluster de locations e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     public void delete(ParametrosClusterLocations entity);
 
     /**
      * Remove parametros de cluster de locations em lote e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     void deleteAll(Iterable<? extends ParametrosClusterLocations> entities);
 
 }

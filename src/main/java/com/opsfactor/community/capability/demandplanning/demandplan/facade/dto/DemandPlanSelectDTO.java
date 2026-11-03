@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -56,13 +56,13 @@ public class DemandPlanSelectDTO {
     /**
      * Adiciona clusters de locations e respectivas locations ativas ao DTO.
      */
-    public void addClusterLocationsList(List<ClusterLocations> clusterLocationsList, ClusterEParametrosProjection clusterEParametrosProjection) {
+    public void addClusterLocationsList(List<ClusterLocations> clusterLocationsList, ClusterizacaoProjection clusterizacaoProjection) {
 
         for (ClusterLocations clusterLocations : clusterLocationsList) {
             ClusterLocationsDTO clusterLocationsDTO = new ClusterLocationsDTO();
             clusterLocationsDTO.id = clusterLocations.getId();
             clusterLocationsDTO.descricao = clusterLocations.getDescricao();
-            for (Location location : clusterEParametrosProjection.getLocationsAtivasDeClusterLocations(clusterLocations)) {
+            for (Location location : clusterizacaoProjection.getLocationsAtivasDeClusterLocations(clusterLocations)) {
                 LocationDTO locationDTO = new LocationDTO();
                 locationDTO.id = location.getId();
                 locationDTO.descricao = location.getDescricao();

@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.transactionaldata.inventory.stock.pro
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByLocationMaterialUOM;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByLocationMaterialUOMDate;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByMaterialUOM;
@@ -49,11 +49,11 @@ public class EstoqueProjectionFactory {
     public EstoqueProjectionLocationProduto getEstoqueProjection(
             LocalDateTime dataReferencia, Location location, Set<Produto> produtos,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             @Nullable UnidadeMedida unidadeMedidaPadraoParaNulos) {
 
         return getEstoqueProjectionLocationProduto(dataReferencia, Sets.newHashSet(location), produtos,
-                unidadeMedidaProjection, clusterEParametrosProjection, unidadeMedidaPadraoParaNulos);
+                unidadeMedidaProjection, cadastroEParametrosProjection, unidadeMedidaPadraoParaNulos);
 
     }
     /**
@@ -65,12 +65,12 @@ public class EstoqueProjectionFactory {
     public EstoqueProjectionLocationProduto getEstoqueProjectionLocationProduto(
             LocalDateTime dataReferencia, Set<Location> locations, Set<Produto> produtos,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             @Nullable UnidadeMedida unidadeMedidaPadraoParaNulos) {
 
         EstoqueProjectionLocationProduto estoqueProjection = EstoqueProjectionLocationProduto.builder()
                 .conversaoUnidadeMedidaProjection(unidadeMedidaProjection)
-                .clusterEParametrosProjection(clusterEParametrosProjection)
+                .cadastroEParametrosProjection(cadastroEParametrosProjection)
                 .locations(locations)
                 .materiais(produtos)
                 .mapaEstoquePorMaterialLocationUnidadeMedida(new HashMap<>())
@@ -92,7 +92,7 @@ public class EstoqueProjectionFactory {
                 // precisa acontecer depois da leitura do agregado.
                 unidadeMedida = (unidadeMedidaPadraoParaNulos != null)
                         ? unidadeMedidaPadraoParaNulos
-                        : clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
+                        : cadastroEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
             }
 
             estoqueProjection.addEstoque(AggregatedByLocationMaterialUOMImpl.builder()
@@ -119,12 +119,12 @@ public class EstoqueProjectionFactory {
     public EstoqueProjectionLocationProdutoData getEstoqueProjectionLocationProdutoPeriodosPassadosCalendario(
             Calendario calendario, Set<Location> locations, Set<Produto> produtos,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             @Nullable UnidadeMedida unidadeMedidaPadraoParaNulos) {
 
         EstoqueProjectionLocationProdutoData estoqueProjection = EstoqueProjectionLocationProdutoData.builder()
                 .conversaoUnidadeMedidaProjection(unidadeMedidaProjection)
-                .clusterEParametrosProjection(clusterEParametrosProjection)
+                .cadastroEParametrosProjection(cadastroEParametrosProjection)
                 .locations(locations)
                 .materiais(produtos)
                 .calendario(calendario)
@@ -148,7 +148,7 @@ public class EstoqueProjectionFactory {
                 // precisa acontecer depois da leitura do agregado.
                 unidadeMedida = (unidadeMedidaPadraoParaNulos != null)
                         ? unidadeMedidaPadraoParaNulos
-                        : clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
+                        : cadastroEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
             }
 
             estoqueProjection.addEstoque(AggregatedByLocationMaterialUOMDateImpl.builder()
@@ -174,12 +174,12 @@ public class EstoqueProjectionFactory {
     public EstoqueProjectionLocationProdutoData getEstoqueProjectionLocationProdutoUltimosDiasPeriodosPassadosCalendario(
             Calendario calendario, Set<Location> locations, Set<Produto> produtos,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             @Nullable UnidadeMedida unidadeMedidaPadraoParaNulos) {
 
         EstoqueProjectionLocationProdutoData estoqueProjection = EstoqueProjectionLocationProdutoData.builder()
                 .conversaoUnidadeMedidaProjection(unidadeMedidaProjection)
-                .clusterEParametrosProjection(clusterEParametrosProjection)
+                .cadastroEParametrosProjection(cadastroEParametrosProjection)
                 .locations(locations)
                 .materiais(produtos)
                 .calendario(calendario)
@@ -210,7 +210,7 @@ public class EstoqueProjectionFactory {
             if (unidadeMedida == null) {
                 unidadeMedida = (unidadeMedidaPadraoParaNulos != null)
                         ? unidadeMedidaPadraoParaNulos
-                        : clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
+                        : cadastroEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
             }
 
             estoqueProjection.addEstoque(AggregatedByLocationMaterialUOMDateImpl.builder()
@@ -231,14 +231,14 @@ public class EstoqueProjectionFactory {
      *
      * @param dataReferencia data do snapshot de estoque
      * @param unidadeMedidaProjection projection de conversoes de UOM
-     * @param clusterEParametrosProjection parametros globais do cluster
+     * @param cadastroEParametrosProjection parametros globais do cluster
      * @param unidadeMedidaPadraoParaNulos fallback para linhas sem UOM persistida
      * @return projection de estoque consolidado para as locations do snapshot
      */
     public EstoqueProjectionLocationProduto getEstoqueProjectionLocationProduto(
             LocalDateTime dataReferencia,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             @Nullable UnidadeMedida unidadeMedidaPadraoParaNulos) {
 
         Collection<AggregatedByLocationMaterialUOM> estoqueAgregadoCollection =
@@ -250,7 +250,7 @@ public class EstoqueProjectionFactory {
 
         EstoqueProjectionLocationProduto estoqueProjection = EstoqueProjectionLocationProduto.builder()
                 .conversaoUnidadeMedidaProjection(unidadeMedidaProjection)
-                .clusterEParametrosProjection(clusterEParametrosProjection)
+                .cadastroEParametrosProjection(cadastroEParametrosProjection)
                 .locations(locations)
                 .materiais(materiais)
                 .mapaEstoquePorMaterialLocationUnidadeMedida(new HashMap<>())
@@ -264,7 +264,7 @@ public class EstoqueProjectionFactory {
                 // precisa acontecer depois da leitura do agregado.
                 unidadeMedida = (unidadeMedidaPadraoParaNulos != null)
                         ? unidadeMedidaPadraoParaNulos
-                        : clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
+                        : cadastroEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
             }
 
             estoqueProjection.addEstoque(AggregatedByLocationMaterialUOMImpl.builder()
@@ -281,12 +281,12 @@ public class EstoqueProjectionFactory {
     public EstoqueProjectionProduto getEstoqueProjectionProduto(
             LocalDateTime dataReferencia, Location location, Set<Produto> produtos,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             @Nullable UnidadeMedida unidadeMedidaPadraoParaNulos) {
 
         EstoqueProjectionProduto estoqueProjection = EstoqueProjectionProduto.builder()
                 .conversaoUnidadeMedidaProjection(unidadeMedidaProjection)
-                .clusterEParametrosProjection(clusterEParametrosProjection)
+                .cadastroEParametrosProjection(cadastroEParametrosProjection)
                 .locations(Sets.newHashSet(location))
                 .materiais(produtos)
                 .mapaEstoquePorMaterialUnidadeMedida(new HashMap<>())
@@ -308,7 +308,7 @@ public class EstoqueProjectionFactory {
                 // precisa acontecer depois da leitura do agregado.
                 unidadeMedida = (unidadeMedidaPadraoParaNulos != null)
                         ? unidadeMedidaPadraoParaNulos
-                        : clusterEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
+                        : cadastroEParametrosProjection.getSNPUnidadeMedidaPadraoGlobal();
             }
 
             estoqueProjection.addEstoque(AggregatedByMaterialUOMImpl.builder()

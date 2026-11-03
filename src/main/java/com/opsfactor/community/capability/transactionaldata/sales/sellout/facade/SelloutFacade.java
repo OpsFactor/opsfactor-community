@@ -11,8 +11,8 @@ import com.opsfactor.community.capability.transactionaldata.sales.sellout.facade
 import com.opsfactor.community.capability.transactionaldata.sales.sellout.domain.Sellout;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
@@ -50,7 +50,7 @@ public class SelloutFacade {
      * de entidade antes da consulta filtrada.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory;
     /**
      * Projection de unidades usada pelo mapper de exportação de sell-out.
      */
@@ -79,7 +79,7 @@ public class SelloutFacade {
 
         validaPeriodoRelatorioSelloutCommunity(selloutReportParametrosDTO);
         
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection cadastroEParametrosProjection = cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
         UnidadeMedidaProjection unidadeMedidaProjection = unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
         
         Collection<Sellout> entidadesSelloutFiltradas;
@@ -87,10 +87,10 @@ public class SelloutFacade {
         if (selloutReportParametrosDTO.materialLocationFilterDTO != null) {
             MaterialProjection materialProjection = getMaterialProjectionFiltroIdsCommunity(
                     selloutReportParametrosDTO.materialLocationFilterDTO,
-                    clusterEParametrosProjection);
+                    cadastroEParametrosProjection);
             LocationProjection locationProjection = getLocationProjectionFiltroIdsCommunity(
                     selloutReportParametrosDTO.materialLocationFilterDTO,
-                    clusterEParametrosProjection);
+                    cadastroEParametrosProjection);
             
             entidadesSelloutFiltradas = selloutRepository.customFindByDataVendaBetweenMaterialInAndLocationIn(
                     selloutReportParametrosDTO.startDate.atStartOfDay(), 
@@ -108,7 +108,7 @@ public class SelloutFacade {
 
         List<SelloutReportDTO> dtosSelloutFiltrados = entidadesSelloutFiltradas.stream()
                 .map(sellout -> SelloutReportMapper.convertEntityToDTO(
-                        sellout, clusterEParametrosProjection,
+                        sellout, cadastroEParametrosProjection,
                         unidadeMedidaProjection))
                 .collect(Collectors.toList());
         
@@ -221,39 +221,39 @@ public class SelloutFacade {
 
     private MaterialProjection getMaterialProjectionFiltroIdsCommunity(
             FiltroMaterialLocationDeCombinacaoCaracteristicasDTO filtroMaterialLocationDeCombinacaoCaracteristicasDTO,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         if (filtroMaterialLocationDeCombinacaoCaracteristicasDTO.materialIds == null
                 || filtroMaterialLocationDeCombinacaoCaracteristicasDTO.materialIds.isEmpty()) {
-            return MaterialProjectionFactory.getMaterialProjectionCompleto(clusterEParametrosProjection);
+            return MaterialProjectionFactory.getMaterialProjectionCompleto(cadastroEParametrosProjection);
         }
 
         Set<Produto> materiais = filtroMaterialLocationDeCombinacaoCaracteristicasDTO
                 .materialIds
                 .stream()
-                .map(clusterEParametrosProjection::getMaterialPersistido)
+                .map(cadastroEParametrosProjection::getMaterialPersistido)
                 .collect(Collectors.toSet());
 
-        return MaterialProjectionFactory.getProjectionSetMateriais(materiais, clusterEParametrosProjection);
+        return MaterialProjectionFactory.getProjectionSetMateriais(materiais, cadastroEParametrosProjection);
 
     }
 
     private LocationProjection getLocationProjectionFiltroIdsCommunity(
             FiltroMaterialLocationDeCombinacaoCaracteristicasDTO filtroMaterialLocationDeCombinacaoCaracteristicasDTO,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         if (filtroMaterialLocationDeCombinacaoCaracteristicasDTO.locationIds == null
                 || filtroMaterialLocationDeCombinacaoCaracteristicasDTO.locationIds.isEmpty()) {
-            return LocationProjectionFactory.getLocationProjectionCompleto(clusterEParametrosProjection);
+            return LocationProjectionFactory.getLocationProjectionCompleto(cadastroEParametrosProjection);
         }
 
         Set<Location> locations = filtroMaterialLocationDeCombinacaoCaracteristicasDTO
                 .locationIds
                 .stream()
-                .map(clusterEParametrosProjection::getLocationPersistida)
+                .map(cadastroEParametrosProjection::getLocationPersistida)
                 .collect(Collectors.toSet());
 
-        return LocationProjectionFactory.getProjectionSetLocations(locations, clusterEParametrosProjection);
+        return LocationProjectionFactory.getProjectionSetLocations(locations, cadastroEParametrosProjection);
 
     }
 

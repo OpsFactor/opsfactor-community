@@ -16,8 +16,8 @@ import com.opsfactor.community.capability.masterdata.production.routing.domain.R
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjectionFactory;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.repository.LinhaTransporteRepository;
@@ -609,7 +609,7 @@ class SupplyNetworkProjectionCommunityContractTest {
                 .thenReturn(List.of(productionVersion));
         setPrivateField(factory, "versaoProducaoRepository", productionVersionRepository);
         SupplyNetworkProjection projection = new SupplyNetworkProjection();
-        projection.clusterEParametrosProjection = new TestClusterEParametrosProjection(
+        projection.cadastroEParametrosProjection = new TestCadastroEParametrosProjection(
                 Set.of(location), coOutputActive ? Set.of(demandedMaterial, coOutput) : Set.of(demandedMaterial));
 
         // Invoca a montagem real; somente o acesso aos repositories é substituído.
@@ -817,9 +817,9 @@ class SupplyNetworkProjectionCommunityContractTest {
                 new TestUnidadeMedidaProjectionFactory(getUnidadeMedidaProjectionComParametrosGlobais()));
         setPrivateField(
                 supplyNetworkProjectionFactory,
-                "clusterEParametrosProjectionFactory",
-                new TestClusterEParametrosProjectionFactory(
-                        new TestClusterEParametrosProjection(Set.of(), Set.of())));
+                "cadastroEParametrosProjectionFactory",
+                new TestCadastroEParametrosProjectionFactory(
+                        new TestCadastroEParametrosProjection(Set.of(), Set.of())));
         setPrivateField(
                 supplyNetworkProjectionFactory,
                 "versaoMalhaRepository",
@@ -834,8 +834,8 @@ class SupplyNetworkProjectionCommunityContractTest {
             Produto material) {
 
         SupplyNetworkProjection supplyNetworkProjection = new SupplyNetworkProjection();
-        supplyNetworkProjection.clusterEParametrosProjection =
-                new TestClusterEParametrosProjection(Set.of(location), Set.of(material));
+        supplyNetworkProjection.cadastroEParametrosProjection =
+                new TestCadastroEParametrosProjection(Set.of(location), Set.of(material));
 
         return supplyNetworkProjection;
 
@@ -899,31 +899,31 @@ class SupplyNetworkProjectionCommunityContractTest {
 
     }
 
-    private static class TestClusterEParametrosProjectionFactory extends ClusterEParametrosProjectionFactory {
+    private static class TestCadastroEParametrosProjectionFactory extends CadastroEParametrosProjectionFactory {
 
-        private final ClusterEParametrosProjection clusterEParametrosProjection;
+        private final CadastroEParametrosProjection cadastroEParametrosProjection;
 
-        private TestClusterEParametrosProjectionFactory(ClusterEParametrosProjection clusterEParametrosProjection) {
+        private TestCadastroEParametrosProjectionFactory(CadastroEParametrosProjection cadastroEParametrosProjection) {
 
-            this.clusterEParametrosProjection = clusterEParametrosProjection;
+            this.cadastroEParametrosProjection = cadastroEParametrosProjection;
 
         }
 
         @Override
-        public ClusterEParametrosProjection getParametrosProjectionCompletoDeCache() {
+        public CadastroEParametrosProjection getParametrosProjectionCompletoDeCache() {
 
-            return clusterEParametrosProjection;
+            return cadastroEParametrosProjection;
 
         }
 
     }
 
-    private static class TestClusterEParametrosProjection extends ClusterEParametrosProjection {
+    private static class TestCadastroEParametrosProjection extends CadastroEParametrosProjection {
 
         private final Set<Location> locationsAtivas;
         private final Set<Produto> materiaisAtivos;
 
-        private TestClusterEParametrosProjection(
+        private TestCadastroEParametrosProjection(
                 Set<Location> locationsAtivas,
                 Set<Produto> materiaisAtivos) {
 

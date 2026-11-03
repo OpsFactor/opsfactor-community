@@ -16,8 +16,8 @@ import com.opsfactor.community.capability.supplyplanning.inventoryplan.domain.In
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.repository.DemandaDiretaConsideradaLinhaDAO;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.projection.PoliticaEstoquesProjection;
@@ -103,7 +103,7 @@ public class SupplyPlanServiceCommunityContractTest {
                 "demandaDiretaConsideradaLinhaDAO",
                 "supplyPlanProjectionFactory",
                 "supplyNetworkProjectionFactory",
-                "clusterEParametrosProjectionFactory",
+                "cadastroEParametrosProjectionFactory",
                 "conversaoUnidadeMedidaProjectionFactory",
                 "estoqueProjectionFactory",
                 "splitTemporalProjectionFactory",
@@ -529,8 +529,8 @@ public class SupplyPlanServiceCommunityContractTest {
         perfilExecucaoSupplyPlan.setModoExecucao(PerfilExecucaoSupplyPlan.ModoExecucao.HEURISTICO);
         setField(
                 supplyNetworkProjection,
-                "clusterEParametrosProjection",
-                new ClusterEParametrosProjection());
+                "cadastroEParametrosProjection",
+                new CadastroEParametrosProjection());
 
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
                 IllegalArgumentException.class,
@@ -1394,9 +1394,9 @@ public class SupplyPlanServiceCommunityContractTest {
         demandPlan.setId(42L);
         VersaoMalha versaoMalha = new VersaoMalha();
         versaoMalha.setId("MALHA_PADRAO");
-        ClusterEParametrosProjection clusterEParametrosProjection = new ClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = new CadastroEParametrosProjection();
         setField(
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 "parametrosGlobais",
                 new ParametrosGlobais());
         setField(
@@ -1417,8 +1417,8 @@ public class SupplyPlanServiceCommunityContractTest {
                 getVersaoMalhaRepositoryComVersaoMalha(versaoMalha));
         setField(
                 supplyPlanService,
-                "clusterEParametrosProjectionFactory",
-                new TestClusterEParametrosProjectionFactory(clusterEParametrosProjection));
+                "cadastroEParametrosProjectionFactory",
+                new TestCadastroEParametrosProjectionFactory(cadastroEParametrosProjection));
         setField(
                 supplyPlanService,
                 "supplyPlanProcessChainService",
@@ -1497,7 +1497,7 @@ public class SupplyPlanServiceCommunityContractTest {
          * O teste injeta apenas os repositories indispensaveis para descobrir
          * que nao ha Supply Plan existente e que o perfil novo solicita
          * otimizador. Se a implementacao voltar a montar DemandPlan, malha ou
-         * ClusterEParametrosProjection antes da validacao de edicao, a chamada
+         * CadastroEParametrosProjection antes da validacao de edicao, a chamada
          * passa a quebrar por NullPointerException ou proxy nao esperado.
          */
         Assertions.assertEquals(
@@ -3169,36 +3169,36 @@ public class SupplyPlanServiceCommunityContractTest {
 
     }
 
-    private static ClusterEParametrosProjection invokeGetClusterEParametrosProjectionObrigatoriaConstrained(
+    private static CadastroEParametrosProjection invokeGetCadastroEParametrosProjectionObrigatoriaConstrained(
             ConstrainedPlanService constrainedPlanService,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             String contexto) throws Exception {
 
         Method method = ConstrainedPlanService.class.getDeclaredMethod(
-                "getClusterEParametrosProjectionObrigatoria",
-                ClusterEParametrosProjection.class,
+                "getCadastroEParametrosProjectionObrigatoria",
+                CadastroEParametrosProjection.class,
                 String.class);
         method.setAccessible(true);
-        return (ClusterEParametrosProjection) method.invoke(
+        return (CadastroEParametrosProjection) method.invoke(
                 constrainedPlanService,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 contexto);
 
     }
 
     private static ParametrosGlobais invokeGetParametrosGlobaisObrigatoriosConstrained(
             ConstrainedPlanService constrainedPlanService,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             String contexto) throws Exception {
 
         Method method = ConstrainedPlanService.class.getDeclaredMethod(
                 "getParametrosGlobaisObrigatorios",
-                ClusterEParametrosProjection.class,
+                CadastroEParametrosProjection.class,
                 String.class);
         method.setAccessible(true);
         return (ParametrosGlobais) method.invoke(
                 constrainedPlanService,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 contexto);
 
     }
@@ -4054,19 +4054,19 @@ public class SupplyPlanServiceCommunityContractTest {
 
     }
 
-    private static ClusterEParametrosProjection invokeGetClusterEParametrosProjectionObrigatoria(
+    private static CadastroEParametrosProjection invokeGetCadastroEParametrosProjectionObrigatoria(
             SupplyPlanService supplyPlanService,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             String contexto) throws Exception {
 
         Method method = SupplyPlanService.class.getDeclaredMethod(
-                "getClusterEParametrosProjectionObrigatoria",
-                ClusterEParametrosProjection.class,
+                "getCadastroEParametrosProjectionObrigatoria",
+                CadastroEParametrosProjection.class,
                 String.class);
         method.setAccessible(true);
-        return (ClusterEParametrosProjection) method.invoke(
+        return (CadastroEParametrosProjection) method.invoke(
                 supplyPlanService,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 contexto);
 
     }
@@ -4366,19 +4366,19 @@ public class SupplyPlanServiceCommunityContractTest {
 
     }
 
-    private static class TestClusterEParametrosProjectionFactory extends ClusterEParametrosProjectionFactory {
+    private static class TestCadastroEParametrosProjectionFactory extends CadastroEParametrosProjectionFactory {
 
-        private final ClusterEParametrosProjection clusterEParametrosProjection;
+        private final CadastroEParametrosProjection cadastroEParametrosProjection;
 
-        private TestClusterEParametrosProjectionFactory(
-                ClusterEParametrosProjection clusterEParametrosProjection) {
+        private TestCadastroEParametrosProjectionFactory(
+                CadastroEParametrosProjection cadastroEParametrosProjection) {
 
-            this.clusterEParametrosProjection = clusterEParametrosProjection;
+            this.cadastroEParametrosProjection = cadastroEParametrosProjection;
 
         }
 
         @Override
-        public ClusterEParametrosProjection getParametrosProjectionCompletoDeCache() {
+        public CadastroEParametrosProjection getParametrosProjectionCompletoDeCache() {
 
             /*
              * O teste da rota publica de process chain precisa apenas do
@@ -4387,7 +4387,7 @@ public class SupplyPlanServiceCommunityContractTest {
              * repositories de master data e transformaria o contrato em teste
              * de integracao acidental.
              */
-            return clusterEParametrosProjection;
+            return cadastroEParametrosProjection;
 
         }
 

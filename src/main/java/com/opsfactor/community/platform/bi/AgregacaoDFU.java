@@ -3,7 +3,7 @@ package com.opsfactor.community.platform.bi;
 import com.google.common.collect.Sets;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
 
 import java.util.List;
@@ -25,13 +25,13 @@ public class AgregacaoDFU {
      */
     public static Set<DFU> getDFUListDeProdutoCartesianoLocationMaterial(
             Set<Location> locations, Set<Produto> materiais,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         Set<List<Object>> listaCombinacoes = Sets.cartesianProduct(materiais, locations);
 
         return listaCombinacoes.stream()
                 .map(x -> new DFU((Produto) x.get(0), (Location) x.get(1)))
-                .filter(x -> clusterEParametrosProjection.isDfuAtiva(x.getProduto(), x.getLocation()))
+                .filter(x -> cadastroEParametrosProjection.isDfuAtiva(x.getProduto(), x.getLocation()))
                 .collect(Collectors.toSet());
 
     }
@@ -43,11 +43,11 @@ public class AgregacaoDFU {
     public static Set<DFU> getDFUListDeLocations(
             Set<Location> locations,
             Set<Produto> materiais,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         return locations.parallelStream()
                 .filter(location -> materiais.stream()
-                        .anyMatch(material -> clusterEParametrosProjection.isDfuAtiva(material, location)))
+                        .anyMatch(material -> cadastroEParametrosProjection.isDfuAtiva(material, location)))
                 .map(location -> new DFU(null, location))
                 .collect(Collectors.toSet());
 
@@ -60,11 +60,11 @@ public class AgregacaoDFU {
     public static Set<DFU> getDFUListDeMateriais(
             Set<Location> locations,
             Set<Produto> materiais,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         return materiais.parallelStream()
                 .filter(material -> locations.stream()
-                        .anyMatch(location -> clusterEParametrosProjection.isDfuAtiva(material, location)))
+                        .anyMatch(location -> cadastroEParametrosProjection.isDfuAtiva(material, location)))
                 .map(material -> new DFU(material, null))
                 .collect(Collectors.toSet());
 
@@ -76,11 +76,11 @@ public class AgregacaoDFU {
     public static boolean verificaSeAlgumaCombinacaoViavel(
             Set<Location> locations,
             Set<Produto> materiais,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         return materiais.parallelStream()
                 .anyMatch(material -> locations.stream()
-                        .anyMatch(location -> clusterEParametrosProjection.isDfuAtiva(material, location)));
+                        .anyMatch(location -> cadastroEParametrosProjection.isDfuAtiva(material, location)));
 
     }
 

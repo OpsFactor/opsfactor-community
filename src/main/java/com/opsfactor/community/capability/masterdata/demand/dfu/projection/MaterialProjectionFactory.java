@@ -4,7 +4,8 @@ import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutos
 import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProduto;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,60 +27,60 @@ public class MaterialProjectionFactory {
     private MaterialProjectionFactory() {
     }
     
-    public static MaterialProjection getProjectionUnicoMaterial(Produto material, ClusterEParametrosProjection clusterEParametrosProjection) {
+    public static MaterialProjection getProjectionUnicoMaterial(Produto material, CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         validaMaterial(material, "MaterialProjectionFactory received null material for single-material projection.");
 
         MaterialProjection materialProjection = new MaterialProjection();
         materialProjection.setMateriais = Collections.unmodifiableSet(Set.of(material));
-        materialProjection.clusterEParametrosProjection = clusterEParametrosProjection;
+        materialProjection.cadastroEParametrosProjection = cadastroEParametrosProjection;
         
         return materialProjection;
         
     }
 
-    public static MaterialProjection getProjectionDeDfus(Collection<DFU> dfus, ClusterEParametrosProjection clusterEParametrosProjection) {
+    public static MaterialProjection getProjectionDeDfus(Collection<DFU> dfus, CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         validaDfus(dfus);
 
         Set<Produto> materiais = dfus.stream().map(DFU::getProduto).collect(Collectors.toSet());
-        return getProjectionSetMateriais(materiais, clusterEParametrosProjection);
+        return getProjectionSetMateriais(materiais, cadastroEParametrosProjection);
     }
 
-    public static MaterialProjection getProjectionSetMateriais(Collection<Produto> materiais, ClusterEParametrosProjection clusterEParametrosProjection) {
+    public static MaterialProjection getProjectionSetMateriais(Collection<Produto> materiais, CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         validaMateriais(materiais);
 
         MaterialProjection materialProjection = new MaterialProjection();
         materialProjection.setMateriais = Collections.unmodifiableSet(new HashSet(materiais));
-        materialProjection.clusterEParametrosProjection = clusterEParametrosProjection;
+        materialProjection.cadastroEParametrosProjection = cadastroEParametrosProjection;
 
         return materialProjection;
         
     }
 
-    public static MaterialProjection getProjectionClusterMateriais(ClusterProdutos clusterMateriais, ClusterEParametrosProjection clusterEParametrosProjection, boolean somenteMateriaisAtivos) {
+    public static MaterialProjection getProjectionClusterMateriais(ClusterProdutos clusterMateriais, ClusterizacaoProjection clusterizacaoProjection, boolean somenteMateriaisAtivos) {
 
-        validaClusterEParametrosProjection(clusterEParametrosProjection);
+        validaCadastroEParametrosProjection(clusterizacaoProjection.getCadastroEParametrosProjection());
         if (clusterMateriais == null) {
             throw new IllegalArgumentException("MaterialProjectionFactory received null material cluster.");
         }
 
         MaterialProjection materialProjection = new MaterialProjection();
-        materialProjection.setMateriais = Collections.unmodifiableSet(clusterEParametrosProjection.getMateriaisDeClusterProdutos(clusterMateriais, somenteMateriaisAtivos));
-        materialProjection.clusterEParametrosProjection = clusterEParametrosProjection;
+        materialProjection.setMateriais = Collections.unmodifiableSet(clusterizacaoProjection.getMateriaisDeClusterProdutos(clusterMateriais, somenteMateriaisAtivos));
+        materialProjection.cadastroEParametrosProjection = clusterizacaoProjection.getCadastroEParametrosProjection();
 
         return materialProjection;
 
     }
 
-    public static MaterialProjectionCompleto getMaterialProjectionCompleto(ClusterEParametrosProjection clusterEParametrosProjection) {
+    public static MaterialProjectionCompleto getMaterialProjectionCompleto(CadastroEParametrosProjection cadastroEParametrosProjection) {
 
-        validaClusterEParametrosProjection(clusterEParametrosProjection);
+        validaCadastroEParametrosProjection(cadastroEParametrosProjection);
 
         MaterialProjectionCompleto materialProjectionCompleto = new MaterialProjectionCompleto();
-        materialProjectionCompleto.setMateriais = Collections.unmodifiableSet(clusterEParametrosProjection.getMateriaisAtivos());
-        materialProjectionCompleto.clusterEParametrosProjection = clusterEParametrosProjection;
+        materialProjectionCompleto.setMateriais = Collections.unmodifiableSet(cadastroEParametrosProjection.getMateriaisAtivos());
+        materialProjectionCompleto.cadastroEParametrosProjection = cadastroEParametrosProjection;
 
         return materialProjectionCompleto;
     }
@@ -89,28 +90,28 @@ public class MaterialProjectionFactory {
      * como a pseudo-característica {@code materialId}.
      *
      * <p>Novos fluxos devem usar
-     * {@link #getMaterialProjectionFiltroCombinacoesCaracteristicasIds(Map, Collection, ClusterEParametrosProjection, boolean)},
+     * {@link #getMaterialProjectionFiltroCombinacoesCaracteristicasIds(Map, Collection, CadastroEParametrosProjection, boolean)},
      * que recebe ids e características em dimensões separadas.</p>
      */
     public static MaterialProjection getProjectionByMaterialCharacteristicValues(
             Map<String, ? extends Collection<String>> valuesByMaterialCharacteristicId,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             boolean activeMaterialsOnly) {
 
-        validaClusterEParametrosProjection(clusterEParametrosProjection);
+        validaCadastroEParametrosProjection(cadastroEParametrosProjection);
         validateCommunityMaterialCharacteristicFilters(valuesByMaterialCharacteristicId);
-        Set<Produto> sourceMaterials = clusterEParametrosProjection.getMateriais(activeMaterialsOnly);
+        Set<Produto> sourceMaterials = cadastroEParametrosProjection.getMateriais(activeMaterialsOnly);
         Set<String> requestedMaterialIds = getRequestedMaterialIds(valuesByMaterialCharacteristicId);
 
         if (requestedMaterialIds.isEmpty()) {
-            return getProjectionSetMateriais(sourceMaterials, clusterEParametrosProjection);
+            return getProjectionSetMateriais(sourceMaterials, cadastroEParametrosProjection);
         }
 
         Set<Produto> filteredMaterials = sourceMaterials.stream()
                 .filter(material -> requestedMaterialIds.stream()
                         .anyMatch(requestedId -> requestedId.equalsIgnoreCase(material.getId())))
                 .collect(Collectors.toSet());
-        return getProjectionSetMateriais(filteredMaterials, clusterEParametrosProjection);
+        return getProjectionSetMateriais(filteredMaterials, cadastroEParametrosProjection);
 
     }
 
@@ -120,21 +121,21 @@ public class MaterialProjectionFactory {
      *
      * <p>O método recupera o contrato do legado sem realizar consultas por
      * item: características, seus valores e materiais já estão indexados no
-     * {@link ClusterEParametrosProjection}.</p>
+     * {@link CadastroEParametrosProjection}.</p>
      */
     public static MaterialProjection getMaterialProjectionFiltroCombinacoesCaracteristicasIds(
             Map<String, ? extends Collection<String>> valuesByMaterialCharacteristicId,
             Collection<String> materialIds,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             boolean activeMaterialsOnly) {
 
-        validaClusterEParametrosProjection(clusterEParametrosProjection);
+        validaCadastroEParametrosProjection(cadastroEParametrosProjection);
 
         return getMaterialProjectionFiltroCombinacoesCaracteristicasIds(
                 valuesByMaterialCharacteristicId,
                 materialIds,
-                clusterEParametrosProjection.getMateriais(activeMaterialsOnly),
-                clusterEParametrosProjection);
+                cadastroEParametrosProjection.getMateriais(activeMaterialsOnly),
+                cadastroEParametrosProjection);
 
     }
 
@@ -150,20 +151,20 @@ public class MaterialProjectionFactory {
             Map<String, ? extends Collection<String>> valuesByMaterialCharacteristicId,
             Collection<String> materialIds,
             Collection<Produto> candidateMaterials,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
-        validaClusterEParametrosProjection(clusterEParametrosProjection);
+        validaCadastroEParametrosProjection(cadastroEParametrosProjection);
         validaMateriais(candidateMaterials);
 
         Map<CaracteristicaProduto, Set<String>> valuesByMaterialCharacteristic =
                 resolveMaterialCharacteristicValues(
                         valuesByMaterialCharacteristicId,
-                        clusterEParametrosProjection);
+                        cadastroEParametrosProjection);
         Set<Produto> filteredMaterials = new LinkedHashSet<>(candidateMaterials);
 
         if (materialIds != null && !materialIds.isEmpty()) {
             Set<Produto> explicitlySelectedMaterials = materialIds.stream()
-                    .map(clusterEParametrosProjection::getMaterialPersistido)
+                    .map(cadastroEParametrosProjection::getMaterialPersistido)
                     .collect(Collectors.toSet());
             filteredMaterials.retainAll(explicitlySelectedMaterials);
         }
@@ -175,18 +176,18 @@ public class MaterialProjectionFactory {
                             valuesByMaterialCharacteristic));
         }
 
-        return getProjectionSetMateriais(filteredMaterials, clusterEParametrosProjection);
+        return getProjectionSetMateriais(filteredMaterials, cadastroEParametrosProjection);
 
     }
     
     public static MaterialProjection getMaterialProjectionDePerfilExecucaoSupplyPlan(
             PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         if (perfilExecucaoSupplyPlan == null) {
             throw new IllegalArgumentException("Supply Planning execution profile is required for material projection.");
         }
-        validaClusterEParametrosProjection(clusterEParametrosProjection);
+        validaCadastroEParametrosProjection(cadastroEParametrosProjection);
 
         /*
          * Community nao possui Material Filter configuravel no perfil de execucao de
@@ -194,8 +195,8 @@ public class MaterialProjectionFactory {
          * manter o contrato dos callers, mas o escopo material e sempre o
          * conjunto completo de materiais ativos carregados no projection base.
          */
-        MaterialProjection materialProjection = getMaterialProjectionCompleto(clusterEParametrosProjection);
-        materialProjection.clusterEParametrosProjection = clusterEParametrosProjection;
+        MaterialProjection materialProjection = getMaterialProjectionCompleto(cadastroEParametrosProjection);
+        materialProjection.cadastroEParametrosProjection = cadastroEParametrosProjection;
         
         return materialProjection;
         
@@ -204,10 +205,10 @@ public class MaterialProjectionFactory {
     /**
      * Valida a projection base que acompanha todo escopo de materiais.
      */
-    private static void validaClusterEParametrosProjection(
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+    private static void validaCadastroEParametrosProjection(
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
-        if (clusterEParametrosProjection == null) {
+        if (cadastroEParametrosProjection == null) {
             throw new IllegalArgumentException("Cluster/parameter projection is required for material projection.");
         }
 
@@ -308,7 +309,7 @@ public class MaterialProjectionFactory {
      */
     private static Map<CaracteristicaProduto, Set<String>> resolveMaterialCharacteristicValues(
             Map<String, ? extends Collection<String>> valuesByMaterialCharacteristicId,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         if (valuesByMaterialCharacteristicId == null) {
             return Map.of();
@@ -326,7 +327,7 @@ public class MaterialProjectionFactory {
             }
 
             CaracteristicaProduto materialCharacteristic =
-                    clusterEParametrosProjection.getCaracteristicaProdutoDeId(entry.getKey());
+                    cadastroEParametrosProjection.getCaracteristicaProdutoDeId(entry.getKey());
             Set<String> selectedValues = new LinkedHashSet<>();
             for (String selectedValue : entry.getValue()) {
                 if (selectedValue == null) {

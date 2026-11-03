@@ -4,7 +4,7 @@ import com.opsfactor.community.capability.configuration.user.domain.ConfiguredVi
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguredViewCharacteristicFilter;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.configuration.user.repository.ConfiguredViewRepository;
 import jakarta.persistence.NoResultException;
 import org.junit.jupiter.api.Assertions;
@@ -34,9 +34,9 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
         Produto material = new Produto("M1");
         Location location = new Location("L1");
 
-        ClusterEParametrosProjection clusterEParametrosProjection = new ClusterEParametrosProjection();
-        setField(clusterEParametrosProjection, "materialSet", Set.of(material));
-        setField(clusterEParametrosProjection, "locationSet", Set.of(location));
+        CadastroEParametrosProjection cadastroEParametrosProjection = new CadastroEParametrosProjection();
+        setField(cadastroEParametrosProjection, "materialSet", Set.of(material));
+        setField(cadastroEParametrosProjection, "locationSet", Set.of(location));
 
         ConfiguredView configuredView = new ConfiguredView(new ConfiguredView.ConfiguredViewCompositeKey(
                 "admin",
@@ -45,7 +45,7 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
 
         ConfiguredViewProjection configuredViewProjection =
                 new ConfiguredViewProjectionFactory()
-                        .getConfiguredViewProjection(configuredView, clusterEParametrosProjection);
+                        .getConfiguredViewProjection(configuredView, cadastroEParametrosProjection);
 
         Assertions.assertEquals(Set.of(material), configuredViewProjection.getMateriaisFiltrados());
         Assertions.assertEquals(Set.of(location), configuredViewProjection.getLocationsFiltradas());
@@ -66,7 +66,7 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
         Produto materialRemovido = new Produto("M2");
         Location locationMantida = new Location("L1");
         Location locationRemovida = new Location("L2");
-        ClusterEParametrosProjection clusterEParametrosProjection = getClusterEParametrosProjection(
+        CadastroEParametrosProjection cadastroEParametrosProjection = getCadastroEParametrosProjection(
                 Set.of(materialMantido, materialRemovido),
                 Set.of(locationMantida, locationRemovida));
 
@@ -77,7 +77,7 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
         ConfiguredViewProjection configuredViewProjection =
                 new ConfiguredViewProjectionFactory().getConfiguredViewProjection(
                         configuredView,
-                        clusterEParametrosProjection);
+                        cadastroEParametrosProjection);
 
         Assertions.assertEquals(Set.of(materialMantido), configuredViewProjection.getMateriaisFiltrados());
         Assertions.assertEquals(Set.of(locationMantida), configuredViewProjection.getLocationsFiltradas());
@@ -98,7 +98,7 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
         locationBrazil.setPais("Brazil");
         Location locationChile = new Location("L-CL");
         locationChile.setPais("Chile");
-        ClusterEParametrosProjection clusterEParametrosProjection = getClusterEParametrosProjection(
+        CadastroEParametrosProjection cadastroEParametrosProjection = getCadastroEParametrosProjection(
                 Set.of(material),
                 Set.of(locationBrazil, locationChile));
 
@@ -109,7 +109,7 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
         ConfiguredViewProjection configuredViewProjection =
                 new ConfiguredViewProjectionFactory().getConfiguredViewProjection(
                         configuredView,
-                        clusterEParametrosProjection);
+                        cadastroEParametrosProjection);
 
         Assertions.assertEquals(
                 Set.of(locationBrazil),
@@ -128,9 +128,9 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
         Location locationMantida = new Location("L1");
         Location locationFiltrada = new Location("L2");
 
-        ClusterEParametrosProjection clusterEParametrosProjection = new ClusterEParametrosProjection();
-        setField(clusterEParametrosProjection, "materialSet", Set.of(materialMantido, materialFiltrado));
-        setField(clusterEParametrosProjection, "locationSet", Set.of(locationMantida, locationFiltrada));
+        CadastroEParametrosProjection cadastroEParametrosProjection = new CadastroEParametrosProjection();
+        setField(cadastroEParametrosProjection, "materialSet", Set.of(materialMantido, materialFiltrado));
+        setField(cadastroEParametrosProjection, "locationSet", Set.of(locationMantida, locationFiltrada));
 
         ConfiguredView configuredView = new ConfiguredView(new ConfiguredView.ConfiguredViewCompositeKey(
                 "admin",
@@ -141,7 +141,7 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
                 new ConfiguredViewProjectionFactory()
                         .getConfiguredViewProjection(
                                 configuredView,
-                                clusterEParametrosProjection,
+                                cadastroEParametrosProjection,
                                 (material, location) -> material.equals(materialMantido) && location.equals(locationMantida));
 
         /*
@@ -167,9 +167,9 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
 
         ConfiguredViewProjectionFactory configuredViewProjectionFactory =
                 new ConfiguredViewProjectionFactory();
-        ClusterEParametrosProjection clusterEParametrosProjection = new ClusterEParametrosProjection();
-        setField(clusterEParametrosProjection, "materialSet", Set.of(new Produto("M1")));
-        setField(clusterEParametrosProjection, "locationSet", Set.of(new Location("L1")));
+        CadastroEParametrosProjection cadastroEParametrosProjection = new CadastroEParametrosProjection();
+        setField(cadastroEParametrosProjection, "materialSet", Set.of(new Produto("M1")));
+        setField(cadastroEParametrosProjection, "locationSet", Set.of(new Location("L1")));
 
         /*
          * A montagem direta e usada por services que ja carregaram a entidade.
@@ -181,12 +181,12 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
                 IllegalArgumentException.class,
                 () -> configuredViewProjectionFactory.getConfiguredViewProjection(
                         null,
-                        clusterEParametrosProjection));
+                        cadastroEParametrosProjection));
         IllegalArgumentException chaveAusenteException = Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> configuredViewProjectionFactory.getConfiguredViewProjection(
                         new ConfiguredView(),
-                        clusterEParametrosProjection));
+                        cadastroEParametrosProjection));
         IllegalArgumentException projectionAusenteException = Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> configuredViewProjectionFactory.getConfiguredViewProjection(
@@ -210,22 +210,22 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
 
         ConfiguredViewProjectionFactory configuredViewProjectionFactory =
                 new ConfiguredViewProjectionFactory();
-        ClusterEParametrosProjection clusterEParametrosProjectionSemMateriais =
-                new ClusterEParametrosProjection();
-        ClusterEParametrosProjection clusterEParametrosProjectionSemLocations =
-                new ClusterEParametrosProjection();
-        setField(clusterEParametrosProjectionSemLocations, "materialSet", Set.of(new Produto("M1")));
+        CadastroEParametrosProjection cadastroEParametrosProjectionSemMateriais =
+                new CadastroEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjectionSemLocations =
+                new CadastroEParametrosProjection();
+        setField(cadastroEParametrosProjectionSemLocations, "materialSet", Set.of(new Produto("M1")));
 
         IllegalArgumentException materiaisAusentesException = Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> configuredViewProjectionFactory.getConfiguredViewProjection(
                         getConfiguredViewValida(),
-                        clusterEParametrosProjectionSemMateriais));
+                        cadastroEParametrosProjectionSemMateriais));
         IllegalArgumentException locationsAusentesException = Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> configuredViewProjectionFactory.getConfiguredViewProjection(
                         getConfiguredViewValida(),
-                        clusterEParametrosProjectionSemLocations));
+                        cadastroEParametrosProjectionSemLocations));
 
         Assertions.assertEquals(
                 "Material snapshot is required in cluster and parameters projection for Planning Book projection.",
@@ -244,7 +244,7 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
 
         Set<Produto> materialSetComItemNulo = new HashSet<>();
         materialSetComItemNulo.add(null);
-        ClusterEParametrosProjection projectionComMaterialNulo = getClusterEParametrosProjection(
+        CadastroEParametrosProjection projectionComMaterialNulo = getCadastroEParametrosProjection(
                 materialSetComItemNulo,
                 Set.of(new Location("L1", "Location 1")));
 
@@ -257,7 +257,7 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
                 "Material at index 0 is required in cluster and parameters projection for Planning Book projection.",
                 materialNuloException.getMessage());
 
-        ClusterEParametrosProjection projectionComMaterialSemId = getClusterEParametrosProjection(
+        CadastroEParametrosProjection projectionComMaterialSemId = getCadastroEParametrosProjection(
                 Set.of(new Produto(" ")),
                 Set.of(new Location("L1", "Location 1")));
         IllegalArgumentException materialSemIdException = Assertions.assertThrows(
@@ -272,7 +272,7 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
         Set<Produto> materialSetComDuplicidade = Collections.newSetFromMap(new IdentityHashMap<>());
         materialSetComDuplicidade.add(new Produto("M1"));
         materialSetComDuplicidade.add(new Produto("M1"));
-        ClusterEParametrosProjection projectionComMaterialDuplicado = getClusterEParametrosProjection(
+        CadastroEParametrosProjection projectionComMaterialDuplicado = getCadastroEParametrosProjection(
                 materialSetComDuplicidade,
                 Set.of(new Location("L1", "Location 1")));
         IllegalArgumentException materialDuplicadoException = Assertions.assertThrows(
@@ -286,7 +286,7 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
 
         Set<Location> locationSetComItemNulo = new HashSet<>();
         locationSetComItemNulo.add(null);
-        ClusterEParametrosProjection projectionComLocationNula = getClusterEParametrosProjection(
+        CadastroEParametrosProjection projectionComLocationNula = getCadastroEParametrosProjection(
                 Set.of(new Produto("M1")),
                 locationSetComItemNulo);
         IllegalArgumentException locationNulaException = Assertions.assertThrows(
@@ -298,7 +298,7 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
                 "Location at index 0 is required in cluster and parameters projection for Planning Book projection.",
                 locationNulaException.getMessage());
 
-        ClusterEParametrosProjection projectionComLocationSemId = getClusterEParametrosProjection(
+        CadastroEParametrosProjection projectionComLocationSemId = getCadastroEParametrosProjection(
                 Set.of(new Produto("M1")),
                 Set.of(new Location(" ", "Location 1")));
         IllegalArgumentException locationSemIdException = Assertions.assertThrows(
@@ -313,7 +313,7 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
         Set<Location> locationSetComDuplicidade = Collections.newSetFromMap(new IdentityHashMap<>());
         locationSetComDuplicidade.add(new Location("L1", "Location 1"));
         locationSetComDuplicidade.add(new Location("L1", "Location 1"));
-        ClusterEParametrosProjection projectionComLocationDuplicada = getClusterEParametrosProjection(
+        CadastroEParametrosProjection projectionComLocationDuplicada = getCadastroEParametrosProjection(
                 Set.of(new Produto("M1")),
                 locationSetComDuplicidade);
         IllegalArgumentException locationDuplicadaException = Assertions.assertThrows(
@@ -343,7 +343,7 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
                         "admin",
                         "Community view",
                         ConfiguredView.TipoView.DEMANDPLANNINGBOOK,
-                        new ClusterEParametrosProjection()));
+                        new CadastroEParametrosProjection()));
 
         Assertions.assertEquals(
                 "Configured View repository returned null Optional for user admin, view Community view and type DEMANDPLANNINGBOOK.",
@@ -367,7 +367,7 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
                         "admin",
                         "Missing view",
                         ConfiguredView.TipoView.SUPPLYPLANNINGBOOK,
-                        new ClusterEParametrosProjection()));
+                        new CadastroEParametrosProjection()));
 
         Assertions.assertEquals(
                 "No configured view found for user admin, view Missing view for SUPPLYPLANNINGBOOK",
@@ -375,14 +375,14 @@ public class ConfiguredViewProjectionFactoryCommunityContractTest {
 
     }
 
-    private ClusterEParametrosProjection getClusterEParametrosProjection(
+    private CadastroEParametrosProjection getCadastroEParametrosProjection(
             Set<Produto> materialSet,
             Set<Location> locationSet) throws Exception {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = new ClusterEParametrosProjection();
-        setField(clusterEParametrosProjection, "materialSet", materialSet);
-        setField(clusterEParametrosProjection, "locationSet", locationSet);
-        return clusterEParametrosProjection;
+        CadastroEParametrosProjection cadastroEParametrosProjection = new CadastroEParametrosProjection();
+        setField(cadastroEParametrosProjection, "materialSet", materialSet);
+        setField(cadastroEParametrosProjection, "locationSet", locationSet);
+        return cadastroEParametrosProjection;
 
     }
 

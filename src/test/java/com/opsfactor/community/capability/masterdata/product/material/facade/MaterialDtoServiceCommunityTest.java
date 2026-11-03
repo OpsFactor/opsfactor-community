@@ -2,8 +2,8 @@ package com.opsfactor.community.capability.masterdata.product.material.facade;
 
 import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutos;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.cluster.repository.material.ClusterProdutosRepository;
 import com.opsfactor.community.capability.masterdata.product.material.repository.ProdutoRepository;
 import org.junit.jupiter.api.Assertions;
@@ -125,8 +125,8 @@ class MaterialDtoServiceCommunityTest {
 
         setPrivateField(
                 materialDtoService,
-                "clusterEParametrosProjectionFactory",
-                new NullClusterEParametrosProjectionFactory());
+                "cadastroEParametrosProjectionFactory",
+                new NullCadastroEParametrosProjectionFactory());
 
         IllegalStateException missingProjectionException = Assertions.assertThrows(
                 IllegalStateException.class,
@@ -244,10 +244,10 @@ class MaterialDtoServiceCommunityTest {
     /**
      * Factory de teste que representa cache/projection estrutural ausente.
      */
-    private static class NullClusterEParametrosProjectionFactory extends ClusterEParametrosProjectionFactory {
+    private static class NullCadastroEParametrosProjectionFactory extends CadastroEParametrosProjectionFactory {
 
         @Override
-        public ClusterEParametrosProjection getParametrosProjectionCompletoDeCache() {
+        public CadastroEParametrosProjection getParametrosProjectionCompletoDeCache() {
 
             return null;
 

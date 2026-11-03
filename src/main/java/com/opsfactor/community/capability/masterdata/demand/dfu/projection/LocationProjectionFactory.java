@@ -5,7 +5,8 @@ import com.opsfactor.community.capability.masterdata.classification.characterist
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.network.location.domain.LocationAbstract;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,62 +25,62 @@ public class LocationProjectionFactory {
     private LocationProjectionFactory() {
     }
     
-    public static LocationProjectionCompleto getLocationProjectionCompleto(ClusterEParametrosProjection clusterEParametrosProjection) {
+    public static LocationProjectionCompleto getLocationProjectionCompleto(CadastroEParametrosProjection cadastroEParametrosProjection) {
 
-        validaClusterEParametrosProjection(clusterEParametrosProjection);
+        validaCadastroEParametrosProjection(cadastroEParametrosProjection);
 
         LocationProjectionCompleto locationProjectionCompleto = new LocationProjectionCompleto();
-        locationProjectionCompleto.setLocations = Collections.unmodifiableSet(clusterEParametrosProjection.getLocationsAtivas()); // já é UnmodifiableSet
-        locationProjectionCompleto.clusterEParametrosProjection = clusterEParametrosProjection;
+        locationProjectionCompleto.setLocations = Collections.unmodifiableSet(cadastroEParametrosProjection.getLocationsAtivas()); // já é UnmodifiableSet
+        locationProjectionCompleto.cadastroEParametrosProjection = cadastroEParametrosProjection;
         
         return locationProjectionCompleto;
     }
 
-    public static LocationProjection getProjectionDeDfus(Collection<DFU> dfus, ClusterEParametrosProjection clusterEParametrosProjection) {
+    public static LocationProjection getProjectionDeDfus(Collection<DFU> dfus, CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         validaDfus(dfus);
 
         Set<Location> locations = dfus.stream().map(DFU::getLocation).collect(Collectors.toSet());
-        return getProjectionSetLocations(locations, clusterEParametrosProjection);
+        return getProjectionSetLocations(locations, cadastroEParametrosProjection);
     }
 
-    public static LocationProjection getProjectionSetLocations(Collection<Location> locations, ClusterEParametrosProjection clusterEParametrosProjection) {
+    public static LocationProjection getProjectionSetLocations(Collection<Location> locations, CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         validaLocations(locations);
 
         LocationProjection locationProjection = new LocationProjection();
-        locationProjection.clusterEParametrosProjection = clusterEParametrosProjection;
+        locationProjection.cadastroEParametrosProjection = cadastroEParametrosProjection;
         locationProjection.setLocations = Collections.unmodifiableSet(new HashSet(locations));
         
         return locationProjection;
         
     }
 
-    public static LocationProjection getProjectionClusterLocations(ClusterLocations clusterLocations, ClusterEParametrosProjection clusterEParametrosProjection, boolean somenteLocationsAtivas) {
+    public static LocationProjection getProjectionClusterLocations(ClusterLocations clusterLocations, ClusterizacaoProjection clusterizacaoProjection, boolean somenteLocationsAtivas) {
 
-        validaClusterEParametrosProjection(clusterEParametrosProjection);
+        validaCadastroEParametrosProjection(clusterizacaoProjection.getCadastroEParametrosProjection());
         if (clusterLocations == null) {
             throw new IllegalArgumentException("LocationProjectionFactory received null location cluster.");
         }
 
         LocationProjection locationProjection = new LocationProjection();
-        locationProjection.clusterEParametrosProjection = clusterEParametrosProjection;
-        locationProjection.setLocations = Collections.unmodifiableSet(clusterEParametrosProjection.getLocationsDeClusterLocations(clusterLocations, somenteLocationsAtivas));
+        locationProjection.cadastroEParametrosProjection = clusterizacaoProjection.getCadastroEParametrosProjection();
+        locationProjection.setLocations = Collections.unmodifiableSet(clusterizacaoProjection.getLocationsDeClusterLocations(clusterLocations, somenteLocationsAtivas));
 
         return locationProjection;
 
     }
 
-    public static LocationProjection getProjectionSetLocationIds(Collection<String> locationIds, ClusterEParametrosProjection clusterEParametrosProjection) {
+    public static LocationProjection getProjectionSetLocationIds(Collection<String> locationIds, CadastroEParametrosProjection cadastroEParametrosProjection) {
 
-        validaClusterEParametrosProjection(clusterEParametrosProjection);
+        validaCadastroEParametrosProjection(cadastroEParametrosProjection);
         validaLocationIds(locationIds);
 
         Set<Location> locations = locationIds.stream()
-                .map(locationId -> clusterEParametrosProjection.getLocationPersistida(locationId))
+                .map(locationId -> cadastroEParametrosProjection.getLocationPersistida(locationId))
                 .collect(Collectors.toSet());
         
-        return getProjectionSetLocations(locations, clusterEParametrosProjection);
+        return getProjectionSetLocations(locations, cadastroEParametrosProjection);
         
     }
 
@@ -89,21 +90,21 @@ public class LocationProjectionFactory {
      *
      * <p>O método recupera o contrato do legado sem realizar consultas por
      * item: características, seus valores e locations já estão indexados no
-     * {@link ClusterEParametrosProjection}.</p>
+     * {@link CadastroEParametrosProjection}.</p>
      */
     public static LocationProjection getLocationProjectionFiltroCombinacoesCaracteristicasIds(
             Map<String, ? extends Collection<String>> valuesByLocationCharacteristicId,
             Collection<String> locationIds,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             boolean activeLocationsOnly) {
 
-        validaClusterEParametrosProjection(clusterEParametrosProjection);
+        validaCadastroEParametrosProjection(cadastroEParametrosProjection);
 
         return getLocationProjectionFiltroCombinacoesCaracteristicasIds(
                 valuesByLocationCharacteristicId,
                 locationIds,
-                clusterEParametrosProjection.getLocations(activeLocationsOnly),
-                clusterEParametrosProjection);
+                cadastroEParametrosProjection.getLocations(activeLocationsOnly),
+                cadastroEParametrosProjection);
 
     }
 
@@ -119,20 +120,20 @@ public class LocationProjectionFactory {
             Map<String, ? extends Collection<String>> valuesByLocationCharacteristicId,
             Collection<String> locationIds,
             Collection<Location> candidateLocations,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
-        validaClusterEParametrosProjection(clusterEParametrosProjection);
+        validaCadastroEParametrosProjection(cadastroEParametrosProjection);
         validaLocations(candidateLocations);
 
         Map<CaracteristicaLocation, Set<String>> valuesByLocationCharacteristic =
                 resolveLocationCharacteristicValues(
                         valuesByLocationCharacteristicId,
-                        clusterEParametrosProjection);
+                        cadastroEParametrosProjection);
         Set<Location> filteredLocations = new LinkedHashSet<>(candidateLocations);
 
         if (locationIds != null && !locationIds.isEmpty()) {
             Set<Location> explicitlySelectedLocations = locationIds.stream()
-                    .map(clusterEParametrosProjection::getLocationPersistida)
+                    .map(cadastroEParametrosProjection::getLocationPersistida)
                     .collect(Collectors.toSet());
             filteredLocations.retainAll(explicitlySelectedLocations);
         }
@@ -144,7 +145,7 @@ public class LocationProjectionFactory {
                             valuesByLocationCharacteristic));
         }
 
-        return getProjectionSetLocations(filteredLocations, clusterEParametrosProjection);
+        return getProjectionSetLocations(filteredLocations, cadastroEParametrosProjection);
 
     }
 
@@ -159,18 +160,18 @@ public class LocationProjectionFactory {
      * perfil indica consolidacao de demanda.</p>
      *
      * @param perfilExecucaoSupplyPlan
-     * @param clusterEParametrosProjection 
+     * @param cadastroEParametrosProjection 
      */
     public static LocationProjection getLocationProjectionDePerfilExecucaoSupplyPlan(
             PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         if (perfilExecucaoSupplyPlan == null) {
             throw new IllegalArgumentException("Supply Planning execution profile is required for location projection.");
         }
-        validaClusterEParametrosProjection(clusterEParametrosProjection);
+        validaCadastroEParametrosProjection(cadastroEParametrosProjection);
 
-        LocationProjection locationProjection = getLocationProjectionCompleto(clusterEParametrosProjection);
+        LocationProjection locationProjection = getLocationProjectionCompleto(cadastroEParametrosProjection);
         
         // limita o LocationProjection a somente locations internas / fornecedores caso o parametro 'LocationsClienteApenasPropagamDemanda'
         // do perfil de execução tenha sido habilitado
@@ -194,10 +195,10 @@ public class LocationProjectionFactory {
     /**
      * Valida a projection base que acompanha todo escopo de locations.
      */
-    private static void validaClusterEParametrosProjection(
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+    private static void validaCadastroEParametrosProjection(
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
-        if (clusterEParametrosProjection == null) {
+        if (cadastroEParametrosProjection == null) {
             throw new IllegalArgumentException("Cluster/parameter projection is required for location projection.");
         }
 
@@ -276,7 +277,7 @@ public class LocationProjectionFactory {
      */
     private static Map<CaracteristicaLocation, Set<String>> resolveLocationCharacteristicValues(
             Map<String, ? extends Collection<String>> valuesByLocationCharacteristicId,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         if (valuesByLocationCharacteristicId == null) {
             return Map.of();
@@ -294,7 +295,7 @@ public class LocationProjectionFactory {
             }
 
             CaracteristicaLocation locationCharacteristic =
-                    clusterEParametrosProjection.getCaracteristicaLocationDeId(entry.getKey());
+                    cadastroEParametrosProjection.getCaracteristicaLocationDeId(entry.getKey());
             Set<String> selectedValues = new LinkedHashSet<>();
             for (String selectedValue : entry.getValue()) {
                 if (selectedValue == null) {

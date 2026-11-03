@@ -1,6 +1,6 @@
 package com.opsfactor.community.capability.masterdata.classification.characteristic.facade.mapper;
 
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaLocation;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProduto;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.facade.dto.FiltroMaterialLocationDeCombinacaoCaracteristicasDTO;
@@ -22,8 +22,8 @@ class FiltroMaterialLocationDeCombinacaoCaracteristicasMapperTest {
     @Test
     void shouldIntersectExplicitIdsAndCharacteristicsUsingLegacyAndOrSemantics() {
 
-        ClusterEParametrosProjection clusterProjection =
-                Mockito.mock(ClusterEParametrosProjection.class);
+        CadastroEParametrosProjection clusterProjection =
+                Mockito.mock(CadastroEParametrosProjection.class);
         Produto matchingMaterial = Mockito.mock(Produto.class);
         Produto excludedMaterial = Mockito.mock(Produto.class);
         Location matchingLocation = Mockito.mock(Location.class);
@@ -80,8 +80,8 @@ class FiltroMaterialLocationDeCombinacaoCaracteristicasMapperTest {
     @Test
     void shouldTreatEmptySelectionAsCompleteActiveScope() {
 
-        ClusterEParametrosProjection clusterProjection =
-                Mockito.mock(ClusterEParametrosProjection.class);
+        CadastroEParametrosProjection clusterProjection =
+                Mockito.mock(CadastroEParametrosProjection.class);
         Produto material = Mockito.mock(Produto.class);
         Location location = Mockito.mock(Location.class);
         Mockito.when(clusterProjection.getMateriais(true)).thenReturn(Set.of(material));

@@ -1,6 +1,6 @@
 package com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.facade.spi;
 
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanningProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
@@ -19,7 +19,7 @@ public record SupplyConversionDiagnosticContext(
         Calendario calendar,
         DemandPlanningProjection demand,
         SupplyNetworkProjection network,
-        ClusterEParametrosProjection parameters,
+        CadastroEParametrosProjection parameters,
         UnidadeMedidaProjection units) {
 
 }

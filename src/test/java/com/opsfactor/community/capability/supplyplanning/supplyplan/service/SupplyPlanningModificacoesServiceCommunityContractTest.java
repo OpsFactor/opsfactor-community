@@ -8,7 +8,7 @@ import com.opsfactor.community.capability.masterdata.production.productionversio
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.projection.PoliticaEstoquesProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
@@ -577,9 +577,9 @@ class SupplyPlanningModificacoesServiceCommunityContractTest {
         }
 
         @Override
-        public ClusterEParametrosProjection getClusterEParametrosProjection() {
+        public CadastroEParametrosProjection getCadastroEParametrosProjection() {
 
-            return new FakeClusterEParametrosProjection();
+            return new FakeCadastroEParametrosProjection();
 
         }
 
@@ -596,9 +596,9 @@ class SupplyPlanningModificacoesServiceCommunityContractTest {
 
     }
 
-    private static class FakeClusterEParametrosProjection extends ClusterEParametrosProjection {
+    private static class FakeCadastroEParametrosProjection extends CadastroEParametrosProjection {
 
-        private FakeClusterEParametrosProjection() {
+        private FakeCadastroEParametrosProjection() {
 
             parametrosGlobais = new ParametrosGlobais();
 

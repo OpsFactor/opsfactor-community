@@ -48,7 +48,7 @@ public class ProductionPlanning {
             RecursoProdutivo recursoProdutivo, Constantes.TipoPlano tipoPlano,
             Constantes.FirmePlanejado firmePlanejado) throws UnitOfMeasureConversionException {
         
-        UnidadeMedida unidadeMedidaPadrao = supplyPlanningProjection.getClusterEParametrosProjection().getSNPUnidadeMedidaPadrao(
+        UnidadeMedida unidadeMedidaPadrao = supplyPlanningProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(
                 material, supplyPlanningProjection.getLocation());
 
         double quantidadeTotalOrdens = supplyPlanningProjection.getQuantidadeProductionPlan(posicaoPeriodo, material, recursoProdutivo, tipoPlano, firmePlanejado, unidadeMedidaPadrao);
@@ -74,7 +74,7 @@ public class ProductionPlanning {
         SupplyNetworkProjection supplyNetworkProjection = supplyPlanningProjection.getSupplyNetworkProjection();
         MaterialProjection materialProjection = supplyPlanningProjection.getMaterialProjection();
 
-        UnidadeMedida unidadeMedidaPadrao = supplyPlanningProjection.getClusterEParametrosProjection().getSNPUnidadeMedidaPadrao(
+        UnidadeMedida unidadeMedidaPadrao = supplyPlanningProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(
                 material, supplyPlanningProjection.getLocation());
 
         double quantidade = supplyPlanningProjection.getQuantidadeProductionPlan(posicaoPeriodo, material, recursoProdutivo, tipoPlano, firmePlanejado, unidadeMedidaPadrao);
@@ -168,7 +168,7 @@ public class ProductionPlanning {
             Constantes.TipoPlano tipoPlano,
             Constantes.FirmePlanejado firmePlanejado) throws IncompatibleCalendarException, UnitOfMeasureConversionException {
 
-        UnidadeMedida unidadeMedidaPadrao = supplyPlanningProjection.getClusterEParametrosProjection().getSNPUnidadeMedidaPadrao(
+        UnidadeMedida unidadeMedidaPadrao = supplyPlanningProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(
                 material, supplyPlanningProjection.getLocation());
 
         double quantidadeTotalSugestoes = supplyPlanningProjection.getQuantidadeProductionPlan(

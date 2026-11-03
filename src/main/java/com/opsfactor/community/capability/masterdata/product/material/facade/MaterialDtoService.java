@@ -1,13 +1,15 @@
 package com.opsfactor.community.capability.masterdata.product.material.facade;
 
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
+
 import com.opsfactor.community.capability.cluster.facade.dto.ClusterProdutosDTO;
 import com.opsfactor.community.capability.masterdata.product.material.facade.dto.ProdutoDTO;
 import com.opsfactor.community.capability.cluster.facade.mapper.ClusterProdutosMapper;
 import com.opsfactor.community.capability.masterdata.product.material.facade.mapper.MaterialMapper;
 import com.opsfactor.community.capability.cluster.domain.produto.ClusterProdutos;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjectionFactory;
 import com.opsfactor.community.capability.cluster.repository.material.ClusterProdutosRepository;
 import com.opsfactor.community.capability.masterdata.product.material.repository.ProdutoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +57,7 @@ public class MaterialDtoService {
      * sem consultas JPA por item.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private ClusterizacaoProjectionFactory clusterizacaoProjectionFactory;
 
     /**
      * Lista materiais ativos para consumo do front Community.
@@ -111,14 +113,14 @@ public class MaterialDtoService {
                     "Material cluster id is required to list Community material DTOs.");
         }
 
-        ClusterEParametrosProjection clusterEParametrosProjection = clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
-        if (clusterEParametrosProjection == null) {
+        ClusterizacaoProjection clusterizacaoProjection = clusterizacaoProjectionFactory.getClusterizacaoProjectionDeCache(PerfilClusterizacao.ID_LEGADO);
+        if (clusterizacaoProjection == null) {
             throw new IllegalStateException(
                     "Cluster and parameters projection snapshot is required to list Community material DTOs.");
         }
 
         Set<Produto> materiaisDoCluster =
-                clusterEParametrosProjection.getMateriaisDeClusterProdutosId(materialClusterId, true);
+                clusterizacaoProjection.getMateriaisDeClusterProdutosId(materialClusterId, true);
         validaMateriaisDoClusterSnapshot(
                 materialClusterId,
                 materiaisDoCluster);

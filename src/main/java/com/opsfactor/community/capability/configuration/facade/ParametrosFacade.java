@@ -1,5 +1,9 @@
 package com.opsfactor.community.capability.configuration.facade;
 
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
+
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
+import com.opsfactor.community.capability.configuration.service.cluster.PerfilClusterizacaoService;
 import com.opsfactor.community.capability.cluster.domain.location.ClusterLocations;
 import com.opsfactor.community.capability.configuration.domain.ParametrosProdutoLocation;
 import com.opsfactor.community.capability.configuration.domain.cluster.location.ParametrosClusterLocations;
@@ -43,6 +47,9 @@ import java.util.Set;
 @Slf4j
 @Service
 public class ParametrosFacade {
+    @Autowired
+    private PerfilClusterizacaoService perfilClusterizacaoService;
+
 
     /**
      * Repository dos parametros associados a clusters de locations.
@@ -90,71 +97,56 @@ public class ParametrosFacade {
     private MaterialService materialService;
     @Transactional
     public List<ParametroClusterLocationDTO> getParametroClusterLocationDTO() {
-        List<ParametroClusterLocationDTO> parametroClusterLocationDTOList = new ArrayList<>();
-        try {
-            /*
-             * A montagem do DTO atravessa os parametros one-to-one do
-             * cluster. A consulta administrativa precisa trazer essa
-             * associacao na mesma fotografia para nao disparar uma consulta
-             * adicional por cluster.
-             */
-            for (ClusterLocations clusterLocations : clusterLocationsRepository.customFindAll()) {
-                ParametrosClusterLocations parametrosClusterLocations = clusterLocations.getParametrosClusterLocations();
-                ParametroClusterLocationDTO dto = new ParametroClusterLocationDTO();
-                dto.setId(parametrosClusterLocations.getClusterLocations().getId());
-                dto.setClusterLocations(clusterLocations.getDescricao());
-                dto.setClusterLocationsID(clusterLocations.getId());
-                dto.setPlanejaDP(parametrosClusterLocations.getPlanejaDP());
-                dto.setPlanejaPricing(false);
-                parametroClusterLocationDTOList.add(dto);
-            }
-        } catch (RuntimeException runtimeException) {
-            log.error("Erro ao carregar parametros de cluster/location Community", runtimeException);
-        }
-        return parametroClusterLocationDTOList;
+
+        return getParametroClusterLocationDTO(PerfilClusterizacao.ID_LEGADO);
+
     }
 
+    /** Um fetch em lote carrega clusters e seus parâmetros no perfil solicitado. */
+    @Transactional(readOnly = true)
+    public List<ParametroClusterLocationDTO> getParametroClusterLocationDTO(String perfilClusterizacaoId) {
+
+        perfilClusterizacaoId = perfilClusterizacaoService.resolveProfileId(perfilClusterizacaoId);
+
+        List<ParametroClusterLocationDTO> result = new ArrayList<>();
+        for (ClusterLocations cluster : clusterLocationsRepository.findAllByPerfilClusterizacaoId(perfilClusterizacaoId)) {
+            ParametrosClusterLocations parameters = cluster.getParametrosClusterLocations();
+            ParametroClusterLocationDTO dto = new ParametroClusterLocationDTO();
+            dto.setPerfilClusterizacaoId(perfilClusterizacaoId);
+            dto.setId(cluster.getId());
+            dto.setClusterLocationsID(cluster.getId());
+            dto.setClusterLocations(cluster.getDescricao());
+            dto.setPlanejaDP(parameters.getPlanejaDP());
+            dto.setPlanejaPricing(false);
+            result.add(dto);
+        }
+        return result;
+
+    }
+
+    @Transactional
     public boolean saveParametroClusterLocationDTO(ParametroClusterLocationDTO parametroClusterLocationDTO) {
 
         validaParametrosClusterLocationCommunity(parametroClusterLocationDTO);
-
-        try {
-            /*
-             * `Optional.empty()` representa cluster inexistente e mantem o
-             * retorno publico `false`. `Optional` nulo e falha de contrato do
-             * repository e deve ficar explicito antes de acessar o mapper de
-             * parametros ou qualquer snapshot salvo.
-             */
-            Optional<ClusterLocations> optionalClusterLocations = clusterLocationsRepository
-                    .findById(parametroClusterLocationDTO.getClusterLocationsID());
-            if (optionalClusterLocations == null) {
-                throw new IllegalStateException(
-                        "Cluster/location parameter repository returned null Optional for Community cluster id "
-                                + parametroClusterLocationDTO.getClusterLocationsID() + ".");
-            }
-            ClusterLocations clusterLocations = optionalClusterLocations.orElseThrow(() -> new IllegalStateException(
-                    "Cluster Location " + parametroClusterLocationDTO.getClusterLocationsID()
-                            + " not found for Community cluster/location parameters"));
-            if (clusterLocations.getParametrosClusterLocations() != null) {
-                ParametrosClusterLocations parametro = clusterLocations.getParametrosClusterLocations();
-                parametro.setPlanejaDP(parametroClusterLocationDTO.getPlanejaDP());
-                /*
-                 * O cluster/location parametriza a inclusao do cluster na
-                 * execucao de Demand Planning. A tela trabalha com retorno
-                 * booleano, mas o repository nao pode devolver uma fotografia
-                 * nula ou sem cluster e ainda assim ser tratado como sucesso.
-                 */
-                ParametrosClusterLocations parametrosClusterLocationsSalvos =
-                        parametrosClusterLocationsRepository.save(parametro);
-                validaParametrosClusterLocationsSalvosCommunity(parametrosClusterLocationsSalvos);
-            } else {
-                throw new IllegalStateException("Not Found a parameter");
-            }
-            return true;
-        } catch (RuntimeException runtimeException) {
-            log.error("Erro ao salvar parametros de cluster/location Community {}", parametroClusterLocationDTO.getClusterLocationsID(), runtimeException);
-            return false;
+        parametroClusterLocationDTO.setPerfilClusterizacaoId(perfilClusterizacaoService.resolveProfileId(
+                parametroClusterLocationDTO.getPerfilClusterizacaoId()));
+        // Inclusão na execução faz parte da definição da versão. O lock é
+        // mantido durante toda a gravação; históricos exigem clone do perfil.
+        perfilClusterizacaoService.requireEditable(parametroClusterLocationDTO.getPerfilClusterizacaoId());
+        Optional<ClusterLocations> optionalCluster = clusterLocationsRepository.findByPerfilClusterizacaoIdAndId(
+                parametroClusterLocationDTO.getPerfilClusterizacaoId(), parametroClusterLocationDTO.getClusterLocationsID());
+        if (optionalCluster == null) {
+            throw new IllegalStateException("O repositório retornou Optional nulo para o cluster/location.");
         }
+        ClusterLocations cluster = optionalCluster
+                .orElseThrow(() -> new IllegalArgumentException("Cluster/location inexistente no perfil informado."));
+        ParametrosClusterLocations parameters = cluster.getParametrosClusterLocations();
+        parameters.setPlanejaDP(parametroClusterLocationDTO.getPlanejaDP());
+        
+        ParametrosClusterLocations saved = parametrosClusterLocationsRepository.save(parameters);
+        validaParametrosClusterLocationsSalvosCommunity(saved);
+        return true;
+
     }
 
     /**
@@ -180,7 +172,7 @@ public class ParametrosFacade {
      * Valida a fotografia salva dos parametros por cluster de location.
      *
      * <p>O id do cluster e a menor chave funcional usada pelas telas e por
-     * `ClusterEParametrosProjection`. Snapshot salvo nulo ou sem cluster
+     * `ClusterizacaoProjection`. Snapshot salvo nulo ou sem cluster
      * indica persistencia quebrada e deve preservar o contrato publico
      * `false`, nao sucesso silencioso.</p>
      */

@@ -1,5 +1,9 @@
 package com.opsfactor.community.capability.demandplanning.configuration.projection;
 
+import java.util.Set;
+import java.util.HashSet;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.ParametrosModeloEstatisticoAbstract;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.forecast.ParametrosArima;
@@ -28,6 +32,77 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ParametrosForecastProjection {
+
+    /** Nullable execution policy: null keeps configured inputs; empty disables external series. */
+    @lombok.Getter @lombok.Setter
+    private Set<String> selectedExternalSeriesIds;
+
+    /**
+     * Janela de mix congelada na revisão sharding; null conserva o fluxo sem sharding.
+     * Não é a janela usada para ajustar tendência, sazonalidade ou regressores.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Integer numeroPeriodosMixHistoricoSharding;
+
+    /** Definição imutável do grão de mix, lida da revisão; não usa o perfil de execução mutável. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String definicaoMapeShardingSnapshot;
+
+    /** Receita numérica imutável da regressão escolhida na poda; null usa defaults do modelo. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String parametrosRegressaoSerieTemporalSnapshot;
+
+    /** Janela efetiva do modelo escolhido na poda, em buckets do calendário, nunca em dias. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Integer numeroPeriodosHistoricosReceitaSharding;
+
+    /** Granularidade congelada para impedir replay de uma receita mensal como semanal. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Constantes.TamanhoBucket tamanhoBucketReceitaSharding;
+
+    /** Null mantém o modelo manual/AutoFit; vazio congela a ausência de sinais fixos na poda. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Set<String> regressoresFixosReceitaSharding;
+
+    /** Calendário real deve conservar granularidade e janela, para ambos os motores de poda. */
+    public void validarCalendarioReceita(Constantes.TamanhoBucket tamanhoBucket, int numeroPeriodosHistoricos) {
+
+        if (tamanhoBucketReceitaSharding != null && tamanhoBucketReceitaSharding != tamanhoBucket) {
+            throw new IllegalArgumentException("A receita selecionada na poda usa bucket " + tamanhoBucketReceitaSharding
+                    + "; o calendário operacional usa " + tamanhoBucket + ". Use o mesmo calendário da revisão "
+                    + "ou selecione explicitamente um modelo manual/AutoFit para substituir a receita de poda.");
+        }
+        validarNumeroPeriodosHistoricosReceita(numeroPeriodosHistoricos);
+
+    }
+
+    /**
+     * O perfil operacional ainda configura histórico em dias. Quando ele é
+     * convertido no calendário real da rodada, exige o mesmo número de buckets
+     * da receita selecionada. Uma janela diferente exige override explícito;
+     * não é apresentada como replay da mesma política avaliada na poda.
+     */
+    public void validarNumeroPeriodosHistoricosReceita(int numeroPeriodosHistoricos) {
+
+        if (numeroPeriodosHistoricosReceitaSharding != null
+                && numeroPeriodosHistoricosReceitaSharding != numeroPeriodosHistoricos) {
+            throw new IllegalArgumentException("A receita selecionada na poda usa "
+                    + numeroPeriodosHistoricosReceitaSharding + " períodos históricos; o calendário operacional possui "
+                    + numeroPeriodosHistoricos + ". Ajuste os dias históricos do perfil/cluster para a mesma janela "
+                    + "ou selecione explicitamente um modelo manual/AutoFit para substituir a receita de poda.");
+        }
+
+    }
+
+    /** Valores explícitos inválidos não podem ativar silenciosamente outro fluxo. */
+    public void setNumeroPeriodosMixHistoricoSharding(Integer numeroPeriodosMixHistoricoSharding) {
+
+        if (numeroPeriodosMixHistoricoSharding != null && numeroPeriodosMixHistoricoSharding < 1) {
+            throw new IllegalArgumentException("O mix histórico do sharding exige ao menos um período.");
+        }
+        this.numeroPeriodosMixHistoricoSharding = numeroPeriodosMixHistoricoSharding;
+
+    }
 
     /**
      * Modelo estatistico/foundation model selecionado para a rodada.
@@ -289,6 +364,15 @@ public class ParametrosForecastProjection {
         );
         this.nivelAgregacaoMaterialMapeId =
                 parametrosForecastProjection.getNivelAgregacaoMaterialMapeId();
+        this.selectedExternalSeriesIds = parametrosForecastProjection.getSelectedExternalSeriesIds() == null ? null
+                : new HashSet<>(parametrosForecastProjection.getSelectedExternalSeriesIds());
+        this.numeroPeriodosMixHistoricoSharding = parametrosForecastProjection.getNumeroPeriodosMixHistoricoSharding();
+        this.definicaoMapeShardingSnapshot = parametrosForecastProjection.getDefinicaoMapeShardingSnapshot();
+        this.parametrosRegressaoSerieTemporalSnapshot = parametrosForecastProjection.getParametrosRegressaoSerieTemporalSnapshot();
+        this.numeroPeriodosHistoricosReceitaSharding = parametrosForecastProjection.getNumeroPeriodosHistoricosReceitaSharding();
+        this.tamanhoBucketReceitaSharding = parametrosForecastProjection.getTamanhoBucketReceitaSharding();
+        this.regressoresFixosReceitaSharding = parametrosForecastProjection.getRegressoresFixosReceitaSharding() == null ? null
+                : new HashSet<>(parametrosForecastProjection.getRegressoresFixosReceitaSharding());
         this.nivelAgregacaoLocationMapeId =
                 parametrosForecastProjection.getNivelAgregacaoLocationMapeId();
 

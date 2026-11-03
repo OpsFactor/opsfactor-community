@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.demandplanning.forecast.disaggregatio
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionAgregado;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionMaterialLocation;
 import com.opsfactor.community.platform.calendar.CalendarioSimples;
@@ -46,7 +46,7 @@ class HistoricalSalesForecastDisaggregationTest {
                 calendario,
                 30,
                 demandPlanForecastProjectionAgregado,
-                new ClusterEParametrosProjectionComTodasDfusAtivas());
+                new CadastroEParametrosProjectionComTodasDfusAtivas());
 
         Assertions.assertArrayEquals(
                 new double[]{62.5d, 125.0d, 187.5d},
@@ -88,7 +88,7 @@ class HistoricalSalesForecastDisaggregationTest {
                 calendario,
                 30,
                 demandPlanForecastProjectionAgregado,
-                new ClusterEParametrosProjectionSemDfusAtivas());
+                new CadastroEParametrosProjectionSemDfusAtivas());
 
         /*
          * Sem DFUs ativas, o split nao deve criar participacao uniforme falsa.
@@ -170,7 +170,7 @@ class HistoricalSalesForecastDisaggregationTest {
 
     }
 
-    private static class ClusterEParametrosProjectionComTodasDfusAtivas extends ClusterEParametrosProjection {
+    private static class CadastroEParametrosProjectionComTodasDfusAtivas extends CadastroEParametrosProjection {
 
         @Override
         public boolean isDfuAtiva(
@@ -183,7 +183,7 @@ class HistoricalSalesForecastDisaggregationTest {
 
     }
 
-    private static class ClusterEParametrosProjectionSemDfusAtivas extends ClusterEParametrosProjection {
+    private static class CadastroEParametrosProjectionSemDfusAtivas extends CadastroEParametrosProjection {
 
         @Override
         public boolean isDfuAtiva(

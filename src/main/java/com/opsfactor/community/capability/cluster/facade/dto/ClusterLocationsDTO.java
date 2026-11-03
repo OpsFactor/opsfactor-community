@@ -11,6 +11,7 @@ import java.util.List;
 @Data @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ClusterLocationsDTO {
     
+    private String clusteringProfileId;
     public Long id;
     public String description;
     private Integer priority;

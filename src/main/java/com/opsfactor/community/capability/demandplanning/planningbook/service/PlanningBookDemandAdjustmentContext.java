@@ -28,7 +28,7 @@ public class PlanningBookDemandAdjustmentContext {
             PlanningBookDfuScope scope, DemandPlanningProjection projection) {
 
         return dfuFiltersByScope.computeIfAbsent(scope, key -> key.getNovoDFUProjectionInterseccaoComProjectionFiltro(
-                projection.getFiltroDfuProjection(), projection.getClusterEParametrosProjection()));
+                projection.getFiltroDfuProjection(), projection.getClusterizacaoProjection().getCadastroEParametrosProjection()));
 
     }
 

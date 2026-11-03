@@ -40,7 +40,10 @@ public class CaracteristicaLocation extends com.opsfactor.community.capability.m
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
     @JoinTable(name = "caracteristica_cluster_locations", 
             joinColumns = @JoinColumn(name = "caracteristica_id"), 
-            inverseJoinColumns = @JoinColumn(name = "cluster_locations_id"))
+            inverseJoinColumns = {
+                    @JoinColumn(name = "cluster_locations_id", referencedColumnName = "id"),
+                    @JoinColumn(name = "cluster_locations_perfil_clusterizacao_id", referencedColumnName = "perfil_clusterizacao_id")
+            })
     private Set<ClusterLocations> clustersLocations = new HashSet<>();
     
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "valorCaracteristicaLocationCompositeKey.caracteristicaLocation",fetch = FetchType.LAZY)

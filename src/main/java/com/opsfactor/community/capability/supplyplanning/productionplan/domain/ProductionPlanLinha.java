@@ -9,7 +9,7 @@ import com.opsfactor.community.capability.supplyplanning.configuration.domain.Pe
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
@@ -630,10 +630,10 @@ public class ProductionPlanLinha {
     public double getQuantidadeMaterialInputConsumidoNoProductionPlanLinhaPorUnidadeProductionPlanLinhaOutput(
             Produto materialInput,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             UnidadeMedida unidadeMedidaMaterialInput) {
                 
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
         
         return getListaTecnica().getQuantidadeInputDeQuantidadeOutput(
                 materialInput, 
@@ -650,11 +650,11 @@ public class ProductionPlanLinha {
             Constantes.FirmePlanejado firmePlanejado,
             Constantes.TipoPlano tipoPlano,
             UnidadeMedidaProjection unidadeMedidaProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             UnidadeMedida unidadeMedidaMaterialInput) {
 
         double quantidadeTargetUOMMaterialInputPorUnidadeOutput = getQuantidadeMaterialInputConsumidoNoProductionPlanLinhaPorUnidadeProductionPlanLinhaOutput(
-                materialInput, unidadeMedidaProjection, clusterEParametrosProjection, unidadeMedidaMaterialInput);
+                materialInput, unidadeMedidaProjection, cadastroEParametrosProjection, unidadeMedidaMaterialInput);
 
         return getQuantidade(tipoPlano, firmePlanejado) * quantidadeTargetUOMMaterialInputPorUnidadeOutput;
         
@@ -672,7 +672,7 @@ public class ProductionPlanLinha {
             PerfilExecucaoSupplyPlan.TipoCapacidadeProdutiva tipoCapacidadeProdutiva,
             SupplyNetworkProjection supplyNetworkProjection) {
         
-        ParametrosGlobais parametrosGlobais = supplyNetworkProjection.getClusterEParametrosProjection().getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = supplyNetworkProjection.getCadastroEParametrosProjection().getParametrosGlobais();
         
         double quantidade = getQuantidade(
                 tipoPlano, firmePlanejado,
@@ -695,7 +695,7 @@ public class ProductionPlanLinha {
             Constantes.FirmePlanejado firmePlanejado,
             SupplyNetworkProjection supplyNetworkProjection) {
         
-        ParametrosGlobais parametrosGlobais = supplyNetworkProjection.getClusterEParametrosProjection().getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = supplyNetworkProjection.getCadastroEParametrosProjection().getParametrosGlobais();
 
         double quantidade = getQuantidade(
                 tipoPlano, firmePlanejado,

@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.masterdata.demand.dfu.projection;
 
 /**
  * Escopo completo de locations ativas da
- * {@link com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection}.
+ * {@link com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection}.
  */
 public class LocationProjectionCompleto extends LocationProjection {
         

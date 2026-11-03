@@ -1,6 +1,6 @@
 package com.opsfactor.community.capability.transactionaldata.sales.saleshistory.projection;
 
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
@@ -44,7 +44,7 @@ class SalesAnnualCalendarTest {
         var factory = new SalesProjectionFactory();
         ReflectionTestUtils.setField(factory, "selloutHistoricalSalesSource", source);
         var projection = factory.getSalesProjectionMaterialData(Constantes.TipoDocumentoVenda.SELLOUT, calendario,
-                Set.of(location), Set.of(produto), conversao, mock(ClusterEParametrosProjection.class), unidade);
+                Set.of(location), Set.of(produto), conversao, mock(CadastroEParametrosProjection.class), unidade);
 
         assertEquals(500f, projection.getQuantidadeSales(produto, 0, unidade));
         assertEquals(200f, projection.getQuantidadeSales(produto, 1, unidade));

@@ -1,7 +1,7 @@
 package com.opsfactor.community.capability.supplyplanning.service.spi;
 
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 
 /**
@@ -26,7 +26,7 @@ public interface SupplyPlanExecutionProfileLocationScopeSpi {
      */
     LocationProjection getLocationProjectionParaExecucaoSupplyPlan(
             PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             LocationProjection locationProjectionCommunity);
 
 }

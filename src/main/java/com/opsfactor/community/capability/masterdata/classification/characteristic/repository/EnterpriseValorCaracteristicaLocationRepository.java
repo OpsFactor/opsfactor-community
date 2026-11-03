@@ -66,14 +66,14 @@ public interface EnterpriseValorCaracteristicaLocationRepository extends JpaRepo
      * Salva valores de caracteristica de location e invalida projections compartilhadas.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     <S extends ValorCaracteristicaLocation> List<S> saveAll(Iterable<S> entities);
 
     /**
      * Remove valores de caracteristica de location e invalida projections compartilhadas.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     void deleteAll(Iterable<? extends ValorCaracteristicaLocation> entities);
 
 }

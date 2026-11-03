@@ -15,7 +15,7 @@ import com.opsfactor.community.capability.supplyplanning.inventoryplan.domain.In
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.platform.exception.UnitOfMeasureConversionException;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
 import com.opsfactor.community.capability.transactionaldata.inventory.stock.projection.EstoqueProjectionLocationProduto;
@@ -92,10 +92,10 @@ public class SupplyPlanProjectionFactory {
             MaterialProjection materialProjection,
             LocationProjection locationProjection) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                supplyNetworkProjection.getCadastroEParametrosProjection();
 
-        Calendario calendario = supplyPlan.getCalendarioDoSupplyPlanParaLocation(clusterEParametrosProjection, location);
+        Calendario calendario = supplyPlan.getCalendarioDoSupplyPlanParaLocation(cadastroEParametrosProjection, location);
 
         SupplyPlanningProjection supplyPlanningProjection = new SupplyPlanningProjection(
                 supplyPlan, perfilExecucaoSupplyPlan,
@@ -119,8 +119,8 @@ public class SupplyPlanProjectionFactory {
             MaterialProjection materialProjection,
             LocationProjection locationProjection) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                supplyNetworkProjection.getCadastroEParametrosProjection();
 
         SupplyPlanningMultiplasLocationsProjection supplyPlanningMultiplasLocationsProjection = new SupplyPlanningMultiplasLocationsProjection(
                 supplyPlan, perfilExecucaoSupplyPlan,
@@ -128,7 +128,7 @@ public class SupplyPlanProjectionFactory {
                 materialProjection, locationProjection);
 
         for (Location location : locationProjection.getLocationsAtivas()) {
-            Calendario calendario = supplyPlan.getCalendarioDoSupplyPlanParaLocation(clusterEParametrosProjection, location);
+            Calendario calendario = supplyPlan.getCalendarioDoSupplyPlanParaLocation(cadastroEParametrosProjection, location);
 
             SupplyPlanningProjection supplyPlanningProjection = new SupplyPlanningProjection(
                     supplyPlan, perfilExecucaoSupplyPlan,
@@ -424,7 +424,7 @@ public class SupplyPlanProjectionFactory {
      */
     public void populaSupplyPlanningMultiplasLocationsProjectionComInventoryPlan(SupplyPlanningMultiplasLocationsProjection supplyPlanningMultiplasLocationsProjection) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyPlanningMultiplasLocationsProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyPlanningMultiplasLocationsProjection.getCadastroEParametrosProjection();
 
         Collection<InventoryPlanLinha> inventoryPlanLinhas = inventoryPlanLinhaRepository.findByInventoryPlanLinhaCompositeKeySupplyPlanIdAndInventoryPlanLinhaCompositeKeyLocationInAndInventoryPlanLinhaCompositeKeyProdutoIn(
                 supplyPlanningMultiplasLocationsProjection.getSupplyPlan().getId(),
@@ -435,7 +435,7 @@ public class SupplyPlanProjectionFactory {
                 inventoryPlanLinhas,
                 "multi-location Inventory Plan projection population")
                 .parallelStream()
-                .filter(inventoryPlanLinha -> clusterEParametrosProjection.isDfuAtiva(inventoryPlanLinha.getProduto(), inventoryPlanLinha.getLocation()))
+                .filter(inventoryPlanLinha -> cadastroEParametrosProjection.isDfuAtiva(inventoryPlanLinha.getProduto(), inventoryPlanLinha.getLocation()))
                 .forEach(inventoryPlanLinha -> {
                     supplyPlanningMultiplasLocationsProjection
                             .getSupplyPlanningProjectionDeLocation(inventoryPlanLinha.getLocation())
@@ -497,7 +497,7 @@ public class SupplyPlanProjectionFactory {
      */
     public void populaSupplyPlanningMultiplasLocationsProjectionComDistributionPlanInbound(SupplyPlanningMultiplasLocationsProjection supplyPlanningMultiplasLocationsProjection) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyPlanningMultiplasLocationsProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyPlanningMultiplasLocationsProjection.getCadastroEParametrosProjection();
 
         Collection<DistributionPlanItem> distributionPlanItemsInbound = distributionPlanItemRepository.findByKeySupplyPlanIdAndKeyLocationDestinoInAndKeyProdutoIn(
                 supplyPlanningMultiplasLocationsProjection.getSupplyPlan().getId(),
@@ -508,7 +508,7 @@ public class SupplyPlanProjectionFactory {
                 distributionPlanItemsInbound,
                 "multi-location Distribution Plan inbound projection population")
                 .parallelStream()
-                .filter(distributionPlanItem -> clusterEParametrosProjection.isDfuAtiva(distributionPlanItem.getProduto(), distributionPlanItem.getLocationDestino()))
+                .filter(distributionPlanItem -> cadastroEParametrosProjection.isDfuAtiva(distributionPlanItem.getProduto(), distributionPlanItem.getLocationDestino()))
                 .forEach(distributionPlanItem -> {
                     supplyPlanningMultiplasLocationsProjection
                             .getSupplyPlanningProjectionDeLocation(distributionPlanItem.getLocationDestino())
@@ -523,7 +523,7 @@ public class SupplyPlanProjectionFactory {
      */
     public void populaSupplyPlanningProjectionComDistributionPlanInboundDeLocationOrigem(SupplyPlanningProjection planningProjection, Location locationOrigem) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = planningProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = planningProjection.getCadastroEParametrosProjection();
 
         Collection<DistributionPlanItem> distributionPlanItemsInbound = distributionPlanItemRepository.findByKeySupplyPlanIdAndKeyLocationDestinoAndKeyLocationOrigemAndKeyProdutoIn(
                 planningProjection.getSupplyPlan().getId(),
@@ -564,7 +564,7 @@ public class SupplyPlanProjectionFactory {
 
     public void populaSupplyPlanningMultiplasLocationsProjectionComDistributionPlanOutbound(SupplyPlanningMultiplasLocationsProjection supplyPlanningMultiplasLocationsProjection) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyPlanningMultiplasLocationsProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyPlanningMultiplasLocationsProjection.getCadastroEParametrosProjection();
 
         Collection<DistributionPlanItem> distributionPlanItemsOutbound = distributionPlanItemRepository.findByKeySupplyPlanIdAndKeyLocationOrigemInAndKeyProdutoIn(
                 supplyPlanningMultiplasLocationsProjection.getSupplyPlan().getId(),
@@ -575,7 +575,7 @@ public class SupplyPlanProjectionFactory {
                 distributionPlanItemsOutbound,
                 "multi-location Distribution Plan outbound projection population")
                 .parallelStream()
-                .filter(distributionPlanItem -> clusterEParametrosProjection.isDfuAtiva(distributionPlanItem.getProduto(), distributionPlanItem.getLocationOrigem()))
+                .filter(distributionPlanItem -> cadastroEParametrosProjection.isDfuAtiva(distributionPlanItem.getProduto(), distributionPlanItem.getLocationOrigem()))
                 .forEach(distributionPlanItemOutbound -> {
                     supplyPlanningMultiplasLocationsProjection
                             .getSupplyPlanningProjectionDeLocation(distributionPlanItemOutbound.getLocationOrigem())
@@ -601,7 +601,7 @@ public class SupplyPlanProjectionFactory {
 
     public void populaSupplyPlanningMultiplasLocationsProjectionComProductionPlanOutput(SupplyPlanningMultiplasLocationsProjection supplyPlanningMultiplasLocationsProjection) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyPlanningMultiplasLocationsProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyPlanningMultiplasLocationsProjection.getCadastroEParametrosProjection();
 
         Collection<ProductionPlanLinha> productionPlanLinhas = productionPlanLinhaRepository.findByProductionPlanLinhaCompositeKeySupplyPlanAndProductionPlanLinhaCompositeKeyLocationInAndMaterialOutputIn(
                 supplyPlanningMultiplasLocationsProjection.getSupplyPlan(),
@@ -612,7 +612,7 @@ public class SupplyPlanProjectionFactory {
                 productionPlanLinhas,
                 "multi-location Production Plan output projection population")
                 .stream()
-                .filter(productionPlanLinha -> clusterEParametrosProjection.isDfuAtiva(productionPlanLinha.getMaterialOutput(), productionPlanLinha.getLocation()))
+                .filter(productionPlanLinha -> cadastroEParametrosProjection.isDfuAtiva(productionPlanLinha.getMaterialOutput(), productionPlanLinha.getLocation()))
                 .forEach(productionPlanLinha -> {
                     SupplyPlanningProjection supplyPlanningProjection = supplyPlanningMultiplasLocationsProjection.getSupplyPlanningProjectionDeLocation(productionPlanLinha.getLocation());
                     supplyPlanningProjection.addProductionPlanLinhaOutput(productionPlanLinha);
@@ -631,8 +631,8 @@ public class SupplyPlanProjectionFactory {
     public void populaSupplyPlanningMultiplasLocationsProjectionComProductionPlanInput(
             SupplyPlanningMultiplasLocationsProjection supplyPlanningMultiplasLocationsProjection) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                supplyPlanningMultiplasLocationsProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                supplyPlanningMultiplasLocationsProjection.getCadastroEParametrosProjection();
         MaterialProjection materialProjection =
                 supplyPlanningMultiplasLocationsProjection.getMaterialProjection();
         Set<Produto> filteredActiveMaterials = materialProjection.getMateriaisAtivos();
@@ -646,7 +646,7 @@ public class SupplyPlanProjectionFactory {
             Location location = productionPlanLine.getLocation();
             if (!supplyPlanningMultiplasLocationsProjection.getLocationProjection()
                     .getLocationsAtivas().contains(location)
-                    || !clusterEParametrosProjection.isDfuAtiva(
+                    || !cadastroEParametrosProjection.isDfuAtiva(
                             productionPlanLine.getMaterialOutput(), location)) {
                 continue;
             }
@@ -699,7 +699,7 @@ public class SupplyPlanProjectionFactory {
     public void populaSupplyPlanningProjectionComProductionPlanInput(SupplyPlanningProjection supplyPlanningProjection) {
 
         SupplyNetworkProjection supplyNetworkProjection = supplyPlanningProjection.getSupplyNetworkProjection();
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyPlanningProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyPlanningProjection.getCadastroEParametrosProjection();
 
         Set<Produto> materiaisFiltradosAtivos = supplyPlanningProjection.getMaterialProjection().getMateriaisAtivos();
 
@@ -710,7 +710,7 @@ public class SupplyPlanProjectionFactory {
                 supplyPlanningProjection.getLocation()),
                 "Production Plan input projection population")
                 .stream()
-                .filter(productionPlanLinha -> clusterEParametrosProjection.isDfuAtiva(
+                .filter(productionPlanLinha -> cadastroEParametrosProjection.isDfuAtiva(
                         productionPlanLinha.getMaterialOutput(),
                         productionPlanLinha.getLocation()))
                 .collect(Collectors.toList());
@@ -754,7 +754,7 @@ public class SupplyPlanProjectionFactory {
 
         for (Produto material : estoqueProjectionProduto.getMateriaisComEstoque()) {
 
-            UnidadeMedida unidadeMedidaPadraoSNP = supplyPlanningProjection.getClusterEParametrosProjection().getSNPUnidadeMedidaPadrao(
+            UnidadeMedida unidadeMedidaPadraoSNP = supplyPlanningProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(
                     material,
                     supplyPlanningProjection.getLocation());
 
@@ -799,7 +799,7 @@ public class SupplyPlanProjectionFactory {
 
             for (Produto material : estoqueProjectionLocationProduto.getMateriaisComEstoque()) {
 
-                UnidadeMedida unidadeMedidaPadraoSNP = supplyPlanningMultiplasLocationsProjection.getClusterEParametrosProjection().getSNPUnidadeMedidaPadrao(
+                UnidadeMedida unidadeMedidaPadraoSNP = supplyPlanningMultiplasLocationsProjection.getCadastroEParametrosProjection().getSNPUnidadeMedidaPadrao(
                         material,
                         supplyPlanningProjection.getLocation());
 

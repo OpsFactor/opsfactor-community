@@ -8,7 +8,7 @@ import com.opsfactor.community.capability.masterdata.product.material.domain.Pro
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjectionFactory;
@@ -126,7 +126,7 @@ public class SupplyPlanningModificacoesService {
         PoliticaEstoquesProjection politicaEstoquesProjection = supplyPlanningProjectionDestino.getPoliticaEstoquesProjection();
         PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan = supplyPlanningProjectionDestino.getPerfilExecucaoSupplyPlanConsiderado();
 
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyPlanningProjectionDestino.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyPlanningProjectionDestino.getCadastroEParametrosProjection();
 
         double modificacaoSolicitada =
                 Math.max(novoValor, 0) -
@@ -147,7 +147,7 @@ public class SupplyPlanningModificacoesService {
             case ESTOQUE_DIAS:
                 Produto materialUnico = materiaisModificados.iterator().next();
                 Location locationDestino = supplyPlanningProjectionDestino.getLocation();
-                UnidadeMedida unidadeMedidaPadraoDestino = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(materialUnico, locationDestino);
+                UnidadeMedida unidadeMedidaPadraoDestino = cadastroEParametrosProjection.getSNPUnidadeMedidaPadrao(materialUnico, locationDestino);
 
                 int posicaoPeriodoDisponibilizacaoMaterial = SupplyPlanning.getPeriodoPadraoParaPrimeiraDisponibilizacaoMaterial(
                         materialUnico,
@@ -573,11 +573,11 @@ public class SupplyPlanningModificacoesService {
             throw new IllegalArgumentException(
                     "Unit of measure projection is required for Community production resource adjustment.");
         }
-        if (supplyPlanningProjection.getClusterEParametrosProjection() == null) {
+        if (supplyPlanningProjection.getCadastroEParametrosProjection() == null) {
             throw new IllegalArgumentException(
                     "Cluster and parameters projection is required for Community production resource adjustment.");
         }
-        if (supplyPlanningProjection.getClusterEParametrosProjection().getParametrosGlobais() == null) {
+        if (supplyPlanningProjection.getCadastroEParametrosProjection().getParametrosGlobais() == null) {
             throw new IllegalArgumentException(
                     "Global parameters are required for Community production resource adjustment.");
         }
@@ -687,7 +687,7 @@ public class SupplyPlanningModificacoesService {
                 AgregacaoDFU.getDFUListDeProdutoCartesianoLocationMaterial(
                         locations,
                         materiais,
-                        supplyNetworkProjection.getClusterEParametrosProjection()),
+                        supplyNetworkProjection.getCadastroEParametrosProjection()),
                 supplyPlan.getVersaoMalha(),
                 supplyPlan.getDataInicioPlano(),
                 supplyNetworkProjection,
@@ -730,7 +730,7 @@ public class SupplyPlanningModificacoesService {
                 supplyNetworkProjection,
                 politicaEstoquesProjection);
 
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
 
         Set<Location> locations = dfus.stream().map(x -> x.getLocation()).collect(Collectors.toSet());
 
@@ -746,8 +746,8 @@ public class SupplyPlanningModificacoesService {
                     location,
                     supplyNetworkProjection,
                     politicaEstoquesProjection,
-                    MaterialProjectionFactory.getProjectionSetMateriais(materiais, clusterEParametrosProjection),
-                    LocationProjectionFactory.getProjectionSetLocations(locations, clusterEParametrosProjection));
+                    MaterialProjectionFactory.getProjectionSetMateriais(materiais, cadastroEParametrosProjection),
+                    LocationProjectionFactory.getProjectionSetLocations(locations, cadastroEParametrosProjection));
 
             SupplyPlanning.atualizaEstoqueSeguranca(
                     supplyPlanningProjection,
@@ -920,7 +920,7 @@ public class SupplyPlanningModificacoesService {
             throw new IllegalArgumentException(
                     "Supply Network projection is required for Community Inventory Plan recalculation.");
         }
-        if (supplyNetworkProjection.getClusterEParametrosProjection() == null) {
+        if (supplyNetworkProjection.getCadastroEParametrosProjection() == null) {
             throw new IllegalArgumentException(
                     "Cluster and parameters projection is required for Community Inventory Plan recalculation.");
         }

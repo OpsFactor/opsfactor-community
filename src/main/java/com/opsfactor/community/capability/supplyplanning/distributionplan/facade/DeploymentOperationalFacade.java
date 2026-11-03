@@ -6,8 +6,8 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjectionFactory;
@@ -58,7 +58,7 @@ public class DeploymentOperationalFacade {
 
     /** Fornece parâmetros globais para montar o calendário do plano. */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory;
 
     /** Carrega políticas de estoque que qualificam a projection operacional. */
     @Autowired
@@ -162,8 +162,8 @@ public class DeploymentOperationalFacade {
         Location destinationLocation = locationService.getLocation(destinationLocationId);
         Produto material = produtoRepository.findById(materialId)
                 .orElseThrow(() -> new NoResultException("Product " + materialId + " not found"));
-        ClusterEParametrosProjection clusterAndParametersProjection =
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection clusterAndParametersProjection =
+                cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
         ParametrosGlobais globalParameters = clusterAndParametersProjection.getParametrosGlobais();
         if (globalParameters == null) {
             throw new IllegalStateException("Global parameters are required for Community deployment.");
@@ -400,7 +400,7 @@ public class DeploymentOperationalFacade {
             UnidadeMedida unitOfMeasure,
             PoliticaEstoquesProjection inventoryPolicyProjection,
             SupplyNetworkProjection supplyNetworkProjection,
-            ClusterEParametrosProjection clusterAndParametersProjection,
+            CadastroEParametrosProjection clusterAndParametersProjection,
             LocationProjection routeLocationProjection) {
 
     }

@@ -6,7 +6,7 @@ import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.d
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.domain.PoliticaEstoquesMaterialLocation;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.supplyplanning.configuration.repository.PerfilExecucaoPoliticaEstoquesRepository;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.utility.FuncoesMap;
@@ -41,7 +41,7 @@ public class PoliticaEstoquesProjectionFactory {
     
     public PoliticaEstoquesProjection getPoliticaEstoquesProjection(
             Calendario calendario,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan) {
 
         List<PoliticaEstoques> politicasEstoquesOrdenadasPorPrioridade =
@@ -54,19 +54,19 @@ public class PoliticaEstoquesProjectionFactory {
 
         return getPoliticaEstoquesProjection(
                 calendario,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 politicasEstoquesOrdenadasPorPrioridade);
 
     }
 
     private PoliticaEstoquesProjection getPoliticaEstoquesProjection(
             Calendario calendario,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             Collection<PoliticaEstoques> politicasEstoquesOrdenadasPorPrioridade) {
 
         PoliticaEstoquesProjection politicaEstoquesProjection = new PoliticaEstoquesProjection();
         politicaEstoquesProjection.calendario = calendario;
-        politicaEstoquesProjection.clusterEParametrosProjection = clusterEParametrosProjection;
+        politicaEstoquesProjection.cadastroEParametrosProjection = cadastroEParametrosProjection;
 
         for (PoliticaEstoques politicaEstoques : politicasEstoquesOrdenadasPorPrioridade) {
 

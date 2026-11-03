@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.demandplanning.forecast.disaggregatio
 
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjection;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionAgregado;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjectionMaterialLocation;
@@ -35,12 +35,12 @@ public class HistoricalSalesForecastDisaggregation implements DemandForecastDisa
             CalendarioSimples calendario,
             int numeroDiasSplitTopDown,
             DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         desagregaForecastComMixHistorico(
                 calendario,
                 demandPlanForecastProjectionAgregado,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 demandPlanForecastProjectionReferencia ->
                         calculaDemandaHistoricaReferencia(
                                 calendario,
@@ -83,7 +83,7 @@ public class HistoricalSalesForecastDisaggregation implements DemandForecastDisa
     private void desagregaForecastComMixHistorico(
             CalendarioSimples calendario,
             DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             ToDoubleFunction<DemandPlanForecastProjection> funcaoValorReferenciaParaCalculoSplit) {
 
         List<DemandPlanForecastProjectionMaterialLocation> demandPlanForecastProjectionMaterialLocationList =
@@ -97,7 +97,7 @@ public class HistoricalSalesForecastDisaggregation implements DemandForecastDisa
         List<DemandPlanForecastProjectionMaterialLocation> demandPlanForecastProjectionMaterialLocationAtivas =
                 demandPlanForecastProjectionMaterialLocationList
                         .stream()
-                        .filter(demandPlanForecastProjectionMaterialLocation -> clusterEParametrosProjection.isDfuAtiva(
+                        .filter(demandPlanForecastProjectionMaterialLocation -> cadastroEParametrosProjection.isDfuAtiva(
                                 demandPlanForecastProjectionMaterialLocation.getMaterial(),
                                 demandPlanForecastProjectionMaterialLocation.getLocation()))
                         .collect(Collectors.toList());
@@ -118,7 +118,7 @@ public class HistoricalSalesForecastDisaggregation implements DemandForecastDisa
                 Produto material = ((DemandPlanForecastProjectionMaterialLocation) demandPlanForecastProjectionLeaf).getMaterial();
                 Location location = ((DemandPlanForecastProjectionMaterialLocation) demandPlanForecastProjectionLeaf).getLocation();
 
-                if (!clusterEParametrosProjection.isDfuAtiva(material, location)) {
+                if (!cadastroEParametrosProjection.isDfuAtiva(material, location)) {
                     continue;
                 }
             }

@@ -1,6 +1,6 @@
 package com.opsfactor.community.capability.supplyplanning.service;
 
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.platform.utility.Constantes;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanningProjection;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.DemandaDiretaConsideradaLinha;
@@ -38,11 +38,11 @@ class SupplyPlanServiceDirectDemandPreparationTest {
         plan.setDataInicioPlano(LocalDateTime.of(2027, 1, 1, 0, 0));
         plan.setPerfilCalendarioSupplyPlan(new PerfilCalendarioSimplesSupplyPlan(
                 plan, Constantes.TamanhoBucket.ANUAL, 1));
-        ClusterEParametrosProjection parameters = mock(ClusterEParametrosProjection.class);
+        CadastroEParametrosProjection parameters = mock(CadastroEParametrosProjection.class);
         when(parameters.getParametrosGlobais()).thenReturn(new ParametrosGlobais());
         when(parameters.getLocationsAtivas()).thenReturn(Set.of());
         SupplyNetworkProjection network = mock(SupplyNetworkProjection.class);
-        when(network.getClusterEParametrosProjection()).thenReturn(parameters);
+        when(network.getCadastroEParametrosProjection()).thenReturn(parameters);
         LocationProjection locations = mock(LocationProjection.class);
         MaterialProjection materials = mock(MaterialProjection.class);
         try (var locationFactory = mockStatic(LocationProjectionFactory.class);

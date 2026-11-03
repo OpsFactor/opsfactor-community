@@ -8,8 +8,8 @@ import com.opsfactor.community.capability.masterdata.product.material.domain.Pro
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjectionFactory;
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.projection.PoliticaEstoquesProjection;
@@ -79,7 +79,7 @@ public class ProductionPlanningBookFacade {
 
     /** Carrega parâmetros globais necessários ao calendário e à malha. */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory;
 
     /** Resolve a política de estoque que compõe a projection do livro. */
     @Autowired
@@ -139,7 +139,7 @@ public class ProductionPlanningBookFacade {
                 productionPlanningBookUpdateDTO.periodEndDate(),
                 periodPosition);
 
-        ClusterEParametrosProjection clusterAndParametersProjection =
+        CadastroEParametrosProjection clusterAndParametersProjection =
                 productionPlanningBookUpdateContext.clusterAndParametersProjection();
         UnidadeMedida standardUnitOfMeasure = clusterAndParametersProjection
                 .getSNPUnidadeMedidaPadrao(material, location);
@@ -171,8 +171,8 @@ public class ProductionPlanningBookFacade {
                     "Supply Plan " + supplyPlan.getId() + " has no execution profile for Community Production Planning Book.");
         }
 
-        ClusterEParametrosProjection clusterAndParametersProjection =
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection clusterAndParametersProjection =
+                cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
         ParametrosGlobais globalParameters = clusterAndParametersProjection.getParametrosGlobais();
         if (globalParameters == null) {
             throw new IllegalStateException(
@@ -241,8 +241,8 @@ public class ProductionPlanningBookFacade {
                     "Supply Plan " + supplyPlan.getId() + " has no execution profile for Community Production Planning Book update.");
         }
 
-        ClusterEParametrosProjection clusterAndParametersProjection =
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection clusterAndParametersProjection =
+                cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
         ParametrosGlobais globalParameters = clusterAndParametersProjection.getParametrosGlobais();
         if (globalParameters == null) {
             throw new IllegalStateException(
@@ -408,7 +408,7 @@ public class ProductionPlanningBookFacade {
             List<Integer> periodPositions) {
 
         UnidadeMedida standardUnitOfMeasure = supplyPlanningProjection
-                .getClusterEParametrosProjection()
+                .getCadastroEParametrosProjection()
                 .getSNPUnidadeMedidaPadrao(material, supplyPlanningProjection.getLocation());
         List<Double> plannedQuantityByPeriod = periodPositions.stream()
                 .map(periodPosition -> supplyPlanningProjection.getQuantidadeProductionPlan(
@@ -588,7 +588,7 @@ public class ProductionPlanningBookFacade {
             SupplyPlanningProjection supplyPlanningProjection,
             SupplyNetworkProjection supplyNetworkProjection,
             PoliticaEstoquesProjection inventoryPolicyProjection,
-            ClusterEParametrosProjection clusterAndParametersProjection,
+            CadastroEParametrosProjection clusterAndParametersProjection,
             BIProjectionCapacidadeProdutiva productionCapacityProjection) {
 
     }
@@ -601,7 +601,7 @@ public class ProductionPlanningBookFacade {
     private record ProductionPlanningBookUpdateContext(
             SupplyPlanningProjection supplyPlanningProjection,
             PoliticaEstoquesProjection inventoryPolicyProjection,
-            ClusterEParametrosProjection clusterAndParametersProjection,
+            CadastroEParametrosProjection clusterAndParametersProjection,
             RecursoProdutivo productionResource) {
 
     }

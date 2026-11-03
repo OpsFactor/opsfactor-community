@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.supplyplanning.supplyplan.projection;
 import com.opsfactor.community.capability.supplyplanning.configuration.domain.PerfilExecucaoSupplyPlan;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.projection.PoliticaEstoquesProjection;
@@ -46,7 +46,7 @@ public class SupplyPlanningMultiplasLocationsProjection {
     private final UnidadeMedidaProjection conversaoUnidadeMedidaProjection;
 
     /** Parametros globais, materiais, locations e clusters usados no calculo. */
-    private final ClusterEParametrosProjection clusterEParametrosProjection;
+    private final CadastroEParametrosProjection cadastroEParametrosProjection;
 
     /**
      * Malha operacional compartilhada pelas projections locais.
@@ -98,7 +98,7 @@ public class SupplyPlanningMultiplasLocationsProjection {
         this.conversaoUnidadeMedidaProjection = supplyNetworkProjection.getConversaoUnidadeMedidaProjection();
         this.materialProjection = materialProjection;
         this.locationProjection = locationProjection;
-        this.clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+        this.cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
         this.supplyNetworkProjection = supplyNetworkProjection;
         this.politicaEstoquesProjection = politicaEstoquesProjection;
 

@@ -7,7 +7,7 @@ import com.opsfactor.community.capability.masterdata.production.productionresour
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.CapacidadeProdutivaEfetivaRecursoProdutivoSupplyPlan;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.platform.projection.inmemorybi.BIEmMemoria;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
@@ -90,7 +90,7 @@ public class BIProjectionCapacidadeProdutiva {
             Calendario calendario,
             SupplyNetworkProjection supplyNetworkProjection) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
 
         this.supplyPlan = supplyPlan;
         this.calendario = calendario;
@@ -98,7 +98,7 @@ public class BIProjectionCapacidadeProdutiva {
         PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan = supplyPlan.getPerfilExecucaoSupplyPlan();
 
         tipoCapacidadeProdutivaPorRecurso = new HashMap<>();
-        for (Location location : perfilExecucaoSupplyPlan.getLocationsConsideradas(clusterEParametrosProjection)) {
+        for (Location location : perfilExecucaoSupplyPlan.getLocationsConsideradas(cadastroEParametrosProjection)) {
             for (RecursoProdutivo recursoProdutivo : supplyNetworkProjection.getRecursoProdutivoAtivoSet(location)) {
                 // futuramente trocar por algo que extraia o tipo de capacidade do próprio recurso produtivo ao invés da location
                 PerfilExecucaoSupplyPlan.TipoCapacidadeProdutiva tipoCapacidadeProdutiva = perfilExecucaoSupplyPlan.getTipoCapacidadeProdutiva(location);

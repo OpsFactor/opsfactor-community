@@ -10,7 +10,6 @@ import com.opsfactor.community.capability.masterdata.calendar.profile.repository
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,7 +73,6 @@ public class PerfilCalendarioFacade {
      * permitido: altera o discriminator JPA e o contrato de perfis Demand.
      */
     @Transactional
-    @CacheEvict(value = "parametrosDemandPlanProjection", allEntries = true)
     public PerfilCalendarioDTO salvar(JsonNode payload) {
 
         PerfilCalendarioDTO dto = lerDTO(payload);

@@ -15,7 +15,7 @@ import com.opsfactor.community.capability.supplyplanning.inventoryplan.domain.In
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha.ProductionPlanLinhaCompositeKey;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.masterdata.production.productionresource.projection.BIProjectionCapacidadeProdutiva;
 import com.opsfactor.community.capability.masterdata.production.productionresource.projection.BIProjectionCapacidadeProdutiva.MasterOrPlanningData;
@@ -136,13 +136,13 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
             SupplyPlanningBiProjection supplyPlanningBiProjection,
             Constantes.TipoPlano tipoPlano) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                supplyNetworkProjection.getCadastroEParametrosProjection();
         UnidadeMedidaProjection unidadeMedidaProjection =
                 supplyNetworkProjection.getConversaoUnidadeMedidaProjection();
         Map<ProductionPlanLinhaCompositeKey, Double> producaoPlanejadaPorChave = new LinkedHashMap<>();
         for (ProductionPlanLinha productionPlanLinha : supplyPlanningBiProjection.getTodosProductionPlanLinhas()) {
-            UnidadeMedida unidadeMedidaPadrao = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(
+            UnidadeMedida unidadeMedidaPadrao = cadastroEParametrosProjection.getSNPUnidadeMedidaPadrao(
                     productionPlanLinha.getMaterialOutput(),
                     productionPlanLinha.getLocation());
             producaoPlanejadaPorChave.put(
@@ -375,7 +375,7 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
         UnidadeMedidaProjection unidadeMedidaProjection =
                 supplyPlanningBiProjection.getConversaoUnidadeMedidaProjection();
         ParametrosGlobais parametrosGlobais = supplyPlanningBiProjection
-                .getClusterEParametrosProjection()
+                .getCadastroEParametrosProjection()
                 .getParametrosGlobais();
 
         for (Map.Entry<Pair<Location, Produto>, List<DistributionPlanItem>> entry :
@@ -489,11 +489,11 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
             return false;
         }
 
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
         UnidadeMedidaProjection unidadeMedidaProjection = supplyNetworkProjection.getConversaoUnidadeMedidaProjection();
         List<NecessidadeProducao> necessidades = criaNecessidadesPlanejadas(
                 productionPlanLinhas,
-                calendario, supplyNetworkProjection, clusterEParametrosProjection,
+                calendario, supplyNetworkProjection, cadastroEParametrosProjection,
                 unidadeMedidaProjection, perfilExecucaoSupplyPlan, quantidadeNivelavelPorLinha, tipoPlano);
         if (necessidades.isEmpty()) {
             return false;
@@ -532,7 +532,7 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
                 alocacoes, supplyPlanningBiProjection, lowLevelCode, posicaoLowLevelCodeAtual);
         materializaAlocacoesNoPlano(productionPlanLinhas, necessidades, alocacoes,
                 calendario,
-                clusterEParametrosProjection, unidadeMedidaProjection, supplyPlanningBiProjection,
+                cadastroEParametrosProjection, unidadeMedidaProjection, supplyPlanningBiProjection,
                 tipoPlano, mantemResidualNaOrigemPrimaria);
         atualizaEstoques(perfilExecucaoSupplyPlan, supplyPlanningBiProjection, tipoPlano);
 
@@ -546,7 +546,7 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
             Collection<ProductionPlanLinha> productionPlanLinhas,
             Calendario calendario,
             SupplyNetworkProjection supplyNetworkProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             UnidadeMedidaProjection unidadeMedidaProjection,
             PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
             Map<ProductionPlanLinha, Double> quantidadeNivelavelPorLinha,
@@ -558,7 +558,7 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
                 continue;
             }
             VersaoProducao versaoProducaoOriginal = productionPlanLinha.getVersaoProducao();
-            UnidadeMedida unidadeMedidaPadrao = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(
+            UnidadeMedida unidadeMedidaPadrao = cadastroEParametrosProjection.getSNPUnidadeMedidaPadrao(
                     productionPlanLinha.getMaterialOutput(), productionPlanLinha.getLocation());
             double quantidadePlanejadaTotal = productionPlanLinha.getQuantidade(
                     tipoPlano, Constantes.FirmePlanejado.PLANEJADO,
@@ -592,13 +592,13 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
             SupplyPlanningBiProjection supplyPlanningBiProjection,
             Constantes.TipoPlano tipoPlano) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                supplyNetworkProjection.getCadastroEParametrosProjection();
         UnidadeMedidaProjection unidadeMedidaProjection =
                 supplyNetworkProjection.getConversaoUnidadeMedidaProjection();
         Map<ProductionPlanLinha, Double> incrementoPlanejadoPorLinha = new LinkedHashMap<>();
         for (ProductionPlanLinha productionPlanLinha : supplyPlanningBiProjection.getTodosProductionPlanLinhas()) {
-            UnidadeMedida unidadeMedidaPadrao = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(
+            UnidadeMedida unidadeMedidaPadrao = cadastroEParametrosProjection.getSNPUnidadeMedidaPadrao(
                     productionPlanLinha.getMaterialOutput(),
                     productionPlanLinha.getLocation());
             double quantidadeAtual = productionPlanLinha.getQuantidade(
@@ -676,7 +676,7 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
                             Constantes.FirmePlanejado.PLANEJADO,
                             perfilExecucaoSupplyPlan.getTipoCapacidadeProdutiva(),
                             supplyNetworkProjection);
-            UnidadeMedida unidadeMedidaPadrao = supplyNetworkProjection.getClusterEParametrosProjection()
+            UnidadeMedida unidadeMedidaPadrao = supplyNetworkProjection.getCadastroEParametrosProjection()
                     .getSNPUnidadeMedidaPadrao(
                             productionPlanLinha.getMaterialOutput(),
                             productionPlanLinha.getLocation());
@@ -982,7 +982,7 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
 
     private void materializaAlocacoesNoPlano(Collection<ProductionPlanLinha> productionPlanLinhas,
                                              Collection<NecessidadeProducao> necessidades, Collection<AlocacaoProducao> alocacoes,
-                                             Calendario calendario, ClusterEParametrosProjection parametros, UnidadeMedidaProjection uomProjection,
+                                             Calendario calendario, CadastroEParametrosProjection parametros, UnidadeMedidaProjection uomProjection,
                                              SupplyPlanningBiProjection snapshot, Constantes.TipoPlano tipoPlano,
                                              boolean mantemResidualNaOrigemPrimaria) {
 
@@ -1031,7 +1031,7 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
     private void adicionaQuantidadePlanejada(Map<ProductionPlanLinhaCompositeKey, ProductionPlanLinha> linhasPorChave,
             SupplyPlan supplyPlan, Location location, Produto materialOutput, VersaoProducao versaoProducao,
             int posicaoPeriodo, double quantidade, UnidadeMedida unidadeMedidaQuantidade, Calendario calendario,
-            ClusterEParametrosProjection parametros, UnidadeMedidaProjection uomProjection,
+            CadastroEParametrosProjection parametros, UnidadeMedidaProjection uomProjection,
             SupplyPlanningBiProjection snapshot, Constantes.TipoPlano tipoPlano) {
 
         ProductionPlanLinhaCompositeKey chave = new ProductionPlanLinhaCompositeKey(supplyPlan, location, versaoProducao,
@@ -1055,7 +1055,7 @@ public class NivelamentoCapacidadePlanoIrrestritoHeuristicoService {
 
     private void adicionaTransferenciaPlanejada(Map<DistributionPlanItemKey, DistributionPlanItem> distribuicoesPorChave,
             NecessidadeProducao necessidade, AlternativaOrigem origem, double quantidade, Calendario calendario,
-            ClusterEParametrosProjection parametros, UnidadeMedidaProjection uomProjection,
+            CadastroEParametrosProjection parametros, UnidadeMedidaProjection uomProjection,
             SupplyPlanningBiProjection snapshot, Constantes.TipoPlano tipoPlano) {
 
         ProductionPlanLinha linhaOriginal = necessidade.linhaOriginal();

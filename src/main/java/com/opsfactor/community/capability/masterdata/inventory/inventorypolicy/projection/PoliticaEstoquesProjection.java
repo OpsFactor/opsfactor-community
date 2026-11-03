@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.domain.PoliticaEstoquesMaterialLocation;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.utility.Constantes;
 import com.opsfactor.community.platform.utility.FuncoesMap;
@@ -44,7 +44,7 @@ public class PoliticaEstoquesProjection {
      * politica especifica material/location.
      */
     @Getter
-    protected ClusterEParametrosProjection clusterEParametrosProjection;
+    protected CadastroEParametrosProjection cadastroEParametrosProjection;
 
     public boolean verificaSeHaPoliticaEstoquesMaterialLocationCadastrada() {
         return (mapaPoliticaEstoquesVigenteParaPeridoLocationMaterial != null && !mapaPoliticaEstoquesVigenteParaPeridoLocationMaterial.isEmpty());
@@ -73,7 +73,7 @@ public class PoliticaEstoquesProjection {
         
         return optionalPoliticaEstoquesMaterialLocation
                 .map(politica -> politica.getModeloOperacionalCadastrado())
-                .orElse(clusterEParametrosProjection
+                .orElse(cadastroEParametrosProjection
                         .getMaterialPersistido(material.getId())
                         .getModeloOperacional());
                 

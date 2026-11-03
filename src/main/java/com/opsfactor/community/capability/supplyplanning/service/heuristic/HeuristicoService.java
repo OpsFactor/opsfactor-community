@@ -4,7 +4,7 @@ import com.opsfactor.community.capability.supplyplanning.configuration.domain.Pe
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjectionFactory;
@@ -114,7 +114,7 @@ public class HeuristicoService {
                 supplyPlan.getDataInicioPlano());
         lowLevelCode.atualizaMapaDFUsPorLowLevelCode();
 
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
         SupplyPlanningProjectionLocationPolicy supplyPlanningProjectionLocationPolicy =
                 getSupplyPlanningProjectionLocationPolicy(perfilExecucaoSupplyPlan);
         SupplyPlanningBiProjection supplyPlanningBiProjection =
@@ -140,7 +140,7 @@ public class HeuristicoService {
                 materialProjection,
                 locationProjection,
                 lowLevelCode,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 supplyPlanningProjectionLocationPolicy,
                 supplyPlanningBiProjection,
                 supplyNetworkProjection,
@@ -173,7 +173,7 @@ public class HeuristicoService {
                 materialProjection,
                 locationProjection,
                 lowLevelCode,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 supplyPlanningProjectionLocationPolicy,
                 supplyPlanningBiProjection,
                 Constantes.TipoPlano.PLANO_IRRESTRITO,
@@ -222,7 +222,7 @@ public class HeuristicoService {
             MaterialProjection materialProjection,
             LocationProjection locationProjection,
             LowLevelCode lowLevelCode,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             SupplyPlanningProjectionLocationPolicy supplyPlanningProjectionLocationPolicy,
             SupplyPlanningBiProjection supplyPlanningBiProjection,
             SupplyNetworkProjection supplyNetworkProjection,
@@ -245,7 +245,7 @@ public class HeuristicoService {
                     materialProjection,
                     locationProjection,
                     lowLevelCode,
-                    clusterEParametrosProjection,
+                    cadastroEParametrosProjection,
                     supplyPlanningProjectionLocationPolicy,
                     supplyPlanningBiProjection,
                     Constantes.TipoPlano.PLANO_RESTRITO,
@@ -264,7 +264,7 @@ public class HeuristicoService {
                     supplyPlan,
                     perfilExecucaoSupplyPlan,
                     supplyPlan.getCalendarioDoSupplyPlan(
-                            clusterEParametrosProjection.getParametrosGlobais()),
+                            cadastroEParametrosProjection.getParametrosGlobais()),
                     supplyNetworkProjection,
                     biProjectionCapacidadeProdutiva,
                     supplyPlanningBiProjection,
@@ -290,7 +290,7 @@ public class HeuristicoService {
             MaterialProjection materialProjection,
             LocationProjection locationProjection,
             LowLevelCode lowLevelCode,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             SupplyPlanningProjectionLocationPolicy supplyPlanningProjectionLocationPolicy,
             SupplyPlanningBiProjection supplyPlanningBiProjection,
             Constantes.TipoPlano tipoPlano,
@@ -306,7 +306,7 @@ public class HeuristicoService {
                     materialProjection,
                     locationProjection,
                     lowLevelCode,
-                    clusterEParametrosProjection,
+                    cadastroEParametrosProjection,
                     supplyPlanningProjectionLocationPolicy,
                     supplyPlanningBiProjection,
                     tipoPlano,
@@ -324,7 +324,7 @@ public class HeuristicoService {
             MaterialProjection materialProjection,
             LocationProjection locationProjection,
             LowLevelCode lowLevelCode,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             SupplyPlanningProjectionLocationPolicy supplyPlanningProjectionLocationPolicy,
             SupplyPlanningBiProjection supplyPlanningBiProjection,
             Constantes.TipoPlano tipoPlano,
@@ -362,7 +362,7 @@ public class HeuristicoService {
                     perfilExecucaoSupplyPlan,
                     materialProjection,
                     locationProjection,
-                    clusterEParametrosProjection,
+                    cadastroEParametrosProjection,
                     supplyPlanningProjectionLocationPolicy,
                     supplyPlanningBiProjection,
                     location,
@@ -380,7 +380,7 @@ public class HeuristicoService {
             PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
             MaterialProjection materialProjection,
             LocationProjection locationProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             SupplyPlanningProjectionLocationPolicy supplyPlanningProjectionLocationPolicy,
             SupplyPlanningBiProjection supplyPlanningBiProjection,
             Location location,
@@ -390,7 +390,7 @@ public class HeuristicoService {
         MaterialProjection materialProjectionMateriaisLowLevelCodeLocationAtuais =
                 MaterialProjectionFactory.getProjectionSetMateriais(
                         produtosLocation,
-                        clusterEParametrosProjection);
+                        cadastroEParametrosProjection);
         SupplyPlanningProjection supplyPlanningProjection =
                 supplyPlanningBiProjection.getSupplyPlanningProjection(
                         location,
@@ -531,11 +531,11 @@ public class HeuristicoService {
             throw new IllegalArgumentException(
                     "Supply Network projection is required for heuristic Supply Planning execution.");
         }
-        if (supplyNetworkProjection.getClusterEParametrosProjection() == null) {
+        if (supplyNetworkProjection.getCadastroEParametrosProjection() == null) {
             throw new IllegalArgumentException(
                     "Cluster and parameters projection is required for heuristic Supply Planning execution.");
         }
-        if (supplyNetworkProjection.getClusterEParametrosProjection().getParametrosGlobais() == null) {
+        if (supplyNetworkProjection.getCadastroEParametrosProjection().getParametrosGlobais() == null) {
             /*
              * Parametros globais definem calendario e granularidade temporal do
              * plano. Mesmo quando o orquestrador ja validou o snapshot, esta

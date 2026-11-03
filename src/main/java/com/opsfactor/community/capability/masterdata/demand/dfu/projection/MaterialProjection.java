@@ -2,7 +2,7 @@ package com.opsfactor.community.capability.masterdata.demand.dfu.projection;
 
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -25,7 +25,7 @@ public class MaterialProjection {
      * Projection base que conhece clusters, status material/location e DFUs
      * ativas. O escopo de materiais e calculado contra essa base.
      */
-    protected ClusterEParametrosProjection clusterEParametrosProjection;
+    protected CadastroEParametrosProjection cadastroEParametrosProjection;
 
     /**
      * Materiais candidatos do escopo em memoria. A factory publica conjuntos
@@ -64,11 +64,11 @@ public class MaterialProjection {
     
     public Set<Produto> getMateriaisAtivosEmLocation(Location location) {
         return getMateriaisAtivos().stream()
-                .filter(x -> clusterEParametrosProjection.isDfuAtiva(x, location))
+                .filter(x -> cadastroEParametrosProjection.isDfuAtiva(x, location))
                 .collect(Collectors.toSet());
     }
     
     public boolean isMaterialFiltradoEAtivoNaLocation(Produto material, Location location) {
-        return getMateriaisAtivos().contains(material) && clusterEParametrosProjection.isDfuAtiva(material, location);
+        return getMateriaisAtivos().contains(material) && cadastroEParametrosProjection.isDfuAtiva(material, location);
     }
 }

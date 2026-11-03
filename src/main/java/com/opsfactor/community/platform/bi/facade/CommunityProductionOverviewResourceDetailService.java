@@ -10,8 +10,8 @@ import com.opsfactor.community.capability.masterdata.product.material.domain.Pro
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.supplyplanning.productionplan.domain.ProductionPlanLinha;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjectionFactory;
@@ -48,7 +48,7 @@ public class CommunityProductionOverviewResourceDetailService {
 
     /** Carrega parâmetros globais necessários para resolver o calendário do plano. */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterAndParametersProjectionFactory;
+    private CadastroEParametrosProjectionFactory clusterAndParametersProjectionFactory;
 
     /** Resolve recursos e estrutura produtiva da malha Community em memória. */
     @Autowired
@@ -87,7 +87,7 @@ public class CommunityProductionOverviewResourceDetailService {
             Integer periodIndex,
             CommunityProductionOverviewResourceDetailSelectionDTO selectionDTO) {
 
-        ClusterEParametrosProjection clusterAndParametersProjection =
+        CadastroEParametrosProjection clusterAndParametersProjection =
                 clusterAndParametersProjectionFactory.getParametrosProjectionCompletoDeCache();
         SupplyNetworkProjection supplyNetworkProjection =
                 supplyNetworkProjectionFactory.getSupplyNetworkProjectionCompletoDeCache();
@@ -173,7 +173,7 @@ public class CommunityProductionOverviewResourceDetailService {
     /** O corpo do POST aplica apenas o filtro de características de material do legado. */
     private MaterialProjection getMaterialProjection(
             CommunityProductionOverviewResourceDetailSelectionDTO selectionDTO,
-            ClusterEParametrosProjection clusterAndParametersProjection) {
+            CadastroEParametrosProjection clusterAndParametersProjection) {
 
         if (selectionDTO == null) {
             return MaterialProjectionFactory.getProjectionByMaterialCharacteristicValues(
@@ -197,7 +197,7 @@ public class CommunityProductionOverviewResourceDetailService {
             Calendario supplyPlanCalendar,
             PerfilExecucaoSupplyPlan.TipoCapacidadeProdutiva productionCapacityType,
             BIProjectionCapacidadeProdutiva productionCapacityProjection,
-            ClusterEParametrosProjection clusterAndParametersProjection) {
+            CadastroEParametrosProjection clusterAndParametersProjection) {
 
         CommunityProductionOverviewResourceDetailResponseDTO response =
                 new CommunityProductionOverviewResourceDetailResponseDTO();
@@ -229,7 +229,7 @@ public class CommunityProductionOverviewResourceDetailService {
             Integer periodIndex,
             PerfilExecucaoSupplyPlan.TipoCapacidadeProdutiva productionCapacityType,
             SupplyNetworkProjection supplyNetworkProjection,
-            ClusterEParametrosProjection clusterAndParametersProjection) {
+            CadastroEParametrosProjection clusterAndParametersProjection) {
 
         Produto outputMaterial = productionPlanLine.getMaterialOutput();
         Roteiro routing = productionPlanLine.getRoteiro();
@@ -323,7 +323,7 @@ public class CommunityProductionOverviewResourceDetailService {
                     + " not found in routing " + routing.getId());
         }
         return routing.getUnidadeMedidaQuantidadeBase(
-                supplyNetworkProjection.getClusterEParametrosProjection().getParametrosGlobais());
+                supplyNetworkProjection.getCadastroEParametrosProjection().getParametrosGlobais());
 
     }
 
@@ -409,7 +409,7 @@ public class CommunityProductionOverviewResourceDetailService {
     private String getResourceCapacityUnitOfMeasureId(
             RecursoProdutivo productionResource,
             PerfilExecucaoSupplyPlan.TipoCapacidadeProdutiva productionCapacityType,
-            ClusterEParametrosProjection clusterAndParametersProjection) {
+            CadastroEParametrosProjection clusterAndParametersProjection) {
 
         return switch (productionCapacityType) {
             case QUANTIDADE_POR_UOM -> productionResource

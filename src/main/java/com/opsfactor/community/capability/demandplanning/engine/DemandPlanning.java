@@ -8,7 +8,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlanItem;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.HistoricoDemandPlanItem;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosGeraisDemandPlanningProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.aggregation.ParametrosDemandPlanNivelClusterProjection;
@@ -124,7 +124,7 @@ public class DemandPlanning {
             case ARIMA -> new ArimaForecastEngine();
             case HOLT_WINTERS -> new HoltWintersForecastEngine();
             case ES -> new ExponentialSmoothingForecastEngine();
-            case SNAIVE, STL, PROPHET, ETS, TBATS, BUDGET_DECOMPOSITION, CHRONOS, PRICING_ML ->
+            case SNAIVE, STL, PROPHET, ETS, TBATS, BUDGET_DECOMPOSITION, CHRONOS, PRICING_ML, REGRESSAO_SERIE_TEMPORAL ->
                     throw new RequiresEnterpriseVersionException("Demand Planning Forecast Model " + dpModeloEstatistico);
         };
 
@@ -134,14 +134,14 @@ public class DemandPlanning {
             CalendarioSimples calendario,
             ParametrosForecastProjection parametrosForecastProjection,
             DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         desagregaForecast(
                 calendario,
                 parametrosForecastProjection.getDpModeloSplit(),
                 parametrosForecastProjection.getNumeroDiasSplitTopDown(),
                 demandPlanForecastProjectionAgregado,
-                clusterEParametrosProjection);
+                cadastroEParametrosProjection);
 
     }
 
@@ -159,7 +159,7 @@ public class DemandPlanning {
             Constantes.DPModeloSplit dpModeloSplit,
             int numeroDiasSplitTopDown,
             DemandPlanForecastProjectionAgregado demandPlanForecastProjectionAgregado,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         DemandForecastDisaggregationSpi demandForecastDisaggregation =
                 getCommunityDemandForecastDisaggregation(dpModeloSplit);
@@ -167,7 +167,7 @@ public class DemandPlanning {
                 calendario,
                 numeroDiasSplitTopDown,
                 demandPlanForecastProjectionAgregado,
-                clusterEParametrosProjection);
+                cadastroEParametrosProjection);
 
     }
 
@@ -217,7 +217,7 @@ public class DemandPlanning {
             UnidadeMedida unidadeMedidaPadraoDp,
             boolean usaHistoricoDemandaInativos,
             SalesProjectionLocationMaterialData salesProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             boolean preencheHorizonteForecastComDemandaHistorica) {
 
         if (calendario == null
@@ -231,7 +231,7 @@ public class DemandPlanning {
                 locationProjection,
                 materialProjection,
                 unidadeMedidaPadraoDp,
-                clusterEParametrosProjection);
+                cadastroEParametrosProjection);
 
         if (locationProjection.getLocationSet().isEmpty()) {
             /*
@@ -260,7 +260,7 @@ public class DemandPlanning {
                     continue;
                 }
 
-                if (!usaHistoricoDemandaInativos && !clusterEParametrosProjection.isDfuAtiva(material, location)) {
+                if (!usaHistoricoDemandaInativos && !cadastroEParametrosProjection.isDfuAtiva(material, location)) {
                     /*
                      * Historico de DFUs inativas so entra quando o parametro
                      * funcional permite. Esta decisao acontece antes da criacao
@@ -314,7 +314,7 @@ public class DemandPlanning {
             LocationProjection locationProjection,
             MaterialProjection materialProjection,
             UnidadeMedida unidadeMedidaPadraoDp,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         if (locationProjection == null) {
             throw new IllegalArgumentException(
@@ -328,7 +328,7 @@ public class DemandPlanning {
             throw new IllegalArgumentException(
                     "Demand Planning default UOM is required for material/location forecast series generation.");
         }
-        if (clusterEParametrosProjection == null) {
+        if (cadastroEParametrosProjection == null) {
             throw new IllegalArgumentException(
                     "Demand Planning cluster and parameters projection is required for material/location forecast series generation.");
         }
@@ -372,7 +372,7 @@ public class DemandPlanning {
     public static void redistribuiForecastBaselineTrendSeasonalEntreMateriaisAtivosCommunity(
             List<? extends DemandPlanForecastProjection> demandPlanForecastProjectionsExecucao,
             CalendarioSimples calendario,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection) {
 
         boolean geraForecastParaDescontinuados = parametrosGeraisDemandPlanningProjection
@@ -399,8 +399,8 @@ public class DemandPlanning {
                     Location location = demandPlanForecastProjectionDesagregado.getLocation();
                     Produto material = demandPlanForecastProjectionDesagregado.getMaterial();
 
-                    boolean dfuAtiva = clusterEParametrosProjection.isDfuAtiva(material, location);
-                    boolean materialDescontinuadoNaLocation = clusterEParametrosProjection.getStatusProduto(material, location, calendario.getPrimeiraDataHorarioPeriodo(i))
+                    boolean dfuAtiva = cadastroEParametrosProjection.isDfuAtiva(material, location);
+                    boolean materialDescontinuadoNaLocation = cadastroEParametrosProjection.getStatusProduto(material, location, calendario.getPrimeiraDataHorarioPeriodo(i))
                             .equals(StatusProduto.DESCONTINUADO);
                     
                     
@@ -431,8 +431,8 @@ public class DemandPlanning {
                     Location location = demandPlanForecastProjectionDesagregado.getLocation();
                     Produto material = demandPlanForecastProjectionDesagregado.getMaterial();
 
-                    boolean dfuAtiva = clusterEParametrosProjection.isDfuAtiva(material, location);
-                    boolean materialDescontinuadoNaLocation = clusterEParametrosProjection.getStatusProduto(material, location, calendario.getPrimeiraDataHorarioPeriodo(i))
+                    boolean dfuAtiva = cadastroEParametrosProjection.isDfuAtiva(material, location);
+                    boolean materialDescontinuadoNaLocation = cadastroEParametrosProjection.getStatusProduto(material, location, calendario.getPrimeiraDataHorarioPeriodo(i))
                             .equals(StatusProduto.DESCONTINUADO);
                     
                     if (dfuAtiva &&
@@ -470,10 +470,10 @@ public class DemandPlanning {
             Collection<DemandPlanItem> demandPlanItems, 
             Constantes.ModificacaoAgregadaPlano modificacaoAgregadaPlano,
             Constantes.TipoPlano tipoPlano,
-            ClusterEParametrosProjection clusterEParametrosProjection, 
+            CadastroEParametrosProjection cadastroEParametrosProjection, 
             UnidadeMedidaProjection unidadeMedidaProjection) {
         
-        ParametrosGlobais parametrosGlobais = clusterEParametrosProjection.getParametrosGlobais();
+        ParametrosGlobais parametrosGlobais = cadastroEParametrosProjection.getParametrosGlobais();
         
         for (DemandPlanItem demandPlanItem : demandPlanItems) {
             
@@ -553,9 +553,9 @@ public class DemandPlanning {
             LocalDate dataAjuste,
             Collection<Location> locations, Collection<Produto> materiais, 
             CalendarioSimples calendarioDemandPlan,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
         
-        Optional<Integer> leadTimeEmPeriodosOptional = clusterEParametrosProjection.getDPHorizonteCongeladoEmPeriodos(locations, materiais,
+        Optional<Integer> leadTimeEmPeriodosOptional = cadastroEParametrosProjection.getDPHorizonteCongeladoEmPeriodos(locations, materiais,
                 calendarioDemandPlan);
         
         if (leadTimeEmPeriodosOptional.isEmpty()) return true;
@@ -575,7 +575,7 @@ public class DemandPlanning {
             List<? extends DemandPlanForecastProjection> demandPlanForecastProjectionsExecucao,
             CalendarioSimples calendario,
             ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         // Extrai demand plans do BD se existirem e os cria se não existirem
         // guarda tudo num mapa para reuso mais à frente
@@ -590,7 +590,7 @@ public class DemandPlanning {
                 Produto material = demandPlanForecastProjectionMaterialLocationDesagregado.getMaterial();
 
                 // Community salva somente materiais ativos no nivel material/location.
-                if (clusterEParametrosProjection.isDfuAtiva(material, location)) {
+                if (cadastroEParametrosProjection.isDfuAtiva(material, location)) {
                         // salva valores do projection no DemandPlan e faz update com valores do
                     // plano anterior (apenas ajuste demanda no Community)
                     for (int i = calendario.getPosicaoPeriodoPresente(); i <= calendario.getPosicaoPeriodoFinalFuturo(); i++) {
@@ -599,7 +599,7 @@ public class DemandPlanning {
                         LocalDateTime dataReferencia = calendario.getUltimaDataHorarioPeriodo(i); // ex: ultima data semana ou mês
 
                         if (!parametrosGeraisDemandPlanningProjection.isDpGeraForecastParaDescontinuados()
-                                && clusterEParametrosProjection.getStatusProduto(material, location, dataReferencia).equals(StatusProduto.DESCONTINUADO)) {
+                                && cadastroEParametrosProjection.getStatusProduto(material, location, dataReferencia).equals(StatusProduto.DESCONTINUADO)) {
                             /*
                              * A projection pode existir para preservar o
                              * historico e os agregados da rodada, mas a linha
@@ -646,7 +646,7 @@ public class DemandPlanning {
             List<? extends DemandPlanForecastProjection> demandPlanForecastProjectionsExecucao,
             CalendarioSimples calendario,
             ParametrosGeraisDemandPlanningProjection parametrosGeraisDemandPlanningProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            CadastroEParametrosProjection cadastroEParametrosProjection) {
 
         // Extrai demand plans do BD se existirem e os cria se não existirem
         // guarda tudo num mapa para reuso mais à frente
@@ -661,7 +661,7 @@ public class DemandPlanning {
                 Produto material = demandPlanForecastProjectionMaterialLocationDesagregado.getMaterial();
 
                 // Community salva historico somente para materiais ativos no nivel material/location.
-                if (clusterEParametrosProjection.isDfuAtiva(material, location)) {
+                if (cadastroEParametrosProjection.isDfuAtiva(material, location)) {
 
                     for (int i = 0; i <= calendario.getPosicaoPeriodoFinalPassado(); i++) {
                         // adiciona dados da chave composta da linha
@@ -711,11 +711,16 @@ public class DemandPlanning {
         int diasFuturosHorizonteForecast = perfilExecucaoDemandPlan.getNumeroDiasHorizontePlanejamento(
                 dataHorarioPeriodoInicioHorizonteForecast);
 
-        return getCalendarioDemandPlanComPeriodosPassadosEFuturosComInputsEmDias(
+        var calendario = getCalendarioDemandPlanComPeriodosPassadosEFuturosComInputsEmDias(
                 perfilExecucaoDemandPlan.getTamanhoBucket(),
                 diasHistoricosForecastEstatistico,
                 diasFuturosHorizonteForecast,
                 dataHorarioPeriodoInicioHorizonteForecast);
+        // Dias de histórico só se tornam buckets com a data real desta rodada.
+        // Falha antes de projections/fits caros quando não reproduzem a receita.
+        parametrosDemandPlanNivelClusterProjection.getAllForecastParameters().forEach(parameters ->
+                parameters.validarCalendarioReceita(calendario.getTamanhoBucket(), calendario.getNumeroPeriodosPassados()));
+        return calendario;
 
     }
 

@@ -18,6 +18,8 @@ import java.util.List;
  */
 @Data @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ClusterProdutosDTO {
+    /** Full cluster identity is (clusteringProfileId,id), never the numeric component alone. */
+    private String clusteringProfileId;
     private Long id;
     private String description;
     private Integer priority;

@@ -7,7 +7,7 @@ import com.opsfactor.community.capability.cluster.facade.dto.ClusterProdutosDTO;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.facade.dto.CaracteristicaProdutoDTO;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProduto;
 import com.opsfactor.community.capability.cluster.facade.dto.RegraAlocaoClusterProdutosDTO;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
 import com.opsfactor.community.platform.exception.RequiresEnterpriseVersionException;
 import com.opsfactor.community.platform.utility.Constantes;
 
@@ -21,6 +21,7 @@ public abstract class ClusterProdutosMapper {
         ClusterProdutosDTO dto = new ClusterProdutosDTO();
         dto.setDescription(clusterProdutos.getDescricao()) ;
         dto.setId(clusterProdutos.getId());
+        dto.setClusteringProfileId(clusterProdutos.getPerfilClusterizacao().getId());
         dto.setPriority(clusterProdutos.getPrioridade());
         return dto;
     }
@@ -109,11 +110,11 @@ public abstract class ClusterProdutosMapper {
 
     public static ClusterProdutosDTO convertComListaMateriaisERegrasAlocacaoDTO(
             ClusterProdutos clusterProdutos,
-            ClusterEParametrosProjection clusterEParametrosProjection) {
+            ClusterizacaoProjection clusterizacaoProjection) {
 
         ClusterProdutosDTO dto = convertComRegrasAlocacaoDTO(clusterProdutos);
 
-        List<ProdutoDTO> produtoDTOList = clusterEParametrosProjection.getMateriaisDeClusterProdutos(clusterProdutos, true)
+        List<ProdutoDTO> produtoDTOList = clusterizacaoProjection.getMateriaisDeClusterProdutos(clusterProdutos, true)
                 .stream()
                 .map(MaterialMapper::convertSemStatusESemCaracteristicasPorMaterial)
                 .collect(Collectors.toList());

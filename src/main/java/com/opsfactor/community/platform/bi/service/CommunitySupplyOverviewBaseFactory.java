@@ -1,6 +1,6 @@
 package com.opsfactor.community.platform.bi.service;
 
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
@@ -32,7 +32,7 @@ public class CommunitySupplyOverviewBaseFactory {
             Calendario calendar,
             Collection<Location> locations,
             MaterialProjection materialProjection,
-            ClusterEParametrosProjection clusterAndParametersProjection,
+            CadastroEParametrosProjection clusterAndParametersProjection,
             UnidadeMedida targetUnitOfMeasure,
             SupplyPlanningMultiplasLocationsProjection supplyPlanningProjection) {
 
@@ -55,7 +55,7 @@ public class CommunitySupplyOverviewBaseFactory {
             Location location,
             SupplyPlanningProjection locationProjection,
             MaterialProjection materialProjection,
-            ClusterEParametrosProjection clusterAndParametersProjection,
+            CadastroEParametrosProjection clusterAndParametersProjection,
             UnidadeMedida targetUnitOfMeasure) {
 
         Calendario calendar = locationProjection.getCalendario();

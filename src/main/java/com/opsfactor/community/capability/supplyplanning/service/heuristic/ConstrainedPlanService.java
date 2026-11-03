@@ -13,8 +13,8 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.domai
 import com.opsfactor.community.capability.masterdata.production.productionresource.domain.RecursoProdutivo;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
@@ -102,7 +102,7 @@ public class ConstrainedPlanService {
      * montar projections sem N+1 durante o loop de low level code.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory parametrosProjectionFactory;
+    private CadastroEParametrosProjectionFactory parametrosProjectionFactory;
 
     /**
      * Factory da malha em memoria, usada para linhas inbound, BOM, roteiros e
@@ -251,28 +251,28 @@ public class ConstrainedPlanService {
         
         VersaoMalha versaoMalha = supplyPlan.getVersaoMalha();
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
+        CadastroEParametrosProjection cadastroEParametrosProjection =
                 parametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
                
         ParametrosGlobais parametrosGlobais =
-                clusterEParametrosProjection.getParametrosGlobais();
+                cadastroEParametrosProjection.getParametrosGlobais();
         
         PoliticaEstoquesProjection politicaEstoquesProjection =
                 politicaEstoquesProjectionFactory.getPoliticaEstoquesProjection(
                                 supplyPlan.getCalendarioDoSupplyPlan(parametrosGlobais),
-                                clusterEParametrosProjection,
+                                cadastroEParametrosProjection,
                                 perfilExecucaoSupplyPlan);
 
         MaterialProjection materialProjection =
                 getMaterialProjectionComEscopoEnterprise(
                                 perfilExecucaoSupplyPlan,
-                                clusterEParametrosProjection,
+                                cadastroEParametrosProjection,
                                 MaterialProjectionFactory.getMaterialProjectionDePerfilExecucaoSupplyPlan(
                                         perfilExecucaoSupplyPlan,
-                                        clusterEParametrosProjection));
+                                        cadastroEParametrosProjection));
         LocationProjection locationProjection =
                 LocationProjectionFactory.getLocationProjectionDePerfilExecucaoSupplyPlan(
-                                perfilExecucaoSupplyPlan, clusterEParametrosProjection);
+                                perfilExecucaoSupplyPlan, cadastroEParametrosProjection);
         
         SupplyNetworkProjection supplyNetworkProjection =
                 supplyNetworkProjectionFactory.getSupplyNetworkProjectionCompletoDeCache();
@@ -325,7 +325,7 @@ public class ConstrainedPlanService {
     /** Applies the optional private scope while preserving Community fallback. */
     private MaterialProjection getMaterialProjectionComEscopoEnterprise(
             PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             MaterialProjection materialProjectionCommunity) {
 
         if (supplyPlanExecutionProfileMaterialScope == null) {
@@ -335,7 +335,7 @@ public class ConstrainedPlanService {
         return supplyPlanExecutionProfileMaterialScope
                 .getMaterialProjectionParaExecucaoSupplyPlan(
                         perfilExecucaoSupplyPlan,
-                        clusterEParametrosProjection,
+                        cadastroEParametrosProjection,
                         materialProjectionCommunity);
 
     }
@@ -403,7 +403,7 @@ public class ConstrainedPlanService {
 
         log.info("Restringindo plano de supply " + supplyPlan.getId());
         
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
         LocationProjection locationProjection = lowLevelCode.getLocationProjection();
         
         /*
@@ -471,7 +471,7 @@ public class ConstrainedPlanService {
                     // CRIA PROJECTION
                     Set<Produto> produtosLowLevelCodeLocation = lowLevelCode.getMateriaisLowLevelCodeEmLocation(posicaoLowLevelCode, location);
                     MaterialProjection materialProjectionMateriaisLowLevelCodeLocation = MaterialProjectionFactory.getProjectionSetMateriais(
-                            produtosLowLevelCodeLocation, clusterEParametrosProjection);
+                            produtosLowLevelCodeLocation, cadastroEParametrosProjection);
 
                     SupplyPlanningProjection supplyPlanningProjection = getSupplyPlanningProjection(
                             supplyPlan,
@@ -516,7 +516,7 @@ public class ConstrainedPlanService {
                                 politicaEstoquesProjection,
                                 MaterialProjectionFactory.getProjectionSetMateriais(
                                         todosMateriaisAtivosLocation,
-                                        clusterEParametrosProjection),
+                                        cadastroEParametrosProjection),
                                 locationProjection,
                                 supplyPlanningBiProjection);
                         
@@ -564,7 +564,7 @@ public class ConstrainedPlanService {
                                 .flatMap(x -> x.stream())
                                 .collect(Collectors.toSet());
                         MaterialProjection materialProjectionMateriaisInputEmProducaoComRestricao = MaterialProjectionFactory.getProjectionSetMateriais(
-                                materiaisInputEmProducaoComRestricao, clusterEParametrosProjection);
+                                materiaisInputEmProducaoComRestricao, cadastroEParametrosProjection);
                         
                         SupplyPlanningProjection supplyPlanningProjectionMateriaisInput = getSupplyPlanningProjection(
                                 supplyPlan,
@@ -775,7 +775,7 @@ public class ConstrainedPlanService {
             throw new IllegalArgumentException(
                     "Supply Network projection is required for constrained heuristic execution.");
         }
-        if (supplyNetworkProjection.getClusterEParametrosProjection() == null) {
+        if (supplyNetworkProjection.getCadastroEParametrosProjection() == null) {
             throw new IllegalArgumentException(
                     "Cluster and parameters projection is required for constrained heuristic execution.");
         }

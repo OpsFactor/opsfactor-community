@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.transactionaldata.inventory.stock.pro
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedDataInterface;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.transactionaldata.inventory.stock.repository.EstoqueRepository;
@@ -59,7 +59,7 @@ class EstoqueProjectionFactoryCommunityTest {
                 Set.of(new Location("LOC")),
                 Set.of(new Produto("MAT")),
                 Mockito.mock(UnidadeMedidaProjection.class),
-                Mockito.mock(ClusterEParametrosProjection.class),
+                Mockito.mock(CadastroEParametrosProjection.class),
                 null);
 
         ArgumentCaptor<Collection<LocalDate>> datasReferenciaCaptor = ArgumentCaptor.forClass(Collection.class);
@@ -98,7 +98,7 @@ class EstoqueProjectionFactoryCommunityTest {
                         Location.class,
                         Set.class,
                         UnidadeMedidaProjection.class,
-                        ClusterEParametrosProjection.class,
+                        CadastroEParametrosProjection.class,
                         UnidadeMedida.class),
                 5,
                 "getEstoqueProjection deve declarar fallback de UOM @Nullable.");
@@ -109,7 +109,7 @@ class EstoqueProjectionFactoryCommunityTest {
                         Set.class,
                         Set.class,
                         UnidadeMedidaProjection.class,
-                        ClusterEParametrosProjection.class,
+                        CadastroEParametrosProjection.class,
                         UnidadeMedida.class),
                 5,
                 "getEstoqueProjectionLocationProduto filtrado deve declarar fallback de UOM @Nullable.");
@@ -120,7 +120,7 @@ class EstoqueProjectionFactoryCommunityTest {
                         Set.class,
                         Set.class,
                         UnidadeMedidaProjection.class,
-                        ClusterEParametrosProjection.class,
+                        CadastroEParametrosProjection.class,
                         UnidadeMedida.class),
                 5,
                 "getEstoqueProjectionLocationProdutoPeriodosPassadosCalendario deve declarar fallback de UOM @Nullable.");
@@ -131,7 +131,7 @@ class EstoqueProjectionFactoryCommunityTest {
                         Set.class,
                         Set.class,
                         UnidadeMedidaProjection.class,
-                        ClusterEParametrosProjection.class,
+                        CadastroEParametrosProjection.class,
                         UnidadeMedida.class),
                 5,
                 "getEstoqueProjectionLocationProdutoUltimosDiasPeriodosPassadosCalendario deve declarar fallback de UOM @Nullable.");
@@ -140,7 +140,7 @@ class EstoqueProjectionFactoryCommunityTest {
                         "getEstoqueProjectionLocationProduto",
                         LocalDateTime.class,
                         UnidadeMedidaProjection.class,
-                        ClusterEParametrosProjection.class,
+                        CadastroEParametrosProjection.class,
                         UnidadeMedida.class),
                 3,
                 "getEstoqueProjectionLocationProduto completo deve declarar fallback de UOM @Nullable.");
@@ -151,7 +151,7 @@ class EstoqueProjectionFactoryCommunityTest {
                         Location.class,
                         Set.class,
                         UnidadeMedidaProjection.class,
-                        ClusterEParametrosProjection.class,
+                        CadastroEParametrosProjection.class,
                         UnidadeMedida.class),
                 5,
                 "getEstoqueProjectionProduto deve declarar fallback de UOM @Nullable.");

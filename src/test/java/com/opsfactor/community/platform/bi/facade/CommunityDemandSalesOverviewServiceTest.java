@@ -8,8 +8,8 @@ import com.opsfactor.community.capability.masterdata.classification.characterist
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlanItem;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedByLocationMaterialUOMDate;
 import com.opsfactor.community.capability.transactionaldata.sales.saleshistory.projection.SalesProjectionFactory;
 import com.opsfactor.community.capability.transactionaldata.sales.saleshistory.projection.SalesProjectionLocationMaterialData;
@@ -46,7 +46,7 @@ class CommunityDemandSalesOverviewServiceTest {
     void shouldLoadSalesAndUnconstrainedPlanThroughOfficialBatchProjections() {
 
         UnidadeMedidaService unidadeMedidaService = Mockito.mock(UnidadeMedidaService.class);
-        ClusterEParametrosProjectionFactory clusterFactory = Mockito.mock(ClusterEParametrosProjectionFactory.class);
+        CadastroEParametrosProjectionFactory clusterFactory = Mockito.mock(CadastroEParametrosProjectionFactory.class);
         UnidadeMedidaProjectionFactory unitOfMeasureProjectionFactory =
                 Mockito.mock(UnidadeMedidaProjectionFactory.class);
         SalesProjectionFactory salesProjectionFactory = Mockito.mock(SalesProjectionFactory.class);
@@ -55,7 +55,7 @@ class CommunityDemandSalesOverviewServiceTest {
 
         CommunityDemandSalesOverviewService service = new CommunityDemandSalesOverviewService();
         ReflectionTestUtils.setField(service, "unidadeMedidaService", unidadeMedidaService);
-        ReflectionTestUtils.setField(service, "clusterEParametrosProjectionFactory", clusterFactory);
+        ReflectionTestUtils.setField(service, "cadastroEParametrosProjectionFactory", clusterFactory);
         ReflectionTestUtils.setField(service, "unidadeMedidaProjectionFactory", unitOfMeasureProjectionFactory);
         ReflectionTestUtils.setField(service, "salesProjectionFactory", salesProjectionFactory);
         ReflectionTestUtils.setField(service, "demandPlanningService", demandPlanningService);
@@ -64,7 +64,7 @@ class CommunityDemandSalesOverviewServiceTest {
         DemandPlan demandPlan = Mockito.mock(DemandPlan.class);
         UnidadeMedida unitOfMeasure = Mockito.mock(UnidadeMedida.class);
         UnidadeMedidaProjection unitOfMeasureProjection = Mockito.mock(UnidadeMedidaProjection.class);
-        ClusterEParametrosProjection clusterProjection = Mockito.mock(ClusterEParametrosProjection.class);
+        CadastroEParametrosProjection clusterProjection = Mockito.mock(CadastroEParametrosProjection.class);
         Location location = Mockito.mock(Location.class);
         Produto material = Mockito.mock(Produto.class);
         Mockito.when(location.getId()).thenReturn("LOC-1");
@@ -177,7 +177,7 @@ class CommunityDemandSalesOverviewServiceTest {
     void shouldLoadOnlyHistoricalSalesWhenNoDemandPlanIsSelected() {
 
         UnidadeMedidaService unidadeMedidaService = Mockito.mock(UnidadeMedidaService.class);
-        ClusterEParametrosProjectionFactory clusterFactory = Mockito.mock(ClusterEParametrosProjectionFactory.class);
+        CadastroEParametrosProjectionFactory clusterFactory = Mockito.mock(CadastroEParametrosProjectionFactory.class);
         UnidadeMedidaProjectionFactory unitOfMeasureProjectionFactory =
                 Mockito.mock(UnidadeMedidaProjectionFactory.class);
         SalesProjectionFactory salesProjectionFactory = Mockito.mock(SalesProjectionFactory.class);
@@ -186,7 +186,7 @@ class CommunityDemandSalesOverviewServiceTest {
 
         CommunityDemandSalesOverviewService service = new CommunityDemandSalesOverviewService();
         ReflectionTestUtils.setField(service, "unidadeMedidaService", unidadeMedidaService);
-        ReflectionTestUtils.setField(service, "clusterEParametrosProjectionFactory", clusterFactory);
+        ReflectionTestUtils.setField(service, "cadastroEParametrosProjectionFactory", clusterFactory);
         ReflectionTestUtils.setField(service, "unidadeMedidaProjectionFactory", unitOfMeasureProjectionFactory);
         ReflectionTestUtils.setField(service, "salesProjectionFactory", salesProjectionFactory);
         ReflectionTestUtils.setField(service, "demandPlanningService", demandPlanningService);
@@ -194,7 +194,7 @@ class CommunityDemandSalesOverviewServiceTest {
 
         UnidadeMedida unitOfMeasure = Mockito.mock(UnidadeMedida.class);
         UnidadeMedidaProjection unitOfMeasureProjection = Mockito.mock(UnidadeMedidaProjection.class);
-        ClusterEParametrosProjection clusterProjection = Mockito.mock(ClusterEParametrosProjection.class);
+        CadastroEParametrosProjection clusterProjection = Mockito.mock(CadastroEParametrosProjection.class);
         Location location = Mockito.mock(Location.class);
         Produto material = Mockito.mock(Produto.class);
         Mockito.when(location.getId()).thenReturn("LOC-1");
@@ -270,7 +270,7 @@ class CommunityDemandSalesOverviewServiceTest {
     @Test
     void shouldBuildExplicitDfuScopeFromLocationActiveMaterialsWithoutCartesianScan() {
 
-        ClusterEParametrosProjection clusterProjection = Mockito.mock(ClusterEParametrosProjection.class);
+        CadastroEParametrosProjection clusterProjection = Mockito.mock(CadastroEParametrosProjection.class);
         Location firstLocation = Mockito.mock(Location.class);
         Location secondLocation = Mockito.mock(Location.class);
         Produto firstMaterial = Mockito.mock(Produto.class);
@@ -290,7 +290,7 @@ class CommunityDemandSalesOverviewServiceTest {
         Mockito.when(clusterProjection.getMaterialPersistido("MAT-2")).thenReturn(secondMaterial);
 
         CommunityDemandSalesOverviewService service = new CommunityDemandSalesOverviewService();
-        ReflectionTestUtils.setField(service, "clusterEParametrosProjectionFactory", Mockito.mock(ClusterEParametrosProjectionFactory.class));
+        ReflectionTestUtils.setField(service, "cadastroEParametrosProjectionFactory", Mockito.mock(CadastroEParametrosProjectionFactory.class));
 
         @SuppressWarnings("unchecked")
         FiltroDFUProjection dfuProjection =

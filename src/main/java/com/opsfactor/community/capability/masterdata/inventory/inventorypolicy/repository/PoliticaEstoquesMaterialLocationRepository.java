@@ -39,7 +39,7 @@ public interface PoliticaEstoquesMaterialLocationRepository extends JpaRepositor
     /**
      * Remove vinculos material-location da politica de estoques informada.
      */
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     @Transactional
     public void removeByPoliticaEstoquesMaterialLocationCompositeKeyPoliticaEstoquesId(String politicaEstoquesId);
 
@@ -49,28 +49,28 @@ public interface PoliticaEstoquesMaterialLocationRepository extends JpaRepositor
      * Salva vinculo material-location de politica de estoques e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     public <S extends PoliticaEstoquesMaterialLocation> S save(S entity);
 
     /**
      * Salva vinculos material-location de politica de estoques em lote e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     <S extends PoliticaEstoquesMaterialLocation> List<S> saveAll(Iterable<S> entities);
 
     /**
      * Remove vinculo material-location de politica de estoques e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     public void delete(PoliticaEstoquesMaterialLocation entity);
 
     /**
      * Remove vinculos material-location de politica de estoques em lote e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     void deleteAll(Iterable<? extends PoliticaEstoquesMaterialLocation> entities);
 
 }

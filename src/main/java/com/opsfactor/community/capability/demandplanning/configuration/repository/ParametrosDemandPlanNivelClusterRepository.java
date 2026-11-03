@@ -5,7 +5,6 @@ import com.opsfactor.community.capability.cluster.domain.produto.ClusterMateriai
 import com.opsfactor.community.capability.demandplanning.configuration.domain.ParametrosDemandPlanNivelCluster;
 import com.opsfactor.community.capability.demandplanning.configuration.domain.PerfilExecucaoDemandPlan;
 import jakarta.persistence.LockModeType;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -35,7 +34,7 @@ public interface ParametrosDemandPlanNivelClusterRepository extends CrudReposito
             "LEFT JOIN FETCH pedp.unidadeMedidaPadraoDP uomdp " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterMateriais cpdp " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterLocations cl " +
-            "WHERE pedp = :perfilExecucaoDemandPlan")
+            "WHERE cpdp.perfilClusterizacao.id = pedp.perfilClusterizacao.id AND cl.perfilClusterizacao.id = pedp.perfilClusterizacao.id AND pedp = :perfilExecucaoDemandPlan")
     public List<ParametrosDemandPlanNivelCluster> customFindAllDePerfilExecucaoDemandPlan(
             PerfilExecucaoDemandPlan perfilExecucaoDemandPlan);
 
@@ -44,7 +43,7 @@ public interface ParametrosDemandPlanNivelClusterRepository extends CrudReposito
             "LEFT JOIN FETCH pedp.unidadeMedidaPadraoDP uomdp " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterMateriais cpdp " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterLocations cl " +
-            "WHERE cpdp = :clusterMateriais " +
+            "WHERE cpdp.perfilClusterizacao.id = pedp.perfilClusterizacao.id AND cl.perfilClusterizacao.id = pedp.perfilClusterizacao.id AND cpdp = :clusterMateriais " +
             "AND cl = :clusterLocations " +
             "AND pedp = :perfilExecucaoDemandPlan")
     public Optional<ParametrosDemandPlanNivelCluster> findByParametrosClusterProdutosDemandPlanningClusterLocationsCompositeKeyClusterProdutosDemandPlanningAndParametrosClusterProdutosDemandPlanningClusterLocationsCompositeKeyClusterLocations(
@@ -62,7 +61,7 @@ public interface ParametrosDemandPlanNivelClusterRepository extends CrudReposito
             "LEFT JOIN FETCH pedp.unidadeMedidaPadraoDP uomdp " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterMateriais cpdp " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterLocations cl " +
-            "WHERE cpdp.id = :clusterProdutosDemandPlanningId " +
+            "WHERE cpdp.perfilClusterizacao.id = pedp.perfilClusterizacao.id AND cl.perfilClusterizacao.id = pedp.perfilClusterizacao.id AND cpdp.id = :clusterProdutosDemandPlanningId " +
             "AND cl.id = :clusterLocationsId " +
             "AND pedp.id = :perfilExecucaoDemandPlanId")
     public Optional<ParametrosDemandPlanNivelCluster> findByParametrosClusterProdutosDemandPlanningClusterLocationsCompositeKeyClusterProdutosDemandPlanningAndParametrosClusterProdutosDemandPlanningClusterLocationsCompositeKeyClusterLocations(
@@ -83,7 +82,7 @@ public interface ParametrosDemandPlanNivelClusterRepository extends CrudReposito
             "LEFT JOIN FETCH pedp.unidadeMedidaPadraoDP uomdp " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterMateriais cpdp " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterLocations cl " +
-            "WHERE cpdp.id = :clusterProdutosDemandPlanningId " +
+            "WHERE cpdp.perfilClusterizacao.id = pedp.perfilClusterizacao.id AND cl.perfilClusterizacao.id = pedp.perfilClusterizacao.id AND cpdp.id = :clusterProdutosDemandPlanningId " +
             "AND cl.id = :clusterLocationsId " +
             "AND pedp.id = :perfilExecucaoDemandPlanId")
     Optional<ParametrosDemandPlanNivelCluster> findByKeyForEnterpriseOverlayUpdate(
@@ -101,9 +100,19 @@ public interface ParametrosDemandPlanNivelClusterRepository extends CrudReposito
             "LEFT JOIN FETCH pedp.unidadeMedidaPadraoDP uomdp " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterMateriais cpdp " +
             "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterLocations cl " +
-            "WHERE pedp.id = :perfilExecucaoDemandPlanId")
+            "WHERE cpdp.perfilClusterizacao.id = pedp.perfilClusterizacao.id AND cl.perfilClusterizacao.id = pedp.perfilClusterizacao.id AND pedp.id = :perfilExecucaoDemandPlanId")
     public List<ParametrosDemandPlanNivelCluster> findByPerfilExecucaoDemandPlanId(
             String perfilExecucaoDemandPlanId);
+
+    /** Leitura operacional pela origem efetiva; evita colisões de ids locais entre versões. */
+    @Query("SELECT pcpdpcl FROM ParametrosDemandPlanNivelCluster pcpdpcl " +
+            "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.perfilExecucaoDemandPlan pedp " +
+            "LEFT JOIN FETCH pedp.unidadeMedidaPadraoDP uomdp " +
+            "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterMateriais cpdp " +
+            "LEFT JOIN FETCH pcpdpcl.parametrosDemandPlanNivelClusterCompositeKey.clusterLocations cl " +
+            "WHERE cpdp.perfilClusterizacao.id = :perfilClusterizacaoId AND cl.perfilClusterizacao.id = :perfilClusterizacaoId AND pedp.id = :perfilExecucaoDemandPlanId")
+    public List<ParametrosDemandPlanNivelCluster> findByPerfilExecucaoDemandPlanId(
+            String perfilExecucaoDemandPlanId, String perfilClusterizacaoId);
 
     // OVERRIDES SAVE E DELETE PARA @CACHEEVICT -------------------------------------------------------------------------------------------
     // limpa caches dependentes em chamadas de saveAll e deleteAll (cacheEvict nao funciona em metodos @Override dos serviços de integração)
@@ -111,28 +120,24 @@ public interface ParametrosDemandPlanNivelClusterRepository extends CrudReposito
      * Salva parametro Demand Planning por nivel de cluster e invalida snapshot do perfil associado.
      */
     @Override
-    @CacheEvict(value = "parametrosDemandPlanProjection", key = "#entity.parametrosDemandPlanNivelClusterCompositeKey.perfilExecucaoDemandPlan")
     public <S extends ParametrosDemandPlanNivelCluster> S save(S entity);
 
     /**
      * Salva parametros Demand Planning por nivel de cluster em lote e invalida snapshot do perfil associado.
      */
     @Override
-    @CacheEvict(value = "parametrosDemandPlanProjection", key = "#entity.parametrosDemandPlanNivelClusterCompositeKey.perfilExecucaoDemandPlan")
     <S extends ParametrosDemandPlanNivelCluster> List<S> saveAll(Iterable<S> entities);
 
     /**
      * Remove parametro Demand Planning por nivel de cluster e invalida snapshot do perfil associado.
      */
     @Override
-    @CacheEvict(value = "parametrosDemandPlanProjection", key = "#entity.parametrosDemandPlanNivelClusterCompositeKey.perfilExecucaoDemandPlan")
     public void delete(ParametrosDemandPlanNivelCluster entity);
 
     /**
      * Remove parametros Demand Planning por nivel de cluster em lote e invalida snapshot do perfil associado.
      */
     @Override
-    @CacheEvict(value = "parametrosDemandPlanProjection", key = "#entity.parametrosDemandPlanNivelClusterCompositeKey.perfilExecucaoDemandPlan")
     void deleteAll(Iterable<? extends ParametrosDemandPlanNivelCluster> entities);
 
 }

@@ -6,8 +6,8 @@ import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais
 import com.opsfactor.community.capability.configuration.user.domain.ConfiguredView;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.configuration.user.projection.ConfiguredViewProjection;
 import com.opsfactor.community.capability.configuration.user.projection.ConfiguredViewProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.FiltroDFUProjection;
@@ -160,9 +160,9 @@ class ConfiguredViewServiceCommunityContractTest {
         ConfiguredViewService configuredViewService = new ConfiguredViewService();
         setPrivateField(
                 configuredViewService,
-                "clusterEParametrosProjectionFactory",
-                new TestClusterEParametrosProjectionFactory(
-                        new TestClusterEParametrosProjection(new ParametrosGlobais())));
+                "cadastroEParametrosProjectionFactory",
+                new TestCadastroEParametrosProjectionFactory(
+                        new TestCadastroEParametrosProjection(new ParametrosGlobais())));
         setPrivateField(
                 configuredViewService,
                 "configuredViewRepository",
@@ -235,7 +235,7 @@ class ConfiguredViewServiceCommunityContractTest {
         configuredViewProjection.setDfuProjectionFiltrado(new FiltroDFUProjection(
                 Set.of(viewLocation),
                 Set.of(viewMaterial),
-                new TestClusterEParametrosProjection(new ParametrosGlobais())));
+                new TestCadastroEParametrosProjection(new ParametrosGlobais())));
 
         /*
          * DFU fora da view e payload/escopo invalido do Planning Book. A borda
@@ -444,7 +444,7 @@ class ConfiguredViewServiceCommunityContractTest {
         configuredViewProjection.setDfuProjectionFiltrado(new FiltroDFUProjection(
                 Set.of(new Location("LOC-2")),
                 Set.of(new Produto("MAT-2")),
-                new TestClusterEParametrosProjection(new ParametrosGlobais())));
+                new TestCadastroEParametrosProjection(new ParametrosGlobais())));
         return configuredViewProjection;
 
     }
@@ -477,19 +477,19 @@ class ConfiguredViewServiceCommunityContractTest {
 
     }
 
-    private static ClusterEParametrosProjection invokeGetClusterEParametrosProjectionObrigatoria(
+    private static CadastroEParametrosProjection invokeGetCadastroEParametrosProjectionObrigatoria(
             ConfiguredViewService configuredViewService,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             String contextoOperacional) throws Exception {
 
         Method validationMethod = ConfiguredViewService.class.getDeclaredMethod(
-                "getClusterEParametrosProjectionObrigatoria",
-                ClusterEParametrosProjection.class,
+                "getCadastroEParametrosProjectionObrigatoria",
+                CadastroEParametrosProjection.class,
                 String.class);
         validationMethod.setAccessible(true);
-        return (ClusterEParametrosProjection) validationMethod.invoke(
+        return (CadastroEParametrosProjection) validationMethod.invoke(
                 configuredViewService,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 contextoOperacional);
 
     }
@@ -539,7 +539,7 @@ class ConfiguredViewServiceCommunityContractTest {
                 String userId,
                 String nomeView,
                 ConfiguredView.TipoView tipoView,
-                ClusterEParametrosProjection clusterEParametrosProjection,
+                CadastroEParametrosProjection cadastroEParametrosProjection,
                 BiFunction<Produto, Location, Boolean> filtrosAdicionaisDfus) {
 
             return configuredViewProjection;
@@ -549,7 +549,7 @@ class ConfiguredViewServiceCommunityContractTest {
         @Override
         public ConfiguredViewProjection getConfiguredViewProjection(
                 ConfiguredView configuredView,
-                ClusterEParametrosProjection clusterEParametrosProjection) {
+                CadastroEParametrosProjection cadastroEParametrosProjection) {
 
             return configuredViewProjection;
 
@@ -557,30 +557,30 @@ class ConfiguredViewServiceCommunityContractTest {
 
     }
 
-    private static class TestClusterEParametrosProjectionFactory extends ClusterEParametrosProjectionFactory {
+    private static class TestCadastroEParametrosProjectionFactory extends CadastroEParametrosProjectionFactory {
 
-        private final ClusterEParametrosProjection clusterEParametrosProjection;
+        private final CadastroEParametrosProjection cadastroEParametrosProjection;
 
-        private TestClusterEParametrosProjectionFactory(ClusterEParametrosProjection clusterEParametrosProjection) {
+        private TestCadastroEParametrosProjectionFactory(CadastroEParametrosProjection cadastroEParametrosProjection) {
 
-            this.clusterEParametrosProjection = clusterEParametrosProjection;
+            this.cadastroEParametrosProjection = cadastroEParametrosProjection;
 
         }
 
         @Override
-        public ClusterEParametrosProjection getParametrosProjectionCompletoDeCache() {
+        public CadastroEParametrosProjection getParametrosProjectionCompletoDeCache() {
 
-            return clusterEParametrosProjection;
+            return cadastroEParametrosProjection;
 
         }
 
     }
 
-    private static class TestClusterEParametrosProjection extends ClusterEParametrosProjection {
+    private static class TestCadastroEParametrosProjection extends CadastroEParametrosProjection {
 
         private final ParametrosGlobais parametrosGlobais;
 
-        private TestClusterEParametrosProjection(ParametrosGlobais parametrosGlobais) {
+        private TestCadastroEParametrosProjection(ParametrosGlobais parametrosGlobais) {
 
             this.parametrosGlobais = parametrosGlobais;
 

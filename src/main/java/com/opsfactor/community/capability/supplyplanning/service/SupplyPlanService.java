@@ -29,8 +29,8 @@ import com.opsfactor.community.capability.masterdata.production.productionversio
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjection;
@@ -285,7 +285,7 @@ public class SupplyPlanService {
      * Factory da projection global de parametros, clusters e master data.
      */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory;
 
     /**
      * Factory de UOM/conversoes usada nas projections e persistencia de volumes.
@@ -493,10 +493,10 @@ public class SupplyPlanService {
              * arredondado ao primeiro dia do mês-base. Locations só limitam
              * sua própria janela; não alteram esta grade do cabeçalho.
              */
-            ClusterEParametrosProjection clusterEParametrosProjection =
-                    clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+            CadastroEParametrosProjection cadastroEParametrosProjection =
+                    cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
             ParametrosGlobais parametrosGlobais =
-                    clusterEParametrosProjection.getParametrosGlobais();
+                    cadastroEParametrosProjection.getParametrosGlobais();
             Calendario calendarioSupplyPlan = supplyPlan.getCalendarioDoSupplyPlan(parametrosGlobais);
             supplyPlan.setDataInicioPlano(calendarioSupplyPlan.getDataHorarioInicial());
             supplyPlan.setDataFimPlano(calendarioSupplyPlan.getDataHorarioFinal());
@@ -785,11 +785,11 @@ public class SupplyPlanService {
 
         UnidadeMedidaProjection unidadeMedidaProjection = conversaoUnidadeMedidaProjectionFactory.getUnidadeMedidaProjectionComConversoes();
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
 
         ParametrosGlobais parametrosGlobais =
-                clusterEParametrosProjection.getParametrosGlobais();
+                cadastroEParametrosProjection.getParametrosGlobais();
         VersaoMalha versaoMalha = supplyPlan.getVersaoMalha();
         /*
          * Parametros de optimizer, P&L, cost-to-serve, line scheduling, soft
@@ -802,26 +802,26 @@ public class SupplyPlanService {
         PoliticaEstoquesProjection politicaEstoquesProjection =
                 politicaEstoquesProjectionFactory.getPoliticaEstoquesProjection(
                                 supplyPlan.getCalendarioDoSupplyPlan(parametrosGlobais),
-                                clusterEParametrosProjection,
+                                cadastroEParametrosProjection,
                                 perfilExecucaoSupplyPlan);
 
         // só mantém locations que são executadas de acordo com perfil execução supply plan
         // ignora o valor do campo ExecutaSupplyPlanParaTodasLocations
         LocationProjection locationProjection =
                 LocationProjectionFactory.getLocationProjectionDePerfilExecucaoSupplyPlan(
-                                perfilExecucaoSupplyPlan, clusterEParametrosProjection);
+                                perfilExecucaoSupplyPlan, cadastroEParametrosProjection);
         locationProjection = getLocationProjectionComEscopoEnterprise(
                         perfilExecucaoSupplyPlan,
-                        clusterEParametrosProjection,
+                        cadastroEParametrosProjection,
                         locationProjection);
         //só mantém materiais que são executadas de acordo com perfil execução supply plan
         MaterialProjection materialProjection =
                 getMaterialProjectionComEscopoEnterprise(
                                 perfilExecucaoSupplyPlan,
-                                clusterEParametrosProjection,
+                                cadastroEParametrosProjection,
                                 MaterialProjectionFactory.getMaterialProjectionDePerfilExecucaoSupplyPlan(
                                         perfilExecucaoSupplyPlan,
-                                        clusterEParametrosProjection));
+                                        cadastroEParametrosProjection));
 
         SupplyNetworkProjection supplyNetworkProjection =
                 supplyNetworkProjectionFactory.getSupplyNetworkProjectionCompletoDeCache();
@@ -900,7 +900,7 @@ public class SupplyPlanService {
                         perfilExecucaoSupplyPlan,
                         supplyPlan.getDemandPlan(),
                         perfilExecucaoSupplyPlan.getLocationsClienteApenasPropagamDemanda() ?
-                                clusterEParametrosProjection.getLocationsAtivas() // se há apenas propagação, trazer a demanda de todas as locations, inclusive aquelas excluídas do perfil execução
+                                cadastroEParametrosProjection.getLocationsAtivas() // se há apenas propagação, trazer a demanda de todas as locations, inclusive aquelas excluídas do perfil execução
                                 : locationProjection.getLocationSet(), // se locations cliente são efetivamente planejadas, aplicar o filtro de locations do perfil de execução
                         materialProjection.getMateriaisAtivos());
 
@@ -1204,7 +1204,7 @@ public class SupplyPlanService {
      */
     private LocationProjection getLocationProjectionComEscopoEnterprise(
             PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             LocationProjection locationProjectionCommunity) {
 
         if (supplyPlanExecutionProfileLocationScope == null) {
@@ -1214,7 +1214,7 @@ public class SupplyPlanService {
         return supplyPlanExecutionProfileLocationScope
                 .getLocationProjectionParaExecucaoSupplyPlan(
                         perfilExecucaoSupplyPlan,
-                        clusterEParametrosProjection,
+                        cadastroEParametrosProjection,
                         locationProjectionCommunity);
 
     }
@@ -1231,7 +1231,7 @@ public class SupplyPlanService {
      */
     private MaterialProjection getMaterialProjectionComEscopoEnterprise(
             PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             MaterialProjection materialProjectionCommunity) {
 
         if (supplyPlanExecutionProfileMaterialScope == null) {
@@ -1241,7 +1241,7 @@ public class SupplyPlanService {
         return supplyPlanExecutionProfileMaterialScope
                 .getMaterialProjectionParaExecucaoSupplyPlan(
                         perfilExecucaoSupplyPlan,
-                        clusterEParametrosProjection,
+                        cadastroEParametrosProjection,
                         materialProjectionCommunity);
 
     }
@@ -1276,15 +1276,15 @@ public class SupplyPlanService {
 
         UnidadeMedidaProjection unidadeMedidaProjection =
                 supplyNetworkProjection.getConversaoUnidadeMedidaProjection();
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                supplyNetworkProjection.getCadastroEParametrosProjection();
         ParametrosGlobais parametrosGlobais =
-                clusterEParametrosProjection.getParametrosGlobais();
+                cadastroEParametrosProjection.getParametrosGlobais();
 
         Calendario calendarioSupplyPlan = supplyPlan.getCalendarioDoSupplyPlan(parametrosGlobais);
         VersaoMalha versaoMalha = supplyPlan.getVersaoMalha();
 
-        LocationProjection locationProjection = LocationProjectionFactory.getProjectionSetLocations(locations, clusterEParametrosProjection);
+        LocationProjection locationProjection = LocationProjectionFactory.getProjectionSetLocations(locations, cadastroEParametrosProjection);
 
         SupplyPlanningMultiplasLocationsProjection supplyPlanningMultiplasLocationsProjection = supplyPlanProjectionFactory.getSupplyPlanningMultiplasLocationsProjectionVazio(
                 supplyPlan,
@@ -1301,7 +1301,7 @@ public class SupplyPlanService {
                         supplyPlan.getDataInicioPlano(),
                         locationProjection,
                         materialProjection,
-                        clusterEParametrosProjection,
+                        cadastroEParametrosProjection,
                         unidadeMedidaProjection);
                 supplyPlanProjectionFactory.populaInventoryPlanComEstoqueInicial(
                         supplyPlanningMultiplasLocationsProjection,
@@ -2983,11 +2983,11 @@ public class SupplyPlanService {
             LocalDateTime  dataHorarioReferenciaEstoque,
             LocationProjection locationProjection,
             MaterialProjection materialProjection,
-            ClusterEParametrosProjection clusterEParametrosProjection,
+            CadastroEParametrosProjection cadastroEParametrosProjection,
             UnidadeMedidaProjection unidadeMedidaProjection) {
 
         ParametrosGlobais parametrosGlobais =
-                clusterEParametrosProjection.getParametrosGlobais();
+                cadastroEParametrosProjection.getParametrosGlobais();
         UnidadeMedida unidadeMedidaPadraoSnp =
                 parametrosGlobais.getUnidadeMedidaPadraoSNP();
 
@@ -2996,7 +2996,7 @@ public class SupplyPlanService {
                 locationProjection.getLocationsAtivas(),
                 materialProjection.getMateriaisAtivos(),
                 unidadeMedidaProjection,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 unidadeMedidaPadraoSnp);
 
     }
@@ -3015,14 +3015,14 @@ public class SupplyPlanService {
             throw new IllegalArgumentException(
                     "Supply Network projection is required for projected initial stock projection.");
         }
-        ClusterEParametrosProjection clusterEParametrosProjection = supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = supplyNetworkProjection.getCadastroEParametrosProjection();
         ParametrosGlobais parametrosGlobais =
-                clusterEParametrosProjection.getParametrosGlobais();
+                cadastroEParametrosProjection.getParametrosGlobais();
         UnidadeMedida unidadeMedidaSnp = parametrosGlobais.getUnidadeMedidaPadraoSNP();
 
-        LocationProjection locationProjectionCompleto = LocationProjectionFactory.getLocationProjectionCompleto(clusterEParametrosProjection);
+        LocationProjection locationProjectionCompleto = LocationProjectionFactory.getLocationProjectionCompleto(cadastroEParametrosProjection);
         Set<Produto> materiaisAtivosNaLocation = materialProjection.getMateriaisAtivosEmLocation(location);
-        MaterialProjection materialProjectionNaLocationAtual = MaterialProjectionFactory.getProjectionSetMateriais(materiaisAtivosNaLocation, clusterEParametrosProjection);
+        MaterialProjection materialProjectionNaLocationAtual = MaterialProjectionFactory.getProjectionSetMateriais(materiaisAtivosNaLocation, cadastroEParametrosProjection);
 
         LocalDateTime ultimaDataHorarioComEstoqueAntesReferencia = estoqueRepository
                 .getUltimaDataHorarioIgualOuMenorDataHorarioReferencia(dataHorarioEstoqueAProjetar)
@@ -3096,19 +3096,19 @@ public class SupplyPlanService {
             EstoqueProjectionProduto estoqueProjectionProdutoUltimoEstoqueDisponivel = estoqueProjectionFactory.getEstoqueProjectionProduto(
                     ultimaDataHorarioComEstoqueAntesReferencia,
                     location, materiaisAtivosNaLocation,
-                    unidadeMedidaProjection, clusterEParametrosProjection,
+                    unidadeMedidaProjection, cadastroEParametrosProjection,
                     unidadeMedidaSnp);
 
             // Estoque projetado para D0
             EstoqueProjectionProduto estoqueProjectionProdutoEstoqueInicialProjetado = EstoqueProjectionProduto.builder()
                     .calendario(calendarioParaProjecaoPreEstoque)
-                    .clusterEParametrosProjection(clusterEParametrosProjection)
+                    .cadastroEParametrosProjection(cadastroEParametrosProjection)
                     .conversaoUnidadeMedidaProjection(unidadeMedidaProjection)
                     .build();
 
             for (Produto material : materialProjection.getMateriaisAtivos()) {
 
-                UnidadeMedida unidadeMedidaPadraoMaterial = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(material, location);
+                UnidadeMedida unidadeMedidaPadraoMaterial = cadastroEParametrosProjection.getSNPUnidadeMedidaPadrao(material, location);
 
                 double posicaoEstoqueInicial = SupplyPlanning.getEstoqueProjetadoDeSupplyPlanningProjectionCalendarioOrigemParaPeriodoCalendarioTarget(
                         // calendario com bucket size = supply plan antigo usado para projeção estoque inicial
@@ -3139,7 +3139,7 @@ public class SupplyPlanService {
         } else {
             return estoqueProjectionFactory.getEstoqueProjectionProduto(
                     dataHorarioEstoqueAProjetar, location, materiaisAtivosNaLocation,
-                    unidadeMedidaProjection, clusterEParametrosProjection,
+                    unidadeMedidaProjection, cadastroEParametrosProjection,
                     unidadeMedidaSnp);
         }
 
@@ -3233,7 +3233,7 @@ public class SupplyPlanService {
             SupplyNetworkProjection supplyNetworkProjection,
             UnidadeMedidaProjection unidadeMedidaProjection) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
+        CadastroEParametrosProjection cadastroEParametrosProjection =
                 validaEntradasDemandaDiretaConsideradaCommunity(
                         supplyPlan,
                         perfilExecucaoSupplyPlan,
@@ -3243,14 +3243,14 @@ public class SupplyPlanService {
                         supplyNetworkProjection,
                         unidadeMedidaProjection);
         ParametrosGlobais parametrosGlobais =
-                clusterEParametrosProjection.getParametrosGlobais();
+                cadastroEParametrosProjection.getParametrosGlobais();
         Calendario calendarioSupplyPlan = supplyPlan.getCalendarioDoSupplyPlan(parametrosGlobais);
 
         // Community nao possui exclusao/inclusao por location no perfil de
         // execucao. A lista abaixo mantem todas as locations relevantes para
         // demanda direta antes da consolidacao/propagacao global do perfil.
-        LocationProjection locationProjectionPerfilExecucao = LocationProjectionFactory.getLocationProjectionDePerfilExecucaoSupplyPlan(perfilExecucaoSupplyPlan, clusterEParametrosProjection);
-        Set<Location> locationsClientesFinaisSemExclusaoNoPerfilExecucao = clusterEParametrosProjection.getLocationsAtivas()
+        LocationProjection locationProjectionPerfilExecucao = LocationProjectionFactory.getLocationProjectionDePerfilExecucaoSupplyPlan(perfilExecucaoSupplyPlan, cadastroEParametrosProjection);
+        Set<Location> locationsClientesFinaisSemExclusaoNoPerfilExecucao = cadastroEParametrosProjection.getLocationsAtivas()
                 .stream()
                 // locations clientes no caso de propagacao para regioes comerciais ou locations clientes/regioes no caso de propagacao para locations internas
                 .filter(location ->
@@ -3261,10 +3261,10 @@ public class SupplyPlanService {
 
         MaterialProjection materialProjection = getMaterialProjectionComEscopoEnterprise(
                 perfilExecucaoSupplyPlan,
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 MaterialProjectionFactory.getMaterialProjectionDePerfilExecucaoSupplyPlan(
                         perfilExecucaoSupplyPlan,
-                        clusterEParametrosProjection));
+                        cadastroEParametrosProjection));
 
         // possíveis targets para consolidação dependem do tipo de consolidação : no nível de locations internas ou de regiões comerciais
         Set<Location> locationsCandidatasConsolidacaoDemanda;
@@ -3328,7 +3328,7 @@ public class SupplyPlanService {
                                         + material.getId()
                                         + " and demand location "
                                         + locationComPlanoDemanda.getId() + "."));
-                UnidadeMedida unidadeMedidaPadrao = clusterEParametrosProjection.getSNPUnidadeMedidaPadrao(material, locationConsiderada);
+                UnidadeMedida unidadeMedidaPadrao = cadastroEParametrosProjection.getSNPUnidadeMedidaPadrao(material, locationConsiderada);
 
                 boolean houveConsolidacaoDemandaClienteEmLocationInterna = !locationConsiderada.equals(locationComPlanoDemanda);
 
@@ -3345,7 +3345,7 @@ public class SupplyPlanService {
                         : 0; // não houve propagação para location interna : não há offset de deslocamento da demanda
 
                 for (int i = calendarioSupplyPlan.getPosicaoPeriodoPresente(); i <= perfilExecucaoSupplyPlan.getUltimoPeriodoFuturoHorizonteAPartirPeriodoPresente(locationComPlanoDemanda,
-                        calendarioSupplyPlan, clusterEParametrosProjection) - offsetPeriodosLeadTime; i++) {
+                        calendarioSupplyPlan, cadastroEParametrosProjection) - offsetPeriodosLeadTime; i++) {
                     double quantidadeDemandPlanNoBucketSupply = getQuantidadeDemandPlanCommunityNoBucketSupply(
                             demandPlanningProjection,
                             splitTemporalProjectionPorDfu,
@@ -3398,7 +3398,7 @@ public class SupplyPlanService {
      * obrigatorios falham com mensagem funcional antes do processamento
      * paralelo por location.</p>
      */
-    private ClusterEParametrosProjection validaEntradasDemandaDiretaConsideradaCommunity(
+    private CadastroEParametrosProjection validaEntradasDemandaDiretaConsideradaCommunity(
             SupplyPlan supplyPlan,
             PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan,
             DemandPlanningProjection demandPlanningProjection,
@@ -3431,10 +3431,10 @@ public class SupplyPlanService {
                     "Inventory policy projection is required for Community direct demand considered update.");
         }
 
-        ClusterEParametrosProjection clusterEParametrosProjection =
-                supplyNetworkProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection =
+                supplyNetworkProjection.getCadastroEParametrosProjection();
 
-        return clusterEParametrosProjection;
+        return cadastroEParametrosProjection;
 
     }
 

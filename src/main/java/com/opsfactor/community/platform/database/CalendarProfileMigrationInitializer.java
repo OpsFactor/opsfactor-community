@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,7 +61,6 @@ public class CalendarProfileMigrationInitializer implements ApplicationRunner {
     /** Executa depois de Hibernate disponibilizar o schema, usando consultas e gravações em lote. */
     @Override
     @Transactional
-    @CacheEvict(value = "parametrosDemandPlanProjection", allEntries = true)
     public void run(ApplicationArguments arguments) {
 
         migrarPerfisDemandExplicitos();

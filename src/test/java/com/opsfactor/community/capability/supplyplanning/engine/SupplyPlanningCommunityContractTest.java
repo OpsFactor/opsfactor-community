@@ -5,7 +5,7 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.production.productionversion.domain.VersaoProducao;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.MaterialProjectionCompleto;
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.projection.PoliticaEstoquesProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
@@ -127,7 +127,7 @@ class SupplyPlanningCommunityContractTest {
                         location,
                         material,
                         calendario,
-                        new FakeClusterEParametrosProjectionComLotesInvalidos()));
+                        new FakeCadastroEParametrosProjectionComLotesInvalidos()));
 
         Assertions.assertEquals(
                 "Process Time cannot be larger than Shelf Life for Material MAT-03 / Location LOC-03",
@@ -184,9 +184,9 @@ class SupplyPlanningCommunityContractTest {
         }
 
         @Override
-        public ClusterEParametrosProjection getClusterEParametrosProjection() {
+        public CadastroEParametrosProjection getCadastroEParametrosProjection() {
 
-            return new FakeClusterEParametrosProjection();
+            return new FakeCadastroEParametrosProjection();
 
         }
 
@@ -202,7 +202,7 @@ class SupplyPlanningCommunityContractTest {
 
     }
 
-    private static class FakeClusterEParametrosProjection extends ClusterEParametrosProjection {
+    private static class FakeCadastroEParametrosProjection extends CadastroEParametrosProjection {
 
         @Override
         public UnidadeMedida getSNPUnidadeMedidaPadrao(
@@ -215,7 +215,7 @@ class SupplyPlanningCommunityContractTest {
 
     }
 
-    private static class FakeClusterEParametrosProjectionComLotesInvalidos extends ClusterEParametrosProjection {
+    private static class FakeCadastroEParametrosProjectionComLotesInvalidos extends CadastroEParametrosProjection {
 
         @Override
         public Optional<Integer> getPrazoValidadeEmPeriodos(

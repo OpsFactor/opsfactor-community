@@ -5,8 +5,8 @@ import com.opsfactor.community.capability.masterdata.product.material.domain.Pro
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlanItem;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.FiltroDFUProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.LocationProjection;
@@ -62,7 +62,7 @@ public class CommunityDemandSalesOverviewService {
 
     /** Carrega os parâmetros globais e escopos ativos do cluster. */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory;
+    private CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory;
 
     /** Fornece as conversões de unidade indexadas usadas na consolidação. */
     @Autowired
@@ -93,8 +93,8 @@ public class CommunityDemandSalesOverviewService {
                 : demandPlanningService.getDemandPlanDeId(selectionDTO.demandPlanId());
         UnidadeMedida targetUnitOfMeasure = unidadeMedidaService.getUnidadeMedida(
                 selectionDTO.unitOfMeasureId());
-        ClusterEParametrosProjection clusterAndParametersProjection =
-                clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
+        CadastroEParametrosProjection clusterAndParametersProjection =
+                cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache();
         UnidadeMedidaProjection unitOfMeasureProjection =
                 unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache();
 
@@ -190,7 +190,7 @@ public class CommunityDemandSalesOverviewService {
      */
     private Map<String, String> getLocationCharacteristicValues(
             Location location,
-            ClusterEParametrosProjection clusterAndParametersProjection) {
+            CadastroEParametrosProjection clusterAndParametersProjection) {
 
         Map<String, String> values = new LinkedHashMap<>();
         clusterAndParametersProjection.getCaracteristicaLocationMap()
@@ -208,7 +208,7 @@ public class CommunityDemandSalesOverviewService {
      */
     private Map<String, String> getMaterialCharacteristicValues(
             Produto material,
-            ClusterEParametrosProjection clusterAndParametersProjection) {
+            CadastroEParametrosProjection clusterAndParametersProjection) {
 
         Map<String, String> values = new LinkedHashMap<>();
         clusterAndParametersProjection.getCaracteristicaProdutoMap()
@@ -225,7 +225,7 @@ public class CommunityDemandSalesOverviewService {
      */
     private FiltroDFUProjection getActiveDfuProjection(
             CommunityDemandSalesOverviewSelectionDTO selectionDTO,
-            ClusterEParametrosProjection clusterAndParametersProjection) {
+            CadastroEParametrosProjection clusterAndParametersProjection) {
 
         FiltroMaterialLocationDeCombinacaoCaracteristicasDTO filterDTO =
                 getMaterialLocationFilter(selectionDTO);
@@ -378,7 +378,7 @@ public class CommunityDemandSalesOverviewService {
     private Set<LocalDateTime> getSelectedDemandPlanPeriodEndDates(
             CommunityDemandSalesOverviewSelectionDTO selectionDTO,
             DemandPlan demandPlan,
-            ClusterEParametrosProjection clusterAndParametersProjection) {
+            CadastroEParametrosProjection clusterAndParametersProjection) {
 
         List<LocalDateTime> selectedReferenceDates =
                 selectionDTO.demandPlanPeriodReferenceDates();

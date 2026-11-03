@@ -1,6 +1,8 @@
 package com.opsfactor.community.capability.configuration.facade;
 
 import org.springframework.test.util.ReflectionTestUtils;
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
+import com.opsfactor.community.capability.configuration.repository.cluster.PerfilClusterizacaoRepository;
 import org.mockito.Mockito;
 import com.opsfactor.community.capability.masterdata.calendar.profile.domain.PerfilCalendarioSimples;
 import com.opsfactor.community.capability.masterdata.calendar.profile.repository.PerfilCalendarioSimplesRepository;
@@ -751,6 +753,10 @@ public class PerfilExecucaoDemandPlanFacadeTest {
     private static PerfilExecucaoDemandPlanFacade createCalendarConfiguredFacade() {
 
         PerfilExecucaoDemandPlanFacade facade = new PerfilExecucaoDemandPlanFacade();
+        PerfilClusterizacaoRepository profileRepository = Mockito.mock(PerfilClusterizacaoRepository.class);
+        Mockito.when(profileRepository.getReferenceById(PerfilClusterizacao.ID_LEGADO)).thenReturn(
+                new PerfilClusterizacao(PerfilClusterizacao.ID_LEGADO, "Default"));
+        ReflectionTestUtils.setField(facade, "perfilClusterizacaoRepository", profileRepository);
         PerfilCalendarioSimplesRepository calendarRepository = Mockito.mock(PerfilCalendarioSimplesRepository.class);
         Mockito.when(calendarRepository.findById(Mockito.anyString())).thenReturn(Optional.of(
                 new PerfilCalendarioSimples("CALENDAR_TEST", Constantes.TamanhoBucket.MENSAL, 12)));

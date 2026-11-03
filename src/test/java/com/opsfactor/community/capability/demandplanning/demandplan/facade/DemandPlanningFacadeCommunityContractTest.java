@@ -8,8 +8,8 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlanItem;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.factory.ParametrosDemandPlanningProjectionFactory;
 import com.opsfactor.community.capability.configuration.user.projection.ConfiguredViewProjection;
@@ -133,7 +133,7 @@ class DemandPlanningFacadeCommunityContractTest {
                 "locationRepository",
                 "configuredViewProjectionFactory",
                 "conversaoUnidadeMedidaProjectionFactory",
-                "clusterEParametrosProjectionFactory",
+                "cadastroEParametrosProjectionFactory",
                 "demandPlanProjectionFactory",
                 "salesProjectionFactory",
                 "keyFigureProjectionFactory",
@@ -1288,31 +1288,31 @@ class DemandPlanningFacadeCommunityContractTest {
 
     }
 
-    private static class TestClusterEParametrosProjectionFactory extends ClusterEParametrosProjectionFactory {
+    private static class TestCadastroEParametrosProjectionFactory extends CadastroEParametrosProjectionFactory {
 
-        private final ClusterEParametrosProjection clusterEParametrosProjection;
+        private final CadastroEParametrosProjection cadastroEParametrosProjection;
 
-        private TestClusterEParametrosProjectionFactory(
-                ClusterEParametrosProjection clusterEParametrosProjection) {
+        private TestCadastroEParametrosProjectionFactory(
+                CadastroEParametrosProjection cadastroEParametrosProjection) {
 
-            this.clusterEParametrosProjection = clusterEParametrosProjection;
+            this.cadastroEParametrosProjection = cadastroEParametrosProjection;
 
         }
 
         @Override
-        public ClusterEParametrosProjection getParametrosProjectionCompletoDeCache() {
+        public CadastroEParametrosProjection getParametrosProjectionCompletoDeCache() {
 
-            return clusterEParametrosProjection;
+            return cadastroEParametrosProjection;
 
         }
 
     }
 
-    private static class TestClusterEParametrosProjection extends ClusterEParametrosProjection {
+    private static class TestCadastroEParametrosProjection extends CadastroEParametrosProjection {
 
         private final ParametrosGlobais parametrosGlobais;
 
-        private TestClusterEParametrosProjection(
+        private TestCadastroEParametrosProjection(
                 ParametrosGlobais parametrosGlobais) {
 
             this.parametrosGlobais = parametrosGlobais;
@@ -1380,7 +1380,7 @@ class DemandPlanningFacadeCommunityContractTest {
         }
 
         @Override
-        public ParametrosDemandPlanProjection getParametrosDemandPlanProjectionDeCache(
+        public ParametrosDemandPlanProjection getParametrosDemandPlanProjection(
                 PerfilExecucaoDemandPlan perfilExecucaoDemandPlan) {
 
             return parametrosDemandPlanProjection;

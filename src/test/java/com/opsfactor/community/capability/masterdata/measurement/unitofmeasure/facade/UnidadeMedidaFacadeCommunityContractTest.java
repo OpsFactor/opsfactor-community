@@ -9,8 +9,8 @@ import com.opsfactor.community.capability.demandplanning.demandplan.domain.Deman
 import com.opsfactor.community.capability.supplyplanning.distributionplan.domain.DistributionPlanItem;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.factory.ParametrosDemandPlanningProjectionFactory;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
@@ -325,26 +325,26 @@ public class UnidadeMedidaFacadeCommunityContractTest {
         UnidadeMedida unidadeMedidaTransferencia = Mockito.mock(UnidadeMedida.class);
         ParametrosGlobais parametrosGlobais = new ParametrosGlobais();
         UnidadeMedidaProjection unidadeMedidaProjection = Mockito.mock(UnidadeMedidaProjection.class);
-        ClusterEParametrosProjection clusterEParametrosProjection = Mockito.mock(ClusterEParametrosProjection.class);
+        CadastroEParametrosProjection cadastroEParametrosProjection = Mockito.mock(CadastroEParametrosProjection.class);
         SupplyPlanRepository supplyPlanRepository = Mockito.mock(SupplyPlanRepository.class);
         DistributionPlanItemRepository distributionPlanItemRepository =
                 Mockito.mock(DistributionPlanItemRepository.class);
         UnidadeMedidaProjectionFactory unidadeMedidaProjectionFactory =
                 Mockito.mock(UnidadeMedidaProjectionFactory.class);
-        ClusterEParametrosProjectionFactory clusterEParametrosProjectionFactory =
-                Mockito.mock(ClusterEParametrosProjectionFactory.class);
+        CadastroEParametrosProjectionFactory cadastroEParametrosProjectionFactory =
+                Mockito.mock(CadastroEParametrosProjectionFactory.class);
 
         Mockito.when(supplyPlanRepository.customFindById(73L)).thenReturn(Optional.of(supplyPlan));
         Mockito.when(distributionPlanItemRepository.customFindBySupplyPlan(supplyPlan))
                 .thenReturn(List.of(distributionPlanItem));
         Mockito.when(unidadeMedidaProjectionFactory.getUnidadeMedidaProjectionCompletoDeCache())
                 .thenReturn(unidadeMedidaProjection);
-        Mockito.when(clusterEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache())
-                .thenReturn(clusterEParametrosProjection);
-        Mockito.when(clusterEParametrosProjection.getParametrosGlobais()).thenReturn(parametrosGlobais);
-        Mockito.when(clusterEParametrosProjection.getLocationMap())
+        Mockito.when(cadastroEParametrosProjectionFactory.getParametrosProjectionCompletoDeCache())
+                .thenReturn(cadastroEParametrosProjection);
+        Mockito.when(cadastroEParametrosProjection.getParametrosGlobais()).thenReturn(parametrosGlobais);
+        Mockito.when(cadastroEParametrosProjection.getLocationMap())
                 .thenReturn(Map.of("ORIGIN", locationOrigemCanonica));
-        Mockito.when(clusterEParametrosProjection.getTransferenciaUnidadeMedida(
+        Mockito.when(cadastroEParametrosProjection.getTransferenciaUnidadeMedida(
                 material,
                 locationOrigem,
                 locationDestino)).thenReturn(unidadeMedidaTransferencia);
@@ -369,8 +369,8 @@ public class UnidadeMedidaFacadeCommunityContractTest {
         setField(unidadeMedidaFrontService, "unidadeMedidaProjectionFactory", unidadeMedidaProjectionFactory);
         setField(
                 unidadeMedidaFrontService,
-                "clusterEParametrosProjectionFactory",
-                clusterEParametrosProjectionFactory);
+                "cadastroEParametrosProjectionFactory",
+                cadastroEParametrosProjectionFactory);
 
         var result = unidadeMedidaFrontService.getUnidadeConversaoFaltanteDeploymentListDTO(73L);
 
@@ -399,9 +399,9 @@ public class UnidadeMedidaFacadeCommunityContractTest {
                         createUnidadeMedidaProjectionComParametrosGlobais()));
         setField(
                 unidadeMedidaFrontService,
-                "clusterEParametrosProjectionFactory",
-                new FakeClusterEParametrosProjectionFactory(
-                        createClusterEParametrosProjectionComParametrosGlobais()));
+                "cadastroEParametrosProjectionFactory",
+                new FakeCadastroEParametrosProjectionFactory(
+                        createCadastroEParametrosProjectionComParametrosGlobais()));
         setField(
                 unidadeMedidaFrontService,
                 "parametrosDemandPlanningProjectionFactory",
@@ -421,14 +421,14 @@ public class UnidadeMedidaFacadeCommunityContractTest {
 
     }
 
-    private static ClusterEParametrosProjection createClusterEParametrosProjectionComParametrosGlobais() throws Exception {
+    private static CadastroEParametrosProjection createCadastroEParametrosProjectionComParametrosGlobais() throws Exception {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = new ClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = new CadastroEParametrosProjection();
         setField(
-                clusterEParametrosProjection,
+                cadastroEParametrosProjection,
                 "parametrosGlobais",
                 new ParametrosGlobais());
-        return clusterEParametrosProjection;
+        return cadastroEParametrosProjection;
 
     }
 
@@ -451,20 +451,20 @@ public class UnidadeMedidaFacadeCommunityContractTest {
 
     }
 
-    private static class FakeClusterEParametrosProjectionFactory extends ClusterEParametrosProjectionFactory {
+    private static class FakeCadastroEParametrosProjectionFactory extends CadastroEParametrosProjectionFactory {
 
-        private final ClusterEParametrosProjection clusterEParametrosProjection;
+        private final CadastroEParametrosProjection cadastroEParametrosProjection;
 
-        private FakeClusterEParametrosProjectionFactory(ClusterEParametrosProjection clusterEParametrosProjection) {
+        private FakeCadastroEParametrosProjectionFactory(CadastroEParametrosProjection cadastroEParametrosProjection) {
 
-            this.clusterEParametrosProjection = clusterEParametrosProjection;
+            this.cadastroEParametrosProjection = cadastroEParametrosProjection;
 
         }
 
         @Override
-        public ClusterEParametrosProjection getParametrosProjectionCompletoDeCache() {
+        public CadastroEParametrosProjection getParametrosProjectionCompletoDeCache() {
 
-            return clusterEParametrosProjection;
+            return cadastroEParametrosProjection;
 
         }
 
@@ -482,7 +482,7 @@ public class UnidadeMedidaFacadeCommunityContractTest {
         }
 
         @Override
-        public ParametrosDemandPlanProjection getParametrosDemandPlanProjectionDeCache(
+        public ParametrosDemandPlanProjection getParametrosDemandPlanProjection(
                 String perfilExecucaoDemandPlanId) {
 
             return parametrosDemandPlanProjection;

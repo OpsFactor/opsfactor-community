@@ -1,8 +1,8 @@
 package com.opsfactor.community.capability.demandplanning.export;
 
 import com.opsfactor.community.capability.configuration.domain.ParametrosGlobais;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjectionFactory;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlan;
 import com.opsfactor.community.capability.demandplanning.demandplan.domain.DemandPlanItem;
 import com.opsfactor.community.capability.demandplanning.demandplan.repository.DemandPlanItemRepository;
@@ -39,7 +39,7 @@ public class CommunityDemandPlanDetailedExportService implements DemandPlanDetai
 
     /** Factory dos parametros e clusters usados para contextualizar a exportacao. */
     @Autowired
-    private ClusterEParametrosProjectionFactory clusterAndParametersProjectionFactory;
+    private CadastroEParametrosProjectionFactory clusterAndParametersProjectionFactory;
 
     /** Exporta a fotografia standard completa do plano. */
     @Override
@@ -143,7 +143,7 @@ public class CommunityDemandPlanDetailedExportService implements DemandPlanDetai
     /** Obtem os parametros globais usados para resolver a UOM da linha. */
     private ParametrosGlobais getRequiredGlobalParameters() {
 
-        ClusterEParametrosProjection clusterAndParametersProjection = clusterAndParametersProjectionFactory
+        CadastroEParametrosProjection clusterAndParametersProjection = clusterAndParametersProjectionFactory
                 .getParametrosProjectionCompletoDeCache();
         if (clusterAndParametersProjection == null
                 || clusterAndParametersProjection.getParametrosGlobais() == null) {

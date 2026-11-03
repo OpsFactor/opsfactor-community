@@ -7,7 +7,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.DemandaDiretaConsideradaLinha;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.SupplyPlan;
 import com.opsfactor.community.platform.projection.inmemorybi.BIEmMemoria;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.masterdata.demand.dfu.projection.DFU;
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.projection.PoliticaEstoquesProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
@@ -359,7 +359,7 @@ public class DemandaDiretaConsideradaProjection {
             PoliticaEstoquesProjection politicaEstoquesProjection,
             PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan) {
 
-        ClusterEParametrosProjection clusterEParametrosProjection = politicaEstoquesProjection.getClusterEParametrosProjection();
+        CadastroEParametrosProjection cadastroEParametrosProjection = politicaEstoquesProjection.getCadastroEParametrosProjection();
 
         biEmMemoriaDemandPlanRestritoEIrrestritoLinha.getAllRecords()
                 .stream()
@@ -367,7 +367,7 @@ public class DemandaDiretaConsideradaProjection {
                     Location location = demandaDiretaConsideradaLinha.getLocation();
 
                     // só atualiza locations cobertas pelo perfil de execução
-                    if (!perfilExecucaoSupplyPlan.contemLocation(clusterEParametrosProjection, location)) return;
+                    if (!perfilExecucaoSupplyPlan.contemLocation(cadastroEParametrosProjection, location)) return;
 
                     // Community usa apenas Demand Plan como fonte futura.
                     // Conciliacao forecast/carteira, MTO sem forecast e

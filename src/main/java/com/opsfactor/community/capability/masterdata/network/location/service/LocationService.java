@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.DependsOn;
+import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.NoResultException;
@@ -28,6 +30,7 @@ import java.util.Optional;
  * operacional minimo usado por Demand/Supply heuristico.</p>
  */
 @Service
+@DependsOn("perfilClusterizacaoInicializacaoService")
 @Slf4j
 public class LocationService {
 
@@ -99,8 +102,10 @@ public class LocationService {
              * default precisa nascer com id fixo antes de algumas rotinas
              * legadas de configuracao relerem a entidade pelo repository.
              */
-            jdbcTemplate.update("insert into cluster_locations (id,descricao,padrao,prioridade) values (?,?,?,?)",
+            // A FK composta exige o perfil padrão antes do cluster de ID fixo.
+            jdbcTemplate.update("insert into cluster_locations (id,perfil_clusterizacao_id,descricao,padrao,prioridade) values (?,?,?,?,?)",
                     Constantes.CLUSTER_LOCATION_PADRAO_ID,
+                    PerfilClusterizacao.ID_LEGADO,
                     Constantes.CLUSTER_LOCATION_PADRAO_DESCRICAO,
                     true,
                     999999);

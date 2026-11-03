@@ -3,7 +3,7 @@ package com.opsfactor.community.capability.transactionaldata.inventory.stock.pro
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
-import com.opsfactor.community.capability.configuration.projection.parametros.ClusterEParametrosProjection;
+import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
 import com.opsfactor.community.capability.transactionaldata.common.aggregation.projection.AggregatedDataInterface;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.platform.calendar.Calendario;
@@ -27,7 +27,7 @@ public abstract class EstoqueProjectionAbstract {
     /**
      * Projection base usada para defaults de UOM e contexto de DFU.
      */
-    protected ClusterEParametrosProjection clusterEParametrosProjection;
+    protected CadastroEParametrosProjection cadastroEParametrosProjection;
 
     /**
      * Projection de conversoes entre unidades usada nas leituras quantitativas.

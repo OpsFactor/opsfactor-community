@@ -15,7 +15,7 @@ public interface RegraAlocacaoClusterProdutosRepository extends JpaRepository<Re
     /**
      * Remove regras de alocacao ligadas ao cluster de produtos informado.
      */
-    @CacheEvict(value = "clusterEParametrosProjection", allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection"}, allEntries = true)
     void deleteAllByClusterProdutosId(Long cluster_produto_id);
 
     // OVERRIDES SAVE E DELETE PARA @CACHEEVICT -------------------------------------------------------------------------------------------
@@ -24,28 +24,28 @@ public interface RegraAlocacaoClusterProdutosRepository extends JpaRepository<Re
      * Salva regra de alocacao de cluster de produtos e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     public <S extends RegraAlocacaoClusterProdutos> S save(S entity);
 
     /**
      * Salva regras de alocacao de cluster de produtos em lote e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     <S extends RegraAlocacaoClusterProdutos> List<S> saveAll(Iterable<S> entities);
 
     /**
      * Remove regra de alocacao de cluster de produtos e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     public void delete(RegraAlocacaoClusterProdutos entity);
 
     /**
      * Remove regras de alocacao de cluster de produtos em lote e invalida snapshots de parametros/cluster e malha.
      */
     @Override
-    @CacheEvict(value = {"clusterEParametrosProjection", "supplyNetworkProjection"}, allEntries = true)
+    @CacheEvict(value = {"cadastroEParametrosProjection", "clusterizacaoProjection", "supplyNetworkProjection"}, allEntries = true)
     void deleteAll(Iterable<? extends RegraAlocacaoClusterProdutos> entities);
 
 }

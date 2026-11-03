@@ -129,10 +129,10 @@ public class CapacidadeEfetivaSupplyPlanService {
             BIProjectionCapacidadeProdutiva biProjectionCapacidadeProdutiva) {
 
         ParametrosGlobais parametrosGlobais = supplyNetworkProjection
-                .getClusterEParametrosProjection()
+                .getCadastroEParametrosProjection()
                 .getParametrosGlobais();
         Set<Location> locationsConsideradas =
-                perfilExecucaoSupplyPlan.getLocationsConsideradas(supplyNetworkProjection.getClusterEParametrosProjection());
+                perfilExecucaoSupplyPlan.getLocationsConsideradas(supplyNetworkProjection.getCadastroEParametrosProjection());
         validaLocationsConsideradasCapacidadeEfetivaCommunity(locationsConsideradas);
 
         List<CapacidadeProdutivaEfetivaRecursoProdutivoSupplyPlan> capacidadesProdutivas = new ArrayList<>();
@@ -203,11 +203,11 @@ public class CapacidadeEfetivaSupplyPlanService {
             throw new IllegalArgumentException(
                     "Supply network projection is required to persist Community effective production capacity snapshot.");
         }
-        if (supplyNetworkProjection.getClusterEParametrosProjection() == null) {
+        if (supplyNetworkProjection.getCadastroEParametrosProjection() == null) {
             throw new IllegalArgumentException(
                     "Cluster and parameters projection is required to persist Community effective production capacity snapshot.");
         }
-        if (supplyNetworkProjection.getClusterEParametrosProjection().getParametrosGlobais() == null) {
+        if (supplyNetworkProjection.getCadastroEParametrosProjection().getParametrosGlobais() == null) {
             throw new IllegalArgumentException(
                     "Global parameters are required to persist Community effective production capacity snapshot.");
         }
