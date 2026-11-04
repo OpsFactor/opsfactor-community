@@ -151,7 +151,11 @@ public final class DataFormatHttpMessageConverter extends AbstractGenericHttpMes
         // Preparation rejects hierarchical flat-file exports before a response body
         // or attachment header exists, allowing the normal Spring error pipeline.
         DataFormatCodec.PreparedWrite prepared = codec.prepareWrite(body, javaType, format, options);
-        String resourceName = request == null ? "data" : request.getRequestURI().replaceAll("[^a-zA-Z0-9_-]+", "-");
+        // File names describe the resource, without API/authentication/transport prefixes.
+        String resourcePath = request == null ? "data"
+                : request.getRequestURI().substring(request.getContextPath().length());
+        resourcePath = resourcePath.replaceFirst("^/api/secured/(?:data(?:upload)?/(?:json/|file/)?)?", "");
+        String resourceName = resourcePath.replaceAll("[^a-zA-Z0-9_-]+", "-").replaceAll("^-+|-+$", "");
         outputMessage.getHeaders().setContentDisposition(ContentDisposition.attachment()
                 .filename(resourceName + "." + format.extension(), StandardCharsets.UTF_8).build());
         try {

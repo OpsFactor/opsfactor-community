@@ -2,6 +2,7 @@ package com.opsfactor.community.web.configuration.dataformat;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -75,6 +76,25 @@ class DataFormatHttpIntegrationTest {
             assertEquals("000123", workbook.getSheetAt(0).getRow(1).getCell(0).getStringCellValue());
             assertEquals(1234.56, workbook.getSheetAt(0).getRow(1).getCell(1).getNumericCellValue(), 0.00001);
         }
+
+    }
+
+    @Test
+    void negotiatedDownloadsUseResourceNamesWithoutApiPrefixes() throws Exception {
+
+        for (String format : List.of("xlsx", "csv", "arrow", "parquet")) {
+            String disposition = mvc.perform(get("/api/secured/data/sample").param("format", format))
+                    .andExpect(status().isOk()).andReturn().getResponse().getHeader("Content-Disposition");
+            assertEquals("sample." + format,
+                    org.springframework.http.ContentDisposition.parse(disposition).getFilename());
+        }
+        String legacy = mvc.perform(get("/api/secured/dataupload/json/legacydto").param("format", "arrow"))
+                .andExpect(status().isOk()).andReturn().getResponse().getHeader("Content-Disposition");
+        assertEquals("legacydto.arrow", org.springframework.http.ContentDisposition.parse(legacy).getFilename());
+        String report = mvc.perform(get("/api/secured/planning/demand/changelog/17").param("format", "xlsx"))
+                .andExpect(status().isOk()).andReturn().getResponse().getHeader("Content-Disposition");
+        assertEquals("planning-demand-changelog-17.xlsx",
+                org.springframework.http.ContentDisposition.parse(report).getFilename());
 
     }
 
@@ -169,6 +189,9 @@ class DataFormatHttpIntegrationTest {
         try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(xlsx))) {
             assertEquals("Material code", workbook.getSheetAt(0).getRow(0).getCell(0).getStringCellValue());
             assertEquals("000123", workbook.getSheetAt(0).getRow(1).getCell(0).getStringCellValue());
+            var calculatedCost = workbook.getSheetAt(0).getRow(1).getCell(2);
+            assertEquals(CellType.NUMERIC, calculatedCost.getCellType());
+            assertEquals(103.51581249999998d, calculatedCost.getNumericCellValue());
         }
 
     }
@@ -367,8 +390,10 @@ class DataFormatHttpIntegrationTest {
         public ResponseEntity<AgGridDTO> gridReport(@PathVariable("id") long id) {
 
             AgGridDTO report = new AgGridDTO();
-            report.columnDefs = List.of(new GridColumn("identifier", "Material code"), new GridColumn("quantity", "Output quantity"));
-            report.data = List.of(Map.of("identifier", "000123", "quantity", new BigDecimal("1234.56")));
+            report.columnDefs = List.of(new GridColumn("identifier", "Material code"),
+                    new GridColumn("quantity", "Output quantity"), new GridColumn("calculatedCost", "Calculated cost"));
+            report.data = List.of(Map.of("identifier", "000123", "quantity", new BigDecimal("1234.56"),
+                    "calculatedCost", 103.51581249999998d));
             return ResponseEntity.ok(report);
 
         }

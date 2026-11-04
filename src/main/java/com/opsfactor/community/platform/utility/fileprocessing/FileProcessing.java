@@ -91,10 +91,13 @@ public abstract class FileProcessing {
                                         .toLocalDateTime();
                             } else {
                                 // campo numerico representa um numero
-                                valorCelula = cell.getNumericCellValue();
-                                // se numero nao tiver casas decimais, traduzir como long para evitar .0 na string
-                                if (((double) valorCelula % 1) == 0) {
-                                    valorCelula = ((Double) valorCelula).longValue();
+                                double numericValue = cell.getNumericCellValue();
+                                valorCelula = numericValue;
+                                // Keep integral cells as Long only when their binary value fits exactly.
+                                // The exclusive upper bound avoids saturation at double's rounded Long.MAX_VALUE.
+                                if (numericValue == Math.rint(numericValue)
+                                        && numericValue >= -0x1p63 && numericValue < 0x1p63) {
+                                    valorCelula = (long) numericValue;
                                 }
                             }
                         } else if (cellType == CellType.FORMULA) {

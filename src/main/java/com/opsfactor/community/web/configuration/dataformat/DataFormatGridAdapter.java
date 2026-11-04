@@ -80,8 +80,8 @@ final class DataFormatGridAdapter {
                     if (value == null || value.isNull()) row.add(null);
                     else if (value.isTextual()) row.add(value.textValue());
                     else if (value.isBoolean()) row.add(value.booleanValue());
-                    else if (value.isIntegralNumber()) row.add(value.bigIntegerValue());
-                    else if (value.isFloatingPointNumber()) row.add(value.decimalValue());
+                    // Preserve approximate versus exact numbers until the file codec writes them.
+                    else if (value.isNumber()) row.add(value.numberValue());
                     else throw new IllegalArgumentException("Report column is not scalar: " + column.field);
                 }
                 return row;

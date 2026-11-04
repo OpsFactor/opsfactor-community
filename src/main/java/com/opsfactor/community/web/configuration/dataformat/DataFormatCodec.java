@@ -271,8 +271,8 @@ public final class DataFormatCodec {
             if (cell == null || cell.isNull()) result.add(null);
             else if (cell.isTextual()) result.add(cell.textValue());
             else if (cell.isBoolean()) result.add(cell.booleanValue());
-            else if (cell.isIntegralNumber()) result.add(cell.bigIntegerValue());
-            else if (cell.isFloatingPointNumber()) result.add(cell.decimalValue());
+            // Keep floating-point values distinct from exact decimals for XLSX cell typing.
+            else if (cell.isNumber()) result.add(cell.numberValue());
             else throw new IOException("Non-scalar spreadsheet cell at " + header);
         }
         return result;
@@ -304,6 +304,15 @@ public final class DataFormatCodec {
             if (value == null) continue;
             if (value instanceof Boolean bool) cell.setCellValue(bool);
             else if (value instanceof Number number) {
+                // Java's native numeric types remain numeric in Excel, including Long.
+                // Excel applies its own numeric precision; textual identifiers stay text.
+                if (number instanceof Byte || number instanceof Short || number instanceof Integer
+                        || number instanceof Long || number instanceof Float || number instanceof Double) {
+                    double numericValue = number.doubleValue();
+                    if (!Double.isFinite(numericValue)) throw new IOException("Non-finite spreadsheet number");
+                    cell.setCellValue(numericValue);
+                    continue;
+                }
                 BigDecimal decimal;
                 try { decimal = new BigDecimal(number.toString()); }
                 catch (NumberFormatException exception) { throw new IOException("Non-finite spreadsheet number", exception); }

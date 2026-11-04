@@ -11,11 +11,13 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.ipc.ArrowStreamReader;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -61,6 +63,30 @@ class DataFormatCodecTest {
         public BigDecimal amount;
         public LocalDate date;
     }
+    /** Distinguishes approximate calculation values from exact numbers and text identifiers. */
+    static class NumericSpreadsheetRow {
+        public String identifier = "000123";
+        public String longIdentifier = "12345678901234567890";
+        public Double cost = 103.51581249999998d;
+        public Float fraction = 0.1f;
+        public Long longValue = Long.MAX_VALUE;
+        public BigInteger exactInteger = new BigInteger("123456789012345678901234567890");
+        public BigDecimal exactDecimal = new BigDecimal("123.45678901234567890123456789");
+        public BigDecimal ordinaryDecimal = new BigDecimal("123.45");
+        public Integer integerValue = Integer.MAX_VALUE;
+    }
+    static class NativeNumericRow {
+        public String identifier;
+        public int integerValue;
+        public long longValue;
+        public float floatValue;
+        public double doubleValue;
+    }
+    static class FloatingSpreadsheetRow {
+        public Double doubleValue;
+        public Float floatValue;
+    }
+
     static class WithList { public List<Child> inputs; }
     static class WithMap { public Map<String, Object> inputs; }
     static class RecursiveRow { public RecursiveRow child; }
@@ -183,6 +209,111 @@ class DataFormatCodecTest {
         try (var workbook = WorkbookFactory.create(new ByteArrayInputStream(encode(matrix, type, DataFormat.XLSX, Map.of())))) {
             assertEquals("12345678901234567890.123456789", workbook.getSheetAt(0).getRow(2).getCell(0).getStringCellValue());
         }
+    }
+
+    @Test
+    void xlsxMatrixKeepsCalculatedDecimalsNumericAndExactValuesUnchanged() throws Exception {
+
+        NumericSpreadsheetRow row = new NumericSpreadsheetRow();
+        List<List<Object>> matrix = List.of(
+                List.of("identifier", "longIdentifier", "cost", "fraction", "longValue",
+                        "exactInteger", "exactDecimal", "ordinaryDecimal", "integerValue"),
+                List.of(row.identifier, row.longIdentifier, row.cost, row.fraction, row.longValue,
+                        row.exactInteger, row.exactDecimal, row.ordinaryDecimal, row.integerValue));
+        JavaType type = mapper.getTypeFactory().constructType(new TypeReference<List<List<Object>>>() { });
+        assertNumericSpreadsheet(encode(matrix, type, DataFormat.XLSX, Map.of()));
+
+    }
+
+    @Test
+    void xlsxDtoKeepsCalculatedDecimalsNumericAndExactValuesUnchanged() throws Exception {
+
+        JavaType type = mapper.getTypeFactory().constructCollectionType(List.class, NumericSpreadsheetRow.class);
+        assertNumericSpreadsheet(encode(List.of(new NumericSpreadsheetRow()), type, DataFormat.XLSX, Map.of()));
+
+    }
+
+    /** Assert native cell types as well as values: a textual decimal cannot be used in Excel sums. */
+    private void assertNumericSpreadsheet(byte[] bytes) throws Exception {
+
+        try (var workbook = WorkbookFactory.create(new ByteArrayInputStream(bytes))) {
+            var cells = workbook.getSheetAt(0).getRow(1);
+            assertEquals(CellType.STRING, cells.getCell(0).getCellType());
+            assertEquals("000123", cells.getCell(0).getStringCellValue());
+            assertEquals(CellType.STRING, cells.getCell(1).getCellType());
+            assertEquals("12345678901234567890", cells.getCell(1).getStringCellValue());
+            assertEquals(CellType.NUMERIC, cells.getCell(2).getCellType());
+            assertEquals(103.51581249999998d, cells.getCell(2).getNumericCellValue());
+            assertEquals(CellType.NUMERIC, cells.getCell(3).getCellType());
+            assertEquals((double) 0.1f, cells.getCell(3).getNumericCellValue());
+            assertEquals(CellType.NUMERIC, cells.getCell(4).getCellType());
+            assertEquals((double) Long.MAX_VALUE, cells.getCell(4).getNumericCellValue());
+            assertEquals(CellType.STRING, cells.getCell(5).getCellType());
+            assertEquals("123456789012345678901234567890", cells.getCell(5).getStringCellValue());
+            assertEquals(CellType.STRING, cells.getCell(6).getCellType());
+            assertEquals("123.45678901234567890123456789", cells.getCell(6).getStringCellValue());
+            assertEquals(CellType.NUMERIC, cells.getCell(7).getCellType());
+            assertEquals(123.45d, cells.getCell(7).getNumericCellValue());
+            assertEquals(CellType.NUMERIC, cells.getCell(8).getCellType());
+            assertEquals((double) Integer.MAX_VALUE, cells.getCell(8).getNumericCellValue());
+        }
+
+    }
+
+    /** Native integer/long/float/double cells must also be read using the DTO's numeric type. */
+    @Test
+    void xlsxRoundTripReadsNativeNumericTypesAndPreservesTextIdentifiers() throws Exception {
+
+        NativeNumericRow expected = new NativeNumericRow();
+        expected.identifier = "000123";
+        expected.integerValue = 123456;
+        expected.longValue = 1234567890123L;
+        expected.floatValue = 0.1f;
+        expected.doubleValue = 103.51581249999998d;
+        JavaType type = mapper.getTypeFactory().constructCollectionType(List.class, NativeNumericRow.class);
+        byte[] bytes = encode(List.of(expected), type, DataFormat.XLSX, Map.of());
+        @SuppressWarnings("unchecked") List<NativeNumericRow> restored = (List<NativeNumericRow>) codec.read(
+                new ByteArrayInputStream(bytes), type, DataFormat.XLSX);
+        NativeNumericRow actual = restored.getFirst();
+        assertEquals(expected.identifier, actual.identifier);
+        assertEquals(expected.integerValue, actual.integerValue);
+        assertEquals(expected.longValue, actual.longValue);
+        assertEquals(expected.floatValue, actual.floatValue);
+        assertEquals(expected.doubleValue, actual.doubleValue);
+
+    }
+
+    @Test
+    void xlsxRejectsNonFiniteFloatingValuesInMatrices() {
+
+        JavaType type = mapper.getTypeFactory().constructType(new TypeReference<List<List<Object>>>() { });
+        for (Number value : List.of(Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
+                Float.NaN, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY)) {
+            IOException error = assertThrows(IOException.class, () -> encode(
+                    List.of(List.of("value"), List.of(value)), type, DataFormat.XLSX, Map.of()));
+            assertTrue(error.getMessage().contains("Non-finite spreadsheet number"));
+        }
+
+    }
+
+    @Test
+    void xlsxRejectsNonFiniteFloatingValuesInDtos() {
+
+        JavaType type = mapper.getTypeFactory().constructCollectionType(List.class, FloatingSpreadsheetRow.class);
+        for (double value : new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}) {
+            FloatingSpreadsheetRow row = new FloatingSpreadsheetRow();
+            row.doubleValue = value;
+            row.floatValue = 0.1f;
+            IOException doubleError = assertThrows(IOException.class,
+                    () -> encode(List.of(row), type, DataFormat.XLSX, Map.of()));
+            assertTrue(doubleError.getMessage().contains("Non-finite spreadsheet number"));
+            row.doubleValue = 0.1d;
+            row.floatValue = (float) value;
+            IOException floatError = assertThrows(IOException.class,
+                    () -> encode(List.of(row), type, DataFormat.XLSX, Map.of()));
+            assertTrue(floatError.getMessage().contains("Non-finite spreadsheet number"));
+        }
+
     }
 
     @Test void unsupportedInputsFailExplicitlyRatherThanLosingData() throws Exception {

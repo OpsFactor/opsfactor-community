@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -196,46 +197,66 @@ public class ProcessedFileRow {
                         
     }
     
+    /** Read an exact signed 64-bit integer; never truncate fractions or saturate overflow. */
     public Long getColumnValueAsLong(int columnPosition) {
-        
-        Object columnValue = getColumnValue(columnPosition);
 
+        Object columnValue = getColumnValue(columnPosition);
         if (columnValue == null) return null;
-        
-        if (columnValue instanceof Number) {
-            return ((Number) columnValue).longValue();
-        } else {
-            try {
-                return Long.valueOf(columnValue.toString());
-            } catch (NumberFormatException numberFormatException) {
-                throw new DataUploadException(
-                        "Incompatible type for column " + (columnPosition + 1) + " : should be a long number (no decimal separator) but found " + columnValue,
-                        numberFormatException);
+
+        try {
+            if (columnValue instanceof Double || columnValue instanceof Float) {
+                double number = ((Number) columnValue).doubleValue();
+                // Test binary bounds directly: Long.MAX_VALUE rounds to 2^63 as a double,
+                // while the lower endpoint -2^63 is exactly representable and remains valid.
+                if (!Double.isFinite(number) || number != Math.rint(number)
+                        || number < -0x1p63 || number >= 0x1p63) {
+                    throw new ArithmeticException("Value is not an exact signed 64-bit integer");
+                }
+                return (long) number;
             }
+            if (columnValue instanceof Number number) {
+                return new BigDecimal(number.toString()).longValueExact();
+            }
+            // Text keeps its existing integer syntax; CSV decimal normalization belongs
+            // exclusively to Float/Double fields and must not relax integer columns.
+            return Long.valueOf(columnValue.toString());
+        } catch (ArithmeticException | NumberFormatException exception) {
+            throw new DataUploadException(
+                    "Incompatible type for column " + (columnPosition + 1) + " : should be a long number (no decimal separator) but found " + columnValue,
+                    exception);
         }
-                        
+
     }
-    
+
+    /** Read an exact signed 32-bit integer; reject fractional and out-of-range numeric cells. */
     public Integer getColumnValueAsInteger(int columnPosition) {
-        
-        Object columnValue = getColumnValue(columnPosition);
 
+        Object columnValue = getColumnValue(columnPosition);
         if (columnValue == null) return null;
-        
-        if (columnValue instanceof Number) {
-            return ((Number) columnValue).intValue();
-        } else {
-            try {
-                return Integer.valueOf(columnValue.toString());
-            } catch (NumberFormatException numberFormatException) {
-                throw new DataUploadException(
-                        "Incompatible type for column " + (columnPosition + 1) + " : should be an integer number (no decimal separator) but found " + columnValue,
-                        numberFormatException);
+
+        try {
+            if (columnValue instanceof Double || columnValue instanceof Float) {
+                double number = ((Number) columnValue).doubleValue();
+                // Preserve exact floating-point boundary values instead of reparsing their
+                // shortened decimal rendering (notably Float's Integer.MIN_VALUE).
+                if (!Double.isFinite(number) || number != Math.rint(number)
+                        || number < Integer.MIN_VALUE || number > Integer.MAX_VALUE) {
+                    throw new ArithmeticException("Value is not an exact signed 32-bit integer");
+                }
+                return (int) number;
             }
+            if (columnValue instanceof Number number) {
+                return new BigDecimal(number.toString()).intValueExact();
+            }
+            return Integer.valueOf(columnValue.toString());
+        } catch (ArithmeticException | NumberFormatException exception) {
+            throw new DataUploadException(
+                    "Incompatible type for column " + (columnPosition + 1) + " : should be an integer number (no decimal separator) but found " + columnValue,
+                    exception);
         }
-                        
+
     }
-    
+
     /** CSV cells stay textual until a numeric mapper asks for their value. */
     private static String decimalValue(Object value) {
         String decimal = value.toString();
