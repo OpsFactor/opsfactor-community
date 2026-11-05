@@ -86,9 +86,7 @@ public abstract class FileProcessing {
                         if (cellType == CellType.NUMERIC) {
                             // o campo numerico representa uma data
                             if (DateUtil.isCellDateFormatted(cell)) {
-                                valorCelula = cell.getDateCellValue().toInstant()
-                                        .atZone(ZoneId.systemDefault())
-                                        .toLocalDateTime();
+                                valorCelula = cell.getLocalDateTimeCellValue();
                             } else {
                                 // campo numerico representa um numero
                                 double numericValue = cell.getNumericCellValue();

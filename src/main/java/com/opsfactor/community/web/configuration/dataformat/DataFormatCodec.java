@@ -12,6 +12,9 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
@@ -44,7 +47,12 @@ public final class DataFormatCodec {
     public PreparedWrite prepareWrite(Object value, JavaType javaType, DataFormat format,
                                       Map<String, String> options) throws IOException {
         Objects.requireNonNull(format);
-        if (format == DataFormat.JSON) return output -> mapper.writerFor(javaType).writeValue(nonClosing(output), value);
+        if (format == DataFormat.JSON) {
+            // Templates historically exposed temporal cells as ISO text, even when Jackson
+            // is configured to serialize DTO dates as timestamps. Keep that public contract.
+            Object jsonValue = isMatrix(value, javaType) ? textualMatrix((List<?>) value) : value;
+            return output -> mapper.writerFor(javaType).writeValue(nonClosing(output), jsonValue);
+        }
         Map<String, String> selectedOptions = options == null ? Map.of() : options;
         if (format == DataFormat.CSV || format == DataFormat.XLSX) {
             Table table = table(value, javaType, format);
@@ -179,11 +187,26 @@ public final class DataFormatCodec {
             @Override public Object next() {
                 List<?> cells = (List<?>) matrix.get(index++);
                 Map<String, Object> row = new LinkedHashMap<>();
-                for (int c = 0; c < headers.size(); c++) row.put(headers.get(c), c < cells.size() ? cells.get(c) : null);
+                for (int c = 0; c < headers.size(); c++) row.put(headers.get(c), c < cells.size() ? structuredMatrixValue(cells.get(c)) : null);
                 return row;
             }
         };
         return new Payload(rows, root, Map.of(SHAPE, "matrix", HEADERS, mapper.writeValueAsString(headers)));
+    }
+
+    private static List<?> textualMatrix(List<?> matrix) {
+        return new AbstractList<>() {
+            @Override public int size() { return matrix.size(); }
+            @Override public Object get(int index) {
+                Object row = matrix.get(index);
+                return row instanceof List<?> cells ? cells.stream().map(DataFormatCodec::structuredMatrixValue).toList() : row;
+            }
+        };
+    }
+
+    /** Preserve the pre-existing textual temporal contract of Arrow/Parquet matrices. */
+    private static Object structuredMatrixValue(Object value) {
+        return DataFormatTemporalValues.isDate(value) ? value.toString() : value;
     }
 
     private static ColumnarSchema.Kind scalarKind(Object value) throws IOException {
@@ -191,7 +214,8 @@ public final class DataFormatCodec {
         if (value instanceof BigDecimal || value instanceof java.math.BigInteger) return ColumnarSchema.Kind.DECIMAL;
         if (value instanceof Float || value instanceof Double) return ColumnarSchema.Kind.DOUBLE;
         if (value instanceof Number) return ColumnarSchema.Kind.LONG;
-        if (value instanceof CharSequence || value instanceof Character || value instanceof Enum<?>) return ColumnarSchema.Kind.STRING;
+        if (value instanceof CharSequence || value instanceof Character || value instanceof Enum<?>
+                || DataFormatTemporalValues.isDate(value)) return ColumnarSchema.Kind.STRING;
         throw new IOException("Unsupported matrix cell type: " + value.getClass().getSimpleName());
     }
 
@@ -262,13 +286,15 @@ public final class DataFormatCodec {
 
     }
 
-    private List<?> cells(Table table, Object object) throws IOException {
+    private List<?> cells(Table table, Object object, boolean nativeDates) throws IOException {
         if (table.matrix) return matrixRow(object);
         JsonNode node = mapper.valueToTree(object);
         List<Object> result = new ArrayList<>();
         for (String header : table.headers) {
             JsonNode cell = node.get(header);
-            if (cell == null || cell.isNull()) result.add(null);
+            Object original = nativeDates ? DataFormatTemporalValues.value(mapper, object, header) : null;
+            if (DataFormatTemporalValues.isDate(original)) result.add(original);
+            else if (cell == null || cell.isNull()) result.add(null);
             else if (cell.isTextual()) result.add(cell.textValue());
             else if (cell.isBoolean()) result.add(cell.booleanValue());
             // Keep floating-point values distinct from exact decimals for XLSX cell typing.
@@ -283,13 +309,15 @@ public final class DataFormatCodec {
         workbook.setCompressTempFiles(true);
         try {
             Sheet sheet = workbook.createSheet("Data");
+            // Reuse workbook styles: creating one per cell exhausts Excel's style limit.
+            Map<String, CellStyle> dateStyles = new HashMap<>();
             int rowIndex = 0;
-            if (!table.matrix && !table.headers.isEmpty()) writeXlsxRow(sheet.createRow(rowIndex++), table.headers);
+            if (!table.matrix && !table.headers.isEmpty()) writeXlsxRow(sheet.createRow(rowIndex++), table.headers, dateStyles);
             for (Object row : table.rows) {
                 if (rowIndex >= 1_048_576) throw new IOException("XLSX exceeds the worksheet row limit; choose CSV, Arrow or Parquet");
-                List<?> values = cells(table, row);
+                List<?> values = cells(table, row, true);
                 if (values.size() > 16_384) throw new IOException("XLSX exceeds the worksheet column limit");
-                writeXlsxRow(sheet.createRow(rowIndex++), values);
+                writeXlsxRow(sheet.createRow(rowIndex++), values, dateStyles);
             }
             workbook.write(nonClosing(output));
         } finally {
@@ -297,12 +325,38 @@ public final class DataFormatCodec {
         }
     }
 
-    private static void writeXlsxRow(Row row, List<?> values) throws IOException {
+    private void writeXlsxRow(Row row, List<?> values, Map<String, CellStyle> dateStyles) throws IOException {
         for (int column = 0; column < values.size(); column++) {
             Object value = values.get(column);
             Cell cell = row.createCell(column);
             if (value == null) continue;
-            if (value instanceof Boolean bool) cell.setCellValue(bool);
+            if (DataFormatTemporalValues.isDate(value)) {
+                String pattern;
+                if (value instanceof LocalTime || value instanceof java.sql.Time) {
+                    LocalTime time = value instanceof LocalTime local ? local : ((java.sql.Time) value).toLocalTime();
+                    cell.setCellValue(time.toNanoOfDay() / 86_400_000_000_000d);
+                    pattern = "hh:mm:ss.000";
+                } else if (value instanceof LocalDate date) {
+                    cell.setCellValue(date);
+                    pattern = "yyyy-mm-dd";
+                } else if (value instanceof java.sql.Date date) {
+                    cell.setCellValue(date.toLocalDate());
+                    pattern = "yyyy-mm-dd";
+                } else {
+                    LocalDateTime dateTime = value instanceof LocalDateTime local ? local
+                            : value instanceof java.sql.Timestamp timestamp ? timestamp.toLocalDateTime()
+                            : ((Date) value).toInstant().atZone(mapper.getSerializationConfig().getTimeZone().toZoneId()).toLocalDateTime();
+                    cell.setCellValue(dateTime);
+                    pattern = "yyyy-mm-dd hh:mm:ss.000";
+                }
+                if (!DateUtil.isValidExcelDate(cell.getNumericCellValue())) throw new IOException("Date is outside Excel's supported range");
+                CellStyle style = dateStyles.computeIfAbsent(pattern, key -> {
+                    CellStyle created = row.getSheet().getWorkbook().createCellStyle();
+                    created.setDataFormat(row.getSheet().getWorkbook().createDataFormat().getFormat(key));
+                    return created;
+                });
+                cell.setCellStyle(style);
+            } else if (value instanceof Boolean bool) cell.setCellValue(bool);
             else if (value instanceof Number number) {
                 // Java's native numeric types remain numeric in Excel, including Long.
                 // Excel applies its own numeric precision; textual identifiers stay text.
@@ -338,7 +392,7 @@ public final class DataFormatCodec {
         Writer writer = new BufferedWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8));
         if (!table.matrix && !table.headers.isEmpty() && !"false".equals(options.get("csvIncludeHeaders")))
             csvRow(writer, table.headers, separator, decimal, newline);
-        for (Object row : table.rows) csvRow(writer, cells(table, row), separator, decimal, newline);
+        for (Object row : table.rows) csvRow(writer, cells(table, row, false), separator, decimal, newline);
         writer.flush();
     }
 
@@ -381,7 +435,11 @@ public final class DataFormatCodec {
                     if (cell == null || cell.getCellType() == CellType.BLANK) cells.add(null);
                     else if (cell.getCellType() == CellType.STRING) cells.add(cell.getStringCellValue());
                     else if (cell.getCellType() == CellType.BOOLEAN) cells.add(cell.getBooleanCellValue());
-                    else if (cell.getCellType() == CellType.NUMERIC) cells.add(BigDecimal.valueOf(cell.getNumericCellValue()));
+                    else if (cell.getCellType() == CellType.NUMERIC) {
+                        // Excel dates are numeric serials plus a date/time style, never plain decimals.
+                        cells.add(DateUtil.isCellDateFormatted(cell) ? cell.getLocalDateTimeCellValue()
+                                : BigDecimal.valueOf(cell.getNumericCellValue()));
+                    }
                     else throw new IOException("Formula/error cells are not accepted as integration values");
                 }
                 matrix.add(cells);
@@ -467,6 +525,10 @@ public final class DataFormatCodec {
                 for (int c = 0; c < headers.size(); c++) {
                     Object cell = c < cells.size() ? cells.get(c) : null;
                     var kind = kinds.get(headers.get(c));
+                    if (cell instanceof LocalDateTime dateTime) {
+                        cell = DataFormatTemporalValues.imported(mapper, dateTime,
+                                DataFormatTemporalValues.propertyType(mapper, rowType, headers.get(c)));
+                    }
                     if (cell instanceof String text && !text.isEmpty()) {
                         if (kind == ColumnarSchema.Kind.DECIMAL || kind == ColumnarSchema.Kind.DOUBLE || kind == ColumnarSchema.Kind.LONG) {
                             // A decimal comma is unambiguous here: the target property is numeric,

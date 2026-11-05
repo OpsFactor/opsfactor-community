@@ -37,6 +37,12 @@ final class DataFormatGridAdapter {
 
     static List<List<Object>> matrix(Object grid, ObjectMapper mapper) throws IOException {
 
+        return matrix(grid, mapper, false);
+
+    }
+
+    static List<List<Object>> matrix(Object grid, ObjectMapper mapper, boolean nativeDates) throws IOException {
+
         Object data = property(grid, "data");
         Object definitions = property(grid, "columnDefs");
         if (!(data instanceof List<?> records) || !(definitions instanceof List<?>)) {
@@ -77,7 +83,11 @@ final class DataFormatGridAdapter {
                             value = value == null || value.isNull() ? null : value.get(part);
                         }
                     }
-                    if (value == null || value.isNull()) row.add(null);
+                    Object original;
+                    try { original = nativeDates ? DataFormatTemporalValues.value(mapper, records.get(index - 1), column.field) : null; }
+                    catch (IOException exception) { throw new IllegalArgumentException("Cannot read report date: " + column.field, exception); }
+                    if (DataFormatTemporalValues.isDate(original)) row.add(original);
+                    else if (value == null || value.isNull()) row.add(null);
                     else if (value.isTextual()) row.add(value.textValue());
                     else if (value.isBoolean()) row.add(value.booleanValue());
                     // Preserve approximate versus exact numbers until the file codec writes them.

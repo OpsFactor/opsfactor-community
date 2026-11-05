@@ -70,6 +70,8 @@ public class ProcessedFileRow {
                 row.add(contentAsString);
             }
         }
+        // Keep temporal types for native Excel cells; textual getters still expose ISO text.
+        else if (content instanceof LocalDate || content instanceof LocalDateTime || content instanceof LocalTime) row.add(content);
         else if (content instanceof Long) row.add((Long) content);
         else if (content instanceof Double) row.add((Double) content);
         else if (content instanceof Float) row.add((Float) content);

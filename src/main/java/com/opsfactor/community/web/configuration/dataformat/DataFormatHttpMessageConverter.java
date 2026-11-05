@@ -132,7 +132,7 @@ public final class DataFormatHttpMessageConverter extends AbstractGenericHttpMes
         DataFormat format = formatFor(outputMessage.getHeaders().getContentType());
         JavaType javaType = DataFormatTypes.resolve(objectMapper, type, null, body);
         if (DataFormatGridAdapter.supports(body.getClass())) {
-            body = DataFormatGridAdapter.matrix(body, objectMapper);
+            body = DataFormatGridAdapter.matrix(body, objectMapper, format == DataFormat.XLSX);
             javaType = objectMapper.getTypeFactory().constructCollectionType(List.class,
                     objectMapper.getTypeFactory().constructCollectionType(List.class, Object.class));
         }
