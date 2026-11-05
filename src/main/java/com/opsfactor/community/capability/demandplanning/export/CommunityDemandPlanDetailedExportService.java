@@ -83,15 +83,6 @@ public class CommunityDemandPlanDetailedExportService implements DemandPlanDetai
         ParametrosGlobais globalParameters = getRequiredGlobalParameters();
         List<List<Object>> file = new ArrayList<>();
         file.add(new ArrayList<>(List.of(
-                "Editable (changing will result in the creation of another record in the database)",
-                "Editable (changing will result in the creation of another record in the database)",
-                "Editable (changing will result in the creation of another record in the database)",
-                "Ignored on upload",
-                "Editable",
-                "Editable",
-                "Editable",
-                "Editable")));
-        file.add(new ArrayList<>(List.of(
                 "Location Id",
                 "Product Id",
                 "Date (represents the end of each period : month/week/day)",
