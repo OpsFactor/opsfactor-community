@@ -82,8 +82,8 @@ public class CommunityProductionOverviewProjectionLoader {
         }
         UnidadeMedidaProjection unitOfMeasureProjection = unitOfMeasureProjectionFactory
                 .getUnidadeMedidaProjectionCompletoDeCache();
-        UnidadeMedida targetUnitOfMeasure = getRequiredQuantityUnitOfMeasure(
-                unitOfMeasureProjection, selectionDTO.uomId);
+        UnidadeMedida targetUnitOfMeasure = CommunitySupplyOverviewBaseFactory.SUM_OF_BASE_UOMS.equals(selectionDTO.uomId)
+                ? null : getRequiredQuantityUnitOfMeasure(unitOfMeasureProjection, selectionDTO.uomId);
         CadastroEParametrosProjection clusterAndParametersProjection = clusterAndParametersProjectionFactory
                 .getParametrosProjectionCompletoDeCache();
         SupplyNetworkProjection supplyNetworkProjection = supplyNetworkProjectionFactory

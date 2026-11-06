@@ -91,9 +91,15 @@ public class CommunityProductionOverviewService {
                         location.getId(),
                         productionResource.getId(),
                         Map.of("materialId", material.getId()),
-                        projectionContext.targetUnitOfMeasure().getId(),
+                        projectionContext.targetUnitOfMeasure() == null
+                                ? CommunitySupplyOverviewBaseFactory.MULTIPLE_UOMS_LABEL
+                                : projectionContext.targetUnitOfMeasure().getId(),
                         calendar.getNumeroPeriodosFuturos());
                 response.occupationAndProductionByProductionResourceAndMaterialGrouping.add(occupation);
+                if (projectionContext.targetUnitOfMeasure() == null) {
+                    occupation.unconstrainedOccupationInHoursOrQuantity = null;
+                    occupation.constrainedOccupationInHoursOrQuantity = null;
+                }
                 addOccupationMeasures(
                         occupation,
                         projectionContext,
@@ -124,6 +130,15 @@ public class CommunityProductionOverviewService {
              period <= calendar.getPosicaoPeriodoFinalFuturo();
              period++) {
             if (!clusterAndParametersProjection.isDfuAtiva(material, location)) {
+                continue;
+            }
+            if (projectionContext.targetUnitOfMeasure() == null) {
+                occupation.unconstrainedProductionQuantity[period] += locationProjection
+                        .getProductionPlanLinhaOutput(period, material, productionResource).stream()
+                        .mapToDouble(line -> line.getQuantidade(Constantes.TipoPlano.PLANO_IRRESTRITO, Constantes.FirmePlanejado.TOTAL)).sum();
+                occupation.constrainedProductionQuantity[period] += locationProjection
+                        .getProductionPlanLinhaOutput(period, material, productionResource).stream()
+                        .mapToDouble(line -> line.getQuantidade(Constantes.TipoPlano.PLANO_RESTRITO, Constantes.FirmePlanejado.TOTAL)).sum();
                 continue;
             }
             occupation.unconstrainedProductionQuantity[period] += (float) locationProjection
