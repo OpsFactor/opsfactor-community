@@ -2096,13 +2096,19 @@ public class SupplyPlanning {
             Constantes.TipoPlano tipoPlano,
             UnidadeMedida unidadeMedida) {
 
-        return getDemandaDiretaConsideradaParaEstoqueProjetado(
+        double demandaBase = getDemandaDiretaConsideradaParaEstoqueProjetado(
                 supplyPlanningProjection,
                 posicaoPeriodo,
                 material,
                 tipoPlano,
                 unidadeMedida)
                 + getDemandaIndireta(supplyPlanningProjection, posicaoPeriodo, material, tipoPlano, unidadeMedida);
+        var restricaoDemandaAdicional = supplyPlanningProjection.getRestricaoDemandaAdicional();
+        if (restricaoDemandaAdicional == null) {
+            return demandaBase;
+        }
+        return demandaBase + restricaoDemandaAdicional.getConsumoAdicional(
+                supplyPlanningProjection, posicaoPeriodo, material, tipoPlano, unidadeMedida);
 
     }
 

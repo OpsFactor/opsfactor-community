@@ -19,10 +19,8 @@ import com.opsfactor.community.capability.supplyplanning.supplyplan.projection.S
 import com.opsfactor.community.capability.supplyplanning.engine.SupplyPlanning;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.utility.Constantes;
-import com.opsfactor.community.platform.utility.MetodosUtilidade;
 
 import java.util.*;
-import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
 import static com.opsfactor.community.capability.supplyplanning.engine.ProductionPlanning.setPercentualQuantidadeOriginalOutputNoProductionPlanLinha;
@@ -38,7 +36,9 @@ import static com.opsfactor.community.capability.supplyplanning.engine.SupplyPla
  * estoque, propagacao de demanda, insumos e capacidade produtiva.</p>
  */
 public class ConstrainedPlanningHeuristicoRotinas {
-    
+
+    private static final double TOLERANCIA_QUANTIDADE = 0.000000001;
+
     /**
      * Restringe distribution plan outbound e demand plan em caso de indisponibilidade de estoque
      * @return true se alguma restrição foi aplicada
@@ -49,7 +49,6 @@ public class ConstrainedPlanningHeuristicoRotinas {
 
         MaterialProjection materialProjection = supplyPlanningProjection.getMaterialProjection();
         LocationProjection locationProjectionLocationsOrigem = supplyPlanningProjection.getLocationProjectionLocationsOrigem();
-        UnidadeMedidaProjection unidadeMedidaProjection = supplyPlanningProjection.getConversaoUnidadeMedidaProjection();
         CadastroEParametrosProjection parametrosProjection = supplyPlanningProjection.getCadastroEParametrosProjection();
         
         SupplyNetworkProjection supplyNetworkProjection = supplyPlanningProjection.getSupplyNetworkProjection();
@@ -104,407 +103,176 @@ public class ConstrainedPlanningHeuristicoRotinas {
                     Constantes.TipoPlano.PLANO_RESTRITO,
                     unidadeMedidaPadrao,
                     true, true, false, true);
-            if (estoqueProjetadoTotal < 0) {
+            if (estoqueProjetadoTotal < -TOLERANCIA_QUANTIDADE) {
                 houveRestricaoPlano = true;
-                
-                double demandaNaoAtendidaRestante = Math.abs(estoqueProjetadoTotal);
-                                
-                // ATUALIZA RESTRICOES OBSERVADAS RELATIVAS A REQS E PEDIDOS OUTBOUND (DEMANDA INDIRETA)
-                // IMPACTARÃO EXECUÇÃO DOS PRÓXIMOS LOW LEVEL CODES
-                double demandaIndireta = getDemandaIndireta(supplyPlanningProjection, posicaoPeriodo, material, Constantes.TipoPlano.PLANO_RESTRITO, unidadeMedidaPadrao);
-                if (demandaIndireta > 0) {
-                    Set<Location> locationsOutboundMaterialNoPlano = supplyPlanningProjection.getLocationsOutboundDeDistributionPlansOutbound(Constantes.ReferenciaPeriodo.CONSUMO_CAPACIDADE, posicaoPeriodo, material);
-                    for (Location locationDestino : locationsOutboundMaterialNoPlano) {
-                        
-                        // clientes não fazem parte da demanda indireta! entram mais adiante como componente da demanda direta
-                        if (locationDestino.getTipoLocation().equals(LocationAbstract.TipoLocation.CLIENTE_FINAL)
-                                || locationDestino.getTipoLocation().equals(LocationAbstract.TipoLocation.REGIAO_COMERCIAL)) continue;
-                        
-                        double quantidadePedidosOutboundJaRestritosParaLocationDestino = supplyPlanningProjection.getQuantidadeDistributionPlanOutboundParaLocationsInternas(Constantes.ReferenciaPeriodo.CONSUMO_CAPACIDADE, posicaoPeriodo, material, locationDestino, Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO, unidadeMedidaPadrao);
-                        double quantidadeRequisicoesOutboundJaRestritasParaLocationDestino = supplyPlanningProjection.getQuantidadeDistributionPlanOutboundParaLocationsInternas(Constantes.ReferenciaPeriodo.CONSUMO_CAPACIDADE, posicaoPeriodo, material, locationDestino, Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO, unidadeMedidaPadrao);
-                        double demandaIndiretaParaLocationDestino = quantidadePedidosOutboundJaRestritosParaLocationDestino + quantidadeRequisicoesOutboundJaRestritasParaLocationDestino;
+                restringeDemandaPorDisponibilidade(
+                        supplyPlanningProjection, posicaoPeriodo, material,
+                        unidadeMedidaPadrao, -estoqueProjetadoTotal);
 
-                        double gapObservadoParaMaterialLocationDestino = demandaIndiretaParaLocationDestino / demandaIndireta * Math.min(demandaIndireta, demandaNaoAtendidaRestante);
-                                                
-                    }
-                }
-                
-                // RESTRINGE OUTBOUNDS E PARCELAS DE ATENDIMENTO A DEMANDA DIRETA ----------------
-                
-                Collection<DistributionPlanItem> distributionPlanItemsOutboundMalhaInterna = supplyPlanningProjection.getDistributionPlanItemOutboundQueueParaLocationsInternas(
-                        Constantes.ReferenciaPeriodo.CONSUMO_CAPACIDADE, posicaoPeriodo, material);
-                Collection<DistributionPlanItem> distributionPlanItemsOutboundClientesFinais = supplyPlanningProjection.getDistributionPlanItemOutboundQueueParaClientes(
-                        Constantes.ReferenciaPeriodo.CONSUMO_CAPACIDADE, posicaoPeriodo, material);
-
-                // Fração dos outbounds internos dedicada ao atendimento indireto da demanda direta.
-                // No Community, os componentes de carteira/pedidos ficam zerados; o caminho existe
-                // para preservar o mesmo algoritmo heuristico usado sobre a tabela compartilhada.
-                double parcelaOrdensPlanejadasTransferenciaOutboundAtendimentoDemandaDireta = supplyPlanningProjection.getQuantidadeDistributionPlanOutboundParaAtendimentoDemandaDireta(
-                        Constantes.ReferenciaPeriodo.CONSUMO_CAPACIDADE, posicaoPeriodo, material, Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO, unidadeMedidaPadrao);
-                double parcelaOrdensFirmesTransferenciaOutboundAtendimentoDemandaDireta = supplyPlanningProjection.getQuantidadeDistributionPlanOutboundParaAtendimentoDemandaDireta(
-                        Constantes.ReferenciaPeriodo.CONSUMO_CAPACIDADE, posicaoPeriodo, material, Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO, unidadeMedidaPadrao);
-                // Canal transacional Enterprise. No Community, esta parcela deve estar zerada.
-                double quantidadeCarteiraTransicional =
-                        supplyPlanningProjection.getDemandaDiretaConsideradaProjection().getQuantidadeOriginal(
-                                location, material, posicaoPeriodo,
-                                DemandaDiretaConsideradaLinha.TipoDemandaDireta.CARTEIRA,
-                                DemandaDiretaConsideradaLinha.PropagacaoDemandaDireta.TOTAL,
-                                unidadeMedidaPadrao);
-                double quantidadeOrdensFirmesOutboundAtendimentoClientes = supplyPlanningProjection.getQuantidadeDistributionPlanOutboundParaClientes(
-                        Constantes.ReferenciaPeriodo.CONSUMO_CAPACIDADE, posicaoPeriodo, material, Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO, unidadeMedidaPadrao);
-
-                double quantidadeOutboundAtendimentoDemandaDireta =
-                        + parcelaOrdensPlanejadasTransferenciaOutboundAtendimentoDemandaDireta
-                        + parcelaOrdensFirmesTransferenciaOutboundAtendimentoDemandaDireta
-                        + quantidadeCarteiraTransicional
-                        + quantidadeOrdensFirmesOutboundAtendimentoClientes;
-                
-                double quantidadeOutboundRequisicoesTotalMalhaInterna = supplyPlanningProjection.getQuantidadeDistributionPlanOutboundParaLocationsInternas(
-                        Constantes.ReferenciaPeriodo.CONSUMO_CAPACIDADE, posicaoPeriodo, material, Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO, unidadeMedidaPadrao);
-                double quantidadeOutboundPedidosTotalMalhaInterna = supplyPlanningProjection.getQuantidadeDistributionPlanOutboundParaLocationsInternas(
-                        Constantes.ReferenciaPeriodo.CONSUMO_CAPACIDADE, posicaoPeriodo, material, Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO, unidadeMedidaPadrao);
-                double quantidadeOutboundRequisicoesEPedidosTotalMalhaInterna = quantidadeOutboundRequisicoesTotalMalhaInterna + quantidadeOutboundPedidosTotalMalhaInterna;
-                                
-                // demanda direta: propagação do DP em clientes finais
-                double quantidadeOrdensPlanejadasOutboundAtendimentoClientes = supplyPlanningProjection.getQuantidadeDistributionPlanOutboundParaClientes(
-                            Constantes.ReferenciaPeriodo.CONSUMO_CAPACIDADE, posicaoPeriodo, material, Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO, unidadeMedidaPadrao);
-                
-                // 1o volume a ser restringido
-                double parcelaOrdensPlanejadasTransferenciaOutboundAtendimentoFormacaoEstoque = Math.max(0, quantidadeOutboundRequisicoesTotalMalhaInterna - parcelaOrdensPlanejadasTransferenciaOutboundAtendimentoDemandaDireta);
-                double parcelaOrdensFirmesTransferenciaOutboundAtendimentoFormacaoEstoque = Math.max(0, quantidadeOutboundPedidosTotalMalhaInterna - parcelaOrdensFirmesTransferenciaOutboundAtendimentoDemandaDireta);
-                double quantidadeOutboundFormacaoEstoque = parcelaOrdensPlanejadasTransferenciaOutboundAtendimentoFormacaoEstoque + parcelaOrdensFirmesTransferenciaOutboundAtendimentoFormacaoEstoque;
-                // 2o volume a ser restringido: outbounds planejados para clientes finais.
-                // 3o volume a ser restringido: atendimento indireto da demanda direta.
-                // 1) RESTRINGE PARCELA DE REQUISIÇÕES + PEDIDOS OUTBOUND PARA FORMAÇÃO DE ESTOQUE NOS DESTINOS (MALHA INTERNA) ---------------------------
-                if (demandaNaoAtendidaRestante > 0 && quantidadeOutboundFormacaoEstoque > 0) {
-                    
-                    double modificacaoRequisicoesEPedidos = Math.min(quantidadeOutboundFormacaoEstoque, demandaNaoAtendidaRestante);
-                    
-                    double modificacaoRequisicoes = modificacaoRequisicoesEPedidos * parcelaOrdensPlanejadasTransferenciaOutboundAtendimentoFormacaoEstoque / quantidadeOutboundFormacaoEstoque;
-                    double modificacaoPedidos = modificacaoRequisicoesEPedidos * parcelaOrdensFirmesTransferenciaOutboundAtendimentoFormacaoEstoque / quantidadeOutboundFormacaoEstoque;
-                                        
-                    // As modificacoes sao aplicadas sobre a parcela ainda nao dedicada
-                    // ao atendimento indireto da demanda direta.
-                    ToDoubleFunction<DistributionPlanItem> funcaoReferenciaRequisicoes = x -> x.getQuantidadeNaUnidadeMedidaTarget(
-                            y -> y.getQuantidade(
-                                    Constantes.FirmePlanejado.PLANEJADO,
-                                    Constantes.TipoPlano.PLANO_RESTRITO)
-                                    - y.getParcelaParaAtendimentoIndiretoDemandaDireta(Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO),
-                            unidadeMedidaProjection, unidadeMedidaPadrao);
-                    ToDoubleFunction<DistributionPlanItem> funcaoReferenciaPedidos = x -> x.getQuantidadeNaUnidadeMedidaTarget(
-                            y -> y.getQuantidade(
-                                    Constantes.FirmePlanejado.ORDEM,
-                                    Constantes.TipoPlano.PLANO_RESTRITO)
-                                    - y.getParcelaParaAtendimentoIndiretoDemandaDireta(Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO),
-                            unidadeMedidaProjection, unidadeMedidaPadrao);
-
-                    // A modificacao segue a proporcao indicada nas funcoes de referencia;
-                    // o BiFunction final grava a nova quantidade na linha correspondente.
-                    MetodosUtilidade.modificaValorProporcional(
-                            -modificacaoRequisicoes, distributionPlanItemsOutboundMalhaInterna, 
-                            funcaoReferenciaRequisicoes,
-                            x -> x.getQuantidade(
-                                    Constantes.FirmePlanejado.PLANEJADO,
-                                    Constantes.TipoPlano.PLANO_RESTRITO),
-                            (x, valorAtualizacao) -> x.setQuantidade(
-                                    limitaResiduoNumericoNegativo(valorAtualizacao),
-                                    Constantes.FirmePlanejado.PLANEJADO,
-                                    Constantes.TipoPlano.PLANO_RESTRITO));
-                    MetodosUtilidade.modificaValorProporcional(
-                            -modificacaoPedidos, distributionPlanItemsOutboundMalhaInterna, 
-                            funcaoReferenciaPedidos,
-                            x -> x.getQuantidade(
-                                    Constantes.FirmePlanejado.ORDEM,
-                                    Constantes.TipoPlano.PLANO_RESTRITO),
-                            (x, valorAtualizacao) -> x.setQuantidade(
-                                    limitaResiduoNumericoNegativo(valorAtualizacao),
-                                    Constantes.FirmePlanejado.ORDEM,
-                                    Constantes.TipoPlano.PLANO_RESTRITO));
-                    
-                    // atualiza variáveis
-                    quantidadeOutboundRequisicoesTotalMalhaInterna -= modificacaoRequisicoes;
-                    quantidadeOutboundPedidosTotalMalhaInterna -= modificacaoPedidos;
-                    quantidadeOutboundRequisicoesEPedidosTotalMalhaInterna -= modificacaoRequisicoesEPedidos;
-                    demandaNaoAtendidaRestante -= modificacaoRequisicoesEPedidos;
-                    
-                }
-
-                // 2) RESTRINGE PARCELA DE OUTBOUNDS PLANEJADOS PARA ATENDIMENTO DO PLANO DE DEMANDA EM CLIENTES FINAIS ---------------------------
-                
-                // A parcela planejada para clientes finais e restringida diretamente,
-                // sempre proporcional ao volume planejado por linha.
-                ToDoubleFunction<DistributionPlanItem> funcaoReferenciaOrdensPlanejadasClientesFinais = x -> x.getQuantidadeNaUnidadeMedidaTarget(
-                        y -> y.getQuantidade(
-                                Constantes.FirmePlanejado.PLANEJADO,
-                                Constantes.TipoPlano.PLANO_RESTRITO),
-                        unidadeMedidaProjection, unidadeMedidaPadrao);
-
-                if (demandaNaoAtendidaRestante > 0 && quantidadeOrdensPlanejadasOutboundAtendimentoClientes > 0) {
-                    double modificacaoOrdensPlanejadasOutboundAtendimentoClientes = Math.min(quantidadeOrdensPlanejadasOutboundAtendimentoClientes, demandaNaoAtendidaRestante);
-
-                    // A modificacao segue a proporcao indicada nas funcoes de referencia;
-                    // o BiFunction final grava a nova quantidade na linha correspondente.
-                    MetodosUtilidade.modificaValorProporcional(
-                            -modificacaoOrdensPlanejadasOutboundAtendimentoClientes, distributionPlanItemsOutboundClientesFinais,
-                            funcaoReferenciaOrdensPlanejadasClientesFinais,
-                            x -> x.getQuantidade(
-                                    Constantes.FirmePlanejado.PLANEJADO,
-                                    Constantes.TipoPlano.PLANO_RESTRITO),
-                            (x, valorAtualizacao) -> x.setQuantidade(
-                                    limitaResiduoNumericoNegativo(valorAtualizacao),
-                                    Constantes.FirmePlanejado.PLANEJADO,
-                                    Constantes.TipoPlano.PLANO_RESTRITO));
-
-                    // atualiza variáveis
-                    quantidadeOrdensPlanejadasOutboundAtendimentoClientes -= modificacaoOrdensPlanejadasOutboundAtendimentoClientes;
-                    demandaNaoAtendidaRestante -= modificacaoOrdensPlanejadasOutboundAtendimentoClientes;
-                }
-                    
-                // 3) RESTRINGE OUTBOUNDS FIRMES PARA CLIENTES E PARCELAS INTERNAS DEDICADAS A DEMANDA DIRETA
-                double modificacaoTotalAtendimentoDemandaDireta = Math.min(quantidadeOutboundAtendimentoDemandaDireta, demandaNaoAtendidaRestante);
-
-                double modificacaoParcelaOrdensPlanejadasTransferenciaOutboundAtendimentoDemandaDireta = modificacaoTotalAtendimentoDemandaDireta * parcelaOrdensPlanejadasTransferenciaOutboundAtendimentoDemandaDireta / quantidadeOutboundAtendimentoDemandaDireta;
-                double modificacaoParcelaOrdensFirmesTransferenciaOutboundAtendimentoDemandaDireta = modificacaoTotalAtendimentoDemandaDireta * parcelaOrdensFirmesTransferenciaOutboundAtendimentoDemandaDireta / quantidadeOutboundAtendimentoDemandaDireta;
-                double modificacaoOrdensFirmesOutboundAtendimentoClientes = modificacaoTotalAtendimentoDemandaDireta * quantidadeOrdensFirmesOutboundAtendimentoClientes / quantidadeOutboundAtendimentoDemandaDireta;
-                double modificacaoCarteiraTransicional = modificacaoTotalAtendimentoDemandaDireta * quantidadeCarteiraTransicional / quantidadeOutboundAtendimentoDemandaDireta;
-
-                if (modificacaoTotalAtendimentoDemandaDireta > 0) {
-
-                    // Esta etapa reduz as parcelas internas e firmes dedicadas ao atendimento
-                    // direto. No Community, a parcela de carteira transicional fica zerada.
-                    ToDoubleFunction<DistributionPlanItem> funcaoReferenciaRequisicoesInternas = x -> x.getQuantidadeNaUnidadeMedidaTarget(
-                            y -> y.getParcelaParaAtendimentoIndiretoDemandaDireta(Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO),
-                            unidadeMedidaProjection, unidadeMedidaPadrao);
-                    ToDoubleFunction<DistributionPlanItem> funcaoReferenciaPedidosInternos = x -> x.getQuantidadeNaUnidadeMedidaTarget(
-                            y -> y.getParcelaParaAtendimentoIndiretoDemandaDireta(Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO),
-                            unidadeMedidaProjection, unidadeMedidaPadrao);
-                    ToDoubleFunction<DistributionPlanItem> funcaoReferenciaOrdensFirmesClientesFinais = x -> x.getQuantidadeNaUnidadeMedidaTarget(
-                            y -> y.getQuantidade(Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO),
-                            unidadeMedidaProjection, unidadeMedidaPadrao);
-
-                    // A modificacao segue a proporcao indicada nas funcoes de referencia;
-                    // o BiFunction final grava a nova quantidade na linha correspondente.
-                    MetodosUtilidade.modificaValorProporcional(
-                            -modificacaoParcelaOrdensPlanejadasTransferenciaOutboundAtendimentoDemandaDireta,
-                            distributionPlanItemsOutboundMalhaInterna, // aplica a modificação em múltiplos distribution plan linha
-                            funcaoReferenciaRequisicoesInternas,
-                            x -> x.getQuantidade(Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO),
-                            (x, valorAtualizacao) -> x.setQuantidade(limitaResiduoNumericoNegativo(valorAtualizacao), Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO));
-                    MetodosUtilidade.modificaValorProporcional(
-                            -modificacaoParcelaOrdensFirmesTransferenciaOutboundAtendimentoDemandaDireta,
-                            distributionPlanItemsOutboundMalhaInterna, // aplica a modificação em múltiplos distribution plan linha
-                            funcaoReferenciaPedidosInternos,
-                            x -> x.getQuantidade(Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO),
-                            (x, valorAtualizacao) -> x.setQuantidade(limitaResiduoNumericoNegativo(valorAtualizacao), Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO));
-                    MetodosUtilidade.modificaValorProporcional(
-                            -modificacaoOrdensFirmesOutboundAtendimentoClientes,
-                            distributionPlanItemsOutboundClientesFinais, // aplica a modificação em múltiplos distribution plan linha
-                            funcaoReferenciaOrdensFirmesClientesFinais,
-                            x -> x.getQuantidade(Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO),
-                            (x, valorAtualizacao) -> x.setQuantidade(valorAtualizacao, Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO));
-
-                    if (quantidadeCarteiraTransicional > 0) {
-                        double percentualDemandaAtendidaRestante =
-                                (quantidadeCarteiraTransicional - modificacaoCarteiraTransicional)
-                                        / quantidadeCarteiraTransicional;
-
-                        /*
-                         * A reducao aqui pertence ao canal transacional de
-                         * carteira/client orders. Community mantem esse canal
-                         * zerado, mas a rotina compartilhada preserva o update
-                         * segmentado para nao reabrir escrita em demanda total
-                         * agregada.
-                         */
-                        supplyPlanningProjection.getDemandaDiretaConsideradaProjection()
-                                .updateQuantidadeDemandaDiretaConsideradaSegregada(
-                                        quantidadeOriginal -> quantidadeOriginal * percentualDemandaAtendidaRestante,
-                                        unidadeMedidaPadrao,
-                                        location,
-                                        material,
-                                        posicaoPeriodo,
-                                        DemandaDiretaConsideradaLinha.TipoDemandaDireta.CARTEIRA,
-                                        Constantes.TipoPlano.PLANO_RESTRITO);
-                    }
-
-                    
-                    // Atualiza a parcela das requisições/pedidos internos usada para atendimento
-                    // indireto da demanda direta.
-                    for (DistributionPlanItem distributionPlanItem : distributionPlanItemsOutboundMalhaInterna) {
-                        // requisições
-                        distributionPlanItem.setParcelaParaAtendimentoDemandaDireta(
-                                Math.min(
-                                        distributionPlanItem.getParcelaParaAtendimentoIndiretoDemandaDireta(Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO),
-                                        distributionPlanItem.getQuantidade(Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO)),
-                                Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO);
-                        // pedidos
-                        distributionPlanItem.setParcelaParaAtendimentoDemandaDireta(
-                                Math.min(
-                                        distributionPlanItem.getParcelaParaAtendimentoIndiretoDemandaDireta(Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO),
-                                        distributionPlanItem.getQuantidade(Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO)),
-                                Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO);
-                    }
-                    
-                    // atualiza variáveis
-                    parcelaOrdensPlanejadasTransferenciaOutboundAtendimentoDemandaDireta -= modificacaoParcelaOrdensPlanejadasTransferenciaOutboundAtendimentoDemandaDireta;
-                    parcelaOrdensFirmesTransferenciaOutboundAtendimentoDemandaDireta -= modificacaoParcelaOrdensFirmesTransferenciaOutboundAtendimentoDemandaDireta;
-                    quantidadeCarteiraTransicional -= modificacaoCarteiraTransicional;
-                    quantidadeOutboundAtendimentoDemandaDireta -= modificacaoTotalAtendimentoDemandaDireta;
-                    demandaNaoAtendidaRestante -= modificacaoTotalAtendimentoDemandaDireta;
-
-                }
-
-                /*
-                 * Os outbounds para clientes podem ter sido reduzidos tanto na
-                 * etapa planejada quanto na etapa firme. A parcela de
-                 * atendimento e uma decomposicao da propria ordem e nunca pode
-                 * permanecer acima do volume restrito efetivamente expedido.
-                 */
-                limitaParcelasAtendimentoDemandaDiretaAoVolumeRestrito(
-                        distributionPlanItemsOutboundClientesFinais);
-
-                // ARREDONDA PARA LOTE MINIMO E MULTIPLO
-                double modificacaoLoteMinimo = 0;
-                double modificacaoMultiplo = 0;
-                if (houveRestricaoPlano) {
-                    if (perfilExecucaoSupplyPlan.getArredondaRequisicoesLoteMinimoEMultiplo()) {
-
-                        for (DistributionPlanItem distributionPlanItem : distributionPlanItemsOutboundMalhaInterna) {
-                            OptionalDouble optionalLoteMinimo = supplyNetworkProjection.getLoteMinimoTransporteNaUnidadeTarget(
-                                    versaoMalha, distributionPlanItem.getLocationOrigem(), distributionPlanItem.getLocationDestino(), material, 
-                                    unidadeMedidaPadrao, calendario.getDataHorarioInicialPresente());
-                            OptionalDouble optionalMultiplo = supplyNetworkProjection.getMultiploTransporteNaUnidadeTarget(
-                                    versaoMalha, distributionPlanItem.getLocationOrigem(), distributionPlanItem.getLocationDestino(), material, 
-                                    unidadeMedidaPadrao, calendario.getDataHorarioInicialPresente());
-
-                            if (optionalLoteMinimo.isPresent()) {
-
-                                double valorRequisicoes = distributionPlanItem.getQuantidade(Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO);
-                                double valorPedidos = distributionPlanItem.getQuantidade(Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO);
-
-                                if (valorPedidos + valorRequisicoes < optionalLoteMinimo.getAsDouble()) {
-                                    distributionPlanItem.setQuantidade(0, Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO);
-                                    distributionPlanItem.setQuantidade(0, Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO);
-
-                                    modificacaoLoteMinimo = -(valorRequisicoes + valorPedidos);
-                                }
-
-                            }
-
-                            if (optionalMultiplo.orElse(0) > 0) {
-
-                                double valorOrdensTransferenciaPlanejadas = distributionPlanItem.getQuantidade(Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO);
-                                double valorOrdensTransferenciaFirmes = distributionPlanItem.getQuantidade(Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO);
-
-                                if (valorOrdensTransferenciaPlanejadas + valorOrdensTransferenciaFirmes <= 0) {
-                                    
-                                    distributionPlanItem.setQuantidade(0, Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO);
-                                    distributionPlanItem.setQuantidade(0, Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO);
-                                
-                                } else {
-                                    
-                                    double multiploInferior = Math.floor((valorOrdensTransferenciaPlanejadas + valorOrdensTransferenciaFirmes) / optionalMultiplo.getAsDouble()) * optionalMultiplo.getAsDouble();
-
-                                    double requisicoesComArredondamentoMultiplo = valorOrdensTransferenciaPlanejadas / (valorOrdensTransferenciaPlanejadas + valorOrdensTransferenciaFirmes) * multiploInferior;
-                                    double pedidosComArredondamentoMultiplo = valorOrdensTransferenciaFirmes / (valorOrdensTransferenciaPlanejadas + valorOrdensTransferenciaFirmes) * multiploInferior;
-
-                                    distributionPlanItem.setQuantidade(requisicoesComArredondamentoMultiplo, Constantes.FirmePlanejado.PLANEJADO, Constantes.TipoPlano.PLANO_RESTRITO);
-                                    distributionPlanItem.setQuantidade(pedidosComArredondamentoMultiplo, Constantes.FirmePlanejado.ORDEM, Constantes.TipoPlano.PLANO_RESTRITO);
-
-                                    modificacaoMultiplo = -(valorOrdensTransferenciaPlanejadas + valorOrdensTransferenciaFirmes);
-                                
-                                }
-
-                            }
-
-                        }
-                    }
+                if (perfilExecucaoSupplyPlan.getArredondaRequisicoesLoteMinimoEMultiplo()) {
+                    arredondaTransferenciasInternas(
+                            supplyPlanningProjection, posicaoPeriodo, material, unidadeMedidaPadrao);
                 }
             }
-            reconciliaDemandaDiretaComSaldoFisico(
-                    supplyPlanningProjection,
-                    posicaoPeriodo,
-                    material,
-                    unidadeMedidaPadrao);
             SupplyPlanning.atualizaEstoqueProjetadoSemLimitarAZero(
                     supplyPlanningProjection, posicaoPeriodo, material, Constantes.TipoPlano.PLANO_RESTRITO);
         }
         return houveRestricaoPlano;
     }
 
-    /** Conserva a validação estrita para falta real e remove apenas erro de ponto flutuante. */
-    private static double limitaResiduoNumericoNegativo(double quantidade) {
+    /**
+     * Preserva a prioridade sobre formação de estoque. O plano de demanda é
+     * cortado em um único rateio antes de qualquer fonte de demanda adicional.
+     */
+    static double restringeDemandaPorDisponibilidade(
+            SupplyPlanningProjection projection,
+            int periodo,
+            Produto material,
+            UnidadeMedida unidade,
+            double deficit) {
 
-        if (quantidade < 0 && quantidade >= -0.000000001) {
-            return 0;
+        Collection<DistributionPlanItem> transferencias =
+                projection.getDistributionPlanItemOutboundQueueParaLocationsInternas(
+                        Constantes.ReferenciaPeriodo.CONSUMO_CAPACIDADE, periodo, material);
+        Collection<DistributionPlanItem> expedicoes =
+                projection.getDistributionPlanItemOutboundQueueParaClientes(
+                        Constantes.ReferenciaPeriodo.CONSUMO_CAPACIDADE, periodo, material);
+        UnidadeMedidaProjection conversoes = projection.getConversaoUnidadeMedidaProjection();
+        var restricaoDemandaAdicional = projection.getRestricaoDemandaAdicional();
+        var tiposTransferencia = restricaoDemandaAdicional == null
+                ? List.of(Constantes.FirmePlanejado.PLANEJADO)
+                : List.of(Constantes.FirmePlanejado.PLANEJADO, Constantes.FirmePlanejado.ORDEM);
+
+        double restante = CorteProporcional.aplica(
+                deficit, parcelasTransferencias(transferencias, tiposTransferencia, conversoes, unidade, false));
+        if (restante > TOLERANCIA_QUANTIDADE) {
+            restante = CorteProporcional.aplica(
+                    restante, parcelasPlanoDemanda(projection, periodo, material, unidade, expedicoes));
         }
-        return quantidade;
+
+        if (restante > TOLERANCIA_QUANTIDADE && restricaoDemandaAdicional != null) {
+            restante = CorteProporcional.aplica(restante,
+                    restricaoDemandaAdicional.getParcelasDemandaAdicional(projection, periodo, material, unidade));
+        }
+        if (restante > TOLERANCIA_QUANTIDADE) {
+            // Transferências dedicadas podem atender ambos os grupos e são reconciliadas pelo saldo físico.
+            restante = CorteProporcional.aplica(
+                    restante, parcelasTransferencias(transferencias, tiposTransferencia, conversoes, unidade, true));
+        }
+        limitaParcelasAtendimentoDemandaDiretaAoVolumeRestrito(transferencias);
+        limitaParcelasAtendimentoDemandaDiretaAoVolumeRestrito(expedicoes);
+        return restante;
 
     }
 
-    /**
-     * Reduz a demanda direta restrita que ainda excede o suprimento físico após
-     * restringir os outbounds. A demanda irrestrita continua representando a
-     * necessidade original; somente o segmento atendido é modificado.
-     *
-     * <p>O cálculo do saldo deve ser feito antes do limite visual de estoque a
-     * zero. A linha da demanda pode usar outra unidade de medida, então a
-     * redução é convertida de volta para a unidade em que ela foi gravada.</p>
-     */
-    static void reconciliaDemandaDiretaComSaldoFisico(
-            SupplyPlanningProjection supplyPlanningProjection,
-            int posicaoPeriodo,
-            Produto material,
-            UnidadeMedida unidadeMedidaPadrao) {
+    private static List<CorteProporcional.Parcela> parcelasPlanoDemanda(
+            SupplyPlanningProjection projection, int periodo, Produto material, UnidadeMedida unidade,
+            Collection<DistributionPlanItem> expedicoes) {
 
-        double saldoFisico = SupplyPlanning.getEstoqueProjetado(
-                supplyPlanningProjection,
-                posicaoPeriodo - 1,
-                posicaoPeriodo,
-                material,
-                Constantes.TipoPlano.PLANO_RESTRITO,
-                unidadeMedidaPadrao,
-                true, true, false, true);
-        if (saldoFisico >= -0.000000001) {
-            return;
+        var tipoPlano = Constantes.TipoPlano.PLANO_RESTRITO;
+        var tipoDemanda = DemandaDiretaConsideradaLinha.TipoDemandaDireta.PLANO_DEMANDA;
+        UnidadeMedidaProjection conversoes = projection.getConversaoUnidadeMedidaProjection();
+        List<CorteProporcional.Parcela> parcelas = new ArrayList<>();
+        projection.getDemandaDiretaConsideradaProjection()
+                .getDemandaDiretaConsideradaLinha(projection.getLocation(), material, periodo)
+                .ifPresent(linha -> {
+                    double quantidade = linha.getQuantidadeDemandaDiretaConsideradaSegregada(tipoDemanda, tipoPlano);
+                    if (quantidade == 0) {
+                        return;
+                    }
+                    double quantidadeConvertida = linha.getQuantidadeConsideradaSupplyPlan(
+                            DemandaDiretaConsideradaLinha.UsoDemandaDireta.PROJECAO_ESTOQUE,
+                            tipoDemanda, tipoPlano, unidade, conversoes);
+                    parcelas.add(new CorteProporcional.Parcela(quantidadeConvertida, fracao -> {
+                        linha.setQuantidadeDemandaDiretaConsideradaSegregada(
+                                quantidade * (1 - fracao), tipoDemanda, tipoPlano);
+                        var restricaoDemandaAdicional = projection.getRestricaoDemandaAdicional();
+                        if (restricaoDemandaAdicional != null) {
+                            restricaoDemandaAdicional.aplicaCorteValoresPlanoDemanda(linha, fracao);
+                        }
+                    }));
+                });
+
+        for (DistributionPlanItem expedicao : expedicoes) {
+            double quantidade = expedicao.getQuantidade(Constantes.FirmePlanejado.PLANEJADO, tipoPlano);
+            if (quantidade != 0) {
+                parcelas.add(parcelaDistribuicao(
+                        expedicao, Constantes.FirmePlanejado.PLANEJADO, quantidade, quantidade, conversoes, unidade));
+            }
         }
+        return parcelas;
 
-        DemandaDiretaConsideradaLinha demandaDiretaConsideradaLinha = supplyPlanningProjection
-                .getDemandaDiretaConsideradaProjection()
-                .getDemandaDiretaConsideradaLinha(
-                        supplyPlanningProjection.getLocation(), material, posicaoPeriodo)
-                .orElse(null);
-        if (demandaDiretaConsideradaLinha == null) {
-            return;
+    }
+
+    private static List<CorteProporcional.Parcela> parcelasTransferencias(
+            Collection<DistributionPlanItem> transferencias, List<Constantes.FirmePlanejado> tiposTransferencia,
+            UnidadeMedidaProjection conversoes,
+            UnidadeMedida unidade, boolean paraAtendimentoDemanda) {
+
+        var tipoPlano = Constantes.TipoPlano.PLANO_RESTRITO;
+        List<CorteProporcional.Parcela> parcelas = new ArrayList<>();
+        for (DistributionPlanItem transferencia : transferencias) {
+            for (var tipo : tiposTransferencia) {
+                double quantidade = transferencia.getQuantidade(tipo, tipoPlano);
+                double atendimento = Math.min(quantidade,
+                        transferencia.getParcelaParaAtendimentoIndiretoDemandaDireta(tipo, tipoPlano));
+                double parcela = paraAtendimentoDemanda ? atendimento : quantidade - atendimento;
+                if (parcela != 0) {
+                    parcelas.add(parcelaDistribuicao(transferencia, tipo, quantidade, parcela, conversoes, unidade));
+                }
+            }
         }
+        return parcelas;
 
-        UnidadeMedidaProjection unidadeMedidaProjection =
-                supplyPlanningProjection.getConversaoUnidadeMedidaProjection();
-        UnidadeMedida unidadeMedidaLinha = demandaDiretaConsideradaLinha.getUnidadeMedida(
-                unidadeMedidaProjection.getParametrosGlobais());
-        double fatorParaUnidadePadrao = unidadeMedidaProjection.getConversaoParaUnidadeDestino(
-                material,
-                unidadeMedidaLinha,
-                unidadeMedidaPadrao);
-        if (!Double.isFinite(fatorParaUnidadePadrao) || fatorParaUnidadePadrao <= 0) {
-            throw new IllegalStateException("Invalid direct demand unit conversion for material "
-                    + material.getId() + ".");
+    }
+
+    private static CorteProporcional.Parcela parcelaDistribuicao(
+            DistributionPlanItem linha, Constantes.FirmePlanejado tipo, double quantidade, double parcela,
+            UnidadeMedidaProjection conversoes, UnidadeMedida unidade) {
+
+        double fatorConversao = conversoes.getConversaoParaUnidadeDestino(
+                linha.getProduto(), linha.getUnidadeMedida(conversoes.getParametrosGlobais()), unidade);
+        double parcelaConvertida = parcela * fatorConversao;
+        return new CorteProporcional.Parcela(parcelaConvertida, fracao -> linha.setQuantidade(
+                quantidade - parcela * fracao, tipo, Constantes.TipoPlano.PLANO_RESTRITO));
+
+    }
+
+    private static void arredondaTransferenciasInternas(
+            SupplyPlanningProjection projection, int periodo, Produto material, UnidadeMedida unidade) {
+
+        var tipoPlano = Constantes.TipoPlano.PLANO_RESTRITO;
+        var rede = projection.getSupplyNetworkProjection();
+        var malha = projection.getSupplyPlan().getVersaoMalha();
+        var referencia = projection.getCalendario().getDataHorarioInicialPresente();
+        var conversoes = projection.getConversaoUnidadeMedidaProjection();
+        var transferencias = projection.getDistributionPlanItemOutboundQueueParaLocationsInternas(
+                Constantes.ReferenciaPeriodo.CONSUMO_CAPACIDADE, periodo, material);
+        for (DistributionPlanItem linha : transferencias) {
+            double planejado = linha.getQuantidade(Constantes.FirmePlanejado.PLANEJADO, tipoPlano);
+            double firme = linha.getQuantidade(Constantes.FirmePlanejado.ORDEM, tipoPlano);
+            double total = linha.getQuantidadeNaUnidadeMedidaTarget(
+                    Constantes.FirmePlanejado.TOTAL, tipoPlano, unidade, conversoes);
+            if (total <= 0) {
+                continue;
+            }
+            double minimo = rede.getLoteMinimoTransporteNaUnidadeTarget(
+                    malha, linha.getLocationOrigem(), linha.getLocationDestino(), material, unidade, referencia)
+                    .orElse(0);
+            double multiplo = rede.getMultiploTransporteNaUnidadeTarget(
+                    malha, linha.getLocationOrigem(), linha.getLocationDestino(), material, unidade, referencia)
+                    .orElse(0);
+            double arredondado = total;
+            if (total < minimo) {
+                arredondado = 0;
+            } else if (multiplo > 0) {
+                arredondado = Math.floor(total / multiplo) * multiplo;
+            }
+            double proporcao = arredondado / total;
+            linha.setQuantidade(planejado * proporcao, Constantes.FirmePlanejado.PLANEJADO, tipoPlano);
+            linha.setQuantidade(firme * proporcao, Constantes.FirmePlanejado.ORDEM, tipoPlano);
         }
-
-        double faltaNaUnidadeDaLinha = -saldoFisico / fatorParaUnidadePadrao;
-        double planoDemandaRestrito = demandaDiretaConsideradaLinha
-                .getQuantidadeDemandaDiretaPlanoDemandaRestrita();
-        double reducaoPlanoDemanda = Math.min(planoDemandaRestrito, faltaNaUnidadeDaLinha);
-        demandaDiretaConsideradaLinha.setQuantidadeDemandaDiretaPlanoDemandaRestrita(
-                planoDemandaRestrito - reducaoPlanoDemanda);
-        faltaNaUnidadeDaLinha -= reducaoPlanoDemanda;
-
-        if (faltaNaUnidadeDaLinha > 0) {
-            double carteiraRestrita = demandaDiretaConsideradaLinha
-                    .getQuantidadeDemandaDiretaCarteiraRestrita();
-            double reducaoCarteira = Math.min(carteiraRestrita, faltaNaUnidadeDaLinha);
-            demandaDiretaConsideradaLinha.setQuantidadeDemandaDiretaCarteiraRestrita(
-                    carteiraRestrita - reducaoCarteira);
-        }
+        limitaParcelasAtendimentoDemandaDiretaAoVolumeRestrito(transferencias);
 
     }
 

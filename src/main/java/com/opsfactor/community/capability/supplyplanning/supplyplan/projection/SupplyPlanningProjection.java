@@ -24,6 +24,7 @@ import com.opsfactor.community.capability.masterdata.demand.dfu.projection.Mater
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.projection.PoliticaEstoquesProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
+import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanHeuristicDemandRestrictionSpi;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.exception.IncompatibleCalendarException;
 import com.opsfactor.community.platform.utility.Constantes;
@@ -166,6 +167,18 @@ public class SupplyPlanningProjection {
 
     public DemandaDiretaConsideradaProjection getDemandaDiretaConsideradaProjection() {
         return demandaDiretaConsideradaProjection;
+    }
+
+    /** Extensão quantitativa opcional associada à fotografia do heurístico. */
+    private SupplyPlanHeuristicDemandRestrictionSpi restricaoDemandaAdicional;
+
+    void setRestricaoDemandaAdicional(SupplyPlanHeuristicDemandRestrictionSpi restricaoDemandaAdicional) {
+
+        if (perfilExecucaoSupplyPlanConsiderado != null
+                && perfilExecucaoSupplyPlanConsiderado.getModoExecucao() == PerfilExecucaoSupplyPlan.ModoExecucao.HEURISTICO) {
+            this.restricaoDemandaAdicional = restricaoDemandaAdicional;
+        }
+
     }
 
     // CONSTRUTOR

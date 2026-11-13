@@ -23,6 +23,7 @@ import com.opsfactor.community.capability.transactionaldata.inventory.stock.proj
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.projection.PoliticaEstoquesProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.service.SupplyPlanPersistedBaselinePreflight;
+import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanHeuristicDemandRestrictionSpi;
 import com.opsfactor.community.platform.calendar.Calendario;
 import com.opsfactor.community.platform.calendar.CalendarioSimples;
 import com.opsfactor.community.platform.utility.Constantes;
@@ -43,6 +44,9 @@ import java.util.stream.Collectors;
  */
 @Component
 public class SupplyPlanProjectionFactory {
+
+    @Autowired(required = false)
+    private SupplyPlanHeuristicDemandRestrictionSpi restricaoDemandaAdicional;
 
     /**
      * Repository das linhas de distribuicao planejadas/restritas/trabalho.
@@ -102,6 +106,7 @@ public class SupplyPlanProjectionFactory {
                 supplyNetworkProjection, politicaEstoquesProjection,
                 calendario, location,
                 materialProjection, locationProjection);
+        supplyPlanningProjection.setRestricaoDemandaAdicional(restricaoDemandaAdicional);
 
         return supplyPlanningProjection;
 
@@ -135,6 +140,7 @@ public class SupplyPlanProjectionFactory {
                     supplyNetworkProjection, politicaEstoquesProjection,
                     calendario, location,
                     materialProjection, locationProjection);
+            supplyPlanningProjection.setRestricaoDemandaAdicional(restricaoDemandaAdicional);
 
             supplyPlanningMultiplasLocationsProjection.addSupplyPlanningProjection(supplyPlanningProjection);
         }
@@ -179,6 +185,7 @@ public class SupplyPlanProjectionFactory {
                 supplyNetworkProjection, politicaEstoquesProjection,
                 calendario, location,
                 materialProjection, locationProjection);
+        supplyPlanningProjection.setRestricaoDemandaAdicional(restricaoDemandaAdicional);
 
         return supplyPlanningProjection;
 
