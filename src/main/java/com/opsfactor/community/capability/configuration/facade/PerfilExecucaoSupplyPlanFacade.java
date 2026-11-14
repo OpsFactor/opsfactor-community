@@ -163,6 +163,10 @@ public class PerfilExecucaoSupplyPlanFacade {
         normalizaPedidosTransacionaisCommunity(perfilExecucaoSupplyPlan);
         normalizaCapacidadesEConstraintsCommunity(perfilExecucaoSupplyPlan);
         normalizaFairShareCommunity(perfilExecucaoSupplyPlan);
+        // O perfil compartilhado pode ter uma escolha gravada pela edição Enterprise.
+        perfilExecucaoSupplyPlanRepository.findById(perfilExecucaoSupplyPlan.getId())
+                .ifPresent(perfilPersistido -> perfilExecucaoSupplyPlan.setEnforceSingleOriginPerEconomicGroupPeriod(
+                        perfilPersistido.getEnforceSingleOriginPerEconomicGroupPeriod()));
         for (PoliticaEstoques politicaEstoques : politicaEstoquesSet) {
             perfilExecucaoSupplyPlan.getSetPerfilExecucaoPoliticaEstoques().add(
                     new PerfilExecucaoPoliticaEstoques(
@@ -666,6 +670,8 @@ public class PerfilExecucaoSupplyPlanFacade {
         validaTextoEnterprisePreenchido(perfilExecucaoSupplyPlanDTO.getSafetyStockPrioritizationModelId(), "Supply Planning safety-stock prioritization");
         validaBooleanEnterprise(perfilExecucaoSupplyPlanDTO.getSaveOptimizerVariablesAndConstraints(), "Supply Planning optimizer diagnostics");
         validaBooleanEnterprise(perfilExecucaoSupplyPlanDTO.getSaveConstraintBacktracking(), "Supply Planning Constraint Root Cause Analysis");
+        validaBooleanEnterprise(perfilExecucaoSupplyPlanDTO.getEnforceSingleOriginPerEconomicGroupPeriod(),
+                "Supply Planning CP-SAT origin limit by economic group and period");
         validaBooleanEnterprise(perfilExecucaoSupplyPlanDTO.getIgnoreLeadTimeConstraintsForUnconstrainedPlan(), "Supply Planning lead-time optimization");
         validaNumeroEnterprise(perfilExecucaoSupplyPlanDTO.getMaximumTransferCostImpactForLeadTimeReduction(), "Supply Planning lead-time optimization");
         validaNumeroEnterprise(perfilExecucaoSupplyPlanDTO.getMaximumMaterialObjectiveValueImpactForLeadTimeReduction(), "Supply Planning lead-time optimization");

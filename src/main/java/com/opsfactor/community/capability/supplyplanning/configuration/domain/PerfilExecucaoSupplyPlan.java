@@ -460,6 +460,10 @@ public class PerfilExecucaoSupplyPlan implements Serializable, Cloneable {
      */
     private Boolean enableGreenfieldBrownfield;
 
+    /** Flag Enterprise que limita a reposição de cada grupo econômico a uma origem por período no CP-SAT. */
+    @Column(name = "enforce_single_origin_per_economic_group_period")
+    private Boolean enforceSingleOriginPerEconomicGroupPeriod;
+
     private Boolean aplicaFairShareSafetyStock;
     private Integer numeroSegmentosLinearizacaoGapDemandaDireta;
     private Integer numeroSegmentosLinearizacaoGapSafetyStock;
@@ -1117,6 +1121,13 @@ public class PerfilExecucaoSupplyPlan implements Serializable, Cloneable {
     public boolean getEnableGreenfieldBrownfield() {
 
         return Boolean.TRUE.equals(enableGreenfieldBrownfield);
+
+    }
+
+    /** Perfis existentes com valor nulo mantêm a restrição desligada. */
+    public boolean getEnforceSingleOriginPerEconomicGroupPeriod() {
+
+        return Boolean.TRUE.equals(enforceSingleOriginPerEconomicGroupPeriod);
 
     }
 

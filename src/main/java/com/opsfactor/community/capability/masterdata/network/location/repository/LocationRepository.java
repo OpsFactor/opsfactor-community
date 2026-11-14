@@ -44,8 +44,10 @@ public interface LocationRepository extends JpaRepository<Location,String> {
     @Query("SELECT DISTINCT l FROM Location l")
     List<Location> customFindAllWithParametros();
 
+    /** Carrega também os grupos usados no snapshot mestre de clientes, sem consultas adicionais. */
     @Query("SELECT DISTINCT l FROM Location l "
             + "LEFT JOIN FETCH l.referenceLocationForProductLocationParameters "
+            + "LEFT JOIN FETCH l.economicGroup "
             + "WHERE l.id <> '0'")
     List<Location> customFindAllSemDefault();
 

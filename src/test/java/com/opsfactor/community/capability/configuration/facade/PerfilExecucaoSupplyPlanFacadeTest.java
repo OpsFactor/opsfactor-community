@@ -1114,6 +1114,7 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
                 perfilExecucaoSupplyPlanDTO -> perfilExecucaoSupplyPlanDTO.setOptimizationModelType("MIP"),
                 perfilExecucaoSupplyPlanDTO -> perfilExecucaoSupplyPlanDTO.setSaveOptimizerVariablesAndConstraints(true),
                 perfilExecucaoSupplyPlanDTO -> perfilExecucaoSupplyPlanDTO.setSaveConstraintBacktracking(true),
+                perfilExecucaoSupplyPlanDTO -> perfilExecucaoSupplyPlanDTO.setEnforceSingleOriginPerEconomicGroupPeriod(true),
                 perfilExecucaoSupplyPlanDTO -> perfilExecucaoSupplyPlanDTO.setCustomerDemandPrioritizationModelId("customer-priority"),
                 perfilExecucaoSupplyPlanDTO -> perfilExecucaoSupplyPlanDTO.setSafetyStockPrioritizationModelId("safety-stock-priority"),
                 perfilExecucaoSupplyPlanDTO -> perfilExecucaoSupplyPlanDTO.setObjectiveFunctionTemporalImpactDecayModel(
@@ -1485,6 +1486,9 @@ public class PerfilExecucaoSupplyPlanFacadeTest {
                             case "equals" -> proxy == args[0];
                             default -> throw new AssertionError("Metodo Object inesperado: " + method.getName());
                         };
+                    }
+                    if ("findById".equals(method.getName())) {
+                        return Optional.empty();
                     }
                     if ("save".equals(method.getName()) && method.getParameterCount() == 1) {
                         return perfilExecucaoSupplyPlanSalvo;

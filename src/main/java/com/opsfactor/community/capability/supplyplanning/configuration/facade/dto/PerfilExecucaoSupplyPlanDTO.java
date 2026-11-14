@@ -85,6 +85,8 @@ public class PerfilExecucaoSupplyPlanDTO {
     private String customerDemandPrioritizationModelId;
     private String safetyStockPrioritizationModelId;
     
+    /** Campo Enterprise de origem única de reposição por grupo econômico e período, aplicada somente pelo CP-SAT. */
+    private Boolean enforceSingleOriginPerEconomicGroupPeriod;
     private Boolean generatePlannedInboundOrders;
     private Boolean generatePlannedProductionOrders;
     /** usado para heurístico : 

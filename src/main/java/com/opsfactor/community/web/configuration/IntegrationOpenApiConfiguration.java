@@ -103,6 +103,7 @@ public class IntegrationOpenApiConfiguration {
             "enableDemandCatchUpFromPastSellout",
             "saveOptimizerVariablesAndConstraints",
             "saveConstraintBacktracking",
+            "enforceSingleOriginPerEconomicGroupPeriod",
             "executeSupplyPlanForAllLocations",
             "ignoreStorageConstraintsForUnconstrainedPlan",
             "ignoreOutboundConstraintsForUnconstrainedPlan",

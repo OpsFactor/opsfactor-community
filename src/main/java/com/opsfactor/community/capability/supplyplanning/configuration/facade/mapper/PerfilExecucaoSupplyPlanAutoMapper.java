@@ -115,6 +115,7 @@ public interface PerfilExecucaoSupplyPlanAutoMapper {
     @Mapping(target = "demandConsolidationMode", expression = "java(null)")
     @Mapping(target = "enableLineSequencing", expression = "java(false)")
     @Mapping(target = "enableGreenfieldBrownfield", expression = "java(false)")
+    @Mapping(target = "enforceSingleOriginPerEconomicGroupPeriod", expression = "java(false)")
     @Mapping(target = "maximumOptimizerExecutionTime", expression = "java(null)")
     /*
      * Estes escalares possuem getters com defaults historicos na entidade
@@ -185,6 +186,7 @@ public interface PerfilExecucaoSupplyPlanAutoMapper {
     @Mapping(target = "enableDemandCatchUpFromPastSellout", expression = "java(false)")
     @Mapping(target = "enableLineSequencing", expression = "java(false)")
     @Mapping(target = "enableGreenfieldBrownfield", expression = "java(false)")
+    @Mapping(target = "enforceSingleOriginPerEconomicGroupPeriod", ignore = true)
     public PerfilExecucaoSupplyPlan converte(PerfilExecucaoSupplyPlanDTO perfilExecucaoSupplyPlanDTO);
         
     public List<PerfilExecucaoSupplyPlanDTO> converteListaEntidadesParaDTOs(List<PerfilExecucaoSupplyPlan> perfilExecucaoSupplyPlanList);
