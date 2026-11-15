@@ -5,8 +5,10 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -27,6 +29,15 @@ public interface ParametrosProdutoLocationRepository extends JpaRepository<Param
         + "LEFT JOIN FETCH ppl.unidadeMedidaLoteMinimoMultiploProducao umlmmp "
         + "LEFT JOIN FETCH ppl.unidadeMedidaPadrao ump")
     public List<ParametrosProdutoLocation> customFindAllComFetchAtributosManyToOne();
+
+    /** Restringe o snapshot de parâmetros aos materiais solicitados. */
+    @Query("SELECT ppl FROM ParametrosProdutoLocation ppl "
+            + "JOIN FETCH ppl.parametrosProdutoLocationCompositeKey.produto p "
+            + "JOIN FETCH ppl.parametrosProdutoLocationCompositeKey.location l "
+            + "LEFT JOIN FETCH ppl.unidadeMedidaLoteMinimoMultiploProducao "
+            + "LEFT JOIN FETCH ppl.unidadeMedidaPadrao "
+            + "WHERE p.id IN :materialIds")
+    List<ParametrosProdutoLocation> findForMaterialIds(@Param("materialIds") Collection<String> materialIds);
 
     public List<ParametrosProdutoLocation> findByParametrosProdutoLocationCompositeKeyLocationId(String locationId);
     public List<ParametrosProdutoLocation> findByParametrosProdutoLocationCompositeKeyLocationTipoLocation(LocationAbstract.TipoLocation tipoLocation);

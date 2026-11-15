@@ -108,6 +108,15 @@ public class CadastroEParametrosProjectionFactory {
     public CadastroEParametrosProjection getParametrosProjectionBase(
             Collection<Location> locationCollection, Collection<Produto> materialCollection) {
 
+        return getParametrosProjectionBase(locationCollection, materialCollection, false);
+
+    }
+
+    /** Mantém a referência entre locations e carrega parâmetros somente para os materiais informados. */
+    public CadastroEParametrosProjection getParametrosProjectionBase(
+            Collection<Location> locationCollection, Collection<Produto> materialCollection,
+            boolean filtraParametrosPorMaterial) {
+
         validaSnapshotComId(
                 materialCollection,
                 Produto::getId,
@@ -161,8 +170,14 @@ public class CadastroEParametrosProjectionFactory {
         cadastroEParametrosProjection.parametrosGlobais = parametrosGlobaisService.getParametrosGlobais();
 
         cadastroEParametrosProjection.mapaParametrosProdutoLocation = new HashMap<>();
-        List<ParametrosProdutoLocation> parametrosProdutoLocationList =
-                parametrosProdutoLocationRepository.customFindAllComFetchAtributosManyToOne();
+        List<ParametrosProdutoLocation> parametrosProdutoLocationList;
+        if (filtraParametrosPorMaterial) {
+            parametrosProdutoLocationList = materialSet.isEmpty() ? List.of()
+                    : parametrosProdutoLocationRepository.findForMaterialIds(
+                            materialSet.stream().map(Produto::getId).toList());
+        } else {
+            parametrosProdutoLocationList = parametrosProdutoLocationRepository.customFindAllComFetchAtributosManyToOne();
+        }
         validaParametrosProdutoLocation(parametrosProdutoLocationList);
         cadastroEParametrosProjection.mapaParametrosProdutoLocation = parametrosProdutoLocationList
                 .stream()

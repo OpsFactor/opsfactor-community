@@ -155,6 +155,26 @@ public class SupplyNetworkProjectionFactory {
             Set<Location> locationsOrigemFiltradas,
             Set<Location> locationsDestinoFiltradas) {
 
+        populaSupplyNetworkProjectionComLinhasTransporte(
+                supplyNetworkProjection, versaoMalha, locationsOrigemFiltradas, locationsDestinoFiltradas, null);
+
+    }
+
+    /**
+     * Monta a malha de transporte para um subconjunto de materiais, incluindo
+     * os bloqueios explícitos e as origens padrão de clientes.
+     */
+    public void populaSupplyNetworkProjectionComLinhasTransporte(
+            SupplyNetworkProjection supplyNetworkProjection,
+            VersaoMalha versaoMalha,
+            Set<Location> locationsOrigemFiltradas,
+            Set<Location> locationsDestinoFiltradas,
+            @Nullable Set<Produto> materiaisFiltrados) {
+
+        if (supplyNetworkProjection.mapaVersaoMalhaPorId == null) {
+            supplyNetworkProjection.mapaVersaoMalhaPorId = new HashMap<>();
+        }
+        supplyNetworkProjection.mapaVersaoMalhaPorId.putIfAbsent(versaoMalha.getId(), versaoMalha);
         if (supplyNetworkProjection.mapaLinhaTransporteSetPorVersaoMalha == null) supplyNetworkProjection.mapaLinhaTransporteSetPorVersaoMalha = new HashMap<>();
         if (supplyNetworkProjection.mapaLinhaTransporteInboundAtivaSetPorLocation == null) supplyNetworkProjection.mapaLinhaTransporteInboundAtivaSetPorLocation = new HashMap<>();
         if (supplyNetworkProjection.mapaLinhaTransporteOutboundAtivaSetPorLocation == null) supplyNetworkProjection.mapaLinhaTransporteOutboundAtivaSetPorLocation = new HashMap<>();
@@ -179,12 +199,15 @@ public class SupplyNetworkProjectionFactory {
                                 locationsDestinoFiltradasCopia);
         validaLinhasTransporte(linhaTransporteList);
 
-        Set<LinhaTransporte> linhaTransporteAtivaSet = linhaTransporteList.stream()
-                        .filter(LinhaTransporte::getAtivo)
-                        .collect(Collectors.toSet());
-
         List<LinhaTransporteProduto> linhaTransporteProdutoSet =
-                linhaTransporteProdutoRepository.customFindAll();
+                materiaisFiltrados == null
+                        ? linhaTransporteProdutoRepository.customFindAll()
+                        : linhaTransporteProdutoRepository
+                                .findByLinhaTransporteProdutoCompositeKeyVersaoIdInAndLinhaTransporteProdutoCompositeKeyProdutoIdInAndLinhaTransporteProdutoCompositeKeyLocationOrigemIdInAndLinhaTransporteProdutoCompositeKeyLocationDestinoIdIn(
+                                        List.of(versaoMalha.getId()),
+                                        materiaisFiltrados.stream().map(Produto::getId).toList(),
+                                        locationsOrigemFiltradasCopia.stream().map(Location::getId).toList(),
+                                        locationsDestinoFiltradasCopia.stream().map(Location::getId).toList());
         adicionaLinhasTransporteAosMapas(
                 supplyNetworkProjection,
                 versaoMalha,
