@@ -12,6 +12,7 @@ import com.opsfactor.community.platform.utility.Constantes;
 import lombok.*;
 
 import jakarta.persistence.*;
+import com.opsfactor.community.platform.database.converter.StringSetJsonConverter;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -391,6 +392,33 @@ public class PerfilExecucaoSupplyPlan implements Serializable, Cloneable {
 
     private Boolean salvaVariaveisERestricoesOtimizador;
     private Boolean alocaTransferenciasNasFrotas;
+
+    /**
+     * Seleção explícita de frotas considerada pelo runtime Enterprise.
+     * Vazio significa nenhuma frota; não inferir todas a partir da malha.
+     * O JSON escalar mantém o Community independente das entidades privadas.
+     */
+    @Getter(AccessLevel.NONE)
+    @Convert(converter = StringSetJsonConverter.class)
+    @Column(columnDefinition = "text")
+    private Set<String> frotaIdsConsideradas = new LinkedHashSet<>();
+
+    /** Arredonda viagens inteiras; independente da seleção de frota e da alocação por tipo. */
+    @Getter(AccessLevel.NONE)
+    private Boolean arredondaAlocacaoVeiculos;
+
+    public Set<String> getFrotaIdsConsideradas() {
+
+        return frotaIdsConsideradas == null ? Set.of() : Set.copyOf(frotaIdsConsideradas);
+
+    }
+
+    public boolean getArredondaAlocacaoVeiculos() {
+
+        return Boolean.TRUE.equals(arredondaAlocacaoVeiculos);
+
+    }
+
     private Boolean consideraRestricaoArmazenagem;
     private Boolean consideraRestricaoOutbound;
     private Boolean consideraRestricaoInbound;

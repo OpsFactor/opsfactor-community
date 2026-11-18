@@ -46,6 +46,8 @@ public interface PerfilExecucaoSupplyPlanAutoMapper {
     @Mapping(expression = "java(perfilExecucaoSupplyPlan.getNumeroPeriodosExpedicaoArredondaRequisicoesLoteMinimoEMultiplo())", target = "expeditionPeriodsToRoundRequisitionsByMoqAndLotSize")
     @Mapping(target = "roundPlannedPurchaseOrdersByMinimumLotSize", expression = "java(false)")
     @Mapping(target = "allocateTransfersInFleets", expression = "java(false)")
+    @Mapping(target = "fleetIdSet", expression = "java(new java.util.HashSet<>())")
+    @Mapping(target = "roundVehicleAllocation", expression = "java(false)")
     @Mapping(source = "arredondaProducaoLoteMinimoEMultiplo", target = "roundProductionByMoqAndLotSize")
     @Mapping(expression = "java(perfilExecucaoSupplyPlan.getArredondaProducaoLoteMinimoEMultiploEmTodosPeriodos())", target = "roundProductionByMoqAndLotSizeForAllPeriods")
     @Mapping(expression = "java(perfilExecucaoSupplyPlan.getNumeroPeriodosArredondaProducaoLoteMinimoEMultiplo())", target = "periodsToRoundProductionByMoqAndLotSize")
@@ -155,6 +157,8 @@ public interface PerfilExecucaoSupplyPlanAutoMapper {
     public PerfilExecucaoSupplyPlanDTO converte(PerfilExecucaoSupplyPlan perfilExecucaoSupplyPlan);
 
     @Mapping(source = "description", target = "descricao")
+    @Mapping(target = "frotaIdsConsideradas", expression = "java(new java.util.HashSet<>())")
+    @Mapping(target = "arredondaAlocacaoVeiculos", expression = "java(false)")
     @Mapping(target = "materialFilterId", ignore = true)
     @Mapping(source = "generatePlannedInboundOrders", target = "geraRequisicoesInbound")
     @Mapping(source = "generatePlannedProductionOrders", target = "geraOrdensProducaoPlanejadas")

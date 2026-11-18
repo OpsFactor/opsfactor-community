@@ -120,6 +120,13 @@ public class PerfilExecucaoSupplyPlanDTO {
     private Boolean roundPlannedPurchaseOrdersByMinimumLotSize;
     /** Campo Enterprise: alocacao de transferencias em frotas/veiculos. */
     private Boolean allocateTransfersInFleets;
+
+    /** Frotas explicitamente selecionadas; vazio desabilita as bases Fleet/Vehicle. */
+    private Set<String> fleetIdSet = new HashSet<>();
+
+    /** Arredondamento inteiro de viagens; não habilita/desabilita alocação de frota. */
+    private Boolean roundVehicleAllocation;
+
     /** se true, o plano de produção será arredondado para cima p/ atender ao lote mínimo e múltiplo de produção */
     private Boolean roundProductionByMoqAndLotSize;
     /** se true, o arredondamento de produção em múltiplos vale para todos os períodos do horizonte */

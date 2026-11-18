@@ -479,6 +479,11 @@ public class PerfilExecucaoSupplyPlanFacade {
                 .equals(perfilExecucaoSupplyPlanDTO.getAiOptimizer())) {
             throw new RequiresEnterpriseVersionException("AI optimizer");
         }
+        if ((perfilExecucaoSupplyPlanDTO.getFleetIdSet() != null
+                && !perfilExecucaoSupplyPlanDTO.getFleetIdSet().isEmpty())
+                || Boolean.TRUE.equals(perfilExecucaoSupplyPlanDTO.getRoundVehicleAllocation())) {
+            throw new RequiresEnterpriseVersionException("Fleet selection and vehicle rounding");
+        }
         if (Boolean.TRUE.equals(perfilExecucaoSupplyPlanDTO.getAllocateTransfersInFleets())) {
             throw new RequiresEnterpriseVersionException("Fleet allocation");
         }
