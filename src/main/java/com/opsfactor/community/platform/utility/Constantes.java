@@ -519,7 +519,9 @@ public class Constantes {
     public enum ModoExecucaoProcesso {
         SYNC, 
         ASYNC, 
-        BATCH
+        BATCH,
+        /** Background execution in this application process; never publishes to a cloud queue. */
+        ASYNC_LOCAL
     }
 
 }

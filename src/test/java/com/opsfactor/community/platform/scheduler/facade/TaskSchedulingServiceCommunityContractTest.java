@@ -128,6 +128,19 @@ public class TaskSchedulingServiceCommunityContractTest {
     }
 
     @Test
+    public void taskSchedulingServiceShouldRejectLocalAsyncBeforePersistenceAccess() {
+
+        TaskSchedulingService taskSchedulingService = new TaskSchedulingService();
+        Assertions.assertThrows(RequiresEnterpriseVersionException.class,
+                () -> taskSchedulingService.validateExecutionMode(ModoExecucaoProcesso.ASYNC_LOCAL));
+        Assertions.assertThrows(RequiresEnterpriseVersionException.class,
+                () -> taskSchedulingService.criaSalvaEExecutaScheduledTaskImediatoComTask(
+                        TestTask.class, "Report", "local-report", "admin", "Local background blocked",
+                        "UTC", ModoExecucaoProcesso.ASYNC_LOCAL, null));
+
+    }
+
+    @Test
     public void taskSchedulingServiceShouldRejectAsyncBeforePersistenceAccess() {
 
         TaskSchedulingService taskSchedulingService = new TaskSchedulingService();

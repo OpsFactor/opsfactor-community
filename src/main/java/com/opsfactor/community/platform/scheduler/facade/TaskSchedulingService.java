@@ -110,6 +110,13 @@ public class TaskSchedulingService {
 
     }
 
+    /** Validates runtime capability before a caller reserves an external report artifact. */
+    public void validateExecutionMode(ModoExecucaoProcesso mode) {
+
+        validaModoExecucaoProcessoCommunity(mode);
+
+    }
+
     /**
      * Classifica o modo de execucao recebido antes de tocar persistencia.
      *
