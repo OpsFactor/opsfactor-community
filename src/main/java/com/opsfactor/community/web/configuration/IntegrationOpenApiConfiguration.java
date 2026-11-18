@@ -5,6 +5,8 @@ import com.opsfactor.community.capability.supplyplanning.configuration.domain.Pe
 import com.opsfactor.community.capability.supplyplanning.service.SupplyPlanningExecutionModelCatalog;
 import com.opsfactor.community.platform.utility.MetodosUtilidade;
 import com.opsfactor.community.web.restcontroller.dataupload.IntegrationControllerAbstract;
+import com.opsfactor.community.web.configuration.dataformat.DataFormat;
+import com.opsfactor.community.web.configuration.dataformat.DataFormatPolicy;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import io.swagger.v3.core.converter.AnnotatedType;
@@ -30,6 +32,7 @@ import jakarta.annotation.Nullable;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ResolvableType;
 import org.springframework.http.ResponseEntity;
@@ -68,6 +71,10 @@ import java.util.stream.Collectors;
  */
 @Configuration
 public class IntegrationOpenApiConfiguration {
+
+    /** Discovery and runtime use the same edition policy. */
+    @Autowired
+    private DataFormatPolicy dataFormatPolicy = new DataFormatPolicy();
 
     private static final List<String> COMMUNITY_OPENAPI_HIDDEN_SUPPLY_PROFILE_PROPERTIES = List.of(
             "materialFilterId",
@@ -706,10 +713,11 @@ public class IntegrationOpenApiConfiguration {
      */
     private Content buildDataRequestContent(Schema<?> requestBodySchema) {
 
-        return new Content()
-                .addMediaType("application/json", new MediaType().schema(requestBodySchema))
-                .addMediaType("application/vnd.apache.arrow.stream", new MediaType().schema(new BinarySchema()))
-                .addMediaType("application/vnd.apache.parquet", new MediaType().schema(new BinarySchema()));
+        Content content = new Content().addMediaType("application/json", new MediaType().schema(requestBodySchema));
+        for (DataFormat format : List.of(DataFormat.ARROW, DataFormat.PARQUET)) {
+            if (dataFormatPolicy.supports(format)) content.addMediaType(format.mediaType(), new MediaType().schema(new BinarySchema()));
+        }
+        return content;
 
     }
 
@@ -720,7 +728,8 @@ public class IntegrationOpenApiConfiguration {
     private List<Parameter> buildDataFormatQueryParameters() {
 
         StringSchema formatSchema = new StringSchema();
-        formatSchema.setEnum(List.of("json", "arrow", "parquet", "xlsx", "csv"));
+        formatSchema.setEnum(java.util.Arrays.stream(DataFormat.values()).filter(dataFormatPolicy::supports)
+                .map(DataFormat::extension).toList());
         formatSchema.setDefault("json");
 
         StringSchema decimalSeparatorSchema = new StringSchema();
@@ -751,8 +760,9 @@ public class IntegrationOpenApiConfiguration {
         if (responseSchema != null) {
             Content content = new Content().addMediaType("application/json", new MediaType().schema(responseSchema));
             if (requestMethod == RequestMethod.GET && controllerMethod.getName().equals("getDataRecordDtoList")) {
-                content.addMediaType("application/vnd.apache.arrow.stream", new MediaType().schema(new BinarySchema()));
-                content.addMediaType("application/vnd.apache.parquet", new MediaType().schema(new BinarySchema()));
+                for (DataFormat format : List.of(DataFormat.ARROW, DataFormat.PARQUET)) {
+                    if (dataFormatPolicy.supports(format)) content.addMediaType(format.mediaType(), new MediaType().schema(new BinarySchema()));
+                }
                 content.addMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", new MediaType().schema(new BinarySchema()));
                 content.addMediaType("text/csv", new MediaType().schema(new BinarySchema()));
             }

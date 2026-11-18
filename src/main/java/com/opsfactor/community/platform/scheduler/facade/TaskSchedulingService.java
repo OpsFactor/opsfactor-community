@@ -545,10 +545,28 @@ public class TaskSchedulingService {
     @Transactional(readOnly = true)
     public List<TaskSchedulingDTO> getTaskSchedulingDTOList() {
 
-        List<TaskSchedulingDTO> listaTaskSchedulingDTO = new ArrayList<>();
-
         List<ScheduledTaskHistoryRowSnapshot> scheduledTaskHistoryRowSnapshotList =
                 scheduledTaskAbstractRepository.findAllProcessStatusRows();
+        return toProcessStatusRows(scheduledTaskHistoryRowSnapshotList);
+
+    }
+
+    /** Returns only the authenticated requester's task, without an admin bypass. */
+    @Transactional(readOnly = true)
+    public List<TaskSchedulingDTO> getTaskSchedulingDTOList(String taskId, String requester) {
+
+        if (taskId == null || taskId.isBlank() || requester == null || requester.isBlank()) {
+            throw new IllegalArgumentException("Task identifier and requester are required");
+        }
+        return toProcessStatusRows(scheduledTaskAbstractRepository
+                .findProcessStatusRowsByTaskIdAndRequester(taskId, requester));
+
+    }
+
+    private List<TaskSchedulingDTO> toProcessStatusRows(
+            List<ScheduledTaskHistoryRowSnapshot> scheduledTaskHistoryRowSnapshotList) {
+
+        List<TaskSchedulingDTO> listaTaskSchedulingDTO = new ArrayList<>();
         validaScheduledTaskHistorySnapshotCommunity(scheduledTaskHistoryRowSnapshotList);
 
         for (ScheduledTaskHistoryRowSnapshot scheduledTaskHistoryRowSnapshot

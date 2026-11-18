@@ -3,6 +3,7 @@ package com.opsfactor.community.web.configuration.dataformat;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.method.HandlerMethod;
@@ -22,22 +23,39 @@ import java.util.Map;
 public final class DataFormatLegacyExportAliases implements SmartInitializingSingleton {
 
     private final ObjectProvider<RequestMappingHandlerMapping> handlerMappingProvider;
+    private final DataFormatPolicy policy;
 
     public DataFormatLegacyExportAliases(
             @Qualifier("requestMappingHandlerMapping") ObjectProvider<RequestMappingHandlerMapping> handlerMappingProvider) {
 
+        this(handlerMappingProvider, new DataFormatPolicy());
+
+    }
+
+    @Autowired
+    public DataFormatLegacyExportAliases(
+            @Qualifier("requestMappingHandlerMapping") ObjectProvider<RequestMappingHandlerMapping> handlerMappingProvider,
+            DataFormatPolicy policy) {
+
         this.handlerMappingProvider = handlerMappingProvider;
+        this.policy = policy;
 
     }
 
     @Override
     public void afterSingletonsInstantiated() {
 
-        registerAliases(handlerMappingProvider.getObject());
+        registerAliases(handlerMappingProvider.getObject(), policy);
 
     }
 
     static void registerAliases(RequestMappingHandlerMapping handlerMapping) {
+
+        registerAliases(handlerMapping, new DataFormatPolicy());
+
+    }
+
+    static void registerAliases(RequestMappingHandlerMapping handlerMapping, DataFormatPolicy policy) {
 
         List<Map.Entry<RequestMappingInfo, HandlerMethod>> originalMappings = new ArrayList<>(handlerMapping.getHandlerMethods().entrySet());
         // Older concrete controllers predate the abstract base. Publish their DTO
@@ -85,11 +103,41 @@ public final class DataFormatLegacyExportAliases implements SmartInitializingSin
                     }
                 }
                 for (String format : formats) {
+                    if (!policy.supports(DataFormat.fromParameter(format))) continue;
                     RequestMappingInfo alias = RequestMappingInfo.paths(canonicalPath)
                             .methods(RequestMethod.GET).params("format=" + format)
                             .options(handlerMapping.getBuilderConfiguration()).build();
                     if (!hasEquivalentMapping(handlerMapping, alias, canonicalPath)) {
                         handlerMapping.registerMapping(alias, handler.getBean(), handler.getMethod());
+                    }
+                }
+            }
+        }
+
+        // Async receipts must win over format-only aliases. Preserve the async
+        // condition when normalizing file routes, then register the two-parameter
+        // combinations so format=xlsx cannot select the direct extraction handler.
+        for (Map.Entry<RequestMappingInfo, HandlerMethod> entry : originalMappings) {
+            RequestMappingInfo source = entry.getKey();
+            if (!source.getMethodsCondition().getMethods().contains(RequestMethod.GET)
+                    || source.getParamsCondition().getExpressions().stream()
+                    .noneMatch(expression -> expression.toString().equals("threadSync=async"))) {
+                continue;
+            }
+            for (String sourcePath : source.getPatternValues()) {
+                String canonicalPath = canonicalExportPath(sourcePath);
+                if (canonicalPath == null && sourcePath.startsWith("/api/secured/data/")) canonicalPath = sourcePath;
+                if (canonicalPath == null) continue;
+                RequestMappingInfo background = source.mutate().paths(canonicalPath).params("threadSync=async").build();
+                if (!hasEquivalentMapping(handlerMapping, background, canonicalPath)) {
+                    handlerMapping.registerMapping(background, entry.getValue().getBean(), entry.getValue().getMethod());
+                }
+                for (DataFormat format : DataFormat.values()) {
+                    if (!policy.supports(format)) continue;
+                    RequestMappingInfo alias = source.mutate().paths(canonicalPath)
+                            .params("threadSync=async", "format=" + format.extension()).build();
+                    if (!hasEquivalentMapping(handlerMapping, alias, canonicalPath)) {
+                        handlerMapping.registerMapping(alias, entry.getValue().getBean(), entry.getValue().getMethod());
                     }
                 }
             }

@@ -2,6 +2,9 @@ package com.opsfactor.community.web.restcontroller.dataupload;
 
 import com.opsfactor.community.web.dto.controller.ResponseDTO;
 import com.opsfactor.community.platform.integration.dto.IntegrationDataDtoAbstract;
+import com.opsfactor.community.platform.integration.capability.DataReadCapability;
+import com.opsfactor.community.platform.integration.capability.DataImportCapability;
+import com.opsfactor.community.web.configuration.dataformat.DataFormatPolicy;
 import com.opsfactor.community.platform.integration.dto.IntegrationDto;
 import com.opsfactor.community.platform.integration.dto.IntegrationOptionsDto;
 import com.opsfactor.community.platform.integration.dto.IntegrationPrimaryKeyDTOAbstract;
@@ -98,6 +101,20 @@ public abstract class IntegrationControllerAbstract<ENTITY, DATARECORDDTO extend
      */
     @Autowired
     private INTEGRATIONSERVICE integrationService;
+
+    /** Enforces the edition's file boundary before any parsing, persistence or scheduling. */
+    @Autowired
+    private DataFormatPolicy dataFormatPolicy = new DataFormatPolicy();
+
+    /** Shares the planning capability levels while preserving existing service/DTO contracts. */
+    private final DataReadCapability<DATAFILTER, List<List<Object>>> fileReader = filter -> filter == null
+            ? integrationService.getFullFileContents() : integrationService.getFilteredFileContents(filter);
+    private final DataReadCapability<DATAFILTER, List<DATARECORDDTO>> dataReader = filter -> filter == null
+            ? integrationService.getFullDTOList() : integrationService.getFilteredDTOList(filter);
+    private final DataImportCapability<Void, MultipartFile, String> fileImporter =
+            (selection, input) -> integrationService.saveFile(input);
+    private final DataImportCapability<Void, IntegrationDto<DATARECORDDTO, PRIMARYKEYDTO, DATAFILTER, OPTIONS>, String> dataImporter =
+            (selection, input) -> integrationService.saveDTOList(input);
 
     /**
      * Request atual usado apenas para logging opcional de integracao.
@@ -310,26 +327,26 @@ public abstract class IntegrationControllerAbstract<ENTITY, DATARECORDDTO extend
 
     public List<List<Object>> getFile() {
         validaAutorizacaoGetCommunity();
-        return integrationService.getFullFileContents();
+        return fileReader.read(null);
     }
 
     public List<List<Object>> getFileComFiltro(IntegrationDto<DATARECORDDTO,PRIMARYKEYDTO,DATAFILTER,OPTIONS> integrationDto) {
         validaIntegrationDtoPresenteCommunity(integrationDto);
         if (integrationDto.dataFilter == null) return getFile();
         validaAutorizacaoGetCommunity();
-        return integrationService.getFilteredFileContents(integrationDto.dataFilter);
+        return fileReader.read(integrationDto.dataFilter);
     }
 
     public List<DATARECORDDTO> getDataRecordDtoList() {
         validaAutorizacaoGetCommunity();
-        return integrationService.getFullDTOList();
+        return dataReader.read(null);
     }
 
     public List<DATARECORDDTO> getDataRecordDtoListComFiltro(IntegrationDto<DATARECORDDTO,PRIMARYKEYDTO,DATAFILTER,OPTIONS> integrationDto) {
         validaIntegrationDtoPresenteCommunity(integrationDto);
         if (integrationDto.dataFilter == null) return getDataRecordDtoList();
         validaAutorizacaoGetCommunity();
-        return integrationService.getFilteredDTOList(integrationDto.dataFilter);
+        return dataReader.read(integrationDto.dataFilter);
     }
 
     /**
@@ -355,9 +372,13 @@ public abstract class IntegrationControllerAbstract<ENTITY, DATARECORDDTO extend
                 "POST"))) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+        if (multipartFile == null || !dataFormatPolicy.supportsMultipartFile(multipartFile.getOriginalFilename())) {
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                    "This edition accepts CSV or XLSX file uploads");
+        }
         return webControllerTaskSchedulingService.runImediatoSync(
                 buildLoggedSupplier(
-                        ThrowingSupplier.unchecked(() -> integrationService.saveFile(multipartFile)),
+                        ThrowingSupplier.unchecked(() -> fileImporter.importData(null, multipartFile)),
                         "SAVE_FILE",
                         null,
                         getMultipartRequestContent(multipartFile)),
@@ -376,7 +397,7 @@ public abstract class IntegrationControllerAbstract<ENTITY, DATARECORDDTO extend
         validaThreadSyncCommunity(integrationDto);
 
         Supplier<String> loggedSupplier = buildLoggedSupplier(
-                () -> integrationService.saveDTOList(integrationDto),
+                ThrowingSupplier.unchecked(() -> dataImporter.importData(null, integrationDto)),
                 "SAVE_DATA",
                 integrationDto.data == null ? null : integrationDto.data.size(),
                 getJsonRequestContent(integrationDto));

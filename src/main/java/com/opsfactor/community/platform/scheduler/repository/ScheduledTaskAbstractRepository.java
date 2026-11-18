@@ -37,6 +37,16 @@ public interface ScheduledTaskAbstractRepository extends JpaRepository<Scheduled
             + "LEFT JOIN scheduledTask.scheduledTaskExecutionSet execution")
     public List<ScheduledTaskHistoryRowSnapshot> findAllProcessStatusRows();
 
+    /** A single task lookup keeps execution LOBs out of five-second polling. */
+    @Query("SELECT new com.opsfactor.community.platform.scheduler.repository.dto.ScheduledTaskHistoryRowSnapshot("
+            + "scheduledTask, execution.scheduledTaskExecutionCompositeKey.idExecucao, "
+            + "execution.horarioInicio, execution.horarioFim, execution.mensagemErroResumida) "
+            + "FROM ScheduledTaskAbstract scheduledTask "
+            + "LEFT JOIN scheduledTask.scheduledTaskExecutionSet execution "
+            + "WHERE scheduledTask.id = :taskId AND scheduledTask.userId = :requester")
+    List<ScheduledTaskHistoryRowSnapshot> findProcessStatusRowsByTaskIdAndRequester(
+            @Param("taskId") String taskId, @Param("requester") String requester);
+
     /**
      * Recupera somente o conjunto ainda operacional para gates de cutover.
      *

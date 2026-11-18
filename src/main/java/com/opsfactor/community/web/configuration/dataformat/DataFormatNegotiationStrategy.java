@@ -18,6 +18,20 @@ import java.util.List;
  */
 public final class DataFormatNegotiationStrategy implements ContentNegotiationStrategy {
 
+    private final DataFormatPolicy policy;
+
+    public DataFormatNegotiationStrategy() {
+
+        this(new DataFormatPolicy());
+
+    }
+
+    public DataFormatNegotiationStrategy(DataFormatPolicy policy) {
+
+        this.policy = policy;
+
+    }
+
     @Override
     public List<MediaType> resolveMediaTypes(NativeWebRequest webRequest) throws HttpMediaTypeNotAcceptableException {
 
@@ -45,12 +59,12 @@ public final class DataFormatNegotiationStrategy implements ContentNegotiationSt
         }
         try {
             DataFormat format = DataFormat.fromParameter(parameter);
-            if (!parameter.equals(format.extension())) {
+            if (!policy.supports(format) || !parameter.equals(format.extension())) {
                 throw new IllegalArgumentException("Format names must use their documented lowercase spelling.");
             }
             return List.of(MediaType.parseMediaType(format.mediaType()));
         } catch (IllegalArgumentException exception) {
-            throw new HttpMediaTypeNotAcceptableException(Arrays.stream(DataFormat.values())
+            throw new HttpMediaTypeNotAcceptableException(Arrays.stream(DataFormat.values()).filter(policy::supports)
                     .map(format -> MediaType.parseMediaType(format.mediaType())).toList());
         }
 

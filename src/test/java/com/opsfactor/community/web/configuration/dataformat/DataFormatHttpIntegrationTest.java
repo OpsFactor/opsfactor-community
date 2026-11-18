@@ -37,16 +37,19 @@ class DataFormatHttpIntegrationTest {
     @BeforeEach
     void configureMvc() {
 
+        // Explicit full policy tests the shared representation library used by
+        // Enterprise. Community runtime exposure has a separate edition test.
+        DataFormatPolicy policy = new DataFormatPolicy(java.util.EnumSet.allOf(DataFormat.class));
         mvc = MockMvcBuilders.standaloneSetup(new SampleController(), new TypedIntegrationController())
-                .setControllerAdvice(new DataFormatExceptionHandler())
+                .setControllerAdvice(new DataFormatExceptionHandler(policy))
                 .setContentNegotiationManager(new ContentNegotiationManager(
-                        new DataFormatNegotiationStrategy(), new HeaderContentNegotiationStrategy()))
-                .setMessageConverters(new DataFormatHttpMessageConverter(mapper),
+                        new DataFormatNegotiationStrategy(policy), new HeaderContentNegotiationStrategy()))
+                .setMessageConverters(new DataFormatHttpMessageConverter(mapper, ",", policy),
                         new MappingJackson2HttpMessageConverter(mapper), new StringHttpMessageConverter(),
                         new ByteArrayHttpMessageConverter())
                 .build();
         DataFormatLegacyExportAliases.registerAliases(mvc.getDispatcherServlet().getWebApplicationContext()
-                .getBean(RequestMappingHandlerMapping.class));
+                .getBean(RequestMappingHandlerMapping.class), policy);
 
     }
 

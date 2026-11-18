@@ -2,6 +2,7 @@ package com.opsfactor.community.web.configuration.dataformat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.accept.HeaderContentNegotiationStrategy;
@@ -16,19 +17,29 @@ public class DataFormatWebConfiguration implements WebMvcConfigurer {
 
     private final ObjectMapper objectMapper;
     private final String fieldSeparator;
+    private final DataFormatPolicy policy;
 
     public DataFormatWebConfiguration(ObjectMapper objectMapper,
             @Value("${opsfactor.data-integration.csv.field-separator:,}") String fieldSeparator) {
 
+        this(objectMapper, fieldSeparator, new DataFormatPolicy());
+
+    }
+
+    @Autowired
+    public DataFormatWebConfiguration(ObjectMapper objectMapper,
+            @Value("${opsfactor.data-integration.csv.field-separator:,}") String fieldSeparator, DataFormatPolicy policy) {
+
         this.objectMapper = objectMapper;
         this.fieldSeparator = fieldSeparator;
+        this.policy = policy;
 
     }
 
     @Override
     public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
 
-        configurer.strategies(List.of(new DataFormatNegotiationStrategy(), new HeaderContentNegotiationStrategy()));
+        configurer.strategies(List.of(new DataFormatNegotiationStrategy(policy), new HeaderContentNegotiationStrategy()));
 
     }
 
@@ -36,7 +47,7 @@ public class DataFormatWebConfiguration implements WebMvcConfigurer {
     public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
 
         // Keep all standard JSON, String, Resource and multipart converters.
-        converters.add(0, new DataFormatHttpMessageConverter(objectMapper, fieldSeparator));
+        converters.add(0, new DataFormatHttpMessageConverter(objectMapper, fieldSeparator, policy));
 
     }
 }

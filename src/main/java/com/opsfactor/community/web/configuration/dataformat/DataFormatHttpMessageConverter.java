@@ -31,6 +31,7 @@ public final class DataFormatHttpMessageConverter extends AbstractGenericHttpMes
     private final ObjectMapper objectMapper;
     private final DataFormatCodec codec;
     private final String defaultFieldSeparator;
+    private final DataFormatPolicy policy;
 
     public DataFormatHttpMessageConverter(ObjectMapper objectMapper) {
 
@@ -40,13 +41,19 @@ public final class DataFormatHttpMessageConverter extends AbstractGenericHttpMes
 
     public DataFormatHttpMessageConverter(ObjectMapper objectMapper, String defaultFieldSeparator) {
 
-        super(MediaType.parseMediaType("application/vnd.apache.arrow.stream"),
-                MediaType.parseMediaType("application/vnd.apache.parquet"),
-                MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
-                new MediaType("text", "csv", StandardCharsets.UTF_8));
+        this(objectMapper, defaultFieldSeparator, new DataFormatPolicy());
+
+    }
+
+    public DataFormatHttpMessageConverter(ObjectMapper objectMapper, String defaultFieldSeparator, DataFormatPolicy policy) {
+
+        super(java.util.Arrays.stream(DataFormat.values()).filter(format -> format != DataFormat.JSON && policy.supports(format))
+                .map(format -> format == DataFormat.CSV ? new MediaType("text", "csv", StandardCharsets.UTF_8)
+                        : MediaType.parseMediaType(format.mediaType())).toArray(MediaType[]::new));
         this.objectMapper = objectMapper;
         this.codec = new DataFormatCodec(objectMapper);
         this.defaultFieldSeparator = defaultFieldSeparator;
+        this.policy = policy;
 
     }
 
@@ -84,14 +91,15 @@ public final class DataFormatHttpMessageConverter extends AbstractGenericHttpMes
     @Override
     public boolean canRead(Class<?> clazz, MediaType mediaType) {
 
-        return (Collection.class.isAssignableFrom(clazz) || clazz.getSimpleName().equals("IntegrationDto")) && isBinaryInput(mediaType);
+        return (Collection.class.isAssignableFrom(clazz) || clazz.getSimpleName().equals("IntegrationDto"))
+                && isBinaryInput(mediaType) && policy.supports(formatFor(mediaType));
 
     }
 
     @Override
     public boolean canRead(Type type, Class<?> contextClass, MediaType mediaType) {
 
-        if (!isBinaryInput(mediaType)) {
+        if (!isBinaryInput(mediaType) || !policy.supports(formatFor(mediaType))) {
             return false;
         }
         JavaType javaType = DataFormatTypes.resolve(objectMapper, type, contextClass, null);

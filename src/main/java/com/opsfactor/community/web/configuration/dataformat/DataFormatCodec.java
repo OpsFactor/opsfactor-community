@@ -314,7 +314,7 @@ public final class DataFormatCodec {
             int rowIndex = 0;
             if (!table.matrix && !table.headers.isEmpty()) writeXlsxRow(sheet.createRow(rowIndex++), table.headers, dateStyles);
             for (Object row : table.rows) {
-                if (rowIndex >= 1_048_576) throw new IOException("XLSX exceeds the worksheet row limit; choose CSV, Arrow or Parquet");
+                if (rowIndex >= 1_048_576) throw new IOException("XLSX exceeds the worksheet row limit; choose CSV");
                 List<?> values = cells(table, row, true);
                 if (values.size() > 16_384) throw new IOException("XLSX exceeds the worksheet column limit");
                 writeXlsxRow(sheet.createRow(rowIndex++), values, dateStyles);

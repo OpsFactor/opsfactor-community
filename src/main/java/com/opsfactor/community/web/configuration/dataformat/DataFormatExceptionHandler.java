@@ -5,6 +5,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
 
@@ -12,12 +13,27 @@ import java.util.Map;
 @RestControllerAdvice
 public final class DataFormatExceptionHandler {
 
+    private final DataFormatPolicy policy;
+
+    public DataFormatExceptionHandler() {
+
+        this(new DataFormatPolicy());
+
+    }
+
+    @Autowired
+    public DataFormatExceptionHandler(DataFormatPolicy policy) {
+
+        this.policy = policy;
+
+    }
+
     @ExceptionHandler(TabularExportException.class)
     public ResponseEntity<Map<String, Object>> unsupportedHierarchy(TabularExportException exception) {
 
         return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of("status", HttpStatus.NOT_ACCEPTABLE.value(),
-                        "code", "HIERARCHICAL_EXPORT_NOT_SUPPORTED", "message", exception.getMessage()));
+                        "code", "HIERARCHICAL_EXPORT_NOT_SUPPORTED", "message", exception.message(policy)));
 
     }
 }

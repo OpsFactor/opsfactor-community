@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -65,11 +67,23 @@ public class ProcessStatusController {
      * O endpoint legado e mantido para compatibilidade do front compartilhado, mas
      * nao representa fila ativa nem monitoramento de jobs assíncronos.
      */
-    @GetMapping("api/secured/scheduler/status")
+    @GetMapping(value = "api/secured/scheduler/status", params = "!taskId")
     @Secured({"ROLE_ADMIN", "ROLE_DEMAND_PLANNING_EXECUTION", "ROLE_SUPPLY_PLANNING_EXECUTION"})
     public List<TaskSchedulingDTO> getScheduledTaskHistory() {
 
         return taskSchedulingService.getTaskSchedulingDTOList();
+
+    }
+
+    /** Optional identity filter preserves the list contract and reads one task. */
+    @GetMapping(value = "api/secured/scheduler/status", params = "taskId")
+    @Secured({"ROLE_ADMIN", "ROLE_DEMAND_PLANNING", "ROLE_DEMAND_PLANNING_EXECUTION", "ROLE_SUPPLY_PLANNING", "ROLE_SUPPLY", "ROLE_SUPPLY_PLANNING_EXECUTION"})
+    public List<TaskSchedulingDTO> getScheduledTaskHistory(
+            @RequestParam(value = "taskId", required = false) String taskId) {
+
+        if (taskId == null) return getScheduledTaskHistory();
+        String requester = SecurityContextHolder.getContext().getAuthentication().getName();
+        return taskSchedulingService.getTaskSchedulingDTOList(taskId, requester);
 
     }
 
