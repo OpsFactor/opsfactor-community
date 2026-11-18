@@ -17,6 +17,7 @@ import com.opsfactor.community.capability.masterdata.demand.dfu.projection.Mater
 import com.opsfactor.community.capability.masterdata.inventory.inventorypolicy.projection.PoliticaEstoquesProjection;
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.projection.SupplyNetworkProjection;
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
+import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanHeuristicDemandRestrictionSpi;
 import com.opsfactor.community.platform.calendar.Calendario;
 import lombok.Getter;
 
@@ -49,6 +50,14 @@ public class SupplyPlanningBiProjection {
     private final DistributionPlanItemBiProjection distributionPlanItemBiProjection;
     private final ProductionPlanLinhaBiProjection productionPlanLinhaBiProjection;
     private final DemandaDiretaConsideradaProjection demandaDiretaConsideradaProjection;
+
+    private SupplyPlanHeuristicDemandRestrictionSpi restricaoDemandaAdicional;
+
+    void setRestricaoDemandaAdicional(SupplyPlanHeuristicDemandRestrictionSpi restricaoDemandaAdicional) {
+
+        this.restricaoDemandaAdicional = restricaoDemandaAdicional;
+
+    }
 
     public SupplyPlanningBiProjection(
             SupplyPlan supplyPlan,
@@ -274,6 +283,7 @@ final class SupplyPlanningBiLocationProjection extends SupplyPlanningProjection 
                 supplyPlanningBiProjection.getCalendario(location), location, materialProjectionEscopo,
                 supplyPlanningBiProjection.getLocationProjection());
         this.supplyPlanningBiProjection = supplyPlanningBiProjection;
+        setRestricaoDemandaAdicional(supplyPlanningBiProjection.getRestricaoDemandaAdicional());
         populaInventoryPlan(materialProjectionEscopo);
         populaDistributionPlan(location, materialProjectionEscopo);
         populaProductionPlan(location, materialProjectionEscopo);

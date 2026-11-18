@@ -4,102 +4,118 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.d
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjection;
 import com.opsfactor.community.capability.masterdata.network.location.domain.Location;
 import com.opsfactor.community.capability.masterdata.product.material.domain.Produto;
+import com.opsfactor.community.capability.supplyplanning.distributionplan.domain.DistributionPlanItem;
 import com.opsfactor.community.capability.supplyplanning.engine.SupplyPlanning;
+import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanHeuristicDemandRestrictionSpi;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.domain.DemandaDiretaConsideradaLinha;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.projection.DemandaDiretaConsideradaProjection;
 import com.opsfactor.community.capability.supplyplanning.supplyplan.projection.SupplyPlanningProjection;
-import com.opsfactor.community.platform.utility.Constantes;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 
+import java.util.ArrayDeque;
+import java.util.List;
 import java.util.Optional;
 
+import static com.opsfactor.community.platform.utility.Constantes.FirmePlanejado.PLANEJADO;
+import static com.opsfactor.community.platform.utility.Constantes.ReferenciaPeriodo.CONSUMO_CAPACIDADE;
+import static com.opsfactor.community.platform.utility.Constantes.TipoPlano.PLANO_RESTRITO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-/** Confere que falta física reduz atendimento restrito na UOM da linha. */
 class ReconciliacaoDemandaDiretaComSaldoFisicoTest {
 
-    @Test
-    void deveReduzirSomenteDemandaRestritaPelaFaltaNaUnidadeDaLinha() {
+    private final SupplyPlanningProjection projection = mock(SupplyPlanningProjection.class);
+    private final UnidadeMedidaProjection conversoes = mock(UnidadeMedidaProjection.class);
+    private final Location location = mock(Location.class);
+    private final Produto material = mock(Produto.class);
+    private final UnidadeMedida unidadePadrao = mock(UnidadeMedida.class);
+    private final DemandaDiretaConsideradaLinha linha = new DemandaDiretaConsideradaLinha();
+    private final DistributionPlanItem expedicao = new DistributionPlanItem();
 
-        SupplyPlanningProjection projection = mock(SupplyPlanningProjection.class);
-        DemandaDiretaConsideradaProjection demandaProjection = mock(DemandaDiretaConsideradaProjection.class);
-        UnidadeMedidaProjection unidadeProjection = mock(UnidadeMedidaProjection.class);
-        Location location = mock(Location.class);
-        Produto material = mock(Produto.class);
+    ReconciliacaoDemandaDiretaComSaldoFisicoTest() {
+
         UnidadeMedida unidadeLinha = mock(UnidadeMedida.class);
-        UnidadeMedida unidadePadrao = mock(UnidadeMedida.class);
-        DemandaDiretaConsideradaLinha linha = new DemandaDiretaConsideradaLinha();
+        var chaveDemanda = new DemandaDiretaConsideradaLinha.DemandaDiretaConsideradaLinhaCompositeKey();
+        chaveDemanda.setMaterial(material);
+        linha.setDemandaDiretaConsideradaLinhaCompositeKey(chaveDemanda);
         linha.setUnidadeMedida(unidadeLinha);
-        linha.setQuantidadeDemandaDiretaPlanoDemandaIrrestrita(50.0);
-        linha.setQuantidadeDemandaDiretaPlanoDemandaRestrita(50.0);
-        linha.setQuantidadeDemandaDiretaCarteiraRestrita(0.0);
+        linha.setQuantidadeDemandaDiretaPlanoDemandaIrrestrita(20.0);
+        linha.setQuantidadeDemandaDiretaPlanoDemandaRestrita(20.0);
+        var chaveExpedicao = new DistributionPlanItem.DistributionPlanItemKey();
+        chaveExpedicao.setProduto(material);
+        expedicao.setKey(chaveExpedicao);
+        expedicao.setUnidadeMedida(unidadeLinha);
+        expedicao.setQuantidade(10.0, PLANEJADO, PLANO_RESTRITO);
+        DemandaDiretaConsideradaProjection demanda = mock(DemandaDiretaConsideradaProjection.class);
 
         when(projection.getLocation()).thenReturn(location);
-        when(projection.getDemandaDiretaConsideradaProjection()).thenReturn(demandaProjection);
-        when(projection.getConversaoUnidadeMedidaProjection()).thenReturn(unidadeProjection);
-        when(demandaProjection.getDemandaDiretaConsideradaLinha(location, material, 1))
-                .thenReturn(Optional.of(linha));
-        when(unidadeProjection.getConversaoParaUnidadeDestino(material, unidadeLinha, unidadePadrao))
-                .thenReturn(2.0);
-
-        try (MockedStatic<SupplyPlanning> supplyPlanning = mockStatic(SupplyPlanning.class)) {
-            supplyPlanning.when(() -> SupplyPlanning.getEstoqueProjetado(
-                    eq(projection), eq(0), eq(1), eq(material),
-                    eq(Constantes.TipoPlano.PLANO_RESTRITO), eq(unidadePadrao),
-                    eq(true), eq(true), eq(false), eq(true)))
-                    .thenReturn(-35.0);
-
-            ConstrainedPlanningHeuristicoRotinas.reconciliaDemandaDiretaComSaldoFisico(
-                    projection, 1, material, unidadePadrao);
-        }
-
-        assertEquals(32.5, linha.getQuantidadeDemandaDiretaPlanoDemandaRestrita(), 0.000001);
-        assertEquals(50.0, linha.getQuantidadeDemandaDiretaPlanoDemandaIrrestrita(), 0.000001);
+        when(projection.getDemandaDiretaConsideradaProjection()).thenReturn(demanda);
+        when(projection.getConversaoUnidadeMedidaProjection()).thenReturn(conversoes);
+        when(demanda.getUnidadeMedidaProjection()).thenReturn(conversoes);
+        when(demanda.getDemandaDiretaConsideradaLinha(location, material, 1)).thenReturn(Optional.of(linha));
+        when(conversoes.getConversaoParaUnidadeDestino(material, unidadeLinha, unidadePadrao)).thenReturn(2.0);
+        when(projection.getDistributionPlanItemOutboundQueueParaLocationsInternas(CONSUMO_CAPACIDADE, 1, material))
+                .thenReturn(new ArrayDeque<>());
+        when(projection.getDistributionPlanItemOutboundQueueParaClientes(CONSUMO_CAPACIDADE, 1, material))
+                .thenReturn(new ArrayDeque<>(List.of(expedicao)));
 
     }
 
     @Test
-    void deveConsumirCarteiraSomenteDepoisDoPlanoDeDemanda() {
+    void rateiaPrevisaoLocalEExpedicaoNaMesmaProporcaoEUsaSaldoAtualNaSegundaPassagem() {
 
-        SupplyPlanningProjection projection = mock(SupplyPlanningProjection.class);
-        DemandaDiretaConsideradaProjection demandaProjection = mock(DemandaDiretaConsideradaProjection.class);
-        UnidadeMedidaProjection unidadeProjection = mock(UnidadeMedidaProjection.class);
-        Location location = mock(Location.class);
-        Produto material = mock(Produto.class);
-        UnidadeMedida unidade = mock(UnidadeMedida.class);
-        DemandaDiretaConsideradaLinha linha = new DemandaDiretaConsideradaLinha();
-        linha.setUnidadeMedida(unidade);
-        linha.setQuantidadeDemandaDiretaPlanoDemandaRestrita(10.0);
-        linha.setQuantidadeDemandaDiretaCarteiraRestrita(8.0);
+        assertEquals(0, restringe(15), 0.000001);
+        assertEquals(15, linha.getQuantidadeDemandaDiretaPlanoDemandaRestrita(), 0.000001);
+        assertEquals(7.5, expedicao.getQuantidade(PLANEJADO, PLANO_RESTRITO), 0.000001);
 
-        when(projection.getLocation()).thenReturn(location);
-        when(projection.getDemandaDiretaConsideradaProjection()).thenReturn(demandaProjection);
-        when(projection.getConversaoUnidadeMedidaProjection()).thenReturn(unidadeProjection);
-        when(demandaProjection.getDemandaDiretaConsideradaLinha(location, material, 1))
-                .thenReturn(Optional.of(linha));
-        when(unidadeProjection.getConversaoParaUnidadeDestino(material, unidade, unidade))
-                .thenReturn(1.0);
-
-        try (MockedStatic<SupplyPlanning> supplyPlanning = mockStatic(SupplyPlanning.class)) {
-            supplyPlanning.when(() -> SupplyPlanning.getEstoqueProjetado(
-                    eq(projection), eq(0), eq(1), eq(material),
-                    eq(Constantes.TipoPlano.PLANO_RESTRITO), eq(unidade),
-                    eq(true), eq(true), eq(false), eq(true)))
-                    .thenReturn(-13.0);
-
-            ConstrainedPlanningHeuristicoRotinas.reconciliaDemandaDiretaComSaldoFisico(
-                    projection, 1, material, unidade);
-        }
-
-        assertEquals(0.0, linha.getQuantidadeDemandaDiretaPlanoDemandaRestrita(), 0.000001);
-        assertEquals(5.0, linha.getQuantidadeDemandaDiretaCarteiraRestrita(), 0.000001);
+        assertEquals(0, restringe(15), 0.000001);
+        assertEquals(10, linha.getQuantidadeDemandaDiretaPlanoDemandaRestrita(), 0.000001);
+        assertEquals(5, expedicao.getQuantidade(PLANEJADO, PLANO_RESTRITO), 0.000001);
+        assertEquals(20, linha.getQuantidadeDemandaDiretaPlanoDemandaIrrestrita(), 0.000001);
+        assertEquals(0, linha.getQuantidadeDemandaDiretaCarteiraRestrita(), 0.000001);
 
     }
 
+    @Test
+    void usaConsumoAdicionalParaCalcularDeficitEProtegeEsseGrupoAteEsgotarForecast() {
+
+        SupplyPlanHeuristicDemandRestrictionSpi extensao = mock(SupplyPlanHeuristicDemandRestrictionSpi.class);
+        when(projection.getRestricaoDemandaAdicional()).thenReturn(extensao);
+        when(projection.getQuantidadeDistributionPlanOutboundParaClientes(
+                CONSUMO_CAPACIDADE, 1, material, PLANEJADO, PLANO_RESTRITO, unidadePadrao))
+                .thenAnswer(call -> 2 * expedicao.getQuantidade(PLANEJADO, PLANO_RESTRITO));
+        double[] consumo = {40};
+        when(extensao.getConsumoAdicional(projection, 1, material, PLANO_RESTRITO, unidadePadrao))
+                .thenAnswer(call -> consumo[0]);
+        when(extensao.getParcelasDemandaAdicional(projection, 1, material, unidadePadrao))
+                .thenAnswer(call -> List.of(new CorteProporcional.Parcela(consumo[0],
+                        fracao -> consumo[0] *= 1 - fracao)));
+
+        assertEquals(-100, saldo(), 0.000001);
+        assertEquals(0, restringe(30), 0.000001);
+        assertEquals(40, consumo[0], 0.000001);
+        assertEquals(-70, saldo(), 0.000001);
+
+        assertEquals(0, restringe(40), 0.000001);
+        assertEquals(0, linha.getQuantidadeDemandaDiretaPlanoDemandaRestrita(), 0.000001);
+        assertEquals(0, expedicao.getQuantidade(PLANEJADO, PLANO_RESTRITO), 0.000001);
+        assertEquals(30, consumo[0], 0.000001);
+        assertEquals(-30, saldo(), 0.000001);
+
+    }
+
+    private double restringe(double deficit) {
+
+        return ConstrainedPlanningHeuristicoRotinas.restringeDemandaPorDisponibilidade(
+                projection, 1, material, unidadePadrao, deficit);
+
+    }
+
+    private double saldo() {
+
+        return SupplyPlanning.getSaldoEntradasSaidas(
+                projection, 1, material, PLANO_RESTRITO, unidadePadrao, true, true);
+
+    }
 }

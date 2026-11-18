@@ -14,6 +14,7 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.proje
 import com.opsfactor.community.capability.supplyplanning.distributionplan.repository.DistributionPlanItemRepository;
 import com.opsfactor.community.capability.supplyplanning.inventoryplan.repository.InventoryPlanLinhaRepository;
 import com.opsfactor.community.capability.supplyplanning.productionplan.repository.ProductionPlanLinhaRepository;
+import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanHeuristicDemandRestrictionSpi;
 import com.opsfactor.community.platform.calendar.Calendario;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,9 @@ import java.util.Set;
 @Slf4j
 @Component
 public class SupplyPlanBiProjectionFactory {
+
+    @Autowired(required = false)
+    private SupplyPlanHeuristicDemandRestrictionSpi restricaoDemandaAdicional;
 
     private final DistributionPlanItemRepository distributionPlanItemRepository;
     private final InventoryPlanLinhaRepository inventoryPlanLinhaRepository;
@@ -77,6 +81,7 @@ public class SupplyPlanBiProjectionFactory {
         SupplyPlanningBiProjection supplyPlanningBiProjection = new SupplyPlanningBiProjection(
                 supplyPlan, perfilExecucaoSupplyPlan, supplyNetworkProjection, politicaEstoquesProjection,
                 materialProjection, locationProjection, demandaDiretaConsideradaProjection);
+        supplyPlanningBiProjection.setRestricaoDemandaAdicional(restricaoDemandaAdicional);
 
         Collection<InventoryPlanLinha> inventoryPlanLinhas =
                 inventoryPlanLinhaRepository.customFindBySupplyPlanELocationsDeListaEMateriaisDeLista(supplyPlan, locations, materiais);
