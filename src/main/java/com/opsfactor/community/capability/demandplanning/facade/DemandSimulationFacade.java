@@ -29,6 +29,7 @@ import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.p
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.projection.UnidadeMedidaProjectionFactory;
 import com.opsfactor.community.capability.demandplanning.demandplan.projection.DemandPlanForecastProjection;
 import com.opsfactor.community.capability.cluster.repository.material.ClusterMateriaisRepository;
+import com.opsfactor.community.capability.cluster.repository.location.ClusterLocationsRepository;
 import com.opsfactor.community.capability.demandplanning.configuration.repository.ParametrosDemandPlanNivelClusterRepository;
 import com.opsfactor.community.capability.demandplanning.configuration.repository.PerfilExecucaoDemandPlanRepository;
 import com.opsfactor.community.capability.cluster.service.ClusterLocationService;
@@ -103,6 +104,10 @@ public class DemandSimulationFacade {
      */
     @Autowired
     private ClusterMateriaisRepository clusterMateriaisDemandPlanningRepository;
+
+    /** Repository para materializar as regras do cluster de location na resposta da simulacao. */
+    @Autowired
+    private ClusterLocationsRepository clusterLocationsRepository;
 
     /**
      * Repository do perfil de execucao Demand Planning usado para bucket,
@@ -284,11 +289,21 @@ public class DemandSimulationFacade {
         validaSimulatedDemandPlanDTOSimulacaoCommunity(simulatedDemandPlanDTO);
         // FIM CARGA HISTORICO E FORECAST POR MATERIAL/LOCATION ---------------------------------------
 
-        // seta os clusters
+        /*
+         * A projection pode estar em cache e suas entidades nao pertencem mais
+         * a uma sessao JPA. Carregamos as duas arvores de regras selecionadas em
+         * lote antes de montar os DTOs, sem consultas lazy durante o mapper e
+         * sem manter uma transacao aberta durante todo o forecast.
+         */
+        String perfilClusterizacaoId = clusterMateriaisDemandPlanning.getPerfilClusterizacao().getId();
+        ClusterMateriais clusterMateriaisParaResposta = clusterMateriaisDemandPlanningRepository
+                .findForSimulation(clusterMateriaisDemandPlanning.getId(), perfilClusterizacaoId).orElseThrow();
+        ClusterLocations clusterLocationsParaResposta = clusterLocationsRepository
+                .findForSimulation(clusterLocations.getId(), perfilClusterizacaoId).orElseThrow();
         simulatedDemandPlanDTO.materialClusterDTO = ClusterProdutosMapper.convertComListaMateriaisERegrasAlocacaoDTO(
-                clusterMateriaisDemandPlanning, clusterizacaoProjection);
+                clusterMateriaisParaResposta, clusterizacaoProjection);
         simulatedDemandPlanDTO.clusterLocationsDTO = ClusterLocationsMapper.convertComListaLocationsERegrasAlocacaoDTO(
-                clusterLocations, clusterizacaoProjection);
+                clusterLocationsParaResposta, clusterizacaoProjection);
 
         // lista com:
         // Calendario mensal : meses

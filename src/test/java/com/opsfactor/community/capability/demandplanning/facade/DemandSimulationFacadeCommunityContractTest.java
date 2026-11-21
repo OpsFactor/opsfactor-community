@@ -15,7 +15,8 @@ import com.opsfactor.community.capability.masterdata.product.material.domain.Pro
 import com.opsfactor.community.capability.masterdata.measurement.unitofmeasure.domain.UnidadeMedida;
 import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjection;
 import com.opsfactor.community.capability.configuration.projection.parametros.CadastroEParametrosProjection;
-import com.opsfactor.community.capability.configuration.projection.cluster.ClusterizacaoProjectionFactory;
+import com.opsfactor.community.capability.demandplanning.configuration.projection.factory.ParametrosDemandPlanningProjectionFactory;
+import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosDemandPlanProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosForecastProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.ParametrosGeraisDemandPlanningProjection;
 import com.opsfactor.community.capability.demandplanning.configuration.projection.aggregation.ParametrosDemandPlanNivelClusterProjection;
@@ -169,8 +170,8 @@ public class DemandSimulationFacadeCommunityContractTest {
                 getPerfilExecucaoDemandPlanRepositoryStub(Optional.of(new PerfilExecucaoDemandPlan())));
         ReflectionTestUtils.setField(
                 demandSimulationFrontService,
-                "clusterizacaoProjectionFactory",
-                new TestClusterizacaoProjectionFactory(
+                "parametrosDemandPlanningProjectionFactory",
+                new TestParametrosDemandPlanningProjectionFactory(
                         Optional.empty(),
                         new ClusterLocations()));
 
@@ -217,8 +218,8 @@ public class DemandSimulationFacadeCommunityContractTest {
                 getPerfilExecucaoDemandPlanRepositoryStub(Optional.of(perfilExecucaoDemandPlan)));
         ReflectionTestUtils.setField(
                 demandSimulationFrontService,
-                "clusterizacaoProjectionFactory",
-                new TestClusterizacaoProjectionFactory(
+                "parametrosDemandPlanningProjectionFactory",
+                new TestParametrosDemandPlanningProjectionFactory(
                         Optional.of(clusterMateriaisDemandPlanning),
                         clusterLocations));
         ReflectionTestUtils.setField(
@@ -593,8 +594,8 @@ public class DemandSimulationFacadeCommunityContractTest {
                 getPerfilExecucaoDemandPlanRepositoryStub(Optional.of(perfilExecucaoDemandPlan)));
         ReflectionTestUtils.setField(
                 demandSimulationFrontService,
-                "clusterizacaoProjectionFactory",
-                new TestClusterizacaoProjectionFactory(
+                "parametrosDemandPlanningProjectionFactory",
+                new TestParametrosDemandPlanningProjectionFactory(
                         Optional.of(clusterMateriaisDemandPlanning),
                         clusterLocations));
         ReflectionTestUtils.setField(
@@ -665,8 +666,8 @@ public class DemandSimulationFacadeCommunityContractTest {
                 new TestUnidadeMedidaProjectionFactory(unidadeMedidaProjection));
         ReflectionTestUtils.setField(
                 demandSimulationFrontService,
-                "clusterizacaoProjectionFactory",
-                new TestClusterizacaoProjectionFactory(
+                "parametrosDemandPlanningProjectionFactory",
+                new TestParametrosDemandPlanningProjectionFactory(
                         new TestClusterizacaoProjection(
                                 Optional.of(clusterMateriaisDemandPlanning),
                                 clusterLocations,
@@ -839,18 +840,18 @@ public class DemandSimulationFacadeCommunityContractTest {
 
     }
 
-    private static class TestClusterizacaoProjectionFactory extends ClusterizacaoProjectionFactory {
+    private static class TestParametrosDemandPlanningProjectionFactory extends ParametrosDemandPlanningProjectionFactory {
 
         private final ClusterizacaoProjection clusterizacaoProjection;
 
-        private TestClusterizacaoProjectionFactory(
+        private TestParametrosDemandPlanningProjectionFactory(
                 ClusterizacaoProjection clusterizacaoProjection) {
 
             this.clusterizacaoProjection = clusterizacaoProjection;
 
         }
 
-        private TestClusterizacaoProjectionFactory(
+        private TestParametrosDemandPlanningProjectionFactory(
                 Optional<ClusterMateriais> clusterMateriaisDemandPlanningOptional,
                 ClusterLocations clusterLocations) {
 
@@ -862,9 +863,16 @@ public class DemandSimulationFacadeCommunityContractTest {
         }
 
         @Override
-        public ClusterizacaoProjection getClusterizacaoProjectionDeCache(String perfilClusterizacaoId) {
+        public ParametrosDemandPlanProjection getParametrosDemandPlanProjection(String perfilExecucaoId) {
 
-            return clusterizacaoProjection;
+            return ParametrosDemandPlanProjection.builder().clusterizacaoProjection(clusterizacaoProjection).build();
+
+        }
+
+        @Override
+        public ParametrosDemandPlanProjection getParametrosDemandPlanProjection(PerfilExecucaoDemandPlan perfilExecucao) {
+
+            return ParametrosDemandPlanProjection.builder().clusterizacaoProjection(clusterizacaoProjection).build();
 
         }
 

@@ -25,6 +25,13 @@ public interface ClusterLocationsRepository extends ClusterProfileRepository<Clu
     List<ClusterLocations> findAllByPerfilClusterizacaoId(@org.springframework.data.repository.query.Param("perfilId") String perfilClusterizacaoId);
 
 
+    /**
+     * Carrega as regras e seus valores do cluster selecionado em uma consulta,
+     * para que o mapper da simulacao nao dependa de uma sessao JPA aberta.
+     */
+    @Query("SELECT DISTINCT c FROM ClusterLocations c LEFT JOIN FETCH c.regrasAlocacaoClusterLocations r LEFT JOIN FETCH r.regrasAlocacaoClusterLocationsPaisEstadoSet LEFT JOIN FETCH r.regrasAlocacaoClusterLocationsTipoLocationSet WHERE c.id = :clusterId AND c.perfilClusterizacao.id = :perfilId")
+    Optional<ClusterLocations> findForSimulation(@org.springframework.data.repository.query.Param("clusterId") Long clusterId, @org.springframework.data.repository.query.Param("perfilId") String perfilId);
+
     /** Catálogo leve: projeção escalar sem carregar regras, locais ou materiais. */
     interface IdentityView {
         Long getId();

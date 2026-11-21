@@ -32,7 +32,8 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Profile;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -145,6 +146,7 @@ class ProjectionProfileCacheIsolationTest {
     private AnnotationConfigApplicationContext newCacheContext() {
 
         var context = new AnnotationConfigApplicationContext();
+        context.getEnvironment().setActiveProfiles("projection-cache-test");
         context.getBeanFactory().registerSingleton("serviceDouble0", mock(ParametrosGlobaisService.class));
         context.getBeanFactory().registerSingleton("serviceDouble1", mock(MaterialService.class));
         context.getBeanFactory().registerSingleton("serviceDouble2", mock(LocationService.class));
@@ -190,7 +192,9 @@ class ProjectionProfileCacheIsolationTest {
         }
     }
 
-    @Configuration
+    // Este contexto de mocks so pode ser ativado pelos testes desta classe.
+    @TestConfiguration
+    @Profile("projection-cache-test")
     @EnableCaching
     static class CacheConfiguration {
         @Bean Source source() { return new Source(); }

@@ -25,6 +25,13 @@ public interface ClusterMateriaisRepository extends ClusterProfileRepository<Clu
     List<ClusterMateriais> findAllByPerfilClusterizacaoId(@org.springframework.data.repository.query.Param("perfilId") String perfilClusterizacaoId);
 
 
+    /**
+     * Carrega integralmente as regras do cluster selecionado para montagem do
+     * resultado de simulacao fora da sessao JPA, em uma unica consulta.
+     */
+    @Query("SELECT DISTINCT c FROM ClusterMateriais c LEFT JOIN FETCH c.regrasAlocacaoClusterProdutos r LEFT JOIN FETCH r.regraAlocacaoClusterProdutosStatusSet LEFT JOIN FETCH r.regrasAlocacaoClusterProdutosCaracteristicaSet v LEFT JOIN FETCH v.regraAlocacaoClusterProdutosCaracteristicaCompositeKey.caracteristica WHERE c.id = :clusterId AND c.perfilClusterizacao.id = :perfilId")
+    Optional<ClusterMateriais> findForSimulation(@org.springframework.data.repository.query.Param("clusterId") Long clusterId, @org.springframework.data.repository.query.Param("perfilId") String perfilId);
+
     /** Catálogo leve: projeção escalar sem carregar regras, locais ou materiais. */
     interface IdentityView {
         Long getId();
