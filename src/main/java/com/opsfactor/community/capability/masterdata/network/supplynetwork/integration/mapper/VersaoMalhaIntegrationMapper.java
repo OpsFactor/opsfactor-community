@@ -6,6 +6,7 @@ import com.opsfactor.community.capability.masterdata.network.location.domain.Loc
 import com.opsfactor.community.capability.masterdata.network.supplynetwork.domain.VersaoMalha;
 import com.opsfactor.community.platform.exception.DataUploadException;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
+import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFile;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
 
@@ -155,30 +156,31 @@ public class VersaoMalhaIntegrationMapper implements IntegrationMapperInterface<
     }
 
     /**
-     * Converte a linha somente quando ela preserva as cinco colunas funcionais
-     * publicadas pelo template. A coluna tecnica {@code Delete}, quando
-     * presente, permanece na sexta posicao definida pelo contrato generico.
-     *
-     * <p>O formato anterior de quatro colunas, que interpretava {@code D} na
-     * quarta posicao como exclusao, nao pertence ao contrato Community. A
-     * validacao abaixo torna a incompatibilidade explicita antes de qualquer
-     * tentativa de reconciliacao de origens.</p>
+     * Valida a estrutura pelo cabecalho, nao pelo tamanho fisico das linhas.
+     * XLSX pode omitir celulas opcionais vazias ao fim de cada linha, enquanto
+     * uma coluna Delete antecipada pertence ao formato legado incompativel.
      */
     @Override
-    public VersaoMalhaIntegrationDataDto convertProcessedFileRowToDTO(
-            ProcessedFileRow processedFileRow,
-            VersaoMalhaIntegrationSupportData supportData) {
+    public List<VersaoMalhaIntegrationDataDto> convertProcessedFileToDTOList(
+            ProcessedFile processedFile, VersaoMalhaIntegrationSupportData supportData) {
 
-        if (processedFileRow.getRowSize() < processedFileHeaders.size()) {
+        if (processedFile == null || processedFile.getFileRows().isEmpty()) {
+            throw new DataUploadException("Supply Network Version file must include its functional header.");
+        }
+        ProcessedFileRow header = processedFile.getProcessedFileRow(0);
+        if (header.getRowSize() < processedFileHeaders.size()) {
             throw new DataUploadException(
                     "Supply Network Version file row must provide "
                             + processedFileHeaders.size()
                             + " functional columns before the optional Delete marker.");
         }
-
-        return IntegrationMapperInterface.super.convertProcessedFileRowToDTO(
-                processedFileRow,
-                supportData);
+        for (int column = 0; column < processedFileHeaders.size(); column++) {
+            String name = header.getColumnValueAsString(column);
+            if (name != null && "Delete".equalsIgnoreCase(name.trim())) {
+                throw new DataUploadException("Supply Network Version Delete marker must follow the five functional columns.");
+            }
+        }
+        return IntegrationMapperInterface.super.convertProcessedFileToDTOList(processedFile, supportData);
 
     }
 

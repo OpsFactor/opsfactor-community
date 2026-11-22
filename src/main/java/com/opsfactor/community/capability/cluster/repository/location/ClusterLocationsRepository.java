@@ -19,10 +19,28 @@ import java.util.List;
 @Repository
 public interface ClusterLocationsRepository extends ClusterProfileRepository<ClusterLocations>, ClusterProfilePersistence<ClusterLocations> {
 
-    /** Snapshot por perfil em uma consulta, sem navegação lazy por regra/cluster. */
+    /**
+     * Busca primeiro as raizes unicas e inicializa suas regras em lote na
+     * mesma sessao. O resultado do fetch nao e usado como lista de raizes:
+     * joins de colecoes podem retornar uma linha por regra no Hibernate.
+     */
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    default List<ClusterLocations> findAllByPerfilClusterizacaoId(String perfilClusterizacaoId) {
+
+        List<ClusterLocations> clusters = findProfileRoots(perfilClusterizacaoId);
+        if (!clusters.isEmpty()) {
+            loadProfileRules(perfilClusterizacaoId);
+        }
+        return clusters;
+
+    }
+
+    @Query("SELECT c FROM ClusterLocations c WHERE c.perfilClusterizacao.id = :perfilId ORDER BY c.prioridade, c.id")
+    List<ClusterLocations> findProfileRoots(@org.springframework.data.repository.query.Param("perfilId") String perfilClusterizacaoId);
+
     @Query("SELECT DISTINCT c FROM ClusterLocations c LEFT JOIN FETCH c.regrasAlocacaoClusterLocations LEFT JOIN FETCH c.parametrosClusterLocations WHERE c.perfilClusterizacao.id = :perfilId ORDER BY c.prioridade, c.id")
-    List<ClusterLocations> findAllByPerfilClusterizacaoId(@org.springframework.data.repository.query.Param("perfilId") String perfilClusterizacaoId);
+    List<ClusterLocations> loadProfileRules(@org.springframework.data.repository.query.Param("perfilId") String perfilClusterizacaoId);
 
 
     /**

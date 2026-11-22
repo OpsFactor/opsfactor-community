@@ -17,10 +17,28 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ClusterProdutosRepository extends ClusterProfileRepository<ClusterProdutos>, ClusterProfilePersistence<ClusterProdutos> {
 
-    /** Snapshot por perfil em uma consulta, sem navegação lazy por regra/cluster. */
+    /**
+     * Busca primeiro as raizes unicas e inicializa suas regras em lote na
+     * mesma sessao. O resultado do fetch nao e usado como lista de raizes:
+     * joins de colecoes podem retornar uma linha por regra no Hibernate.
+     */
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    default List<ClusterProdutos> findAllByPerfilClusterizacaoId(String perfilClusterizacaoId) {
+
+        List<ClusterProdutos> clusters = findProfileRoots(perfilClusterizacaoId);
+        if (!clusters.isEmpty()) {
+            loadProfileRules(perfilClusterizacaoId);
+        }
+        return clusters;
+
+    }
+
+    @Query("SELECT c FROM ClusterProdutos c WHERE c.perfilClusterizacao.id = :perfilId ORDER BY c.prioridade, c.id")
+    List<ClusterProdutos> findProfileRoots(@org.springframework.data.repository.query.Param("perfilId") String perfilClusterizacaoId);
+
     @Query("SELECT DISTINCT c FROM ClusterProdutos c LEFT JOIN FETCH c.regrasAlocacaoClusterProdutos WHERE c.perfilClusterizacao.id = :perfilId ORDER BY c.prioridade, c.id")
-    List<ClusterProdutos> findAllByPerfilClusterizacaoId(@org.springframework.data.repository.query.Param("perfilId") String perfilClusterizacaoId);
+    List<ClusterProdutos> loadProfileRules(@org.springframework.data.repository.query.Param("perfilId") String perfilClusterizacaoId);
 
     ClusterProdutos findByPerfilClusterizacaoIdAndDescricao(String perfilClusterizacaoId, String descricao);
 

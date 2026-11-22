@@ -11,6 +11,7 @@ import com.opsfactor.community.capability.cluster.facade.mapper.ClusterLocations
 import com.opsfactor.community.capability.cluster.facade.mapper.ClusterProdutosMapper;
 import com.opsfactor.community.capability.cluster.repository.location.ClusterLocationsRepository;
 import com.opsfactor.community.capability.cluster.repository.material.ClusterMateriaisRepository;
+import com.opsfactor.community.capability.cluster.repository.material.ClusterProdutosRepository;
 import com.opsfactor.community.capability.configuration.domain.cluster.PerfilClusterizacao;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.Caracteristica;
 import com.opsfactor.community.capability.masterdata.classification.characteristic.domain.CaracteristicaProduto;
@@ -33,6 +34,7 @@ class DemandSimulationClusterFetchJpaTest {
 
     @Autowired private EntityManager entityManager;
     @Autowired private ClusterMateriaisRepository clusterMateriaisRepository;
+    @Autowired private ClusterProdutosRepository clusterProdutosRepository;
     @Autowired private ClusterLocationsRepository clusterLocationsRepository;
 
     @Test
@@ -89,6 +91,17 @@ class DemandSimulationClusterFetchJpaTest {
         ClusterLocations locationCarregado = clusterLocationsRepository.findForSimulation(locationId, perfil.getId()).orElseThrow();
         entityManager.clear();
 
+        // A classificacao possui duas regras, mas deve aparecer uma unica vez.
+        var baseRoots = clusterProdutosRepository.findAllByPerfilClusterizacaoId(perfil.getId());
+        var materialRoots = clusterMateriaisRepository.findAllByPerfilClusterizacaoId(perfil.getId());
+        var locationRoots = clusterLocationsRepository.findAllByPerfilClusterizacaoId(perfil.getId());
+        assertEquals(1, baseRoots.size());
+        assertEquals(1, materialRoots.size());
+        assertEquals(1, locationRoots.size());
+        entityManager.clear();
+        assertEquals(2, baseRoots.getFirst().getRegrasAlocacaoClusterProdutos().size());
+        assertEquals(2, materialRoots.getFirst().getRegrasAlocacaoClusterProdutos().size());
+        assertEquals(2, locationRoots.getFirst().getRegrasAlocacaoClusterLocations().size());
         assertEquals(2, ClusterProdutosMapper.convertComRegrasAlocacaoDTO(materialCarregado).getRegraAlocacaoClusterDTOList().size());
         assertEquals(2, ClusterLocationsMapper.convertComRegrasAlocacaoDTO(locationCarregado).getRegraAlocacaoClusterDTOList().size());
         assertTrue(clusterMateriaisRepository.findForSimulation(materialId, "OTHER_PROFILE").isEmpty());

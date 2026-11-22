@@ -52,7 +52,7 @@ public class VersaoMalhaIntegrationDataDto extends IntegrationDataDtoAbstract<
             VersaoMalhaPrimaryKeyIntegrationDTO,
             VersaoMalha> {
 
-        @IntegrationFileColumn(0)
+        @IntegrationFileColumn(value = 0, required = true)
         public String supplyNetworkVersionId;
 
         @JsonCreator

@@ -19,10 +19,28 @@ import org.springframework.data.jpa.repository.EntityGraph;
 @Repository
 public interface ClusterMateriaisRepository extends ClusterProfileRepository<ClusterMateriais>, ClusterProfilePersistence<ClusterMateriais> {
 
-    /** Snapshot por perfil em uma consulta, sem navegação lazy por regra/cluster. */
+    /**
+     * Busca primeiro as raizes unicas e inicializa suas regras em lote na
+     * mesma sessao. O resultado do fetch nao e usado como lista de raizes:
+     * joins de colecoes podem retornar uma linha por regra no Hibernate.
+     */
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    default List<ClusterMateriais> findAllByPerfilClusterizacaoId(String perfilClusterizacaoId) {
+
+        List<ClusterMateriais> clusters = findProfileRoots(perfilClusterizacaoId);
+        if (!clusters.isEmpty()) {
+            loadProfileRules(perfilClusterizacaoId);
+        }
+        return clusters;
+
+    }
+
+    @Query("SELECT c FROM ClusterMateriais c WHERE c.perfilClusterizacao.id = :perfilId ORDER BY c.prioridade, c.id")
+    List<ClusterMateriais> findProfileRoots(@org.springframework.data.repository.query.Param("perfilId") String perfilClusterizacaoId);
+
     @Query("SELECT DISTINCT c FROM ClusterMateriais c LEFT JOIN FETCH c.regrasAlocacaoClusterProdutos WHERE c.perfilClusterizacao.id = :perfilId ORDER BY c.prioridade, c.id")
-    List<ClusterMateriais> findAllByPerfilClusterizacaoId(@org.springframework.data.repository.query.Param("perfilId") String perfilClusterizacaoId);
+    List<ClusterMateriais> loadProfileRules(@org.springframework.data.repository.query.Param("perfilId") String perfilClusterizacaoId);
 
 
     /**
@@ -46,6 +64,9 @@ public interface ClusterMateriaisRepository extends ClusterProfileRepository<Clu
     List<IdentityView> findAllProjectedByPerfilClusterizacaoId(@org.springframework.data.repository.query.Param("perfilId") String perfilClusterizacaoId);
 
     Optional<ClusterMateriais> findByPerfilClusterizacaoIdAndDescricao(String perfilClusterizacaoId, String descricao);
+
+    /** Retorna os defaults efetivos de um perfil sem carregar regras. */
+    List<ClusterMateriais> findAllByPerfilClusterizacaoIdAndPadraoTrue(String perfilClusterizacaoId);
 
     /** Compatibilidade somente com o perfil LEGADO, nunca busca global por descrição. */
     @Deprecated

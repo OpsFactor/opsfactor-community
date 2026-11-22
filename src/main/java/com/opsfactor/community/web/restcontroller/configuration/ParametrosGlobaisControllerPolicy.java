@@ -81,6 +81,16 @@ public class ParametrosGlobaisControllerPolicy {
         parametrosGlobais.setTipoDocumentoVenda(Constantes.TipoDocumentoVenda.SELLOUT);
         parametrosGlobais.setDpArredondaParaUnidadeVenda(false);
         /*
+         * A borda aceita ausência destas flags exclusivas do Enterprise, mas
+         * alguns getters da entidade interpretam null como true. Após validar o
+         * DTO, mantenha explícito o estado Community antes da validação da
+         * fachada, inclusive em payloads mínimos ou bancos antigos.
+         */
+        parametrosGlobais.setPermiteAjusteAgregadoSemBaselineProduto(false);
+        parametrosGlobais.setPermiteAjusteAgregadoSemBaselineLocation(false);
+        parametrosGlobais.setRemessasConsomemDisponibilidadeNoPrimeiroPeriodo(false);
+        parametrosGlobais.setQuantidadesEmPedidosRepresentamSaldoRestante(false);
+        /*
          * Pedidos transacionais/backlog pertencem ao Enterprise. Este setter
          * limpa valores antigos eventualmente persistidos antes do recorte
          * Community, evitando que uma simples alteracao de parametro global

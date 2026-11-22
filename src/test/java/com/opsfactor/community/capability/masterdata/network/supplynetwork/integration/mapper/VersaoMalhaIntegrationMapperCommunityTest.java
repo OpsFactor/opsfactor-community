@@ -6,6 +6,7 @@ import com.opsfactor.community.capability.masterdata.network.supplynetwork.domai
 import com.opsfactor.community.platform.exception.DataUploadException;
 import com.opsfactor.community.platform.exception.MissingDependencyDataUploadException;
 import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFileRow;
+import com.opsfactor.community.platform.utility.fileprocessing.ProcessedFile;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.stereotype.Component;
@@ -106,15 +107,28 @@ class VersaoMalhaIntegrationMapperCommunityTest {
         VersaoMalhaIntegrationMapper versaoMalhaIntegrationMapper =
                 new VersaoMalhaIntegrationMapper();
 
+        ProcessedFile legacyFile = new ProcessedFile();
+        legacyFile.addRow(new ProcessedFileRow(List.of("Id", "Description", "Client Origin", "Delete")));
+        legacyFile.addRow(new ProcessedFileRow(List.of("SNV-2", "Network", "CLIENT", "D")));
         DataUploadException dataUploadException = Assertions.assertThrows(
                 DataUploadException.class,
-                () -> versaoMalhaIntegrationMapper.convertProcessedFileRowToDTO(
-                        new ProcessedFileRow(List.of("SNV-2", "Network", "CLIENT", "D")),
-                        null));
+                () -> versaoMalhaIntegrationMapper.convertProcessedFileToDTOList(legacyFile, null));
 
         Assertions.assertEquals(
                 "Supply Network Version file row must provide 5 functional columns before the optional Delete marker.",
                 dataUploadException.getMessage());
+
+    }
+
+    @Test
+    void supplyNetworkVersionMapperShouldRejectDeleteHeaderInsideFunctionalColumns() {
+
+        ProcessedFile file = new ProcessedFile();
+        file.addRow(new ProcessedFileRow(List.of("Id", "Description", "Client Origin", "Delete", "Lead Time")));
+        file.addRow(new ProcessedFileRow(List.of("SNV", "Network", "CLIENT", "D")));
+        DataUploadException error = Assertions.assertThrows(DataUploadException.class,
+                () -> new VersaoMalhaIntegrationMapper().convertProcessedFileToDTOList(file, null));
+        Assertions.assertEquals("Supply Network Version Delete marker must follow the five functional columns.", error.getMessage());
 
     }
 
