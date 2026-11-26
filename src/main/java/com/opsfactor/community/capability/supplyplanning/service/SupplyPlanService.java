@@ -66,6 +66,7 @@ import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanD
 import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanFirmProductionOrdersSpi;
 import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanOpenOrdersHeuristicSpi;
 import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanOptimizationServiceSpi;
+import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanOptimizationDiagnosticsException;
 import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanProcessChainServiceSpi;
 import com.opsfactor.community.capability.supplyplanning.service.spi.SupplyPlanPresetConstraintGroupSpi;
 import com.opsfactor.community.platform.calendar.CalendarioSimples;
@@ -1009,6 +1010,9 @@ public class SupplyPlanService {
          * cleanup interno permanece separado para preservar a excecao original
          * se a remocao do plano parcial tambem falhar.
          */
+        } catch (SupplyPlanOptimizationDiagnosticsException e) {
+            // The optimizer publishes diagnostics against this plan ID, even on a failed run.
+            throw e;
         } catch (RuntimeException e) {
             log.error("Erro ao executar Supply Plan Community {}", supplyPlan.getId(), e);
             try {
